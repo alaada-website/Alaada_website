@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alaada</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header id="navbar">
+    <div class="logo">
+      <img src="images/alaada-logo.jpg" alt="Alaada Logo">
+    </div>
+
+    <nav id="navLinks">
+      <!-- Internal Links -->
+      <a href="#hero">Home</a>
+      <a href="#about">About</a>
+      <a href="#creations">Creations</a>
+      <a href="#arzo">About me</a>
+      <a href="#join">Join</a>
+
+      <!-- External Project Pages -->
+      <a href="alaada-os.html">Alaada OS</a>
+      <a href="alaada-universe.html">Alaada Universe</a>
+      <a href="alaada-lab.html">Alaada Lab</a>
+      <a href="prove-hosting.html">Prove Hosting</a>
+    </nav>
+
+    <div class="menu-icon" id="menuToggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="hero">
+    <canvas id="heroCanvas"></canvas>
+    <h1>Alaada — Where perfection meets possibilities.</h1>
+    <div class="buttons">
+      <button id="getStarted">Get Started</button>
+      <button id="learnMore">Learn More</button>
+    </div>
+  </section>
+
+  <!-- About Alaada -->
+  <section id="about" class="fade-section">
+    <h2>About Alaada</h2>
+    <p>Alaada is a space for exploring ideas, creating projects, and bringing simple yet meaningful innovations to life.
+      From software like Alaada OS to experiments in Alaada Lab, we focus on building tools, experiences, and solutions
+      that can help people and inspire curiosity. At Alaada, ideas are just as important as the projects themselves —
+      every new concept is a chance to learn, experiment, and improve.</p>
+  </section>
+
+  <!-- Our Creations -->
+  <section id="creations" class="fade-section">
+    <h2>Our Creations</h2>
+    <ul>
+      <li><a href="alaada-os.html">Alaada OS</a></li>
+      <li><a href="alaada-universe.html">Alaada Universe</a></li>
+      <li><a href="alaada-lab.html">Alaada Lab</a></li>
+      <li><a href="prove-hosting.html">Prove Hosting</a></li>
+    </ul>
+  </section>
+
+  <!-- Arzo Das -->
+  <section id="arzo" class="fade-section">
+    <h2>About Me — The founder of Alaada</h2>
+    <div class="arzo-container">
+      <p>I’m 14 years old, and a technology enthusiast who loves learning, building, and experimenting.
+        I enjoy exploring robotics, programming, software development, and creative projects, always thinking of
+        new ideas to try. My goal is to turn ideas into practical projects, learn from the process, and share what
+        I discover to inspire others along the way.</p>
+    </div>
+  </section>
+
+  <!-- Join the Journey -->
+  <section id="join" class="fade-section">
+    <h2>Join the Journey</h2>
+    <form id="joinForm" action="https://formspree.io/f/xyznbgbp" method="POST">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="email" name="email" placeholder="Your Email" required>
+      <textarea name="suggestions" placeholder="Your Suggestions (optional)"></textarea>
+      <button type="submit">Join</button>
+      <p id="thankyouMsg">Thank you for joining the journey!</p>
+    </form>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2025 Alaada. All rights reserved.</p>
+    <div class="social">
+      <a href="#">Twitter</a>
+      <a href="#">Instagram</a>
+      <a href="#">LinkedIn</a>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alaada OS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav>
+    <div class="logo">
+      <img src="images/alaada-logo.jpg" alt="Alaada Logo">
+      <h1>   Alaada</h1>
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="alaada-os.html" class="active">Alaada OS</a></li>
+      <li><a href="alaada-universe.html">Alaada Universe</a></li>
+      <li><a href="alaada-lab.html">Alaada Lab</a></li>
+      <li><a href="prove-hosting.html">Prove Hosting</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Alaada OS</h1>
+    <p>Alaada OS isn’t a traditional operating system — it’s a vision of how technology should work together.
+    It represents the core of Alaada’s ecosystem, bringing innovation, design, and intelligence into one connected space.</p>
+  </section>
+
+  <!-- Content Section -->
+  <section class="content">
+    <p>Within Alaada OS live several unique projects, each built to explore the boundaries of technology:</p>
+  </section>
+
+  <section class="modules">
+    <div class="module-grid">
+      <div class="module-card">
+        <h3>🧠 Aurora Programming Language</h3>
+        <p>A creative, human-friendly language made to simplify logic and enhance expression.</p>
+      </div>
+      <div class="module-card">
+		<h3>🧮 Alaada Spreadsheet</h3>
+		<p>A modern, Python-based spreadsheet with formula support and built-in AI.</p>
+		<button onclick="launchSpreadsheet()">Open Spreadsheet</button>
+	  </div>
+
+      <div class="module-card">
+        <h3>👁️ Face Detector</h3>
+        <p>Real-time AI that can identify and respond to human faces.</p>
+      </div>
+      <div class="module-card">
+        <h3>✋ Finger Counter</h3>
+        <p>Vision-powered system for gesture recognition and robotic control.</p>
+      </div>
+      <div class="module-card">
+        <h3>🎮 Stone–Paper–Scissors AI</h3>
+        <p>A fun, learning-based experiment in pattern recognition and machine learning.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <p>Alaada OS is the start of something bigger — where imagination becomes function.</p>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Alaada. All rights reserved.</p>
+  </footer>
+  <script type="text/javascript" src="/eel.js"></script>
+	<script>
+	async function launchSpreadsheet() {
+		await eel.launch_spreadsheet()();
+	}
+	</script>
+
+	</body>
+</html>
