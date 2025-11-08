@@ -14,6 +14,28 @@ body {
   overflow-x: hidden;
 }
 
+/* Announcement Banner */
+.announcement {
+    background-color: #fffae6; /* Light yellow */
+    color: #333;
+    text-align: center;
+    padding: 15px 10px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border-bottom: 2px solid #ffd700;
+}
+
+.announcement a.announcement-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.announcement a.announcement-link:hover {
+    text-decoration: underline;
+}
+
+
 /* ===== Navigation Bar ===== */
 #navbar {
   position: fixed;
