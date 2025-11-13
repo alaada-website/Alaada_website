@@ -268,3 +268,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 }); // DOMContentLoaded
+
+window.addEventListener('load', () => {
+  const rocket = document.querySelector('.rocket');
+  rocket.style.animationPlayState = 'running';
+});

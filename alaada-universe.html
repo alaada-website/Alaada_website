@@ -1,50 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alaada Universe</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alaada Universe — Coming Soon</title>
+  <link rel="icon" href="images/alaada-icon.png" type="image/png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body, html {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      text-align: center;
+    }
+    video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      filter: brightness(0.4);
+    }
+    .content {
+      position: relative;
+      top: 40%;
+      transform: translateY(-50%);
+      z-index: 2;
+    }
+    h1 {
+      font-size: 3rem;
+      background: linear-gradient(90deg, #00b4d8, #8a2be2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+      from { text-shadow: 0 0 10px #00b4d8; }
+      to { text-shadow: 0 0 25px #8a2be2; }
+    }
+    p {
+      font-size: 1.2rem;
+      opacity: 0.8;
+      margin-top: 10px;
+    }
+    .links {
+      margin-top: 40px;
+    }
+    .links a {
+      color: #00b4d8;
+      text-decoration: none;
+      border: 1px solid #00b4d8;
+      padding: 10px 20px;
+      border-radius: 25px;
+      margin: 10px;
+      transition: 0.3s;
+    }
+    .links a:hover {
+      background: #00b4d8;
+      color: black;
+    }
+  </style>
 </head>
-<body>
-<!-- Google tag (gtag.js) -->
+<!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BJGLCGLMK5"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-BJGLCGLMK5');
 </script>
+<body>
 
-  <nav>
-    <div class="logo">
-      <img src="images/alaada-logo.jpg" alt="Alaada Logo">
-      <h1>Alaada</h1>
-    </div>
-    <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="alaada-os.html">Alaada OS</a></li>
-      <li><a href="alaada-universe.html" class="active">Alaada Universe</a></li>
-      <li><a href="alaada-lab.html">Alaada Lab</a></li>
-      <li><a href="prove-hosting.html">Prove Hosting</a></li>
-    </ul>
-  </nav>
+  <video autoplay muted loop playsinline>
+    <source src="images/space.mp4" type="video/mp4">
+  </video>
 
-  <section class="coming-soon">
+  <div class="content">
     <h1>🌌 Alaada Universe</h1>
-    <p class="animated-text">Not yet released for commercial purposes.</p>
-  </section>
+    <p>This space is being built — soon, you’ll explore the full Alaada ecosystem.</p>
+    <div class="links">
+      <a href="index.html">⬅ Return to Landing Page</a>
+      <a href="alaada-os.html">⚙ Go to Alaada OS</a>
+    </div>
+  </div>
 
-  <!-- Footer -->
-  <footer>
-		<p>&copy; 2025 Alaada. All rights reserved.</p>
-		<div class="social">
-		<a href="https://discord.gg/r4G7dynh">Discord</a>
-		<a href="https://www.facebook.com/profile.php?id=61583515497634">Facebook</a>
-	  <a href="alaada@alaada.com">Email us</a>
-		</div>
-
-  <script src="script.js"></script>
 </body>
 </html>
