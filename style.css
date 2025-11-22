@@ -2266,3 +2266,96 @@ body {
   display: none;
 }
 body.menu-open .close-overlay { display: block; }
+body {
+  padding-top: 90px; /* match navbar height */
+}
+#navLinks {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  #navLinks {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 90px;
+    right: 0;
+    width: 220px;
+    background: rgba(0,0,0,0.9);
+    padding: 20px;
+  }
+
+  #navLinks.active {
+    display: flex;
+  }
+
+  .menu-icon {
+    display: block;
+    z-index: 9999;
+  }
+}
+#hero video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.hero-overlay {
+  position: relative;
+  z-index: 2;
+}
+.announcement {
+  position: relative;
+  z-index: 3;
+}
+.alaada-modal {
+  z-index: 999999;
+}
+#bg-video img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Highlighted Web Analyzer Card */
+.web-analyser-highlight {
+  position: relative;
+  border: 2px solid #00c6ff;
+  box-shadow: 0 0 12px #00c6ff55;
+  transform: scale(1.03);
+  transition: all 0.25s ease;
+  background: linear-gradient(135deg, #0f1721, #111d29);
+}
+
+.web-analyser-highlight:hover {
+  box-shadow: 0 0 18px #00c6ffaa;
+  transform: scale(1.06);
+}
+
+/* Clickable title link */
+.web-link {
+  color: #00d1ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.web-link:hover {
+  text-decoration: underline;
+}
+
+/* “NEW” badge */
+.badge-new {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #00d1ff;
+  color: #000;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 0 6px #00d1ffaa;
+}

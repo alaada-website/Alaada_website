@@ -1,4 +1,3 @@
-// script.js — final unified, conflict-free version
 (function () {
   'use strict';
 
@@ -30,26 +29,61 @@
   };
 
   /* -------------------------
-     Smooth scroll handlers
+     Smooth scroll handlers (robust)
   --------------------------*/
   const initSmoothScroll = () => {
+    // Smoothly scroll any anchor link to an in-page target
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const handleAnchor = (e, targetId) => {
+      e.preventDefault();
+      const target = document.querySelector(targetId);
+      if (!target) return;
+      if (prefersReduced) {
+        target.scrollIntoView();
+      } else {
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    // Attach to anchor links that point to in-page IDs
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      const href = a.getAttribute('href');
+      if (href && href.length > 1) {
+        a.addEventListener('click', (e) => handleAnchor(e, href));
+      }
+    });
+
+    // Backwards-compatible: specific IDs you used before
     const getStarted = $('getStarted');
     const learnMore = $('learnMore');
-
     if (getStarted) {
       getStarted.addEventListener('click', (e) => {
         e.preventDefault();
         const join = $('join');
-        if (join) join.scrollIntoView({ behavior: 'smooth' });
+        if (join) join.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' });
       });
     }
     if (learnMore) {
       learnMore.addEventListener('click', (e) => {
         e.preventDefault();
         const about = $('about');
-        if (about) about.scrollIntoView({ behavior: 'smooth' });
+        if (about) about.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' });
       });
     }
+
+    // If you have hero CTA / secondary buttons without hrefs, handle them by class
+    document.querySelectorAll('.cta, .secondary').forEach(btn => {
+      if (btn.tagName.toLowerCase() === 'a') return; // anchors already handled
+      btn.addEventListener('click', (e) => {
+        const target = btn.dataset.target || (btn.classList.contains('cta') ? '#join' : '#about');
+        const el = document.querySelector(target);
+        if (el) {
+          e.preventDefault();
+          el.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' });
+        }
+      });
+    });
   };
 
   /* -------------------------
@@ -140,11 +174,16 @@
     const ctx = (canvas.getContext && canvas.getContext('2d')) || null;
     if (!ctx) return;
 
+    // respect prefers-reduced-motion and very small viewports
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+
     const setSize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     setSize();
 
     let particles = [];
-    const particleCount = 100;
+    const baseCount = 100;
+    const particleCount = Math.min(baseCount, Math.max(20, Math.floor((canvas.width * canvas.height) / (1280 * 720) * baseCount)));
 
     const initParticles = () => {
       particles = [];
@@ -160,6 +199,7 @@
     };
     initParticles();
 
+    let raf;
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       particles.forEach(p => {
@@ -173,11 +213,20 @@
         if (p.y < 0) p.y = canvas.height;
         if (p.y > canvas.height) p.y = 0;
       });
-      requestAnimationFrame(animate);
+      raf = requestAnimationFrame(animate);
     };
     animate();
 
     window.addEventListener('resize', () => { setSize(); initParticles(); }, { passive: true });
+
+    // cleanup if the canvas is removed from DOM later
+    const observer = new MutationObserver(() => {
+      if (!document.body.contains(canvas) && raf) {
+        cancelAnimationFrame(raf);
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
   };
 
   /* -------------------------

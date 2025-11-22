@@ -1,0 +1,431 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Alaada — Website Analyzer</title>
+<meta name="description" content="Alaada Website Analyzer — fast, practical AI-powered website diagnostics and actionable suggestions." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23ff7f50'/%3E%3Ctext x='50' y='57' font-size='48' text-anchor='middle' fill='%23081018' font-family='Inter,Segoe UI,Roboto' font-weight='700'%3EA%3C/text%3E%3C/svg%3E">
+<style>
+  /* ---------- Base & Brand ---------- */
+  :root{
+    --bg:#090d14;
+    --card:#0f1721;
+    --muted:#9aa6b2;
+    --accent:#ff7f50;
+    --glass: rgba(255,255,255,0.04);
+    --radius:14px;
+    --maxw:980px;
+  }
+  *{box-sizing:border-box;}
+  html, body{height:100%; margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto; background:radial-gradient(1200px 600px at 10% 10%, rgba(18,24,36,0.6), transparent), linear-gradient(180deg,#04101a 0%, var(--bg) 60%); color:#e6eef6; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; padding:28px 16px; display:flex; flex-direction:column; align-items:center; }
+
+  /* ---------- NAV ---------- */
+  nav{ width:100%; background:#0f172a; border-bottom:1px solid rgba(255,255,255,0.06); position:sticky; top:0; z-index:1200 }
+  .nav-container{ max-width:1400px; margin:auto; padding:12px 20px; display:flex; gap:12px; align-items:center; justify-content:space-between }
+  .logo{ display:flex; gap:12px; align-items:center }
+  .logo .mark{ width:44px; height:44px; border-radius:9px; background:linear-gradient(135deg,var(--accent),#ffb28f); display:flex; align-items:center; justify-content:center; font-weight:800; color:#081018 }
+  .logo h1{ color:white; font-size:18px; margin:0 }
+  .nav-links{ list-style:none; display:flex; gap:18px; align-items:center; margin:0 }
+  .nav-links a{ color:#cbd5e1; text-decoration:none; padding:6px 10px; border-radius:8px }
+  .nav-links a:hover{ background:rgba(255,255,255,0.04); color:#fff }
+  .nav-links a.active{ background:rgba(255,255,255,0.08); color:#fff; font-weight:600 }
+  .menu-toggle{ display:none; font-size:22px; background:transparent; border:none; color:#fff }
+
+  @media (max-width:880px){
+    .menu-toggle{ display:block }
+    .nav-links{ position:absolute; top:64px; right:0; left:0; background:#0f172a; flex-direction:column; display:none; padding:12px 12px }
+    .nav-links.show{ display:flex }
+    .nav-links a{ display:block; width:100%; text-align:center; padding:12px 0 }
+  }
+
+  /* ---------- Main Content ---------- */
+  .wrap{ width:100%; max-width:var(--maxw); }
+  header{ display:flex; gap:12px; align-items:center; margin:18px 0 }
+  .brand h2{ margin:0; font-size:18px }
+  .brand p{ margin:2px 0 0; font-size:13px; color:var(--muted) }
+
+  .card{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:var(--radius); padding:18px; box-shadow:0 6px 30px rgba(4,8,12,0.6); border:1px solid rgba(255,255,255,0.03) }
+
+  .hero-row{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap }
+  .left{ flex:1 1 520px; min-width:260px }
+  .right{ flex:0 0 280px; min-width:220px }
+
+  label{ display:block; font-size:13px; color:var(--muted); margin-bottom:8px }
+  input#urlInput{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:#08111a; color:#e8f2ff; font-size:15px }
+  input#urlInput:focus{ box-shadow:0 8px 30px rgba(0,0,0,0.6), 0 0 0 6px rgba(255,127,80,0.04); outline:none }
+
+  .controls{ display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap }
+  .btn{ display:inline-flex; align-items:center; gap:8px; background: linear-gradient(180deg,var(--accent), #ff9c74); color:#081018; padding:10px 14px; border-radius:10px; font-weight:700; border:none; cursor:pointer }
+  .btn.ghost{ background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03) }
+  .btn:disabled{ opacity:0.55; cursor:not-allowed }
+
+  .muted{ color:var(--muted); font-size:13px }
+  pre{ white-space:pre-wrap; font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Roboto Mono,monospace; font-size:13px }
+
+  /* Sidebar */
+  .sidebar{ position:sticky; top:26px; align-self:start }
+
+  @media (max-width:900px){ 
+    .right{ order:2; width:100%; display:flex; justify-content:flex-end } 
+    #results{ grid-template-columns:1fr } 
+    .sidebar{ position:relative; top:0 } 
+  }
+
+  /* Footer */
+  footer{ margin-top:28px; text-align:center; color:var(--muted); font-size:13px }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-container">
+    <div class="nav-container">
+  <div class="logo">
+    <a href="/" aria-label="Alaada home" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+      <img src="images/alaada-logo.png" alt="Alaada Logo" style="height:40px; width:auto;">
+    </a>
+  </div>
+</div>
+
+    <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="mainNav">☰</button>
+
+    <ul class="nav-links" id="mainNav">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="alaada-os.html">Alaada OS</a></li>
+      <li><a href="alaada-universe.html">Universe</a></li>
+      <li><a href="alaada-lab.html">Lab</a></li>
+      <li><a href="prove-hosting.html">Prove Hosting</a></li>
+      <li><a href="website-analyser.html" class="active">Website Analyser</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h2>Alaada Website Analyzer</h2>
+      <p>AI-powered site diagnostics with helpful, prioritized recommendations.</p>
+    </div>
+  </header>
+
+  <main class="card" role="main" aria-labelledby="pageTitle">
+    <div class="hero-row">
+      <div class="left">
+        <label for="urlInput">Enter a website URL to analyze</label>
+        <input id="urlInput" inputmode="url" placeholder="https://example.com" aria-label="Website URL" autocomplete="off">
+
+        <div class="controls">
+          <button id="analyzeBtn" class="btn" aria-label="Analyze website">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M3 12h18M12 3v18" stroke="#081018" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Analyze
+          </button>
+
+          <button id="sampleBtn" class="btn ghost" title="Try example">Try example</button>
+
+          <div class="meta">
+            <div class="badge" id="planBadge">Free • 3/day</div>
+            <div class="muted" id="usesNote">You have 3 free analyses today.</div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px" class="muted">Tip: paste any public URL. The server fetches and analyzes the HTML. If you host locally, ensure the server can reach it.</div>
+
+        <div id="output" class="result-card" role="region" aria-live="polite" style="margin-top:18px">
+          <div class="muted">Enter a URL and click <strong>Analyze</strong> to begin.</div>
+        </div>
+
+      </div>
+
+      <aside class="right">
+        <div class="card result-card sidebar">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div class="muted">Alaada Score</div>
+              <div class="score" id="scoreDisplay">—</div>
+            </div>
+            <div style="text-align:right">
+              <div class="muted">Plan</div>
+              <div style="font-weight:800;margin-top:6px">Free</div>
+            </div>
+          </div>
+
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+          <div class="muted" id="timeNote">—</div>
+          <div style="margin-top:10px">
+            <div class="tools">
+              <button id="exportJson" class="btn ghost" title="Download JSON report">Download JSON</button>
+              <button id="copyReport" class="btn ghost" title="Copy summary to clipboard">Copy Summary</button>
+            </div>
+          </div>
+          <div style="margin-top:12px">
+            <button id="upgradeBtn" class="btn" style="width:100%">Upgrade to Premium</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <section id="results" aria-hidden="false"></section>
+  </main>
+</div>
+
+<!-- simple modal -->
+<div id="modal" class="result-card" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,12,0.6);z-index:9999">
+  <div style="width:min(680px,92%);background:linear-gradient(180deg,#071016,#08111a);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.03)">
+    <h3 style="margin:0 0 8px">Upgrade to Alaada Premium</h3>
+    <p style="margin:0 0 12px;color:var(--muted)">Unlimited analyses, priority processing, downloadable PDF reports, and more pro features.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="closeModal" class="btn ghost">Close</button>
+      <button id="goPremium" class="btn">Get Premium</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const API_ORIGIN = 'https://alaada-website-analyser-2.onrender.com/analyze';
+
+  const urlInput = document.getElementById('urlInput');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const output = document.getElementById('output');
+  const planBadge = document.getElementById('planBadge');
+  const usesNote = document.getElementById('usesNote');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const timeNote = document.getElementById('timeNote');
+  const modal = document.getElementById('modal');
+  const upgradeBtn = document.getElementById('upgradeBtn');
+  const closeModal = document.getElementById('closeModal');
+  const goPremium = document.getElementById('goPremium');
+  const sampleBtn = document.getElementById('sampleBtn');
+  const exportJsonBtn = document.getElementById('exportJson');
+  const copyReportBtn = document.getElementById('copyReport');
+  const resultsSection = document.getElementById('results');
+  const menuToggle = document.getElementById('menuToggle');
+  const mainNav = document.getElementById('mainNav');
+
+  const USAGE_KEY = 'alaada_analyzer_usage_v1';
+  const FREE_USES_PER_DAY = 1000;
+
+  // ----------------- Usage tracking -----------------
+  function getLocalUsage() {
+    try {
+      const raw = localStorage.getItem(USAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  function setLocalUsage(obj) {
+    localStorage.setItem(USAGE_KEY, JSON.stringify(obj));
+  }
+
+  function recordLocalUse() {
+    const today = new Date().toISOString().slice(0, 10);
+    const usage = getLocalUsage() || {};
+    if (usage.date !== today) { usage.date = today; usage.count = 0; }
+    usage.count = (usage.count || 0) + 1;
+    setLocalUsage(usage);
+    refreshUsageUI();
+  }
+
+  function refreshUsageUI() {
+    const usage = getLocalUsage();
+    const today = new Date().toISOString().slice(0, 10);
+    if (!usage || usage.date !== today) {
+      usesNote.textContent = `You have ${FREE_USES_PER_DAY} free analyses today.`;
+      analyzeBtn.disabled = false;
+      planBadge.textContent = `Free • ${FREE_USES_PER_DAY}/day`;
+    } else {
+      const left = Math.max(0, FREE_USES_PER_DAY - (usage.count || 0));
+      usesNote.textContent = left > 0
+        ? `You have ${left} free analyses today.`
+        : `You've used your free analyses for today.`;
+      analyzeBtn.disabled = left <= 0;
+      planBadge.textContent = left > 0 ? `Free • ${left}/day` : `Free • used`;
+    }
+  }
+
+  // ----------------- Utilities -----------------
+  function normalizeUrl(u) {
+    if (!u) return '';
+    if (!/^https?:\/\//i.test(u)) return 'https://' + u;
+    return u;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  }
+
+  const sectionColors = {
+    PROS: '#7ef0b2', CONS: '#ff6b6b', 'UI/UX Suggestions': '#ffa500',
+    'Design Improvements': '#1e90ff', 'SEO Improvements': '#ff7f50',
+    'Performance Improvements': '#9b59b6', 'Accessibility Improvements': '#f39c12',
+    'Final Summary': '#ffffff'
+  };
+
+  const sectionIcons = {
+    PROS: '✅', CONS: '❌', 'UI/UX Suggestions': '💡',
+    'Design Improvements': '🎨', 'SEO Improvements': '🔍',
+    'Performance Improvements': '⚡', 'Accessibility Improvements': '♿',
+    'Final Summary': '📌'
+  };
+
+  function renderObject(obj) {
+    let html = '';
+    for (const key in obj) {
+      const value = obj[key];
+      const title = escapeHtml(key.toUpperCase());
+      const color = sectionColors[key] || '#ff7f50';
+      const icon = sectionIcons[key] || '📌';
+
+      html += `<div class="result-card" style="border-left:4px solid ${color};">
+        <h3>${icon} ${title}</h3>
+        <div class="muted">`;
+
+      if (typeof value === 'string') html += `<div>- ${escapeHtml(value)}</div>`;
+      else if (Array.isArray(value)) value.forEach(v => {
+        html += (typeof v === 'object' && v !== null) ? renderObject(v) : `<div>- ${escapeHtml(v)}</div>`;
+      });
+      else if (typeof value === 'object' && value !== null) html += renderObject(value);
+      else html += `<div>- ${escapeHtml(value)}</div>`;
+
+      html += `</div></div>`;
+    }
+    return html;
+  }
+
+  function renderAnalysisText(data) {
+    if (!data) return `<div class="muted">No analysis returned.</div>`;
+    if (typeof data === 'string') return `<div class="muted">${escapeHtml(data)}</div>`;
+    if (typeof data === 'object') return renderObject(data);
+    return `<div class="muted">No analysis returned.</div>`;
+  }
+
+  function animateScore(n) {
+    let cur = 0;
+    scoreDisplay.textContent = '—';
+    const step = Math.max(1, Math.floor(n / 20));
+    const id = setInterval(() => {
+      cur += step;
+      if (cur >= n) { scoreDisplay.textContent = n; clearInterval(id); return; }
+      scoreDisplay.textContent = cur;
+    }, 18);
+  }
+
+  function showModal() { modal.style.display = 'flex'; }
+  function hideModal() { modal.style.display = 'none'; }
+
+  let lastResult = null;
+
+  // ----------------- Analyze -----------------
+  async function analyzeWebsite(urlRaw) {
+    const url = normalizeUrl(urlRaw);
+
+    resultsSection.innerHTML = '';
+    output.innerHTML = `<div class="muted">Preparing analysis for <strong>${escapeHtml(url)}</strong>…</div>`;
+    analyzeBtn.disabled = true;
+
+    output.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <div class="muted">Scanning & analyzing…</div>
+      </div>`;
+
+    try {
+      const resp = await fetch(API_ORIGIN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      if (resp.status === 429) {
+        resultsSection.innerHTML = `
+          <div class="result-card">
+            <h3>Daily limit reached</h3>
+            <div class="muted">You’ve used your free analysis for today.</div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn" id="upgradeInline">Upgrade</button>
+              <button class="btn ghost" id="tryLater">Try later</button>
+            </div>
+          </div>`;
+        document.getElementById('upgradeInline').onclick = showModal;
+        document.getElementById('tryLater').onclick = refreshUsageUI;
+        analyzeBtn.disabled = true;
+        return;
+      }
+
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => 'Server error');
+        resultsSection.innerHTML = `<div class="result-card"><h3>Error</h3><div class="muted">${escapeHtml(errText)}</div></div>`;
+        refreshUsageUI();
+        analyzeBtn.disabled = false;
+        return;
+      }
+
+      let data = {};
+      try { data = await resp.json(); } catch { data = { error: 'Invalid JSON from server' }; }
+
+      lastResult = data;
+
+      // ✅ Corrected: AI summary > structured summary > fallback
+      const toRender = data.ai_summary || data.summary || data;
+      resultsSection.innerHTML = renderAnalysisText(toRender);
+
+      // Score calculation
+      const rawText = JSON.stringify(toRender).toUpperCase();
+      const pros = (rawText.match(/PROS/g) || []).length;
+      const cons = (rawText.match(/CONS/g) || []).length;
+      const score = Math.max(40, Math.min(96, 80 - cons * 4 + pros * 2));
+      animateScore(score);
+
+      timeNote.textContent = `Last analyzed: ${new Date().toLocaleString()}`;
+      recordLocalUse();
+
+    } catch {
+      resultsSection.innerHTML = `
+        <div class="result-card">
+          <h3>Network error</h3>
+          <div class="muted">Failed to contact backend. Possible CORS or server issue.</div>
+        </div>`;
+    }
+
+    analyzeBtn.disabled = false;
+  }
+
+  // ----------------- Event handlers -----------------
+  analyzeBtn.onclick = () => analyzeWebsite(urlInput.value.trim());
+  sampleBtn.onclick = () => {
+    urlInput.value = "https://example.com";
+    analyzeWebsite("https://example.com");
+  };
+  exportJsonBtn.onclick = () => {
+    if (!lastResult) return;
+    const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "alaada-report.json";
+    a.click();
+  };
+  copyReportBtn.onclick = async () => {
+    if (!lastResult) return;
+    await navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2));
+    copyReportBtn.textContent = "Copied!";
+    setTimeout(() => copyReportBtn.textContent = "Copy Summary", 1400);
+  };
+  menuToggle.onclick = () => mainNav.classList.toggle('show');
+  upgradeBtn.onclick = showModal;
+  closeModal.onclick = hideModal;
+  goPremium.onclick = () => location.href = "/premium.html";
+
+  refreshUsageUI();
+})();
+</script>
+
+<footer style="margin-top:28px;text-align:center;color:var(--muted);font-size:13px">
+  <div>&copy; 2025 Alaada. All rights reserved.</div>
+  <div style="margin-top:6px">Contact: <a href="mailto:alaada@alaada.com">alaada@alaada.com</a></div>
+</footer>
+</body>
+</html>
