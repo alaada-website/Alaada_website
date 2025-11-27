@@ -44,19 +44,6 @@
     <a href="prove-hosting.html">Prove Hosting</a>
 	<a href="website-analyzer.html">Alaada Website Analyser</a>
   </nav>
-  
-  <!-- Auth Buttons (Right side of navbar) -->
-<div id="authButtons" class="auth-buttons">
-  <button class="btn" onclick="openLogin()">Sign In</button>
-  <button class="btn" onclick="openSignup()">Sign Up</button>
-</div>
-
-<!-- Logged-in User Bar -->
-<div id="userBar" class="user-bar hidden">
-  <span id="userName"></span>
-  <span id="userPlan" class="user-plan"></span>
-  <button class="btn" onclick="logout()">Logout</button>
-</div>
 
   <div class="menu-icon" id="menuToggle">
     <span></span><span></span><span></span>
@@ -67,14 +54,6 @@
 <section class="announcement">
   <p>🎉 Exciting news! <strong>Alaada Web Anlyser</strong> is LIVE— <a href="website-analyzer.html" class="announcement-link">Learn More →</a></p>
 </section>
-
-<!-- First-Time User Box -->
-<div id="firstTimeBox" class="hidden" style="background:#0f1721;margin:20px;
-padding:20px;border-radius:12px;color:#fff;border:1px solid #1e2733;">
-  <h3>👋 Welcome to Alaada!</h3>
-  <p>You’re new here! Create an account to save your activity across Alaada.</p>
-  <button onclick="openSignup()" class="btn">Create Account</button>
-</div>
 
 <!-- Hero -->
 <section id="hero">
@@ -170,139 +149,6 @@ padding:20px;border-radius:12px;color:#fff;border:1px solid #1e2733;">
     <span>alaada@alaada.com</span>
   </div>
 </footer>
-
-<!-- 2FA Verification Modal -->
-<div id="twofaModal" class="twofa-modal hidden">
-  <div class="twofa-box">
-    <h2>Two-Factor Verification</h2>
-    <p>A code has been sent. Please verify.</p>
-
-    <label for="twofaMethod">Method:</label>
-    <select id="twofaMethod"></select>
-
-    <input type="text" id="twofaCode" maxlength="6" placeholder="Enter Code">
-    <button class="btn" id="verify2faBtn">Verify</button>
-    <button class="btn" id="resend2faBtn">Resend Code</button>
-
-    <p class="twofa-error" id="twofaError"></p>
-  </div>
-</div>
-
-
-<script>
-// --- Refresh User State ---
-async function refreshUserState() {
-  try {
-    // Update API endpoint
-    const res = await fetch("https://alaada-website-logger.onrender.com/api/me", { credentials: "include" });
-    const data = await res.json();
-    
-    const twofaModal = document.getElementById("twofaModal");
-    const firstTimeBox = document.getElementById("firstTimeBox");
-
-    // First-Time User Box
-    if (!localStorage.getItem("alaada_first_visit")) {
-      firstTimeBox.classList.remove("hidden");
-      localStorage.setItem("alaada_first_visit", "true");
-    } else {
-      firstTimeBox.classList.add("hidden");
-    }
-
-    if (data.logged_in) {
-      document.getElementById("authButtons").classList.add("hidden");
-      document.getElementById("userBar").classList.remove("hidden");
-      document.getElementById("userName").innerText = "👤 " + data.user.name;
-      document.getElementById("userPlan").innerText = data.user.plan === "premium" ? "⭐ Premium" : "Free User";
-
-      // 2FA Modal
-      if (data.needs_2fa) {
-        twofaModal.classList.remove("hidden");
-        const methodSelect = document.getElementById("twofaMethod");
-        methodSelect.innerHTML = "";
-        data.methods.forEach(m => {
-          const opt = document.createElement("option");
-          opt.value = m;
-          opt.innerText = m.charAt(0).toUpperCase() + m.slice(1);
-          methodSelect.appendChild(opt);
-        });
-      } else {
-        twofaModal.classList.add("hidden");
-      }
-
-    } else {
-      document.getElementById("authButtons").classList.remove("hidden");
-      document.getElementById("userBar").classList.add("hidden");
-      twofaModal.classList.add("hidden");
-    }
-
-  } catch (e) {
-    console.log("User fetch failed:", e);
-  }
-}
-
-// --- Logout ---
-function logout() {
-  fetch("https://alaada-website-logger.onrender.com/api/logout", { method: "POST", credentials: "include" })
-    .then(() => refreshUserState());
-}
-
-// --- Verify 2FA ---
-document.getElementById("verify2faBtn").onclick = async () => {
-  const code = document.getElementById("twofaCode").value;
-  const method = document.getElementById("twofaMethod")?.value || "email";
-
-  if (!code || code.length !== 6) {
-    document.getElementById("twofaError").innerText = "Enter a valid 6-digit code.";
-    return;
-  }
-
-  const res = await fetch("https://alaada-website-logger.onrender.com/api/verify-2fa", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ code, method })
-  });
-
-  const data = await res.json();
-  if (data.success) {
-    document.getElementById("twofaError").innerText = "";
-    alert("2FA Verified!");
-    await refreshUserState();
-  } else {
-    document.getElementById("twofaError").innerText = data.message;
-  }
-};
-
-// --- Resend 2FA with cooldown ---
-let resendCooldown = false;
-document.getElementById("resend2faBtn")?.addEventListener("click", async () => {
-  if (resendCooldown) return alert("Wait 30 seconds before resending.");
-  resendCooldown = true;
-  setTimeout(() => resendCooldown = false, 30000);
-
-  const method = document.getElementById("twofaMethod")?.value || "email";
-  const res = await fetch("https://alaada-website-logger.onrender.com/api/resend-2fa", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ method })
-  });
-
-  const data = await res.json();
-  alert(data.message || "Code resent!");
-});
-
-// --- Login / Signup redirects ---
-function openLogin() { window.location.href = "/login.html"; }
-function openSignup() { window.location.href = "/signup.html"; }
-
-// --- Call refresh on page load ---
-window.addEventListener("DOMContentLoaded", refreshUserState);
-
-</script>
-
-
-
 <script src="script.js"></script>
 </body>
 </html>
