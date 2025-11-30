@@ -168,12 +168,12 @@
 </footer>
 
 <script>
-/* CONFIG — your backend URL */
+/* CONFIG: backend URL */
 const UMS_BASE = "https://alaada-ums.onrender.com";
 
-/* --- Cookie helpers --- */
+/* Cookie helpers */
 function readCookie(name) {
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
   return match ? decodeURIComponent(match[2]) : null;
 }
 
@@ -186,124 +186,136 @@ function writeUserInfoCookie(user) {
     };
     const raw = encodeURIComponent(JSON.stringify(safe));
     const secure = location.protocol === "https:" ? "; Secure" : "";
+    // non-sensitive cookie for UX only
     document.cookie = `user_info=${raw}; path=/; max-age=${30*24*60*60}; SameSite=Strict${secure}`;
-  } catch (e) {}
+  } catch (err) {
+    console.warn('writeUserInfoCookie error', err);
+  }
 }
 
 function clearUserInfoCookie() {
-  document.cookie = "user_info=; Path=/; Max-Age=0; SameSite=Strict";
+  document.cookie = 'user_info=; Path=/; Max-Age=0; SameSite=Strict';
 }
 
 function parseUserInfoFromCookie() {
-  const raw = readCookie("user_info");
+  const raw = readCookie('user_info');
   if (!raw) return null;
-  try { return JSON.parse(raw); }
-  catch { return null; }
-}
-
-/* --- API: whoami --- */
-async function fetchWhoami() {
   try {
-    const res = await fetch(`${UMS_BASE}/api/whoami`, {
-      credentials: "include",
-      mode: "cors",
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.user || null;
-  } catch {
+    // cookie value was encoded with encodeURIComponent(JSON.stringify(...))
+    return JSON.parse(decodeURIComponent(raw));
+  } catch (err) {
+    console.warn('Failed to parse user_info cookie', err);
     return null;
   }
 }
 
-/* --- Main UI --- */
-async function initAuthUI() {
-  const authButtons = document.getElementById("auth-buttons");
-  const userMenu = document.getElementById("user-menu");
-  const profileName = document.getElementById("profile-name");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  /* Update button hrefs to backend */
-  if (authButtons) {
-    const loginBtn = authButtons.querySelector("a[href='login.html']");
-    const signupBtn = authButtons.querySelector("a[href='signup.html']");
-    if (loginBtn) loginBtn.href = `${UMS_BASE}/login`;
-    if (signupBtn) signupBtn.href = `${UMS_BASE}/register`;
-  }
-  if (userMenu) {
-    const profileBtn = userMenu.querySelector("a[href='profile.html']");
-    if (profileBtn) profileBtn.href = `${UMS_BASE}/profile`;
-  }
-
-  /* Cookie first */
-  const cookieUser = parseUserInfoFromCookie();
-  if (cookieUser) {
-    authButtons.style.display = "none";
-    userMenu.style.display = "flex";
-    profileName.textContent = cookieUser.fullName || cookieUser.username;
-
-    fetchWhoami().then(serverUser => {
-      if (serverUser) {
-        writeUserInfoCookie(serverUser);
-        profileName.textContent = serverUser.fullName || serverUser.username;
-      } else {
-        clearUserInfoCookie();
-        authButtons.style.display = "block";
-        userMenu.style.display = "none";
-      }
+/* whoami (calls backend) */
+async function fetchWhoami() {
+  try {
+    const res = await fetch(`${UMS_BASE}/api/whoami`, {
+      credentials: 'include',
+      mode: 'cors',
+      cache: 'no-store'
     });
-
-    attachLogoutHandler(logoutBtn);
-    return;
+    if (!res.ok) {
+      console.warn('whoami status', res.status);
+      return null;
+    }
+    const json = await res.json();
+    return json && json.user ? json.user : null;
+  } catch (err) {
+    console.warn('whoami fetch failed', err);
+    return null;
   }
-
-  /* Otherwise server */
-  const serverUser = await fetchWhoami();
-  if (serverUser) {
-    writeUserInfoCookie(serverUser);
-    authButtons.style.display = "none";
-    userMenu.style.display = "flex";
-    profileName.textContent = serverUser.fullName || serverUser.username;
-  } else {
-    authButtons.style.display = "block";
-    userMenu.style.display = "none";
-  }
-
-  attachLogoutHandler(logoutBtn);
 }
 
-/* --- Logout --- */
-function attachLogoutHandler(btn) {
-  if (!btn) return;
-  btn.addEventListener("click", e => {
+/* Update anchor hrefs to backend */
+function updateAuthLinks() {
+  const loginBtn = document.getElementById('loginBtn');
+  const signupBtn = document.getElementById('signupBtn');
+  const profileLink = document.getElementById('profileLink');
+  if (loginBtn) loginBtn.href = `${UMS_BASE}/login`;
+  if (signupBtn) signupBtn.href = `${UMS_BASE}/register`;
+  if (profileLink) profileLink.href = `${UMS_BASE}/profile`;
+}
+
+/* Attach logout: clear cookie and redirect to backend logout (which clears httpOnly cookie) */
+function attachLogoutHandler() {
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (!logoutBtn) return;
+  logoutBtn.addEventListener('click', (e) => {
     e.preventDefault();
+    // immediate UI cleanup
     clearUserInfoCookie();
+    // send to backend logout; allow backend to redirect back via next param
     const next = encodeURIComponent(window.location.href);
     window.location.href = `${UMS_BASE}/logout?next=${next}`;
   });
 }
 
-/* --- Misc UI --- */
-document.addEventListener("DOMContentLoaded", () => {
-  initAuthUI();
+/* Main */
+async function initAuthUI() {
+  const authButtons = document.getElementById('auth-buttons');
+  const userMenu = document.getElementById('user-menu');
+  const profileName = document.getElementById('profile-name');
 
-  const joinForm = document.getElementById("joinForm");
-  if (joinForm) {
-    const thank = document.getElementById("thankyouMsg");
-    joinForm.addEventListener("submit", () => {
-      if (thank) thank.style.display = "block";
-    });
+  updateAuthLinks();
+  attachLogoutHandler();
+
+  // Fast path: cookie
+  const cookieUser = parseUserInfoFromCookie();
+  if (cookieUser) {
+    if (authButtons) authButtons.style.display = 'none';
+    if (userMenu) userMenu.style.display = 'flex';
+    if (profileName) profileName.textContent = cookieUser.fullName || cookieUser.username || '';
+
+    // validate server session in background and refresh cookie
+    fetchWhoami().then(serverUser => {
+      if (serverUser) {
+        writeUserInfoCookie(serverUser);
+        if (profileName) profileName.textContent = serverUser.fullName || serverUser.username || '';
+      } else {
+        // server session invalid: clear cookie + show auth buttons
+        clearUserInfoCookie();
+        if (authButtons) authButtons.style.display = 'block';
+        if (userMenu) userMenu.style.display = 'none';
+      }
+    }).catch(()=>{});
+    return;
   }
 
-  const menuToggle = document.getElementById("menuToggle");
-  const navLinks = document.getElementById("navLinks");
-  menuToggle && menuToggle.addEventListener("click", () => {
-    navLinks.classList.toggle("open");
-    menuToggle.classList.toggle("open");
+  // Slow path: call server
+  const user = await fetchWhoami();
+  if (user) {
+    writeUserInfoCookie(user);
+    if (authButtons) authButtons.style.display = 'none';
+    if (userMenu) userMenu.style.display = 'flex';
+    if (profileName) profileName.textContent = user.fullName || user.username || '';
+  } else {
+    if (authButtons) authButtons.style.display = 'block';
+    if (userMenu) userMenu.style.display = 'none';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initAuthUI();
+
+  // join form thank you
+  const joinForm = document.getElementById('joinForm');
+  if (joinForm) {
+    const thank = document.getElementById('thankyouMsg');
+    joinForm.addEventListener('submit', () => { if (thank) thank.style.display = 'block'; });
+  }
+
+  // mobile menu
+  const menuToggle = document.getElementById('menuToggle');
+  const navLinks = document.getElementById('navLinks');
+  menuToggle && menuToggle.addEventListener('click', () => {
+    navLinks.classList.toggle('open');
+    menuToggle.classList.toggle('open');
   });
 });
 </script>
-
 
 
 <script src="script.js"></script>
