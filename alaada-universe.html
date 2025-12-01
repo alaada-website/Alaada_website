@@ -7,6 +7,7 @@
   <link rel="icon" href="images/alaada-icon.png" type="image/png">
 
   <style>
+    /* ---------- Base / original styles (kept) ---------- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body, html {
@@ -15,10 +16,10 @@
       color: white;
       text-align: center;
       background: black;
-      overflow-y: scroll;  /* allow scrolling for video feed */
+      overflow-y: auto;
     }
 
-    /* ---------- Background video (updated rules for reliability) ---------- */
+    /* ---------- Background video (kept path unchanged) ---------- */
     video.bg {
       position: fixed !important;
       top: 0;
@@ -26,7 +27,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      z-index: 0;               /* base layer (not negative) */
+      z-index: 0;               /* base layer */
       pointer-events: none;     /* don't intercept interactions */
       filter: brightness(0.4);
       display: block;
@@ -35,17 +36,18 @@
       backface-visibility: hidden;
     }
 
-    /* ensure main UI stacks above the background video */
+    /* Ensure main UI layers sit above video */
     header, .content, .links, .community-videos, footer {
       position: relative;
       z-index: 2;
     }
 
-    /* Main content */
+    /* Main content (original) */
     .content {
       margin-top: 120px;
       z-index: 2;
       position: relative;
+      padding: 0 18px;
     }
 
     h1 {
@@ -69,14 +71,14 @@
       padding: 10px 20px;
       border-radius: 25px;
       margin: 10px;
-      transition: 0.3s;
+      transition: 0.25s ease;
+      display: inline-block;
     }
-    .links a:hover { background: #00b4d8; color: black; }
+    .links a:hover { background: #00b4d8; color: black; transform: translateY(-3px); }
 
-    /* ---------- COMMUNITY VIDEOS SECTION (new) ---------- */
-
+    /* ---------- Community Videos (new) ---------- */
     .community-videos {
-      margin-top: 100px;
+      margin-top: 80px;
       padding: 20px;
       position: relative;
       z-index: 2;
@@ -87,18 +89,18 @@
     }
 
     .community-videos h2 {
-      font-size: 2rem;
-      margin-bottom: 18px;
+      font-size: 1.9rem;
+      margin-bottom: 16px;
       background: linear-gradient(90deg, #8a2be2, #00b4d8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    /* Grid: desktop 3 columns, tablet 2, mobile 1 */
+    /* Grid: 3 / 2 / 1 columns */
     .community-videos .videos-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 22px;
+      gap: 20px;
     }
     @media (max-width: 1000px) {
       .community-videos .videos-grid { grid-template-columns: repeat(2, 1fr); }
@@ -107,10 +109,10 @@
       .community-videos .videos-grid { grid-template-columns: 1fr; }
     }
 
-    /* Card styling: rounded, soft shadows, hover scale */
+    /* Card */
     .community-videos .video-card {
-      background: rgba(7,10,18,0.45);
-      padding: 10px;
+      background: rgba(8,10,16,0.5);
+      padding: 12px;
       border-radius: 12px;
       backdrop-filter: blur(6px);
       box-shadow: 0 10px 30px rgba(2,6,23,0.55);
@@ -120,9 +122,10 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-height: 1px;
     }
     .community-videos .video-card:focus { outline: 3px solid rgba(124,58,237,0.18); outline-offset: 4px; }
-    .community-videos .video-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 20px 60px rgba(2,6,23,0.66); }
+    .community-videos .video-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 18px 60px rgba(2,6,23,0.66); }
 
     .community-videos .video-thumb {
       width: 100%;
@@ -140,17 +143,18 @@
       filter: contrast(0.98) saturate(1.05);
       transform-origin: center center;
       transition: transform 300ms ease;
+      pointer-events: none; /* thumbnail shouldn't capture clicks, card handles clicks */
     }
     .community-videos .video-card:hover .video-thumb video { transform: scale(1.03); }
 
-    /* Play badge centered */
+    /* Play badge */
     .community-videos .play-badge {
       position: absolute;
       left: 50%;
       top: 50%;
       transform: translate(-50%,-50%);
-      width: 62px;
-      height: 62px;
+      width: 60px;
+      height: 60px;
       border-radius: 999px;
       display: flex;
       align-items: center;
@@ -159,12 +163,13 @@
       box-shadow: 0 10px 30px rgba(6,182,212,0.12);
       opacity: 0.98;
       transition: transform 140ms ease;
+      pointer-events: none;
     }
     .community-videos .video-card:hover .play-badge { transform: translate(-50%,-50%) scale(1.06); }
-    .community-videos .play-badge svg { width: 22px; height: 22px; fill: #fff; }
+    .community-videos .play-badge svg { width: 20px; height: 20px; fill: #fff; }
 
     .community-videos .video-meta {
-      margin-top: 10px;
+      margin-top: 12px;
       display:flex;
       align-items:center;
       justify-content:space-between;
@@ -189,13 +194,13 @@
       justify-content: center;
       background: linear-gradient(180deg, rgba(2,6,23,0.88), rgba(2,6,23,0.96));
       z-index: 9999;
-      padding: 20px;
+      padding: 18px;
     }
     #videoOverlay.active { display: flex; }
     #videoOverlay .overlay-inner {
       width: 100%;
       max-width: 1200px;
-      height: calc(100% - 80px);
+      height: calc(100% - 72px);
       display:flex;
       align-items:center;
       justify-content:center;
@@ -210,8 +215,8 @@
     }
     .overlay-close {
       position: absolute;
-      top: -8px;
-      right: -8px;
+      top: -10px;
+      right: -10px;
       background: rgba(255,255,255,0.06);
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.06);
@@ -234,19 +239,24 @@
       font-size: 1rem;
     }
 
-    /* ---------- end community videos styles ---------- */
-
+    /* Small accessibility helpers */
+    .sr-only {
+      position: absolute !important;
+      height: 1px; width: 1px;
+      overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
+      white-space: nowrap;
+    }
   </style>
 </head>
 
 <body>
 
-  <!-- Background Video (keeps file path unchanged) -->
+  <!-- Background Video (unchanged path) -->
   <video class="bg" autoplay muted loop playsinline preload="auto">
     <source src="images/space.mp4" type="video/mp4">
   </video>
 
-  <!-- Main Text -->
+  <!-- Main Text (original content preserved) -->
   <div class="content">
     <h1>🌌 Alaada Universe</h1>
     <p>This space is being built — soon you’ll explore the full Alaada ecosystem.</p>
@@ -256,15 +266,15 @@
     </div>
   </div>
 
-  <!-- ======= New Videos Section (keeps everything else unchanged) ======= -->
+  <!-- ======= Community Videos (new) ======= -->
   <section class="community-videos" aria-labelledby="communityVideosHeading">
     <h2 id="communityVideosHeading">Community Videos</h2>
 
-    <div class="videos-grid" id="videosGrid">
-      <!-- Card showing the friend's video (uses images/Arko.mp4) -->
-      <article class="video-card" data-src="images/Arko.mp4" tabindex="0" role="button" aria-label="Play Arko – Official Release">
+    <div class="videos-grid" id="videosGrid" aria-live="polite">
+      <!-- Single card showing the friend's video (images/Arko.mp4) -->
+      <article class="video-card" data-src="images/Arko.mp4" tabindex="0" role="button" aria-label="Play video Arko – Official Release">
         <div class="video-thumb" aria-hidden="true">
-          <!-- <video> used to auto-generate a thumbnail (first frame) -->
+          <!-- HTML <video> provides the thumbnail (first frame) -->
           <video muted preload="metadata" src="images/Arko.mp4" playsinline></video>
           <div class="play-badge" aria-hidden="true">
             <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
@@ -281,11 +291,11 @@
         </div>
       </article>
 
-      <!-- Add more cards (duplicates or different files) by copying <article> and changing data-src if needed -->
+      <!-- If you want more items later, duplicate <article> and set data-src to the file path -->
     </div>
   </section>
 
-  <!-- Fullscreen overlay player (in-page; no external sites) -->
+  <!-- Fullscreen overlay player (plays inside the page) -->
   <div id="videoOverlay" aria-hidden="true" role="dialog" aria-label="Video player overlay">
     <div class="overlay-inner" role="document">
       <button class="overlay-close" id="overlayClose" aria-label="Close video player">
@@ -293,30 +303,54 @@
           <path d="M18 6L6 18M6 6l12 12" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+
       <video id="overlayPlayer" controls playsinline preload="auto"></video>
       <div class="overlay-title" id="overlayTitle">Arko – Official Release</div>
     </div>
   </div>
 
-  <!-- Scripts: overlay player behavior + background autoplay fallback -->
   <script>
-    (function(){
-      // --- Overlay player logic ---
+    (function () {
+      // Elements
       const grid = document.getElementById('videosGrid');
       const overlay = document.getElementById('videoOverlay');
       const overlayPlayer = document.getElementById('overlayPlayer');
       const overlayTitle = document.getElementById('overlayTitle');
       const overlayClose = document.getElementById('overlayClose');
 
-      // Delegate clicks and keyboard activation on video cards
-      grid.addEventListener('click', function(e){
+      // Helper: open player for a card
+      function openPlayerForCard(card) {
+        const src = card.dataset.src;
+        if (!src) return;
+        overlayPlayer.src = src;
+        overlayPlayer.currentTime = 0;
+        overlayPlayer.muted = false; // user initiated so allow sound
+        overlayTitle.textContent = card.querySelector('.video-title')?.textContent || 'Video';
+        overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+
+        // Try to play (user gesture already triggered this)
+        const p = overlayPlayer.play();
+        if (p && typeof p.then === 'function') {
+          p.catch(() => {
+            // If autoplay with sound blocked, leave paused; user can press play
+            overlayPlayer.pause();
+          });
+        }
+
+        // focus close button for accessibility
+        overlayClose.focus();
+      }
+
+      // Click delegation on grid
+      grid.addEventListener('click', function (e) {
         const card = e.target.closest('.video-card');
         if (!card) return;
         openPlayerForCard(card);
       });
 
-      // keyboard accessibility (Enter or Space to open)
-      grid.addEventListener('keydown', function(e){
+      // Keyboard activation (Enter / Space)
+      grid.addEventListener('keydown', function (e) {
         const card = e.target.closest('.video-card');
         if (!card) return;
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
@@ -325,86 +359,65 @@
         }
       });
 
-      function openPlayerForCard(card){
-        const src = card.getAttribute('data-src') || card.dataset.src;
-        if (!src) return;
-        overlayPlayer.src = src;
-        overlayPlayer.currentTime = 0;
-        overlayPlayer.removeAttribute('muted'); // allow sound once user initiates play
-        overlayTitle.textContent = card.querySelector('.video-title')?.textContent || 'Video';
-        overlay.classList.add('active');
-        overlay.setAttribute('aria-hidden', 'false');
-
-        // attempt to play; user gesture already happened by click
-        const p = overlayPlayer.play();
-        if (p && typeof p.then === 'function') {
-          p.catch(() => {
-            // autoplay with sound may be blocked: leave paused and let user press play
-            overlayPlayer.pause();
-          });
-        }
-        overlayClose.focus();
-      }
-
-      function closeOverlay(){
+      // Close overlay
+      function closeOverlay() {
         overlay.classList.remove('active');
-        overlay.setAttribute('aria-hidden','true');
-        try { overlayPlayer.pause(); } catch(e){}
+        overlay.setAttribute('aria-hidden', 'true');
+        try { overlayPlayer.pause(); } catch (err) {}
         overlayPlayer.removeAttribute('src');
         overlayPlayer.load();
       }
 
-      overlayClose.addEventListener('click', function(e){
+      overlayClose.addEventListener('click', function (e) {
         e.stopPropagation();
         closeOverlay();
       });
 
-      // clicking outside player closes overlay
-      overlay.addEventListener('click', function(e){
+      // Clicking outside the player closes it
+      overlay.addEventListener('click', function (e) {
         if (e.target === overlay) closeOverlay();
       });
 
-      // ESC closes overlay
-      document.addEventListener('keydown', function(e){
+      // ESC to close
+      document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && overlay.classList.contains('active')) {
           closeOverlay();
         }
       });
 
-      // When overlay closes, return focus to the first card
-      overlay.addEventListener('transitionend', function(){
+      // Return focus to first card after overlay closes
+      overlay.addEventListener('transitionend', function () {
         if (!overlay.classList.contains('active')) {
           const firstCard = document.querySelector('.video-card');
           if (firstCard) firstCard.focus();
         }
       });
 
-      // Ensure the <video> thumbnails don't show controls (they are muted preview)
+      // Thumbnail videos: hide controls and prevent pointer interactions
       document.querySelectorAll('.community-videos .video-thumb video').forEach(v => {
         v.controls = false;
+        v.addEventListener('loadedmetadata', () => {
+          // nothing — browser uses first frame as visible thumbnail
+        });
       });
 
-      // --- Background video autoplay fallback ---
+      // Background autoplay fallback (attempt immediate play; if blocked, play on first gesture)
       const bg = document.querySelector('video.bg');
       if (bg) {
-        // try to play immediately (muted autoplay usually allowed)
-        bg.play().catch(()=>{/* ignore */});
+        bg.play().catch(() => { /* ignore */ });
 
-        // If autoplay blocked, attempt to play on first user gesture
         function tryPlayBg() {
           if (!bg) return;
           if (bg.paused) {
-            bg.play().catch(()=> {
-              // if still blocked, ensure it's muted
-              try { bg.muted = true; } catch(e) {}
+            bg.play().catch(() => {
+              try { bg.muted = true; } catch (err) {}
             });
           }
-          ['click','keydown','touchstart'].forEach(ev => document.removeEventListener(ev, tryPlayBg));
+          ['click', 'keydown', 'touchstart'].forEach(ev => document.removeEventListener(ev, tryPlayBg));
         }
-        ['click','keydown','touchstart'].forEach(ev => document.addEventListener(ev, tryPlayBg, {passive:true}));
+        ['click', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, tryPlayBg, { passive: true }));
       }
     })();
   </script>
-
 </body>
 </html>
