@@ -5,35 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alaada Universe — Coming Soon</title>
   <link rel="icon" href="images/alaada-icon.png" type="image/png">
+
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body, html {
       height: 100%;
-      overflow: hidden;
       font-family: 'Segoe UI', sans-serif;
       color: white;
       text-align: center;
+      background: black;
+      overflow-y: scroll;  /* allow scrolling for video feed */
     }
-    video {
+
+    /* Background video */
+    video.bg {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       object-fit: cover;
       z-index: -1;
       filter: brightness(0.4);
     }
+
+    /* Main content */
     .content {
-      position: relative;
-      top: 40%;
-      transform: translateY(-50%);
+      margin-top: 120px;
       z-index: 2;
+      position: relative;
     }
+
     h1 {
       font-size: 3rem;
       background: linear-gradient(90deg, #00b4d8, #8a2be2);
@@ -45,14 +46,9 @@
       from { text-shadow: 0 0 10px #00b4d8; }
       to { text-shadow: 0 0 25px #8a2be2; }
     }
-    p {
-      font-size: 1.2rem;
-      opacity: 0.8;
-      margin-top: 10px;
-    }
-    .links {
-      margin-top: 40px;
-    }
+    p { font-size: 1.2rem; opacity: 0.8; margin-top: 10px; }
+
+    .links { margin-top: 40px; }
     .links a {
       color: #00b4d8;
       text-decoration: none;
@@ -62,32 +58,85 @@
       margin: 10px;
       transition: 0.3s;
     }
-    .links a:hover {
-      background: #00b4d8;
-      color: black;
+    .links a:hover { background: #00b4d8; color: black; }
+
+    /* ---------- VIDEO FEED SECTION ---------- */
+    .video-section {
+      margin-top: 100px;
+      padding: 20px;
+      position: relative;
+      z-index: 2;
+      text-align: left;
+    }
+
+    .video-section h2 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      background: linear-gradient(90deg, #8a2be2, #00b4d8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 25px;
+    }
+
+    .video-card {
+      background: rgba(0,0,0,0.4);
+      padding: 10px;
+      border-radius: 10px;
+      backdrop-filter: blur(4px);
+    }
+
+    .video-card video {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .video-title {
+      margin-top: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .video-creator {
+      font-size: 0.9rem;
+      opacity: 0.7;
     }
   </style>
 </head>
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BJGLCGLMK5"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-BJGLCGLMK5');
-</script>
+
 <body>
 
-  <video autoplay muted loop playsinline>
+  <!-- Background Video -->
+  <video class="bg" autoplay muted loop playsinline>
     <source src="images/space.mp4" type="video/mp4">
   </video>
 
+  <!-- Main Text -->
   <div class="content">
     <h1>🌌 Alaada Universe</h1>
-    <p>This space is being built — soon, you’ll explore the full Alaada ecosystem.</p>
+    <p>This space is being built — soon you’ll explore the full Alaada ecosystem.</p>
     <div class="links">
-      <a href="index.html">⬅ Return to Landing Page</a>
+      <a href="index.html">⬅ Return to Home page</a>
       <a href="alaada-os.html">⚙ Go to Alaada OS</a>
+    </div>
+  </div>
+
+  <div class="video-section">
+    <h2>Community Videos</h2>
+
+    <div class="video-grid">
+      <div class="video-card">
+        <video controls>
+          <source src="images/Arko.mp4" type="video/mp4">
+        </video>
+        <div class="video-title">My Friends' Song</div>
+        <div class="video-creator">Uploaded by: Aarka, Aaditya and Adrijo</div>
+      </div>
+
     </div>
   </div>
 
