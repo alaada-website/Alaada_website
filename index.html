@@ -133,18 +133,6 @@
   </div>
 </section>
 
-  <!-- Arzo Das -->
-  <section id="arzo" class="fade-section">
-    <h2>About Me — Arzo Das</h2>
-    <div class="arzo-container">
-      <img src="images/arzo.jpg" alt="Arzo Das">
-      <p>I’m Arzo Das, 14 years old, and a technology enthusiast who loves learning, building, and experimenting.
-        I enjoy exploring robotics, programming, software development, and creative projects, always thinking of
-        new ideas to try. My goal is to turn ideas into practical projects, learn from the process, and share what
-        I discover to inspire others along the way.</p>
-    </div>
-  </section>
-
 <!-- Join -->
 <section id="join" class="fade-section">
   <h2>Join the Journey</h2>
@@ -167,136 +155,49 @@
   </div>
 </footer>
 
+<div id="g_id_onload"
+     data-client_id="http://958385740602-aogrgno78jk5o0rrcaji9via12inld9k.apps.googleusercontent.com"
+     data-callback="handleGoogleLogin"
+     data-auto_prompt="false">
+</div>
+
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <script>
-/* CONFIG: backend URL */
-const UMS_BASE = "https://alaada-ums.onrender.com";
-
-/* Cookie helpers */
-function readCookie(name) {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? decodeURIComponent(match[2]) : null;
-}
-
-function writeUserInfoCookie(user) {
-  try {
-    const safe = {
-      username: user.username || "",
-      email: user.email || "",
-      fullName: user.fullName || ""
-    };
-    const raw = encodeURIComponent(JSON.stringify(safe));
-    const secure = location.protocol === "https:" ? "; Secure" : "";
-    // non-sensitive cookie for UX only
-    document.cookie = `user_info=${raw}; path=/; max-age=${30*24*60*60}; SameSite=Strict${secure}`;
-  } catch (err) {
-    console.warn('writeUserInfoCookie error', err);
-  }
-}
-
-function clearUserInfoCookie() {
-  document.cookie = 'user_info=; Path=/; Max-Age=0; SameSite=Strict';
-}
-
-function parseUserInfoFromCookie() {
-  const raw = readCookie('user_info');
-  if (!raw) return null;
-  try {
-    // cookie value was encoded with encodeURIComponent(JSON.stringify(...))
-    return JSON.parse(decodeURIComponent(raw));
-  } catch (err) {
-    console.warn('Failed to parse user_info cookie', err);
-    return null;
-  }
-}
-
-/* whoami (calls backend) */
-async function fetchWhoami() {
-  try {
-    const res = await fetch(`${UMS_BASE}/api/whoami`, {
-      credentials: 'include',
-      mode: 'cors',
-      cache: 'no-store'
-    });
-    if (!res.ok) {
-      console.warn('whoami status', res.status);
-      return null;
-    }
-    const json = await res.json();
-    return json && json.user ? json.user : null;
-  } catch (err) {
-    console.warn('whoami fetch failed', err);
-    return null;
-  }
-}
-
-/* Update anchor hrefs to backend */
-function updateAuthLinks() {
-  const loginBtn = document.getElementById('loginBtn');
-  const signupBtn = document.getElementById('signupBtn');
-  const profileLink = document.getElementById('profileLink');
-  if (loginBtn) loginBtn.href = `${UMS_BASE}/login`;
-  if (signupBtn) signupBtn.href = `${UMS_BASE}/register`;
-  if (profileLink) profileLink.href = `${UMS_BASE}/profile`;
-}
-
-/* Attach logout: clear cookie and redirect to backend logout (which clears httpOnly cookie) */
-function attachLogoutHandler() {
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (!logoutBtn) return;
-  logoutBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    // immediate UI cleanup
-    clearUserInfoCookie();
-    // send to backend logout; allow backend to redirect back via next param
-    const next = encodeURIComponent(window.location.href);
-    window.location.href = `${UMS_BASE}/logout?next=${next}`;
+  // 1. Check login state using cookies
+  document.addEventListener("DOMContentLoaded", () => {
+    fetch("/auth/me")
+      .then(res => res.json())
+      .then(data => {
+        // ONLY new users are redirected
+        if (data.authenticated && data.is_new) {
+          window.location.href = "/google_auth.html";
+        }
+        // old users + anonymous users stay on index.html
+      });
   });
-}
 
-/* Main */
-async function initAuthUI() {
-  const authButtons = document.getElementById('auth-buttons');
-  const userMenu = document.getElementById('user-menu');
-  const profileName = document.getElementById('profile-name');
+  // 2. Get Started → Google Sign-In
+  document.getElementById("getStarted").addEventListener("click", () => {
+    google.accounts.id.prompt();
+  });
 
-  updateAuthLinks();
-  attachLogoutHandler();
-
-  // Fast path: cookie
-  const cookieUser = parseUserInfoFromCookie();
-  if (cookieUser) {
-    if (authButtons) authButtons.style.display = 'none';
-    if (userMenu) userMenu.style.display = 'flex';
-    if (profileName) profileName.textContent = cookieUser.fullName || cookieUser.username || '';
-
-    // validate server session in background and refresh cookie
-    fetchWhoami().then(serverUser => {
-      if (serverUser) {
-        writeUserInfoCookie(serverUser);
-        if (profileName) profileName.textContent = serverUser.fullName || serverUser.username || '';
-      } else {
-        // server session invalid: clear cookie + show auth buttons
-        clearUserInfoCookie();
-        if (authButtons) authButtons.style.display = 'block';
-        if (userMenu) userMenu.style.display = 'none';
+  // 3. Handle Google login
+  function handleGoogleLogin(response) {
+    fetch("/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential: response.credential })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.is_new) {
+        window.location.href = "/google_auth.html";
       }
-    }).catch(()=>{});
-    return;
+      // old users stay on index.html
+    });
   }
-
-  // Slow path: call server
-  const user = await fetchWhoami();
-  if (user) {
-    writeUserInfoCookie(user);
-    if (authButtons) authButtons.style.display = 'none';
-    if (userMenu) userMenu.style.display = 'flex';
-    if (profileName) profileName.textContent = user.fullName || user.username || '';
-  } else {
-    if (authButtons) authButtons.style.display = 'block';
-    if (userMenu) userMenu.style.display = 'none';
-  }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   initAuthUI();
 
