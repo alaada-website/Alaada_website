@@ -139,7 +139,7 @@
           </div>
         </div>
 
-        <div style="margin-top:10px" class="muted">Tip: paste any public URL. The server fetches and analyzes the HTML. If you host locally, ensure the server can reach it.</div>
+        <div style="margin-top:10px" class="muted">Tip: paste any public URL. The server fetches and analyzes the HTML.</div>
 
         <div id="output" class="result-card" role="region" aria-live="polite" style="margin-top:18px">
           <div class="muted">Enter a URL and click <strong>Analyze</strong> to begin.</div>
@@ -408,7 +408,7 @@
   analyzeBtn.onclick = () => analyzeWebsite(urlInput.value.trim());
   sampleBtn.onclick = () => {
     urlInput.value = "https://example.com";
-    analyzeWebsite("https://example.com");
+    analyzeWebsite("https://alaada.com");
   };
   exportJsonBtn.onclick = () => {
     if (!lastResult) return;
@@ -439,3 +439,4 @@
 </footer>
 </body>
 </html>
+
