@@ -3,20 +3,129 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alaada — Where Perfection Meets Possibilities</title>
-  <meta name="description" content="Alaada — a creative ecosystem built to connect imagination, intelligence, and simplicity through projects like Alaada OS, Aurora, and more." />
-  <meta name="keywords" content="Alaada OS, Alaada Universe, Alaada Lab, Alaada, Alada, Prove Hosting, Website Analyser, Alaada Website Analyser, Arzo, Arzo Das, WebOS">
+
+  <title>Alaada — Orbit</title>
+
+  <meta name="description" content="Orbit is Alaada’s AI for thoughtful questions and clear thinking." />
+  <meta name="keywords" content="Alaada, Orbit, AI, Website Analyser, Arzo Das" />
+
   <link rel="icon" href="images/alaada-icon.png" type="image/png" />
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- VISIBILITY + HERO CONTROL -->
   <style>
-    /* subtle inline styles to ensure auth UI looks okay if your style.css is different */
-    .auth-buttons .btn, .user-menu .btn { margin-left:8px; padding:8px 12px; background:#0b72ff; color:#fff; text-decoration:none; border-radius:6px; display:inline-block; }
-    .user-menu { display:flex; gap:8px; align-items:center; }
-    .profile-name { font-weight:600; margin-right:6px; }
-    #thankyouMsg{display:none;color:green;margin-top:8px}
+    /* limit hero dominance */
+    #hero {
+      min-height: 75vh;
+      position: relative;
+    }
+
+    #bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+
+    .hero-overlay {
+      position: relative;
+      z-index: 2;
+      height: 75vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px 20px;
+      background: rgba(0,0,0,0.35);
+    }
+
+    /* scroll hint */
+    .scroll-hint {
+      position: absolute;
+      bottom: 20px;
+      font-size: 0.9rem;
+      opacity: 0.85;
+      animation: float 2s infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+      100% { transform: translateY(0); }
+    }
+
+    /* force fade sections visible */
+    .fade-section {
+      opacity: 1 !important;
+      transform: none !important;
+      visibility: visible !important;
+      position: relative;
+      z-index: 5;
+    }
+
+    /* ORBIT */
+    #orbit {
+      max-width: 900px;
+      margin: 80px auto;
+      background: rgba(0,0,0,0.65);
+      padding: 40px;
+      border-radius: 18px;
+      color: #fff;
+    }
+
+    #orbit textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      font-family: Inter, sans-serif;
+      margin-top: 16px;
+    }
+
+    #orbit button {
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: #0b72ff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #orbit-response {
+      margin-top: 20px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    #orbit-meta {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .share-links span {
+      margin-right: 14px;
+      color: #0b72ff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* Web Analyser */
+    #web-analyser {
+      max-width: 900px;
+      margin: 80px auto;
+      text-align: center;
+    }
   </style>
 </head>
+
 <body>
 
 <!-- Google Analytics -->
@@ -27,51 +136,6 @@
   gtag('js', new Date());
   gtag('config', 'G-BJGLCGLMK5');
 </script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8528400701607693"
-     crossorigin="anonymous"></script>
-<!-- Navigation -->
-<header id="navbar">
-  <div class="logo">
-    <a href="index.html">
-      <img src="images/alaada-logo.jpg" alt="Alaada Logo" />
-    </a>
-    <h1>Alaada</h1>
-  </div>
-
-  <nav id="navLinks">
-    <a href="#hero" class="active">Home</a>
-    <a href="#about">About</a>
-    <a href="#creations">Creations</a>
-    <a href="#arzo">About Me</a>
-    <a href="#join">Join</a>
-    <a href="alaada-os.html">Alaada OS</a>
-    <a href="alaada-universe.html">Alaada Universe</a>
-    <a href="alaada-lab.html">Alaada Lab</a>
-    <a href="prove-hosting.html">Prove Hosting</a>
-    <a href="website-analyzer.html">Alaada Website Analyser</a>
-  </nav>
-  
-  <!-- User Auth / Profile Area -->
-  <div id="auth-buttons" class="auth-buttons" style="display:none;">
-    <a href="/login" id="loginBtn" class="btn">Login</a>
-    <a href="/register" id="signupBtn" class="btn">Sign Up</a>
-  </div>
-
-  <div id="user-menu" class="user-menu" style="display:none;">
-    <span class="profile-name" id="profile-name"></span>
-    <a href="/profile" id="profileLink" class="btn">Profile</a>
-    <button id="logoutBtn" class="btn logout-btn">Logout</button>
-  </div>
-
-  <div class="menu-icon" id="menuToggle">
-    <span></span><span></span><span></span>
-  </div>
-</header>
-
-<!-- Announcement Banner -->
-<section class="announcement">
-  <p>🎉 Exciting news! <strong>Alaada Web Anlyser</strong> is LIVE— <a href="website-analyzer.html" class="announcement-link">Learn More →</a></p>
-</section>
 
 <!-- Hero -->
 <section id="hero">
@@ -82,55 +146,110 @@
 
   <div class="hero-overlay">
     <h1>Alaada — <span>Where Perfection Meets Possibilities.</span></h1>
-    <p>Exploring imagination, building systems, and shaping the Alaada Universe.</p>
+    <p>Exploring imagination, building systems, and shaping intelligent tools.</p>
+
     <div class="buttons">
-      <a href="alaada-os.html" class="cta">Explore Alaada OS</a>
+      <a href="#orbit" class="cta">Try Orbit</a>
       <a href="#about" class="secondary">Learn More</a>
     </div>
+
+    <div class="scroll-hint">↓ Scroll to explore</div>
   </div>
 </section>
 
-<script src="https://unpkg.com/three@0.154.0/build/three.min.js"></script>
-<script src="hero.js"></script>
 
- <!-- About Alaada -->
-  <section id="about" class="fade-section">
-    <h2>About Alaada</h2>
-    <p>Alaada is a space for exploring ideas, creating projects, and bringing simple yet meaningful innovations to life.
-      From software like Alaada OS to experiments in Alaada Lab, we focus on building tools, experiences, and solutions
-      that can help people and inspire curiosity. At Alaada, ideas are just as important as the projects themselves —
-      every new concept is a chance to learn, experiment, and improve.</p>
-  </section>
+<!-- About Alaada -->
+<section id="about" class="fade-section">
+  <h2>Why Alaada?</h2>
+  <p>
+    Alaada is a space for exploring ideas, creating projects, and bringing simple yet meaningful innovations to life.
+    Most platforms either overwhelm you with raw data or provide generic AI responses with little context. Alaada is built to do neither.
 
-<!-- Creations -->
-<section id="creations" class="fade-section">
-  <h2>Our Creations</h2>
-  <div class="creations-grid">
-    <a href="alaada-os.html" class="creation-card">
-      <div class="card-inner">
-        <h3>⚙️ Alaada OS</h3>
-        <p>The intelligent foundation of the Alaada Universe.</p>
-      </div>
-    </a>
-    <a href="alaada-universe.html" class="creation-card">
-      <div class="card-inner">
-        <h3>🌌 Alaada Universe</h3>
-        <p>Explore the connected network of tools and creativity.</p>
-      </div>
-    </a>
-    <a href="alaada-lab.html" class="creation-card">
-      <div class="card-inner">
-        <h3>🧪 Alaada Lab</h3>
-        <p>Where experiments turn into innovations.</p>
-      </div>
-    </a>
-    <a href="prove-hosting.html" class="creation-card">
-      <div class="card-inner">
-        <h3>💻 Prove Hosting</h3>
-        <p>Fast, reliable hosting built for modern creators.</p>
-      </div>
-    </a>
+	Alaada helps you understand what is happening on your website and why it matters. It turns usage data into clear insights and pairs it with intelligent reasoning, so you can make decisions faster and with confidence.
+
+	Instead of switching between analytics dashboards and AI tools, Alaada brings understanding and action into one place. It is designed for creators, developers, and teams who value clarity, accuracy, and practical results over complexity and noise.
+  </p>
+</section>
+
+<!-- ABOUT ORBIT -->
+<section id="orbit" class="fade-section">
+  <h2>About Orbit</h2>
+  <p>
+    Most AI tools give answers. Orbit helps you reach understanding and thinking.
+	Orbit is built to reason with context, use up-to-date information, and deliver clear, structured responses that support real decisions. It reduces guesswork, saves time, and helps you move from questions to conclusions without noise or unnecessary complexity.
+    <br><br>
+    Built at Alaada by <strong>Arzo Das</strong>.
+  </p>
+  
+  <!-- Usage progress bar -->
+<div style="margin-top:14px">
+  <div style="font-size:0.85rem;opacity:0.85" id="orbit-usage-text">
+    Loading usage…
   </div>
+  <div style="height:8px;background:#222;border-radius:6px;overflow:hidden;margin-top:6px">
+    <div id="orbit-usage-bar"
+         style="height:100%;width:0%;background:#0b72ff;transition:width .3s ease">
+    </div>
+  </div>
+</div>
+
+  <textarea id="orbit-input" placeholder="Ask Orbit anything…"></textarea>
+  <button onclick="Orbit.askStream()">Ask Orbit</button>
+
+
+  <div id="orbit-meta"></div>
+  <div id="orbit-response"></div>
+  
+  <!-- Chat history toggle -->
+<div style="margin-top:22px">
+  <button onclick="Orbit.toggleHistory()" style="
+    background: transparent;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  ">
+    Show chat history
+  </button>
+</div>
+
+<!-- Chat history panel -->
+<div id="orbit-history" style="
+  display:none;
+  margin-top:14px;
+  padding:14px;
+  background:rgba(0,0,0,0.55);
+  border-radius:10px;
+  font-size:0.9rem;
+  line-height:1.5;
+  max-height:320px;
+  overflow-y:auto;
+">
+  <em style="opacity:0.7">No history yet.</em>
+</div>
+
+
+  <div class="share-links" style="margin-top:18px">
+    Get more prompts by sharing online: 
+    <span onclick="Orbit.share('twitter')">X</span>
+    <span onclick="Orbit.share('facebook')">Facebook</span>
+    <span onclick="Orbit.share('linkedin')">LinkedIn</span>
+    <span onclick="Orbit.share('instagram')">Instagram</span>
+    <span onclick="Orbit.share('copy')">Copy link</span>
+  </div>
+</section>
+
+<!-- Alaada Web Analyser -->
+<section id="web-analyser" class="fade-section">
+  <h2>Alaada Web Analyser</h2>
+  <p>
+    Analytics should explain behavior, not just report numbers.
+	The Alaada Web Analyser turns website data into meaningful insights by highlighting engagement patterns, performance trends, and areas that matter most. It helps you understand how users interact with your site and where to focus, so improvements are driven by evidence, not assumptions.
+	
+  </p>
+  <a href="website-analyzer.html" class="cta">Open Web Analyser</a>
 </section>
 
 <!-- Join -->
@@ -155,70 +274,225 @@
   </div>
 </footer>
 
-<div id="g_id_onload"
-     data-client_id="http://958385740602-aogrgno78jk5o0rrcaji9via12inld9k.apps.googleusercontent.com"
-     data-callback="handleGoogleLogin"
-     data-auto_prompt="false">
-</div>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
 
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
-  // 1. Check login state using cookies
-  document.addEventListener("DOMContentLoaded", () => {
-    fetch("/auth/me")
-      .then(res => res.json())
-      .then(data => {
-        // ONLY new users are redirected
-        if (data.authenticated && data.is_new) {
-          window.location.href = "/google_auth.html";
-        }
-        // old users + anonymous users stay on index.html
-      });
-  });
+(function () {
+  "use strict";
 
-  // 2. Get Started → Google Sign-In
-  document.getElementById("getStarted").addEventListener("click", () => {
-    google.accounts.id.prompt();
-  });
+  /* =========================
+     BACKEND ENDPOINTS
+  ========================== */
+  const BACKEND_HTTP = "https://orbit-38iw.onrender.com";
+  const BACKEND_WS   = "wss://orbit-38iw.onrender.com";
 
-  // 3. Handle Google login
-  function handleGoogleLogin(response) {
-    fetch("/auth/google", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ credential: response.credential })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.is_new) {
-        window.location.href = "/google_auth.html";
-      }
-      // old users stay on index.html
+  const DAILY_BASE = 10;
+  const DAILY_BONUS = 10;
+
+  /* =========================
+     COOKIE + DATE HELPERS
+  ========================== */
+  function setCookie(name, value, days = 1) {
+    const d = new Date();
+    d.setTime(d.getTime() + days * 86400000);
+    document.cookie =
+      name + "=" + encodeURIComponent(value) +
+      ";expires=" + d.toUTCString() +
+      ";path=/;SameSite=Lax";
+  }
+
+  function getCookie(name) {
+    return document.cookie
+      .split("; ")
+      .find(r => r.startsWith(name + "="))
+      ?.split("=")[1];
+  }
+
+  function today() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function hasShareBonusToday() {
+    return getCookie("orbit_shared_date") === today();
+  }
+
+  function markSharedToday() {
+    setCookie("orbit_shared_date", today(), 1);
+    setCookie("orbit_shared", "true", 1);
+  }
+
+  /* =========================
+     UI HELPERS
+  ========================== */
+  function updateUsageUI(remaining, limit) {
+    const used = Math.max(0, limit - remaining);
+    const pct = Math.min(100, Math.round((used / limit) * 100));
+
+    const bar = document.getElementById("orbit-usage-bar");
+    const text = document.getElementById("orbit-usage-text");
+
+    if (bar) bar.style.width = pct + "%";
+    if (text) text.textContent = `Used ${used} of ${limit} prompts today`;
+  }
+
+  function renderMarkdown(md) {
+    return DOMPurify.sanitize(
+      marked.parse(md || "", { breaks: true })
+    );
+  }
+
+  function enhanceCodeBlocks(container) {
+    if (!container) return;
+
+    container.querySelectorAll("pre code").forEach(code => {
+      Prism.highlightElement(code);
+
+      const pre = code.parentElement;
+      if (pre.querySelector(".copy-code-btn")) return;
+
+      const btn = document.createElement("button");
+      btn.className = "copy-code-btn";
+      btn.textContent = "Copy";
+
+      btn.onclick = () => {
+        navigator.clipboard.writeText(code.textContent);
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy", 1200);
+      };
+
+      pre.appendChild(btn);
     });
   }
-document.addEventListener('DOMContentLoaded', () => {
-  initAuthUI();
 
-  // join form thank you
-  const joinForm = document.getElementById('joinForm');
-  if (joinForm) {
-    const thank = document.getElementById('thankyouMsg');
-    joinForm.addEventListener('submit', () => { if (thank) thank.style.display = 'block'; });
-  }
+  /* =========================
+     ORBIT OBJECT
+  ========================== */
+  window.Orbit = {
+    history: [],
 
-  // mobile menu
-  const menuToggle = document.getElementById('menuToggle');
-  const navLinks = document.getElementById('navLinks');
-  menuToggle && menuToggle.addEventListener('click', () => {
-    navLinks.classList.toggle('open');
-    menuToggle.classList.toggle('open');
-  });
-});
+    askStream() {
+      const input = document.getElementById("orbit-input");
+      const out = document.getElementById("orbit-response");
+      const meta = document.getElementById("orbit-meta");
+
+      if (!input || !out || !meta) return;
+
+      const question = input.value.trim();
+      if (!question) return;
+
+      let rawResponse = "";
+      out.innerHTML = "";
+      meta.textContent = "Thinking…";
+
+      const shared = hasShareBonusToday();
+      const ws = new WebSocket(BACKEND_WS + "/ws");
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ question, shared }));
+      };
+
+      ws.onmessage = (event) => {
+        let msg;
+        try { msg = JSON.parse(event.data); } catch { return; }
+
+        if (msg.type === "token") {
+          rawResponse += msg.content;
+          out.innerHTML = renderMarkdown(rawResponse);
+          enhanceCodeBlocks(out);
+        }
+
+        if (msg.type === "done") {
+          Orbit.history.push({ question, answer: rawResponse });
+          if (Orbit.history.length > 50) Orbit.history.shift();
+
+          const limit = shared ? DAILY_BASE + DAILY_BONUS : DAILY_BASE;
+          if (typeof msg.remaining === "number") {
+            updateUsageUI(msg.remaining, limit);
+          }
+
+          meta.textContent = "✓ Response complete";
+          input.value = "";
+          ws.close();
+        }
+
+        if (msg.error) {
+          out.textContent = msg.error;
+          meta.textContent = "Daily limit reached";
+          ws.close();
+        }
+      };
+
+      ws.onerror = () => {
+        out.textContent = "Connection error. Please retry.";
+        meta.textContent = "";
+        ws.close();
+      };
+    },
+
+    share(type) {
+      if (!hasShareBonusToday()) {
+        markSharedToday();
+        alert("Thanks for sharing! You unlocked 10 extra prompts today.");
+      }
+
+      const url = location.href;
+      if (type === "twitter") window.open("https://twitter.com/intent/tweet?url=" + encodeURIComponent(url));
+      if (type === "facebook") window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url));
+      if (type === "linkedin") window.open("https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(url));
+      if (type === "instagram") alert("Instagram doesn’t support direct links. Copy and share manually.");
+      if (type === "copy") {
+        navigator.clipboard.writeText(url);
+        alert("Link copied.");
+      }
+    },
+
+    toggleHistory() {
+      const panel = document.getElementById("orbit-history");
+      if (!panel) return;
+
+      if (panel.style.display === "none") {
+        Orbit.renderHistory();
+        panel.style.display = "block";
+      } else {
+        panel.style.display = "none";
+      }
+    },
+
+    renderHistory() {
+      const panel = document.getElementById("orbit-history");
+      if (!panel) return;
+
+      if (Orbit.history.length === 0) {
+        panel.innerHTML = "<em style='opacity:0.7'>No history yet.</em>";
+        return;
+      }
+
+      panel.innerHTML = Orbit.history.map(h => `
+        <div style="margin-bottom:16px">
+          <strong>You:</strong> ${h.question}
+          <div style="margin-top:6px">
+            <strong>Orbit:</strong>
+            <div style="margin-top:6px">${renderMarkdown(h.answer)}</div>
+          </div>
+        </div>
+      `).join("");
+
+      enhanceCodeBlocks(panel);
+    }
+  };
+
+})();
 </script>
 
-
-<script src="script.js"></script>
 </body>
 </html>
