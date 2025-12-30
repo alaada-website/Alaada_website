@@ -305,84 +305,120 @@
      CONFIG
   ========================== */
   const BACKEND_WS = "wss://orbit-38iw.onrender.com";
-  const LOCAL_HISTORY_KEY = "orbit_history_backup";
 
-  let identityReady = false;
+  const DAILY_BASE  = 10;
+  const DAILY_BONUS = 10;
+
+  const IDENTITY_KEY = "orbit_identity";
+  const USAGE_KEY    = "orbit_usage";
+  const HISTORY_KEY  = "orbit_history_backup";
 
   /* =========================
-     COOKIE HELPERS
+     HELPERS
   ========================== */
+  function today() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
   function setCookie(name, value, days = 365) {
     const d = new Date(Date.now() + days * 86400000);
     document.cookie =
       `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
   }
 
-  function getCookie(name) {
-    const match = document.cookie
-      .split("; ")
-      .find(r => r.startsWith(name + "="));
-    return match ? decodeURIComponent(match.split("=")[1]) : null;
+  /* =========================
+     IDENTITY (FRONTEND SOURCE)
+  ========================== */
+  function getIdentity() {
+    return JSON.parse(localStorage.getItem(IDENTITY_KEY) || "null");
   }
 
-  function today() {
-    return new Date().toISOString().slice(0, 10);
+  function hasIdentity() {
+    const id = getIdentity();
+    return id && id.name && id.email;
+  }
+
+  function saveIdentity(name, email) {
+    const obj = { name, email };
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify(obj));
+
+    // mirror to cookies for backend
+    setCookie("orbit_name", name);
+    setCookie("orbit_email", email);
+  }
+
+  /* =========================
+     USAGE (FRONTEND-ONLY)
+  ========================== */
+  function loadUsage() {
+    const u = JSON.parse(localStorage.getItem(USAGE_KEY) || "{}");
+    if (u.date !== today()) {
+      return { date: today(), used: 0, bonus: false };
+    }
+    return u;
+  }
+
+  function saveUsage(u) {
+    localStorage.setItem(USAGE_KEY, JSON.stringify(u));
+  }
+
+  function remainingUsage() {
+    const u = loadUsage();
+    return (DAILY_BASE + (u.bonus ? DAILY_BONUS : 0)) - u.used;
+  }
+
+  function incrementUsage() {
+    const u = loadUsage();
+    u.used += 1;
+    saveUsage(u);
+    updateUsageUI();
+  }
+
+  function unlockShareBonus() {
+    const u = loadUsage();
+    if (!u.bonus) {
+      u.bonus = true;
+      saveUsage(u);
+      updateUsageUI();
+      alert("You unlocked +10 prompts today.");
+    }
+  }
+
+  function updateUsageUI() {
+    const u = loadUsage();
+    const limit = DAILY_BASE + (u.bonus ? DAILY_BONUS : 0);
+    const pct = Math.min(100, Math.round((u.used / limit) * 100));
+
+    document.getElementById("orbit-usage-text").textContent =
+      `Used ${u.used} of ${limit} prompts today`;
+
+    document.getElementById("orbit-usage-bar").style.width = pct + "%";
   }
 
   /* =========================
      MARKDOWN + CODE
   ========================== */
   function renderMarkdown(md) {
-    return DOMPurify.sanitize(
-      marked.parse(md || "", { breaks: true })
-    );
+    return DOMPurify.sanitize(marked.parse(md || "", { breaks: true }));
   }
 
   function enhanceCode(container) {
     container.querySelectorAll("pre code").forEach(code => {
       Prism.highlightElement(code);
-
-      if (code.parentElement.querySelector(".copy-btn")) return;
-
-      const btn = document.createElement("button");
-      btn.className = "copy-btn";
-      btn.textContent = "Copy";
-
-      btn.onclick = () => {
-        navigator.clipboard.writeText(code.textContent);
-        btn.textContent = "Copied!";
-        setTimeout(() => btn.textContent = "Copy", 1000);
-      };
-
-      code.parentElement.appendChild(btn);
     });
   }
 
   /* =========================
-     LOCAL HISTORY (BACKUP)
+     HISTORY (LOCAL DISPLAY)
   ========================== */
-  function loadLocalHistory() {
-    return JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || "[]");
+  function loadHistory() {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
   }
 
-  function saveLocalHistory(entry) {
-    const h = loadLocalHistory();
+  function saveHistory(entry) {
+    const h = loadHistory();
     h.push(entry);
-    localStorage.setItem(
-      LOCAL_HISTORY_KEY,
-      JSON.stringify(h.slice(-200))
-    );
-  }
-
-  /* =========================
-     SHARE BONUS
-  ========================== */
-  function hasShareBonusToday() {
-    return getCookie("orbit_shared_date") === today();
-  }
-
-  function markSharedToday() {
-    setCookie("orbit_shared_date", today(), 1);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(-200)));
   }
 
   /* =========================
@@ -390,65 +426,45 @@
   ========================== */
   window.Orbit = {
 
-    /* ---------- INIT ---------- */
     init() {
-      const name  = getCookie("orbit_name");
-      const email = getCookie("orbit_email");
+      updateUsageUI();
 
-      if (!name || !email) {
-        document.getElementById("orbit-identity").style.display = "block";
-        identityReady = false;
+      const identityBox = document.getElementById("orbit-identity");
+      const meta = document.getElementById("orbit-meta");
+
+      if (!hasIdentity()) {
+        identityBox.style.display = "block";
+        meta.textContent = "Please enter your name and email to continue.";
         return;
       }
 
-      identityReady = true;
-
+      const { name } = getIdentity();
+      identityBox.style.display = "none";
       document.getElementById("orbit-input").placeholder =
         `Ask Orbit anything, ${name}…`;
-
-      document.getElementById("orbit-meta").textContent =
-        `Welcome back, ${name}.`;
+      meta.textContent = `Welcome back, ${name}.`;
     },
 
-    /* ---------- SAVE IDENTITY ---------- */
     saveIdentity() {
       const name  = document.getElementById("orbit-name").value.trim();
       const email = document.getElementById("orbit-email").value.trim();
 
-      if (!name) {
-        alert("Please enter your name.");
-        return;
-      }
+      if (!name) return alert("Please enter your name.");
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        return alert("Please enter a valid email.");
 
-      if (!email) {
-        alert("Email is required to continue.");
-        return;
-      }
-
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        alert("Please enter a valid email address.");
-        return;
-      }
-
-      setCookie("orbit_name", name);
-      setCookie("orbit_email", email);
-
-      identityReady = true;
-
-      document.getElementById("orbit-identity").style.display = "none";
-      document.getElementById("orbit-input").placeholder =
-        `Ask Orbit anything, ${name}…`;
-
-      document.getElementById("orbit-meta").textContent =
-        `Welcome, ${name}. Orbit is ready.`;
+      saveIdentity(name, email);
+      this.init();
     },
 
-    /* ---------- ASK (STREAM) ---------- */
     askStream() {
-      if (!identityReady) {
+      if (!hasIdentity()) {
         document.getElementById("orbit-identity").style.display = "block";
-        alert("Please enter your name and email to continue.");
-        return;
+        return alert("Please enter your name and email first.");
+      }
+
+      if (remainingUsage() <= 0) {
+        return alert("Daily limit reached.");
       }
 
       const input = document.getElementById("orbit-input");
@@ -460,15 +476,12 @@
 
       let raw = "";
       out.innerHTML = "";
-      meta.textContent = "Orbit is thinking…   May take some time do not press the botton repetatly";
+      meta.textContent = "Orbit is thinking…";
 
       const ws = new WebSocket(BACKEND_WS + "/ws");
 
       ws.onopen = () => {
-        ws.send(JSON.stringify({
-          question,
-          shared: hasShareBonusToday()
-        }));
+        ws.send(JSON.stringify({ question }));
       };
 
       ws.onmessage = e => {
@@ -483,19 +496,13 @@
         if (msg.type === "done") {
           meta.textContent = "✓ Complete";
           input.value = "";
-
-          saveLocalHistory({
-            date: today(),
-            question,
-            answer: raw
-          });
-
+          incrementUsage();
+          saveHistory({ date: today(), question, answer: raw });
           ws.close();
         }
 
         if (msg.error) {
-          out.textContent = msg.error;
-          meta.textContent = "Limit reached";
+          meta.textContent = msg.error;
           ws.close();
         }
       };
@@ -506,88 +513,35 @@
       };
     },
 
-    /* ---------- HISTORY ---------- */
     toggleHistory() {
       const panel = document.getElementById("orbit-history");
-      panel.style.display =
-        panel.style.display === "block" ? "none" : "block";
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
 
-      this.renderHistory(loadLocalHistory());
-    },
-
-    renderHistory(items) {
-      const panel = document.getElementById("orbit-history");
-
-      if (!items.length) {
+      const h = loadHistory();
+      if (!h.length) {
         panel.innerHTML = "<em>No history yet.</em>";
         return;
       }
 
-      panel.innerHTML = `
-        <input placeholder="Search…" id="orbit-search">
-        <button onclick="Orbit.exportPDF()">Export PDF</button>
-        <button onclick="Orbit.deleteHistory()" style="color:#ff5555">
-          Delete
-        </button>
-        <div id="orbit-history-list"></div>
-      `;
-
-      const list = document.getElementById("orbit-history-list");
-      list.innerHTML = items.map(i => `
+      panel.innerHTML = h.map(i => `
         <div style="margin:10px 0">
           <strong>You:</strong> ${i.question}
-          <div><strong>Orbit:</strong>${renderMarkdown(i.answer)}</div>
+          <div><strong>Orbit:</strong> ${renderMarkdown(i.answer)}</div>
         </div>
       `).join("");
 
-      enhanceCode(list);
-
-      document.getElementById("orbit-search").oninput = e => {
-        const q = e.target.value.toLowerCase();
-        this.renderHistory(
-          items.filter(i =>
-            i.question.toLowerCase().includes(q) ||
-            i.answer.toLowerCase().includes(q)
-          )
-        );
-      };
+      enhanceCode(panel);
     },
 
-    exportPDF() {
-      window.print();
-    },
-
-    deleteHistory() {
-      if (!confirm("Delete your Orbit history?")) return;
-      localStorage.removeItem(LOCAL_HISTORY_KEY);
-      document.getElementById("orbit-history").innerHTML =
-        "<em>History deleted.</em>";
-    },
-
-    /* ---------- SHARE ---------- */
-    share(type) {
-      if (!hasShareBonusToday()) {
-        markSharedToday();
-        alert("You unlocked +10 prompts today.");
-      }
-
-      const url = location.href;
-      const map = {
-        twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`,
-        facebook:`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-        linkedin:`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
-      };
-
-      if (map[type]) window.open(map[type]);
-      if (type === "copy") navigator.clipboard.writeText(url);
+    share() {
+      unlockShareBonus();
+      navigator.clipboard.writeText(location.href);
     }
   };
 
   Orbit.init();
-
 })();
 </script>
-
 
 
 </body>
