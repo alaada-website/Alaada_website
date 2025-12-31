@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Alaada — Orbit</title>
+  <title>Alaada — Where Perfection meets Possibility</title>
 
   <meta name="description" content="Orbit is Alaada’s AI for thoughtful questions and clear thinking." />
   <meta name="keywords" content="Alaada, Orbit, AI, Website Analyser, Arzo Das" />
@@ -146,8 +146,7 @@
 
   <div class="hero-overlay">
     <h1>Alaada — <span>Where Perfection Meets Possibilities.</span></h1>
-    <p>Exploring imagination, building systems, and shaping intelligent tools.
-    Try Orbit, you personal assistant.	
+    <p>Exploring imagination, building systems, and shaping intelligent tools. Try Orbit — an AI built to help you understand, reason, and decide.	
 	</p>
 
     <div class="buttons">
@@ -184,14 +183,21 @@
   <button onclick="Orbit.saveIdentity()" style="margin-top:8px">Continue</button>
 </div>
 
-
-  <h2>About Orbit</h2>
-  <p>
-    Most AI tools give answers. Orbit helps you reach understanding and thinking.
-	Orbit is built to reason with context, use up-to-date information, and deliver clear, structured responses that support real decisions. It reduces guesswork, saves time, and helps you move from questions to conclusions without noise or unnecessary complexity.
-    <br><br>
-    Built at Alaada by <strong>Arzo Das</strong>.
-  </p>
+<div style="
+  margin-top:18px;
+  margin-bottom:10px;
+  padding:12px 14px;
+  background:rgba(11,114,255,0.12);
+  border-left:4px solid #0b72ff;
+  border-radius:10px;
+  font-size:0.95rem;
+  line-height:1.5;
+">
+  <strong>What can Orbit help with?</strong><br>
+  Ask Orbit to explain concepts, analyze decisions, debug ideas, or reason through problems — not just give quick answers.
+  <br><br>
+  Built at Alaada by <strong>Arzo Das</strong>.
+</div>
   
   <!-- Usage progress bar -->
 <div style="margin-top:14px">
@@ -206,8 +212,7 @@
 </div>
 
   <textarea id="orbit-input" placeholder="Ask Orbit anything…"></textarea>
-  <button onclick="Orbit.askStream()">Ask Orbit</button>
-
+  <button onclick="Orbit.askStream()">Ask Orbit →</button>
 
   <div id="orbit-meta"></div>
   <div id="orbit-response"></div>
@@ -312,6 +317,64 @@
   const IDENTITY_KEY = "orbit_identity";
   const USAGE_KEY    = "orbit_usage";
   const HISTORY_KEY  = "orbit_history_backup";
+  
+  /* =========================
+   ORBIT PROMPT AUTOFILL
+========================== */
+const ORBIT_EXAMPLES = [
+  "Explain loops in Python like I'm a beginner.",
+  "Why is my website's bounce rate high?",
+  "Compare Flask vs FastAPI for a small startup.",
+  "Explain recursion with a simple example.",
+  "How should I structure my first backend API?"
+];
+
+function typeExample(textarea, text, speed = 35) {
+  let i = 0;
+  textarea.value = "";
+  textarea.setAttribute("data-typing", "true");
+
+  const timer = setInterval(() => {
+    if (textarea.getAttribute("data-user-input") === "true") {
+      clearInterval(timer);
+      textarea.removeAttribute("data-typing");
+      return;
+    }
+
+    textarea.value += text.charAt(i);
+    i++;
+
+    if (i >= text.length) {
+      clearInterval(timer);
+      textarea.removeAttribute("data-typing");
+    }
+  }, speed);
+}
+
+function startOrbitAutofill() {
+  const textarea = document.getElementById("orbit-input");
+  if (!textarea) return;
+
+  let index = 0;
+
+  textarea.addEventListener("input", () => {
+    textarea.setAttribute("data-user-input", "true");
+  });
+
+  setTimeout(() => {
+    typeExample(textarea, ORBIT_EXAMPLES[index]);
+  }, 1200);
+
+  setInterval(() => {
+    if (
+      textarea.value.trim() === "" &&
+      textarea.getAttribute("data-user-input") !== "true"
+    ) {
+      index = (index + 1) % ORBIT_EXAMPLES.length;
+      typeExample(textarea, ORBIT_EXAMPLES[index]);
+    }
+  }, 9000);
+}
 
   /* =========================
      HELPERS
@@ -428,6 +491,8 @@
 
     init() {
       updateUsageUI();
+
+	  startOrbitAutofill();
 
       const identityBox = document.getElementById("orbit-identity");
       const meta = document.getElementById("orbit-meta");
