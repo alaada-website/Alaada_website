@@ -319,7 +319,6 @@
   const MEMORY_KEY   = "orbit_prompt_memory";
 
   const MAX_MEMORY = 3;
-  const MAX_INPUT_CHARS = 2000;
   const COOLDOWN_MS = 4000;
 
   const DAILY_LIMIT = 10;
@@ -330,25 +329,31 @@
   let orbitWS = null;
 
   /* =========================
-     SAFE STORAGE HELPERS
+     SAFE JSON
   ========================== */
   function safeJSON(value, fallback) {
-    try { return JSON.parse(value); }
-    catch { return fallback; }
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" ? parsed : fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   /* =========================
-     USAGE (FRONTEND)
+     USAGE (FRONTEND ONLY)
   ========================== */
   function todayKey() {
     return "orbit_usage_" + new Date().toISOString().slice(0, 10);
   }
 
   function getUsageData() {
-    return safeJSON(
-      localStorage.getItem(todayKey()),
-      { used: 0, bonus: 0, shared: false }
-    );
+    const d = safeJSON(localStorage.getItem(todayKey()), null);
+    return {
+      used: Number(d?.used) || 0,
+      bonus: Number(d?.bonus) || 0,
+      shared: Boolean(d?.shared)
+    };
   }
 
   function saveUsageData(d) {
@@ -401,21 +406,21 @@
     "How should I structure my first visit to Kolkata?"
   ];
 
-  function typeExample(textarea, text, speed = 35) {
+  function typeExample(ta, text, speed = 35) {
     let i = 0;
-    textarea.value = "";
-    textarea.dataset.typing = "true";
+    ta.value = "";
+    ta.dataset.typing = "true";
 
-    const timer = setInterval(() => {
-      if (textarea.dataset.userInput === "true") {
-        clearInterval(timer);
-        textarea.dataset.typing = "false";
+    const t = setInterval(() => {
+      if (ta.dataset.userInput === "true") {
+        clearInterval(t);
+        ta.dataset.typing = "false";
         return;
       }
-      textarea.value += text[i++] || "";
+      ta.value += text[i++] || "";
       if (i >= text.length) {
-        clearInterval(timer);
-        textarea.dataset.typing = "false";
+        clearInterval(t);
+        ta.dataset.typing = "false";
       }
     }, speed);
   }
@@ -438,7 +443,7 @@
   }
 
   /* =========================
-     IDENTITY
+     IDENTITY (LOCAL ONLY)
   ========================== */
   function getIdentity() {
     return safeJSON(localStorage.getItem(IDENTITY_KEY), null);
@@ -446,16 +451,7 @@
 
   function hasIdentity() {
     const id = getIdentity();
-
-ws.send(JSON.stringify({
-  question: finalPrompt,
-  identity: {
-    name: id.name,
-    email: id.email
-  }
-}));
-
-    return id && id.name && id.email;
+    return Boolean(id && id.name && id.email);
   }
 
   function saveIdentity(name, email) {
@@ -471,17 +467,17 @@ ws.send(JSON.stringify({
     return safeJSON(localStorage.getItem(MEMORY_KEY), []);
   }
 
-  function savePromptMemory(arr) {
-    localStorage.setItem(MEMORY_KEY, JSON.stringify(arr.slice(-MAX_MEMORY)));
+  function savePromptMemory(a) {
+    localStorage.setItem(MEMORY_KEY, JSON.stringify(a.slice(-MAX_MEMORY)));
   }
 
   function loadHistory() {
     return safeJSON(localStorage.getItem(HISTORY_KEY), []);
   }
 
-  function saveHistory(entry) {
+  function saveHistory(e) {
     const h = loadHistory();
-    h.push(entry);
+    h.push(e);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(-200)));
   }
 
@@ -502,7 +498,7 @@ ws.send(JSON.stringify({
       updateUsageUI();
       startOrbitAutofill();
 
-      const box = document.getElementById("orbit-identity");
+      const box  = document.getElementById("orbit-identity");
       const meta = document.getElementById("orbit-meta");
 
       if (!hasIdentity()) {
@@ -516,7 +512,7 @@ ws.send(JSON.stringify({
     },
 
     saveIdentity() {
-      const name = document.getElementById("orbit-name").value.trim();
+      const name  = document.getElementById("orbit-name").value.trim();
       const email = document.getElementById("orbit-email").value.trim();
 
       if (!name) return alert("Please enter your name.");
@@ -539,8 +535,8 @@ ws.send(JSON.stringify({
       if (inFlight || now - lastAskTime < COOLDOWN_MS) return;
 
       const input = document.getElementById("orbit-input");
-      const out = document.getElementById("orbit-response");
-      const meta = document.getElementById("orbit-meta");
+      const out   = document.getElementById("orbit-response");
+      const meta  = document.getElementById("orbit-meta");
 
       const q = input.value.trim();
       if (!q) return;
@@ -548,21 +544,21 @@ ws.send(JSON.stringify({
       inFlight = true;
       lastAskTime = now;
 
-      const memory = loadPromptMemory();
-      const finalPrompt =
-        memory.length
-          ? q + "\n\npast prompts:\n" + memory.map(p => `- ${p}`).join("\n")
-          : q;
+      const mem = loadPromptMemory();
+      const finalPrompt = mem.length
+        ? q + "\n\npast prompts:\n" + mem.map(p => `- ${p}`).join("\n")
+        : q;
 
-      savePromptMemory([...memory, q]);
+      savePromptMemory([...mem, q]);
 
       out.innerHTML = "";
       meta.textContent = "Orbit is thinking…";
 
       orbitWS = new WebSocket(BACKEND_WS + "/ws");
 
-      orbitWS.onopen = () =>
+      orbitWS.onopen = () => {
         orbitWS.send(JSON.stringify({ question: finalPrompt }));
+      };
 
       let raw = "";
 
@@ -575,7 +571,11 @@ ws.send(JSON.stringify({
         }
         if (msg.type === "done") {
           incrementUsage();
-          saveHistory({ date: new Date().toISOString().slice(0,10), question: q, answer: raw });
+          saveHistory({
+            date: new Date().toISOString().slice(0,10),
+            question: q,
+            answer: raw
+          });
           input.value = "";
           input.dataset.userInput = "false";
           meta.textContent = "✓ Complete";
