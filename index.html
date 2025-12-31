@@ -309,72 +309,61 @@
   /* =========================
      CONFIG
   ========================== */
-  const BACKEND_WS = "wss://orbit-38iw.onrender.com";
-
-  const DAILY_BASE  = 10;
-  const DAILY_BONUS = 10;
+  const BACKEND_WS   = "wss://orbit-38iw.onrender.com";
+  const BACKEND_HTTP = "https://orbit-38iw.onrender.com";
 
   const IDENTITY_KEY = "orbit_identity";
-  const USAGE_KEY    = "orbit_usage";
   const HISTORY_KEY  = "orbit_history_backup";
-  
+
   /* =========================
-   ORBIT PROMPT AUTOFILL
-========================== */
-const ORBIT_EXAMPLES = [
-  "Explain loops in Python like I'm a beginner.",
-  "Why is my website's bounce rate high?",
-  "Compare Flask vs FastAPI for a small startup.",
-  "Explain recursion with a simple example.",
-  "How should I structure my first backend API?"
-];
+     ORBIT PROMPT AUTOFILL
+  ========================== */
+  const ORBIT_EXAMPLES = [
+    "Explain loops in Python like I'm a beginner.",
+    "Why is my website's bounce rate high?",
+    "Compare Flask vs FastAPI for a small startup.",
+    "Explain recursion with a simple example.",
+    "How should I structure my first backend API?"
+  ];
 
-function typeExample(textarea, text, speed = 35) {
-  let i = 0;
-  textarea.value = "";
-  textarea.setAttribute("data-typing", "true");
+  function typeExample(textarea, text, speed = 35) {
+    let i = 0;
+    textarea.value = "";
+    textarea.dataset.typing = "true";
 
-  const timer = setInterval(() => {
-    if (textarea.getAttribute("data-user-input") === "true") {
-      clearInterval(timer);
-      textarea.removeAttribute("data-typing");
-      return;
-    }
+    const timer = setInterval(() => {
+      if (textarea.dataset.userInput === "true") {
+        clearInterval(timer);
+        delete textarea.dataset.typing;
+        return;
+      }
 
-    textarea.value += text.charAt(i);
-    i++;
+      textarea.value += text.charAt(i++);
+      if (i >= text.length) {
+        clearInterval(timer);
+        delete textarea.dataset.typing;
+      }
+    }, speed);
+  }
 
-    if (i >= text.length) {
-      clearInterval(timer);
-      textarea.removeAttribute("data-typing");
-    }
-  }, speed);
-}
+  function startOrbitAutofill() {
+    const textarea = document.getElementById("orbit-input");
+    if (!textarea) return;
 
-function startOrbitAutofill() {
-  const textarea = document.getElementById("orbit-input");
-  if (!textarea) return;
+    let index = 0;
+    textarea.addEventListener("input", () => {
+      textarea.dataset.userInput = "true";
+    });
 
-  let index = 0;
+    setTimeout(() => typeExample(textarea, ORBIT_EXAMPLES[index]), 1200);
 
-  textarea.addEventListener("input", () => {
-    textarea.setAttribute("data-user-input", "true");
-  });
-
-  setTimeout(() => {
-    typeExample(textarea, ORBIT_EXAMPLES[index]);
-  }, 1200);
-
-  setInterval(() => {
-    if (
-      textarea.value.trim() === "" &&
-      textarea.getAttribute("data-user-input") !== "true"
-    ) {
-      index = (index + 1) % ORBIT_EXAMPLES.length;
-      typeExample(textarea, ORBIT_EXAMPLES[index]);
-    }
-  }, 9000);
-}
+    setInterval(() => {
+      if (!textarea.value.trim() && textarea.dataset.userInput !== "true") {
+        index = (index + 1) % ORBIT_EXAMPLES.length;
+        typeExample(textarea, ORBIT_EXAMPLES[index]);
+      }
+    }, 9000);
+  }
 
   /* =========================
      HELPERS
@@ -390,7 +379,7 @@ function startOrbitAutofill() {
   }
 
   /* =========================
-     IDENTITY (FRONTEND SOURCE)
+     IDENTITY
   ========================== */
   function getIdentity() {
     return JSON.parse(localStorage.getItem(IDENTITY_KEY) || "null");
@@ -402,59 +391,21 @@ function startOrbitAutofill() {
   }
 
   function saveIdentity(name, email) {
-    const obj = { name, email };
-    localStorage.setItem(IDENTITY_KEY, JSON.stringify(obj));
-
-    // mirror to cookies for backend
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify({ name, email }));
     setCookie("orbit_name", name);
     setCookie("orbit_email", email);
   }
 
   /* =========================
-     USAGE (FRONTEND-ONLY)
+     USAGE (BACKEND DRIVEN)
   ========================== */
-  function loadUsage() {
-    const u = JSON.parse(localStorage.getItem(USAGE_KEY) || "{}");
-    if (u.date !== today()) {
-      return { date: today(), used: 0, bonus: false };
-    }
-    return u;
-  }
-
-  function saveUsage(u) {
-    localStorage.setItem(USAGE_KEY, JSON.stringify(u));
-  }
-
-  function remainingUsage() {
-    const u = loadUsage();
-    return (DAILY_BASE + (u.bonus ? DAILY_BONUS : 0)) - u.used;
-  }
-
-  function incrementUsage() {
-    const u = loadUsage();
-    u.used += 1;
-    saveUsage(u);
-    updateUsageUI();
-  }
-
-  function unlockShareBonus() {
-    const u = loadUsage();
-    if (!u.bonus) {
-      u.bonus = true;
-      saveUsage(u);
-      updateUsageUI();
-      alert("You unlocked +10 prompts today.");
-    }
-  }
-
-  function updateUsageUI() {
-    const u = loadUsage();
-    const limit = DAILY_BASE + (u.bonus ? DAILY_BONUS : 0);
-    const pct = Math.min(100, Math.round((u.used / limit) * 100));
+  function updateUsageFromBackend(remaining) {
+    const limit = 20; // 10 base + 10 bonus max
+    const used = Math.max(0, limit - remaining);
+    const pct = Math.min(100, Math.round((used / limit) * 100));
 
     document.getElementById("orbit-usage-text").textContent =
-      `Used ${u.used} of ${limit} prompts today`;
-
+      `Used ${used} of ${limit} prompts today`;
     document.getElementById("orbit-usage-bar").style.width = pct + "%";
   }
 
@@ -490,9 +441,7 @@ function startOrbitAutofill() {
   window.Orbit = {
 
     init() {
-      updateUsageUI();
-
-	  startOrbitAutofill();
+      startOrbitAutofill();
 
       const identityBox = document.getElementById("orbit-identity");
       const meta = document.getElementById("orbit-meta");
@@ -528,10 +477,6 @@ function startOrbitAutofill() {
         return alert("Please enter your name and email first.");
       }
 
-      if (remainingUsage() <= 0) {
-        return alert("Daily limit reached.");
-      }
-
       const input = document.getElementById("orbit-input");
       const out   = document.getElementById("orbit-response");
       const meta  = document.getElementById("orbit-meta");
@@ -541,7 +486,7 @@ function startOrbitAutofill() {
 
       let raw = "";
       out.innerHTML = "";
-      meta.textContent = "Orbit is thinking…  This may take some time, please wait.";
+      meta.textContent = "Orbit is thinking…";
 
       const ws = new WebSocket(BACKEND_WS + "/ws");
 
@@ -561,7 +506,11 @@ function startOrbitAutofill() {
         if (msg.type === "done") {
           meta.textContent = "✓ Complete";
           input.value = "";
-          incrementUsage();
+
+          if (typeof msg.remaining === "number") {
+            updateUsageFromBackend(msg.remaining);
+          }
+
           saveHistory({ date: today(), question, answer: raw });
           ws.close();
         }
@@ -598,16 +547,21 @@ function startOrbitAutofill() {
       enhanceCode(panel);
     },
 
-    share() {
-      unlockShareBonus();
+    share(type) {
+      const ws = new WebSocket(BACKEND_WS + "/ws");
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ question: "shared_orbit", shared: true }));
+        ws.close();
+      };
+
       navigator.clipboard.writeText(location.href);
+      alert("Shared! Bonus prompts unlocked.");
     }
   };
 
   Orbit.init();
 })();
 </script>
-
 
 </body>
 </html>
