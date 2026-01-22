@@ -280,6 +280,23 @@
     <a href="https://www.facebook.com/profile.php?id=61583515497634" target="_blank">Facebook</a>
     <span>alaada@alaada.com</span>
   </div>
+  <button onclick="logout()">Logout</button>
+
+<script>
+function logout() {
+  fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      "X-Appwrite-Project": APPWRITE_PROJECT_ID
+    }
+  }).then(() => {
+    localStorage.removeItem("orbit_identity");
+    location.reload();
+  });
+}
+</script>
+
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
@@ -294,179 +311,174 @@
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
 
 <script>
-(function () {
+/* =========================================================
+   APPWRITE AUTH + COOKIE GUARD + ORBIT BOOTSTRAP
+   PRODUCTION SAFE & APPWRITE-CORRECT
+========================================================= */
+(() => {
   "use strict";
 
   /* =========================
      CONFIG
   ========================== */
+  const APPWRITE_ENDPOINT = "https://sfo.cloud.appwrite.io/v1";
+  const APPWRITE_PROJECT_ID = "6972444700208a437da1";
+
+  const AUTH_COOKIE  = "alaada_auth";
+  const IDENTITY_KEY = "orbit_identity";
+
+  // 🔒 Appwrite REQUIRES origin only (no path, no params)
+  const ORIGIN = window.location.origin;
+
+  const GOOGLE_LOGIN =
+  "https://sfo.cloud.appwrite.io/v1/account/sessions/oauth2/google" +
+  "?project=6972444700208a437da1" +
+  "&success=https://www.alaada.com" +
+  "&failure=https://www.alaada.com/fail";
+
+
+  /* =========================
+     COOKIE HELPERS
+     (Optimization only — never trusted alone)
+  ========================== */
+  function setAuthCookie() {
+    document.cookie =
+      `${AUTH_COOKIE}=1;` +
+      `path=/;` +
+      `max-age=${60 * 60 * 24 * 7};` +
+      `SameSite=Lax;Secure`;
+  }
+
+  function clearAuthCookie() {
+    document.cookie =
+      `${AUTH_COOKIE}=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT;SameSite=Lax;Secure`;
+  }
+
+  function hasAuthCookie() {
+    return document.cookie.split("; ").some(c =>
+      c.startsWith(AUTH_COOKIE + "=")
+    );
+  }
+
+  /* =========================
+     SAFE JSON
+  ========================== */
+  function safeJSON(v, f) {
+    try {
+      const p = JSON.parse(v);
+      return p && typeof p === "object" ? p : f;
+    } catch {
+      return f;
+    }
+  }
+
+  /* =========================
+     GLOBAL LOGOUT
+  ========================== */
+  window.logout = async function () {
+    try {
+      await fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
+      });
+    } finally {
+      clearAuthCookie();
+      localStorage.removeItem(IDENTITY_KEY);
+      location.replace(ORIGIN);
+    }
+  };
+
+  /* =========================
+     AUTHENTICATION FLOW
+     (SESSION IS SOURCE OF TRUTH)
+  ========================== */
+  async function authenticate() {
+    try {
+      const res = await fetch(`${APPWRITE_ENDPOINT}/account`, {
+        credentials: "include",
+        headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
+      });
+
+      // ❌ No valid session → OAuth
+      if (!res.ok) {
+        clearAuthCookie();
+        window.location.replace(GOOGLE_LOGIN);
+        return false;
+      }
+
+      const user = await res.json();
+
+      // ✅ Valid Appwrite session
+      setAuthCookie();
+
+      if (user?.email) {
+        localStorage.setItem(
+          IDENTITY_KEY,
+          JSON.stringify({
+            name: user.name || "User",
+            email: user.email
+          })
+        );
+      }
+
+      return true;
+
+    } catch (err) {
+      console.error("Auth error:", err);
+      clearAuthCookie();
+      window.location.replace(GOOGLE_LOGIN);
+      return false;
+    }
+  }
+
+  /* =========================
+     ORBIT CORE
+  ========================== */
   const BACKEND_WS = "wss://orbit-38iw.onrender.com";
 
-  const IDENTITY_KEY = "orbit_identity";
-  const HISTORY_KEY  = "orbit_history_backup";
-  const MEMORY_KEY   = "orbit_prompt_memory";
+  const HISTORY_KEY = "orbit_history_backup";
+  const MEMORY_KEY  = "orbit_prompt_memory";
 
-  const MAX_MEMORY = 3;
-  const COOLDOWN_MS = 4000;
-
-  const DAILY_LIMIT = 10;
-  const SHARE_BONUS = 3;
+  const MAX_MEMORY   = 3;
+  const COOLDOWN_MS  = 4000;
+  const DAILY_LIMIT  = 10;
+  const SHARE_BONUS  = 3;
 
   let lastAskTime = 0;
   let inFlight = false;
   let orbitWS = null;
 
-  /* =========================
-     SAFE JSON
-  ========================== */
-  function safeJSON(value, fallback) {
-    try {
-      const parsed = JSON.parse(value);
-      return parsed && typeof parsed === "object" ? parsed : fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  /* =========================
-     USAGE (FRONTEND ONLY)
-  ========================== */
   function todayKey() {
     return "orbit_usage_" + new Date().toISOString().slice(0, 10);
   }
 
   function getUsageData() {
-    const d = safeJSON(localStorage.getItem(todayKey()), null);
+    const d = safeJSON(localStorage.getItem(todayKey()), {});
     return {
-      used: Number(d?.used) || 0,
-      bonus: Number(d?.bonus) || 0,
-      shared: Boolean(d?.shared)
+      used: Number(d.used) || 0,
+      bonus: Number(d.bonus) || 0,
+      shared: Boolean(d.shared)
     };
   }
 
   function saveUsageData(d) {
     localStorage.setItem(todayKey(), JSON.stringify(d));
-    updateUsageUI();
   }
 
   function incrementUsage() {
     const d = getUsageData();
-    d.used += 1;
+    d.used++;
     saveUsageData(d);
-  }
-
-  function usageLimit() {
-    const d = getUsageData();
-    return DAILY_LIMIT + d.bonus;
   }
 
   function canAsk() {
     const d = getUsageData();
-    return d.used < usageLimit();
+    return d.used < (DAILY_LIMIT + d.bonus);
   }
 
-  function updateUsageUI() {
-    const d = getUsageData();
-    const limit = usageLimit();
-
-    const text = document.getElementById("orbit-usage-text");
-    const bar  = document.getElementById("orbit-usage-bar");
-    if (!text || !bar) return;
-
-    const pct = Math.min((d.used / limit) * 100, 100);
-    bar.style.width = pct + "%";
-    bar.style.background = d.used >= limit ? "#ff4d4f" : "#0b72ff";
-
-    text.textContent =
-      d.used >= limit
-        ? `${d.used} / ${limit} prompts — limit reached`
-        : `${d.used} / ${limit} prompts used today`;
-  }
-
-  /* =========================
-     AUTOFILL
-  ========================== */
-  const ORBIT_EXAMPLES = [
-    "Explain loops in Python like I'm a beginner.",
-    "Write a story about India",
-    "Compare Flask vs FastAPI for a small startup.",
-    "Let's chat about cricket!",
-    "How should I structure my first visit to Kolkata?"
-  ];
-
-  function typeExample(ta, text, speed = 35) {
-    let i = 0;
-    ta.value = "";
-    ta.dataset.typing = "true";
-
-    const t = setInterval(() => {
-      if (ta.dataset.userInput === "true") {
-        clearInterval(t);
-        ta.dataset.typing = "false";
-        return;
-      }
-      ta.value += text[i++] || "";
-      if (i >= text.length) {
-        clearInterval(t);
-        ta.dataset.typing = "false";
-      }
-    }, speed);
-  }
-
-  function startOrbitAutofill() {
-    const ta = document.getElementById("orbit-input");
-    if (!ta) return;
-
-    let idx = 0;
-    ta.addEventListener("input", () => ta.dataset.userInput = "true");
-
-    setTimeout(() => typeExample(ta, ORBIT_EXAMPLES[idx]), 1200);
-
-    setInterval(() => {
-      if (!ta.value.trim() && ta.dataset.userInput !== "true") {
-        idx = (idx + 1) % ORBIT_EXAMPLES.length;
-        typeExample(ta, ORBIT_EXAMPLES[idx]);
-      }
-    }, 9000);
-  }
-
-  /* =========================
-     IDENTITY (LOCAL ONLY)
-  ========================== */
   function getIdentity() {
     return safeJSON(localStorage.getItem(IDENTITY_KEY), null);
-  }
-
-  function hasIdentity() {
-    const id = getIdentity();
-    return Boolean(id && id.name && id.email);
-  }
-
-  function saveIdentity(name, email) {
-    localStorage.setItem(IDENTITY_KEY, JSON.stringify({ name, email }));
-    document.cookie = `orbit_name=${encodeURIComponent(name)};path=/;SameSite=Lax`;
-    document.cookie = `orbit_email=${encodeURIComponent(email)};path=/;SameSite=Lax`;
-  }
-
-  /* =========================
-     MEMORY + HISTORY
-  ========================== */
-  function loadPromptMemory() {
-    return safeJSON(localStorage.getItem(MEMORY_KEY), []);
-  }
-
-  function savePromptMemory(a) {
-    localStorage.setItem(MEMORY_KEY, JSON.stringify(a.slice(-MAX_MEMORY)));
-  }
-
-  function loadHistory() {
-    return safeJSON(localStorage.getItem(HISTORY_KEY), []);
-  }
-
-  function saveHistory(e) {
-    const h = loadHistory();
-    h.push(e);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(-200)));
   }
 
   function renderMarkdown(md) {
@@ -483,36 +495,24 @@
   window.Orbit = {
 
     init() {
-      updateUsageUI();
-      startOrbitAutofill();
-
-      const box  = document.getElementById("orbit-identity");
       const meta = document.getElementById("orbit-meta");
+      const box  = document.getElementById("orbit-identity");
+      const id   = getIdentity();
 
-      if (!hasIdentity()) {
+      if (!id || !id.email) {
         box.style.display = "block";
-        meta.textContent = "Please enter your name and email to continue.";
+        meta.textContent = "Please sign in to continue.";
         return;
       }
 
       box.style.display = "none";
-      meta.textContent = `Welcome back, ${getIdentity().name}.`;
-    },
-
-    saveIdentity() {
-      const name  = document.getElementById("orbit-name").value.trim();
-      const email = document.getElementById("orbit-email").value.trim();
-
-      if (!name) return alert("Please enter your name.");
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-        return alert("Please enter a valid email.");
-
-      saveIdentity(name, email);
-      this.init();
+      meta.textContent = `Welcome back, ${id.name}.`;
     },
 
     askStream() {
-      if (!hasIdentity()) return alert("Please enter your name and email first.");
+      const id = getIdentity();
+      if (!id) return alert("Authentication required.");
+
       if (!canAsk()) {
         document.getElementById("orbit-meta").textContent =
           "Daily limit reached. Share Orbit to unlock more prompts.";
@@ -532,21 +532,12 @@
       inFlight = true;
       lastAskTime = now;
 
-      const mem = loadPromptMemory();
-      const finalPrompt = mem.length
-        ? q + "\n\npast prompts:\n" + mem.map(p => `- ${p}`).join("\n")
-        : q;
-
-      savePromptMemory([...mem, q]);
-
       out.innerHTML = "";
       meta.textContent = "Orbit is thinking…";
 
-      orbitWS = new WebSocket(BACKEND_WS + "/ws");
-
-      orbitWS.onopen = () => {
-        orbitWS.send(JSON.stringify({ question: finalPrompt }));
-      };
+      orbitWS = new WebSocket(`${BACKEND_WS}/ws`);
+      orbitWS.onopen = () =>
+        orbitWS.send(JSON.stringify({ question: q }));
 
       let raw = "";
 
@@ -559,13 +550,7 @@
         }
         if (msg.type === "done") {
           incrementUsage();
-          saveHistory({
-            date: new Date().toISOString().slice(0,10),
-            question: q,
-            answer: raw
-          });
           input.value = "";
-          input.dataset.userInput = "false";
           meta.textContent = "✓ Complete";
           inFlight = false;
           orbitWS.close();
@@ -576,56 +561,20 @@
         meta.textContent = "Connection error";
         inFlight = false;
       };
-    },
-
-    toggleHistory() {
-      const panel = document.getElementById("orbit-history");
-      panel.style.display = panel.style.display === "block" ? "none" : "block";
-
-      const h = loadHistory();
-      panel.innerHTML = h.length
-        ? h.map(i =>
-            `<div><strong>You:</strong> ${i.question}
-             <div><strong>Orbit:</strong> ${renderMarkdown(i.answer)}</div></div>`
-          ).join("")
-        : "<em>No history yet.</em>";
-
-      enhanceCode(panel);
-    },
-
-    share(platform = "copy") {
-      const d = getUsageData();
-      if (d.shared) return alert("Already shared today.");
-
-      const url = location.href;
-      const links = {
-        twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`,
-        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
-      };
-
-      platform === "copy"
-        ? navigator.clipboard.writeText(url)
-        : links[platform] && window.open(links[platform], "_blank", "noopener");
-
-      d.shared = true;
-      d.bonus += SHARE_BONUS;
-      saveUsageData(d);
-
-      document.getElementById("orbit-meta").textContent =
-        "Bonus unlocked. You can continue asking.";
     }
   };
 
-  window.addEventListener("beforeunload", () => {
-    try { orbitWS && orbitWS.close(); } catch {}
+  /* =========================
+     BOOT SEQUENCE
+  ========================== */
+  window.addEventListener("load", async () => {
+    const ok = await authenticate();
+    if (ok) window.Orbit.init();
   });
 
-  Orbit.init();
 })();
 </script>
 
 
 </body>
 </html>
-
