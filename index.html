@@ -318,8 +318,8 @@
 
 <script>
 /* =========================================================
-   APPWRITE AUTH + COOKIE GUARD + ORBIT BOOTSTRAP
-   PRODUCTION SAFE & APPWRITE-CORRECT
+   APPWRITE AUTH + ORBIT BOOTSTRAP
+   PRODUCTION-SAFE (NO LOOPS, NO FAKE COOKIES)
 ========================================================= */
 (() => {
   "use strict";
@@ -330,39 +330,14 @@
   const APPWRITE_ENDPOINT = "https://sfo.cloud.appwrite.io/v1";
   const APPWRITE_PROJECT_ID = "6972444700208a437da1";
 
-  const AUTH_COOKIE  = "alaada_auth";
   const IDENTITY_KEY = "orbit_identity";
-
   const ORIGIN = window.location.origin;
 
   const GOOGLE_LOGIN =
-  "https://sfo.cloud.appwrite.io/v1/account/tokens/oauth2/google" +
-  "?project=6972444700208a437da1" +
-  "&success=https://www.alaada.com" +
-  "&failure=https://www.alaada.com/fail";
-
-
-  /* =========================
-     COOKIE HELPERS
-  ========================== */
-  function setAuthCookie() {
-    document.cookie =
-      `${AUTH_COOKIE}=1;` +
-      `path=/;` +
-      `max-age=${60 * 60 * 24 * 7};` +
-      `SameSite=Lax;Secure`;
-  }
-
-  function clearAuthCookie() {
-    document.cookie =
-      `${AUTH_COOKIE}=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT;SameSite=Lax;Secure`;
-  }
-
-  function hasAuthCookie() {
-    return document.cookie.split("; ").some(c =>
-      c.startsWith(AUTH_COOKIE + "=")
-    );
-  }
+    "https://sfo.cloud.appwrite.io/v1/account/sessions/oauth2/google" +
+    "?project=6972444700208a437da1" +
+    "&success=https://www.alaada.com" +
+    "&failure=https://www.alaada.com/fail";
 
   /* =========================
      SAFE JSON
@@ -377,92 +352,79 @@
   }
 
   /* =========================
-     GLOBAL LOGOUT
+     LOGIN / LOGOUT
   ========================== */
-  window.logout = async function () {
-  try {
-    await fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
-      method: "DELETE",
-      credentials: "include",
-      headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
-    });
-  } finally {
-    clearAuthCookie();
-    localStorage.removeItem(IDENTITY_KEY);
-    location.reload(); // Refresh to show the login button again
-  }
-};
-  
-  window.startLogin = function() {
+  window.startLogin = () => {
+    window.location.href = GOOGLE_LOGIN;
+  };
 
-  window.location.assign(GOOGLE_LOGIN);
-
-};
+  window.logout = async () => {
+    try {
+      await fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
+      });
+    } finally {
+      localStorage.removeItem(IDENTITY_KEY);
+      location.replace(ORIGIN);
+    }
+  };
 
   /* =========================
-     AUTHENTICATION FLOW
+     SESSION CHECK (WITH RETRY)
+  ========================== */
+  async function fetchAccountWithRetry(retries = 3) {
+    for (let i = 0; i <= retries; i++) {
+      const res = await fetch(`${APPWRITE_ENDPOINT}/account`, {
+        credentials: "include",
+        headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
+      });
+
+      if (res.ok) return res;
+      await new Promise(r => setTimeout(r, 600));
+    }
+    return null;
+  }
+
+  /* =========================
+     AUTHENTICATION
   ========================== */
   async function authenticate() {
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId');
-    const secret = urlParams.get('secret');
+    try {
+      const res = await fetchAccountWithRetry();
 
-    if (userId && secret) {
-      // EXCHANGE THE TOKEN FOR A SESSION
-      const sessionRes = await fetch(`${APPWRITE_ENDPOINT}/account/sessions/magic-url`, {
-        method: "PUT",
-        headers: { 
-          "X-Appwrite-Project": APPWRITE_PROJECT_ID,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ userId, secret })
-      });
-      
-      if (sessionRes.ok) {
-        // Clean the URL immediately so the secret is gone
-        window.history.replaceState({}, document.title, window.location.pathname);
+      if (!res) {
+        localStorage.removeItem(IDENTITY_KEY);
+        return false;
       }
-    }
 
-    // NOW CHECK FOR THE ACCOUNT
-    const res = await fetch(`${APPWRITE_ENDPOINT}/account`, {
-      credentials: "include", // Appwrite will now see the session created above
-      headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
-    });
+      const user = await res.json();
 
-    if (!res.ok) {
-      clearAuthCookie();
+      localStorage.setItem(
+        IDENTITY_KEY,
+        JSON.stringify({
+          name: user.name || "User",
+          email: user.email
+        })
+      );
+
+      return true;
+    } catch (err) {
+      console.error("Auth error:", err);
       localStorage.removeItem(IDENTITY_KEY);
-      return false; // STOP HERE. Don't redirect.
+      return false;
     }
-
-    const user = await res.json();
-    setAuthCookie();
-    localStorage.setItem(IDENTITY_KEY, JSON.stringify({
-      name: user.name || "User",
-      email: user.email
-    }));
-
-    return true;
-  } catch (err) {
-    console.error("Auth error:", err);
-    return false;
   }
-}
 
   /* =========================
-     ORBIT CORE
+     ORBIT CORE (UNCHANGED)
   ========================== */
   const BACKEND_WS = "wss://orbit-38iw.onrender.com";
 
-  const HISTORY_KEY = "orbit_history_backup";
-  const MEMORY_KEY  = "orbit_prompt_memory";
-
-  const MAX_MEMORY   = 3;
-  const COOLDOWN_MS  = 4000;
-  const DAILY_LIMIT  = 10;
-  const SHARE_BONUS  = 3;
+  const MAX_MEMORY = 3;
+  const COOLDOWN_MS = 4000;
+  const DAILY_LIMIT = 10;
 
   let lastAskTime = 0;
   let inFlight = false;
@@ -474,26 +436,17 @@
 
   function getUsageData() {
     const d = safeJSON(localStorage.getItem(todayKey()), {});
-    return {
-      used: Number(d.used) || 0,
-      bonus: Number(d.bonus) || 0,
-      shared: Boolean(d.shared)
-    };
-  }
-
-  function saveUsageData(d) {
-    localStorage.setItem(todayKey(), JSON.stringify(d));
+    return { used: Number(d.used) || 0 };
   }
 
   function incrementUsage() {
     const d = getUsageData();
     d.used++;
-    saveUsageData(d);
+    localStorage.setItem(todayKey(), JSON.stringify(d));
   }
 
   function canAsk() {
-    const d = getUsageData();
-    return d.used < (DAILY_LIMIT + d.bonus);
+    return getUsageData().used < DAILY_LIMIT;
   }
 
   function getIdentity() {
@@ -512,23 +465,22 @@
      ORBIT API
   ========================== */
   window.Orbit = {
-
     init() {
       const meta = document.getElementById("orbit-meta");
-      const box  = document.getElementById("orbit-identity");
-      const id   = getIdentity();
+      const box = document.getElementById("orbit-identity");
+      const id = getIdentity();
 
       if (!id || !id.email) {
-		box.style.display = "block";
-		meta.textContent = "Please sign in to continue.";
-		document.getElementById("orbit").classList.remove("logged-in"); // Added
-		return;
-    }
+        box.style.display = "block";
+        meta.textContent = "Please sign in to continue.";
+        document.getElementById("orbit").classList.remove("logged-in");
+        return;
+      }
 
-	box.style.display = "none";
-	meta.textContent = `Welcome back, ${id.name}.`;
-	document.getElementById("orbit").classList.add("logged-in"); // Added
-	},
+      box.style.display = "none";
+      meta.textContent = `Welcome back, ${id.name}.`;
+      document.getElementById("orbit").classList.add("logged-in");
+    },
 
     askStream() {
       const id = getIdentity();
@@ -536,7 +488,7 @@
 
       if (!canAsk()) {
         document.getElementById("orbit-meta").textContent =
-          "Daily limit reached. Share Orbit to unlock more prompts.";
+          "Daily limit reached.";
         return;
       }
 
@@ -544,8 +496,8 @@
       if (inFlight || now - lastAskTime < COOLDOWN_MS) return;
 
       const input = document.getElementById("orbit-input");
-      const out   = document.getElementById("orbit-response");
-      const meta  = document.getElementById("orbit-meta");
+      const out = document.getElementById("orbit-response");
+      const meta = document.getElementById("orbit-meta");
 
       const q = input.value.trim();
       if (!q) return;
@@ -586,16 +538,16 @@
   };
 
   /* =========================
-     BOOT SEQUENCE
+     BOOT
   ========================== */
   window.addEventListener("load", async () => {
-  const ok = await authenticate();
-  // We always init Orbit; it handles the UI for logged-in vs logged-out states
-  window.Orbit.init();
-});
+    await authenticate();
+    window.Orbit.init();
+  });
 
 })();
 </script>
+
 
 
 </body>
