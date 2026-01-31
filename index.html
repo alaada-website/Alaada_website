@@ -123,6 +123,18 @@
       margin: 80px auto;
       text-align: center;
     }
+	
+	/* Add this inside your <style> tags */
+	#orbit-input, #orbit-input + button {
+	 display: none;
+	}
+
+	/* We will show them via JS in Orbit.init() when auth is successful */
+	.logged-in #orbit-input, 
+	.logged-in #orbit-input + button {
+	 display: block;
+	}
+	
   </style>
 </head>
 
@@ -146,7 +158,7 @@
 
   <div class="hero-overlay">
     <h1>Alaada — <span>Where Perfection meets Possibility.</span></h1>
-    <p>Exploring imagination, building systems, and shaping intelligent tools. Try Orbit — an AI built to help you understand, reason, and decide.
+    <p>Exploring imagination, building systems, and shaping intelligent tools. Try Orbit — an AI built to help you understand, reason, and decide.	
 	</p>
 
     <div class="buttons">
@@ -175,12 +187,21 @@
 <!-- ABOUT ORBIT -->
 <section id="orbit" class="fade-section">
 
-	<div id="orbit-identity" style="margin-bottom:14px;display:none">
-  <input id="orbit-name" placeholder="Your name"
-         style="padding:6px;border-radius:6px;border:none;width:48%">
-  <input id="orbit-email" placeholder="Your email"
-         style="padding:6px;border-radius:6px;border:none;width:48%;margin-left:4%">
-  <button onclick="Orbit.saveIdentity()" style="margin-top:8px">Continue</button>
+	<div id="orbit-identity" style="margin-bottom:14px; display:none; text-align:center;">
+  <p style="margin-bottom: 15px; color: #ccc;">To use Orbit, please authenticate with your account.</p>
+  <button onclick="startLogin()" style="
+    background: #fff; 
+    color: #000; 
+    padding: 10px 24px; 
+    border-radius: 8px; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 10px;
+    font-weight: 700;
+  ">
+    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18" alt="Google">
+    Sign in with Google
+  </button>
 </div>
 
 <div style="
@@ -198,7 +219,7 @@
   <br><br>
   Built at Alaada by <strong>Arzo Das</strong>.
 </div>
-
+  
 	<textarea
   id="orbit-input"
   placeholder="Ask Orbit anything…"
@@ -208,7 +229,7 @@
 
   <div id="orbit-meta"></div>
   <div id="orbit-response"></div>
-
+  
   <!-- Chat history toggle -->
 <div style="margin-top:22px">
   <button onclick="Orbit.toggleHistory()" style="
@@ -241,7 +262,7 @@
 
 
   <div class="share-links" style="margin-top:18px">
-    Get more prompts by sharing online:
+    Get more prompts by sharing online: 
     <span onclick="Orbit.share('twitter')">X</span>
     <span onclick="Orbit.share('facebook')">Facebook</span>
     <span onclick="Orbit.share('linkedin')">LinkedIn</span>
@@ -255,9 +276,21 @@
   <p>
     Analytics should explain behavior, not just report numbers.
 	The Alaada Web Analyser turns website data into meaningful insights by highlighting engagement patterns, performance trends, and areas that matter most. It helps you understand how users interact with your site and where to focus, so improvements are driven by evidence, not assumptions.
+	
   </p>
-  <br>
   <a href="website-analyzer.html" class="cta">Open Web Analyser</a>
+</section>
+
+<!-- Join -->
+<section id="join" class="fade-section">
+  <h2>Join the Journey</h2>
+  <form id="joinForm" action="https://formspree.io/f/mnnlqgar" method="POST">
+    <input type="text" name="name" placeholder="Your Name" required />
+    <input type="email" name="email" placeholder="Your Email" required />
+    <textarea name="suggestions" placeholder="Your Suggestions (optional)"></textarea>
+    <button type="submit">Join</button>
+    <p id="thankyouMsg">Thank you for joining the journey!</p>
+  </form>
 </section>
 
 <!-- Footer -->
@@ -269,21 +302,6 @@
     <span>alaada@alaada.com</span>
   </div>
   <button onclick="logout()">Logout</button>
-
-<script>
-function logout() {
-  fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: {
-      "X-Appwrite-Project": APPWRITE_PROJECT_ID
-    }
-  }).then(() => {
-    localStorage.removeItem("orbit_identity");
-    location.reload();
-  });
-}
-</script>
 
 </footer>
 
@@ -315,19 +333,17 @@ function logout() {
   const AUTH_COOKIE  = "alaada_auth";
   const IDENTITY_KEY = "orbit_identity";
 
-  // 🔒 Appwrite REQUIRES origin only (no path, no params)
   const ORIGIN = window.location.origin;
 
   const GOOGLE_LOGIN =
-  "https://sfo.cloud.appwrite.io/v1/account/sessions/oauth2/google" +
-  "?project=6972444700208a437da1" +
-  "&success=https://www.alaada.com" +
-  "&failure=https://www.alaada.com/fail";
+  `${APPWRITE_ENDPOINT}/account/tokens/oauth2/google` +
+  `?project=${APPWRITE_PROJECT_ID}` +
+  `&success=${encodeURIComponent(window.location.origin)}` + // Dynamic
+  `&failure=${encodeURIComponent(window.location.origin + '/fail')}`;
 
 
   /* =========================
      COOKIE HELPERS
-     (Optimization only — never trusted alone)
   ========================== */
   function setAuthCookie() {
     document.cookie =
@@ -364,61 +380,76 @@ function logout() {
      GLOBAL LOGOUT
   ========================== */
   window.logout = async function () {
-    try {
-      await fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
-      });
-    } finally {
-      clearAuthCookie();
-      localStorage.removeItem(IDENTITY_KEY);
-      location.replace(ORIGIN);
-    }
-  };
+  try {
+    await fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
+    });
+  } finally {
+    clearAuthCookie();
+    localStorage.removeItem(IDENTITY_KEY);
+    location.reload(); // Refresh to show the login button again
+  }
+};
+  
+  window.startLogin = function() {
+
+  window.location.assign(GOOGLE_LOGIN);
+
+};
 
   /* =========================
      AUTHENTICATION FLOW
-     (SESSION IS SOURCE OF TRUTH)
   ========================== */
   async function authenticate() {
-    try {
-      const res = await fetch(`${APPWRITE_ENDPOINT}/account`, {
-        credentials: "include",
-        headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    const secret = urlParams.get('secret');
+
+    if (userId && secret) {
+      // EXCHANGE THE TOKEN FOR A SESSION
+      const sessionRes = await fetch(`${APPWRITE_ENDPOINT}/account/sessions/magic-url`, {
+        method: "PUT",
+        headers: { 
+          "X-Appwrite-Project": APPWRITE_PROJECT_ID,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ userId, secret })
       });
-
-      // ❌ No valid session → OAuth
-      if (!res.ok) {
-        clearAuthCookie();
-        window.location.replace(GOOGLE_LOGIN);
-        return false;
+      
+      if (sessionRes.ok) {
+        // Clean the URL immediately so the secret is gone
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
-
-      const user = await res.json();
-
-      // ✅ Valid Appwrite session
-      setAuthCookie();
-
-      if (user?.email) {
-        localStorage.setItem(
-          IDENTITY_KEY,
-          JSON.stringify({
-            name: user.name || "User",
-            email: user.email
-          })
-        );
-      }
-
-      return true;
-
-    } catch (err) {
-      console.error("Auth error:", err);
-      clearAuthCookie();
-      window.location.replace(GOOGLE_LOGIN);
-      return false;
     }
+
+    // NOW CHECK FOR THE ACCOUNT
+    const res = await fetch(`${APPWRITE_ENDPOINT}/account`, {
+      credentials: "include", // Appwrite will now see the session created above
+      headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
+    });
+
+    if (!res.ok) {
+      clearAuthCookie();
+      localStorage.removeItem(IDENTITY_KEY);
+      return false; // STOP HERE. Don't redirect.
+    }
+
+    const user = await res.json();
+    setAuthCookie();
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify({
+      name: user.name || "User",
+      email: user.email
+    }));
+
+    return true;
+  } catch (err) {
+    console.error("Auth error:", err);
+    return false;
   }
+}
 
   /* =========================
      ORBIT CORE
@@ -488,14 +519,16 @@ function logout() {
       const id   = getIdentity();
 
       if (!id || !id.email) {
-        box.style.display = "block";
-        meta.textContent = "Please sign in to continue.";
-        return;
-      }
+		box.style.display = "block";
+		meta.textContent = "Please sign in to continue.";
+		document.getElementById("orbit").classList.remove("logged-in"); // Added
+		return;
+    }
 
-      box.style.display = "none";
-      meta.textContent = `Welcome back, ${id.name}.`;
-    },
+	box.style.display = "none";
+	meta.textContent = `Welcome back, ${id.name}.`;
+	document.getElementById("orbit").classList.add("logged-in"); // Added
+	},
 
     askStream() {
       const id = getIdentity();
@@ -556,9 +589,10 @@ function logout() {
      BOOT SEQUENCE
   ========================== */
   window.addEventListener("load", async () => {
-    const ok = await authenticate();
-    if (ok) window.Orbit.init();
-  });
+  const ok = await authenticate();
+  // We always init Orbit; it handles the UI for logged-in vs logged-out states
+  window.Orbit.init();
+});
 
 })();
 </script>
@@ -566,4 +600,3 @@ function logout() {
 
 </body>
 </html>
-
