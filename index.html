@@ -336,10 +336,10 @@
   const ORIGIN = window.location.origin;
 
   const GOOGLE_LOGIN =
-  `${APPWRITE_ENDPOINT}/account/tokens/oauth2/google` +
-  `?project=${APPWRITE_PROJECT_ID}` +
-  `&success=${encodeURIComponent(window.location.origin)}` + // Dynamic
-  `&failure=${encodeURIComponent(window.location.origin + '/fail')}`;
+  "https://sfo.cloud.appwrite.io/v1/account/tokens/oauth2/google" +
+  "?project=6972444700208a437da1" +
+  "&success=https://www.alaada.com" +
+  "&failure=https://www.alaada.com/fail";
 
 
   /* =========================
