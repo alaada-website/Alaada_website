@@ -421,12 +421,20 @@ function logout() {
 
       return true;
 
-    } catch (err) {
-      console.error("Auth error:", err);
-      clearAuthCookie();
-      window.location.replace(GOOGLE_LOGIN);
-      return false;
-    }
+    } 
+	catch (err) {
+  console.error("Auth error:", err);
+
+  if (sessionStorage.getItem(OAUTH_RETURN_FLAG)) {
+    return false;
+  }
+
+  sessionStorage.setItem(OAUTH_RETURN_FLAG, "1");
+  clearAuthCookie();
+  window.location.replace(GOOGLE_LOGIN);
+  return false;
+}
+
   }
 
   /* =========================
@@ -507,67 +515,67 @@ function logout() {
     },
 
     askStream() {
-      const id = getIdentity();
-      if (!id) return alert("Authentication required.");
 
-      if (!canAsk()) {
-        document.getElementById("orbit-meta").textContent =
-          "Daily limit reached. Share Orbit to unlock more prompts.";
-        return;
-      }
+  if (!canAsk()) {
+    document.getElementById("orbit-meta").textContent =
+      "Daily limit reached. Share Orbit to unlock more prompts.";
+    return;
+  }
 
-      const now = Date.now();
-      if (inFlight || now - lastAskTime < COOLDOWN_MS) return;
+  const now = Date.now();
+  if (inFlight || now - lastAskTime < COOLDOWN_MS) return;
 
-      const input = document.getElementById("orbit-input");
-      const out   = document.getElementById("orbit-response");
-      const meta  = document.getElementById("orbit-meta");
+  const input = document.getElementById("orbit-input");
+  const out   = document.getElementById("orbit-response");
+  const meta  = document.getElementById("orbit-meta");
 
-      const q = input.value.trim();
-      if (!q) return;
+  const q = input.value.trim();
+  if (!q) return;
 
-      inFlight = true;
-      lastAskTime = now;
+  inFlight = true;
+  lastAskTime = now;
 
-      out.innerHTML = "";
-      meta.textContent = "Orbit is thinking…";
+  out.innerHTML = "";
+  meta.textContent = "Orbit is thinking…";
 
-      orbitWS = new WebSocket(`${BACKEND_WS}/ws`);
-      orbitWS.onopen = () =>
-        orbitWS.send(JSON.stringify({ question: q }));
+  orbitWS = new WebSocket(`${BACKEND_WS}/ws`);
+  orbitWS.onopen = () =>
+    orbitWS.send(JSON.stringify({ question: q }));
 
-      let raw = "";
+  let raw = "";
 
-      orbitWS.onmessage = e => {
-        const msg = JSON.parse(e.data);
-        if (msg.type === "token") {
-          raw += msg.content;
-          out.innerHTML = renderMarkdown(raw);
-          enhanceCode(out);
-        }
-        if (msg.type === "done") {
-          incrementUsage();
-          input.value = "";
-          meta.textContent = "✓ Complete";
-          inFlight = false;
-          orbitWS.close();
-        }
-      };
-
-      orbitWS.onerror = () => {
-        meta.textContent = "Connection error";
-        inFlight = false;
-      };
+  orbitWS.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === "token") {
+      raw += msg.content;
+      out.innerHTML = renderMarkdown(raw);
+      enhanceCode(out);
     }
+    if (msg.type === "done") {
+      incrementUsage();
+      input.value = "";
+      meta.textContent = "✓ Complete";
+      inFlight = false;
+      orbitWS.close();
+    }
+  };
+
+  orbitWS.onerror = () => {
+    meta.textContent = "Connection error";
+    inFlight = false;
+  };
+}
+
   };
 
   /* =========================
      BOOT SEQUENCE
   ========================== */
   window.addEventListener("load", async () => {
-    const ok = await authenticate();
-    if (ok) window.Orbit.init();
-  });
+  await authenticate();
+  window.Orbit.init();
+});
+
 
 })();
 </script>
