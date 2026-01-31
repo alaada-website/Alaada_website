@@ -312,6 +312,8 @@ function logout() {
   const APPWRITE_ENDPOINT = "https://sfo.cloud.appwrite.io/v1";
   const APPWRITE_PROJECT_ID = "6972444700208a437da1";
 
+  const OAUTH_RETURN_FLAG = "alaada_oauth_returned";
+
   const AUTH_COOKIE  = "alaada_auth";
   const IDENTITY_KEY = "orbit_identity";
 
@@ -390,12 +392,19 @@ function logout() {
 
       // ❌ No valid session → OAuth
       if (!res.ok) {
-        clearAuthCookie();
-        window.location.replace(GOOGLE_LOGIN);
-        return false;
+        if (sessionStorage.getItem(OAUTH_RETURN_FLAG)) {
+			return false;
+		}
+
+		sessionStorage.setItem(OAUTH_RETURN_FLAG, "1");
+		clearAuthCookie();
+		window.location.replace(GOOGLE_LOGIN);
+		return false;
       }
 
       const user = await res.json();
+	  sessionStorage.removeItem(OAUTH_RETURN_FLAG);
+
 
       // ✅ Valid Appwrite session
       setAuthCookie();
