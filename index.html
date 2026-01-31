@@ -123,18 +123,6 @@
       margin: 80px auto;
       text-align: center;
     }
-	
-	/* Add this inside your <style> tags */
-	#orbit-input, #orbit-input + button {
-	 display: none;
-	}
-
-	/* We will show them via JS in Orbit.init() when auth is successful */
-	.logged-in #orbit-input, 
-	.logged-in #orbit-input + button {
-	 display: block;
-	}
-	
   </style>
 </head>
 
@@ -158,7 +146,7 @@
 
   <div class="hero-overlay">
     <h1>Alaada — <span>Where Perfection meets Possibility.</span></h1>
-    <p>Exploring imagination, building systems, and shaping intelligent tools. Try Orbit — an AI built to help you understand, reason, and decide.	
+    <p>Exploring imagination, building systems, and shaping intelligent tools. Try Orbit — an AI built to help you understand, reason, and decide.
 	</p>
 
     <div class="buttons">
@@ -187,21 +175,12 @@
 <!-- ABOUT ORBIT -->
 <section id="orbit" class="fade-section">
 
-	<div id="orbit-identity" style="margin-bottom:14px; display:none; text-align:center;">
-  <p style="margin-bottom: 15px; color: #ccc;">To use Orbit, please authenticate with your account.</p>
-  <button onclick="startLogin()" style="
-    background: #fff; 
-    color: #000; 
-    padding: 10px 24px; 
-    border-radius: 8px; 
-    display: inline-flex; 
-    align-items: center; 
-    gap: 10px;
-    font-weight: 700;
-  ">
-    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18" alt="Google">
-    Sign in with Google
-  </button>
+	<div id="orbit-identity" style="margin-bottom:14px;display:none">
+  <input id="orbit-name" placeholder="Your name"
+         style="padding:6px;border-radius:6px;border:none;width:48%">
+  <input id="orbit-email" placeholder="Your email"
+         style="padding:6px;border-radius:6px;border:none;width:48%;margin-left:4%">
+  <button onclick="Orbit.saveIdentity()" style="margin-top:8px">Continue</button>
 </div>
 
 <div style="
@@ -219,7 +198,7 @@
   <br><br>
   Built at Alaada by <strong>Arzo Das</strong>.
 </div>
-  
+
 	<textarea
   id="orbit-input"
   placeholder="Ask Orbit anything…"
@@ -229,7 +208,7 @@
 
   <div id="orbit-meta"></div>
   <div id="orbit-response"></div>
-  
+
   <!-- Chat history toggle -->
 <div style="margin-top:22px">
   <button onclick="Orbit.toggleHistory()" style="
@@ -262,7 +241,7 @@
 
 
   <div class="share-links" style="margin-top:18px">
-    Get more prompts by sharing online: 
+    Get more prompts by sharing online:
     <span onclick="Orbit.share('twitter')">X</span>
     <span onclick="Orbit.share('facebook')">Facebook</span>
     <span onclick="Orbit.share('linkedin')">LinkedIn</span>
@@ -276,21 +255,9 @@
   <p>
     Analytics should explain behavior, not just report numbers.
 	The Alaada Web Analyser turns website data into meaningful insights by highlighting engagement patterns, performance trends, and areas that matter most. It helps you understand how users interact with your site and where to focus, so improvements are driven by evidence, not assumptions.
-	
   </p>
+  <br>
   <a href="website-analyzer.html" class="cta">Open Web Analyser</a>
-</section>
-
-<!-- Join -->
-<section id="join" class="fade-section">
-  <h2>Join the Journey</h2>
-  <form id="joinForm" action="https://formspree.io/f/mnnlqgar" method="POST">
-    <input type="text" name="name" placeholder="Your Name" required />
-    <input type="email" name="email" placeholder="Your Email" required />
-    <textarea name="suggestions" placeholder="Your Suggestions (optional)"></textarea>
-    <button type="submit">Join</button>
-    <p id="thankyouMsg">Thank you for joining the journey!</p>
-  </form>
 </section>
 
 <!-- Footer -->
@@ -302,6 +269,21 @@
     <span>alaada@alaada.com</span>
   </div>
   <button onclick="logout()">Logout</button>
+
+<script>
+function logout() {
+  fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      "X-Appwrite-Project": APPWRITE_PROJECT_ID
+    }
+  }).then(() => {
+    localStorage.removeItem("orbit_identity");
+    location.reload();
+  });
+}
+</script>
 
 </footer>
 
@@ -318,8 +300,8 @@
 
 <script>
 /* =========================================================
-   APPWRITE AUTH + ORBIT BOOTSTRAP
-   PRODUCTION-SAFE (NO LOOPS, NO FAKE COOKIES)
+   APPWRITE AUTH + COOKIE GUARD + ORBIT BOOTSTRAP
+   PRODUCTION SAFE & APPWRITE-CORRECT
 ========================================================= */
 (() => {
   "use strict";
@@ -330,14 +312,41 @@
   const APPWRITE_ENDPOINT = "https://sfo.cloud.appwrite.io/v1";
   const APPWRITE_PROJECT_ID = "6972444700208a437da1";
 
+  const AUTH_COOKIE  = "alaada_auth";
   const IDENTITY_KEY = "orbit_identity";
+
+  // 🔒 Appwrite REQUIRES origin only (no path, no params)
   const ORIGIN = window.location.origin;
 
   const GOOGLE_LOGIN =
-    "https://sfo.cloud.appwrite.io/v1/account/sessions/oauth2/google" +
-    "?project=6972444700208a437da1" +
-    "&success=https://www.alaada.com" +
-    "&failure=https://www.alaada.com/fail";
+  "https://sfo.cloud.appwrite.io/v1/account/sessions/oauth2/google" +
+  "?project=6972444700208a437da1" +
+  "&success=https://www.alaada.com" +
+  "&failure=https://www.alaada.com/fail";
+
+
+  /* =========================
+     COOKIE HELPERS
+     (Optimization only — never trusted alone)
+  ========================== */
+  function setAuthCookie() {
+    document.cookie =
+      `${AUTH_COOKIE}=1;` +
+      `path=/;` +
+      `max-age=${60 * 60 * 24 * 7};` +
+      `SameSite=Lax;Secure`;
+  }
+
+  function clearAuthCookie() {
+    document.cookie =
+      `${AUTH_COOKIE}=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT;SameSite=Lax;Secure`;
+  }
+
+  function hasAuthCookie() {
+    return document.cookie.split("; ").some(c =>
+      c.startsWith(AUTH_COOKIE + "=")
+    );
+  }
 
   /* =========================
      SAFE JSON
@@ -352,13 +361,9 @@
   }
 
   /* =========================
-     LOGIN / LOGOUT
+     GLOBAL LOGOUT
   ========================== */
-  window.startLogin = () => {
-    window.location.href = GOOGLE_LOGIN;
-  };
-
-  window.logout = async () => {
+  window.logout = async function () {
     try {
       await fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
         method: "DELETE",
@@ -366,65 +371,67 @@
         headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
       });
     } finally {
+      clearAuthCookie();
       localStorage.removeItem(IDENTITY_KEY);
       location.replace(ORIGIN);
     }
   };
 
   /* =========================
-     SESSION CHECK (WITH RETRY)
+     AUTHENTICATION FLOW
+     (SESSION IS SOURCE OF TRUTH)
   ========================== */
-  async function fetchAccountWithRetry(retries = 3) {
-    for (let i = 0; i <= retries; i++) {
+  async function authenticate() {
+    try {
       const res = await fetch(`${APPWRITE_ENDPOINT}/account`, {
         credentials: "include",
         headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
       });
 
-      if (res.ok) return res;
-      await new Promise(r => setTimeout(r, 600));
-    }
-    return null;
-  }
-
-  /* =========================
-     AUTHENTICATION
-  ========================== */
-  async function authenticate() {
-    try {
-      const res = await fetchAccountWithRetry();
-
-      if (!res) {
-        localStorage.removeItem(IDENTITY_KEY);
+      // ❌ No valid session → OAuth
+      if (!res.ok) {
+        clearAuthCookie();
+        window.location.replace(GOOGLE_LOGIN);
         return false;
       }
 
       const user = await res.json();
 
-      localStorage.setItem(
-        IDENTITY_KEY,
-        JSON.stringify({
-          name: user.name || "User",
-          email: user.email
-        })
-      );
+      // ✅ Valid Appwrite session
+      setAuthCookie();
+
+      if (user?.email) {
+        localStorage.setItem(
+          IDENTITY_KEY,
+          JSON.stringify({
+            name: user.name || "User",
+            email: user.email
+          })
+        );
+      }
 
       return true;
+
     } catch (err) {
       console.error("Auth error:", err);
-      localStorage.removeItem(IDENTITY_KEY);
+      clearAuthCookie();
+      window.location.replace(GOOGLE_LOGIN);
       return false;
     }
   }
 
   /* =========================
-     ORBIT CORE (UNCHANGED)
+     ORBIT CORE
   ========================== */
   const BACKEND_WS = "wss://orbit-38iw.onrender.com";
 
-  const MAX_MEMORY = 3;
-  const COOLDOWN_MS = 4000;
-  const DAILY_LIMIT = 10;
+  const HISTORY_KEY = "orbit_history_backup";
+  const MEMORY_KEY  = "orbit_prompt_memory";
+
+  const MAX_MEMORY   = 3;
+  const COOLDOWN_MS  = 4000;
+  const DAILY_LIMIT  = 10;
+  const SHARE_BONUS  = 3;
 
   let lastAskTime = 0;
   let inFlight = false;
@@ -436,17 +443,26 @@
 
   function getUsageData() {
     const d = safeJSON(localStorage.getItem(todayKey()), {});
-    return { used: Number(d.used) || 0 };
+    return {
+      used: Number(d.used) || 0,
+      bonus: Number(d.bonus) || 0,
+      shared: Boolean(d.shared)
+    };
+  }
+
+  function saveUsageData(d) {
+    localStorage.setItem(todayKey(), JSON.stringify(d));
   }
 
   function incrementUsage() {
     const d = getUsageData();
     d.used++;
-    localStorage.setItem(todayKey(), JSON.stringify(d));
+    saveUsageData(d);
   }
 
   function canAsk() {
-    return getUsageData().used < DAILY_LIMIT;
+    const d = getUsageData();
+    return d.used < (DAILY_LIMIT + d.bonus);
   }
 
   function getIdentity() {
@@ -465,21 +481,20 @@
      ORBIT API
   ========================== */
   window.Orbit = {
+
     init() {
       const meta = document.getElementById("orbit-meta");
-      const box = document.getElementById("orbit-identity");
-      const id = getIdentity();
+      const box  = document.getElementById("orbit-identity");
+      const id   = getIdentity();
 
       if (!id || !id.email) {
         box.style.display = "block";
         meta.textContent = "Please sign in to continue.";
-        document.getElementById("orbit").classList.remove("logged-in");
         return;
       }
 
       box.style.display = "none";
       meta.textContent = `Welcome back, ${id.name}.`;
-      document.getElementById("orbit").classList.add("logged-in");
     },
 
     askStream() {
@@ -488,7 +503,7 @@
 
       if (!canAsk()) {
         document.getElementById("orbit-meta").textContent =
-          "Daily limit reached.";
+          "Daily limit reached. Share Orbit to unlock more prompts.";
         return;
       }
 
@@ -496,8 +511,8 @@
       if (inFlight || now - lastAskTime < COOLDOWN_MS) return;
 
       const input = document.getElementById("orbit-input");
-      const out = document.getElementById("orbit-response");
-      const meta = document.getElementById("orbit-meta");
+      const out   = document.getElementById("orbit-response");
+      const meta  = document.getElementById("orbit-meta");
 
       const q = input.value.trim();
       if (!q) return;
@@ -538,17 +553,17 @@
   };
 
   /* =========================
-     BOOT
+     BOOT SEQUENCE
   ========================== */
   window.addEventListener("load", async () => {
-    await authenticate();
-    window.Orbit.init();
+    const ok = await authenticate();
+    if (ok) window.Orbit.init();
   });
 
 })();
 </script>
 
 
-
 </body>
 </html>
+
