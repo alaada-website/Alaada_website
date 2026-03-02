@@ -415,36 +415,37 @@ function renderMessage(msg){
 /* ========= SEND ========= */
 function send(){
 
- if(isProcessing) return; // 🔴 Block new sends
+ if(isProcessing) return;
 
- const text=input.value.trim();
+ const text = input.value.trim();
  if(!text && !uploadedFileId) return;
 
- const thread=getActiveThread();
+ const thread = getActiveThread();
 
  // Show user message immediately
  thread.messages.push({
    role:"user",
-   text:text || "",
+   text: text || "",
    images: uploadedPreview ? [uploadedPreview] : null
  });
 
  saveThreads();
  renderChat();
 
- input.value="";
- uploadedPreview=null;
+ input.value = "";
+ uploadedPreview = null;
  document.getElementById("imagePreviewContainer").style.display="none";
 
  isProcessing = true;
  toggleInputState(true);
 
+ // ✅ SEND RAW TEXT ONLY
  ws.send(JSON.stringify({
-   question: buildPrompt(text || "User sent an image."),
+   question: text || "User sent an image.",
    image_file_id: uploadedFileId || null
  }));
 
- uploadedFileId=null;
+ uploadedFileId = null;
 
  thread.messages.push({
    role:"assistant",
