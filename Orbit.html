@@ -272,14 +272,48 @@ initWS();
 
 /* ========= WEBSOCKET ========= */
 function initWS(){
- const protocol = location.protocol==="https:"?"wss":"ws";
- ws = new WebSocket(`${protocol}://${location.host}/ws`);
 
- ws.onmessage = (e)=>{
-   const data = JSON.parse(e.data);
-   if(data.type==="token") appendAssistantToken(data.content);
-   if(data.type==="done") finalizeAssistant();
- };
+  // Avoid duplicate connections
+  if (ws && ws.readyState === WebSocket.OPEN) return;
+
+  ws = new WebSocket("wss://orbit-38iw.onrender.com/ws");
+
+  ws.onopen = () => {
+    console.log("Connected to Render WebSocket");
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+
+      if (data.type === "token") {
+        appendAssistantToken(data.content);
+      }
+
+      if (data.type === "done") {
+        finalizeAssistant();
+      }
+
+      if (data.error) {
+        console.error("Server error:", data.error);
+        finalizeAssistant();
+      }
+
+    } catch (err) {
+      console.error("Invalid WS message:", err);
+    }
+  };
+
+  ws.onclose = () => {
+    console.log("WebSocket closed. Reconnecting...");
+    finalizeAssistant(); // unlock UI if needed
+    setTimeout(initWS, 2000);
+  };
+
+  ws.onerror = (err) => {
+    console.error("WebSocket error:", err);
+    ws.close();
+  };
 }
 
 /* ========= THREADS ========= */
