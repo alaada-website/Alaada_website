@@ -10,119 +10,342 @@
   --bg:#0f172a;--panel:#111827;--panel2:#1f2937;
   --accent:#2563eb;--border:#2d3748;--text:#e5e7eb;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);display:flex;height:100vh;font-family:Inter,sans-serif;overflow:hidden}
-.typing{display:flex;gap:5px;align-items:center}
-.typing span{width:8px;height:8px;background:white;border-radius:50%;animation:blink 1.2s infinite}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);display:flex;height:100vh;font-family:Inter,sans-serif;overflow:hidden}
+
+/* ── TYPING ── */
+.typing{display:flex;gap:5px;align-items:center;padding:4px 0}
+.typing span{width:8px;height:8px;background:#94a3b8;border-radius:50%;animation:blink 1.2s infinite}
 .typing span:nth-child(2){animation-delay:.2s}
 .typing span:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,100%{opacity:0.3}50%{opacity:1}}
+@keyframes blink{0%,100%{opacity:0.2}50%{opacity:1}}
+
+/* ── RECORDING ── */
 .recording{background:#ef4444!important;animation:pulse 1s infinite}
-@keyframes pulse{0%{opacity:1}50%{opacity:.6}100%{opacity:1}}
-.sidebar{width:260px;min-width:260px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-@media(max-width:768px){.sidebar{width:70px;min-width:70px}.thread-title{display:none}textarea{height:45px}}
-#newChatBtn{margin:10px;padding:10px;background:var(--accent);border:none;color:white;border-radius:8px;cursor:pointer;font-size:14px}
-#chatSearch{margin:0 10px 8px;padding:7px 10px;border-radius:6px;border:none;background:var(--panel2);color:white;font-size:13px;outline:none;width:calc(100% - 20px)}
-#threads,#archivedThreads{overflow-y:auto}
-.thread{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;user-select:none}
+@keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+
+/* ══ SIDEBAR ══ */
+.sidebar{
+  width:260px;min-width:260px;
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow:hidden;transition:width .2s;
+}
+@media(max-width:768px){
+  .sidebar{width:60px;min-width:60px}
+  .sidebar .label{display:none}
+  textarea{height:44px!important}
+}
+#newChatBtn{
+  margin:10px;padding:10px 14px;
+  background:var(--accent);border:none;
+  color:white;border-radius:8px;cursor:pointer;font-size:13px;
+  display:flex;align-items:center;gap:6px;justify-content:center;
+}
+#newChatBtn:hover{opacity:.88}
+#chatSearch{
+  margin:0 10px 8px;padding:8px 10px;
+  border-radius:6px;border:1px solid var(--border);
+  background:var(--panel2);color:white;
+  font-size:12px;outline:none;width:calc(100% - 20px);
+}
+#chatSearch:focus{border-color:var(--accent)}
+#threads,#archivedThreads{overflow-y:auto;flex:1}
+.thread{
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  cursor:pointer;font-size:13px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  user-select:none;transition:background .1s;
+}
 .thread:hover{background:rgba(255,255,255,.04)}
 .thread.active{background:var(--panel2)}
-#archivedSection{padding:8px 12px;font-size:11px;opacity:.5;text-transform:uppercase}
-#profileBtn{margin-top:auto;padding:12px;border-top:1px solid var(--border);cursor:pointer;font-size:13px;opacity:.8;display:flex;align-items:center;gap:8px;flex-shrink:0}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.chat{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
-.message{max-width:75%;padding:12px 14px;border-radius:12px;word-wrap:break-word;line-height:1.5;font-size:14px}
-.message.user{align-self:flex-end;background:var(--accent)}
-.message.assistant{align-self:flex-start;background:var(--panel2)}
+#archivedSection{
+  padding:6px 12px;font-size:10px;
+  opacity:.45;text-transform:uppercase;letter-spacing:.08em;
+  border-top:1px solid var(--border);margin-top:4px;
+}
+#profileBtn{
+  padding:12px;border-top:1px solid var(--border);
+  cursor:pointer;font-size:13px;opacity:.8;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+  transition:background .15s;
+}
+#profileBtn:hover{background:var(--panel2)}
+
+/* ══ MAIN ══ */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.chat{
+  flex:1;overflow-y:auto;
+  padding:24px 20px;
+  display:flex;flex-direction:column;gap:16px;
+}
+.chat::-webkit-scrollbar{width:4px}
+.chat::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── MESSAGES ── */
+.message{
+  max-width:76%;padding:12px 15px;
+  border-radius:14px;word-wrap:break-word;
+  line-height:1.6;font-size:14px;
+  animation:msgIn .18s ease;
+}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.message.user{
+  align-self:flex-end;
+  background:var(--accent);
+  border-bottom-right-radius:4px;
+}
+.message.assistant{
+  align-self:flex-start;
+  background:var(--panel2);
+  border-bottom-left-radius:4px;
+}
 .message p{margin:0 0 8px}.message p:last-child{margin:0}
-.message pre{background:#0f172a;padding:10px;border-radius:6px;overflow-x:auto;font-size:12px}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
-.gallery img{width:100%;border-radius:8px;cursor:pointer}
-.input-area{display:flex;border-top:1px solid var(--border);padding:10px;gap:8px;align-items:flex-end;position:relative;flex-shrink:0}
-.input-area textarea{flex:1;background:var(--panel2);border:1px solid var(--border);color:white;padding:10px;border-radius:8px;height:60px;resize:none;font-size:14px;font-family:inherit;outline:none}
+.message h1,.message h2,.message h3{margin:10px 0 6px;font-size:1em}
+.message ul,.message ol{padding-left:18px;margin:6px 0}
+.message pre{background:#0d1117;padding:12px;border-radius:8px;overflow-x:auto;font-size:12px;margin:8px 0}
+.message code{font-size:12px;background:#0d1117;padding:1px 5px;border-radius:3px}
+.message pre code{background:none;padding:0}
+.message a{color:#60a5fa}
+
+/* ── IMAGE GALLERY ── */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:10px}
+.gallery img{width:100%;border-radius:8px;cursor:pointer;transition:opacity .15s}
+.gallery img:hover{opacity:.88}
+
+/* ── INPUT AREA ── */
+.input-area{
+  display:flex;border-top:1px solid var(--border);
+  padding:10px;gap:8px;align-items:flex-end;
+  position:relative;flex-shrink:0;background:var(--panel);
+}
+.input-area textarea{
+  flex:1;background:var(--panel2);
+  border:1px solid var(--border);color:var(--text);
+  padding:10px 12px;border-radius:10px;
+  height:60px;resize:none;
+  font-size:14px;font-family:inherit;outline:none;
+  transition:border-color .15s;line-height:1.5;
+}
 .input-area textarea:focus{border-color:var(--accent)}
-.input-area button{background:var(--accent);border:none;padding:10px 14px;color:white;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0;transition:opacity .15s}
-.input-area button:hover{opacity:.85}
-.input-area button:disabled{opacity:.4;cursor:not-allowed}
-#imagePreviewContainer{display:none;position:absolute;bottom:80px;left:200px;background:#1f2937;padding:8px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:2000}
-#imagePreview{max-width:200px;border-radius:8px;display:block}
-#clearPreviewBtn{margin-top:6px;width:100%;background:#ef4444;border:none;color:white;padding:5px;border-radius:6px;cursor:pointer;font-size:12px}
-.input-area.dragover{outline:2px dashed var(--accent);border-radius:8px}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:3000}
+.input-area textarea::placeholder{color:#4b5563}
+.icon-btn{
+  background:var(--panel2);border:1px solid var(--border);
+  padding:10px 12px;color:var(--text);
+  border-radius:10px;cursor:pointer;font-size:15px;
+  flex-shrink:0;transition:all .15s;
+}
+.icon-btn:hover{background:var(--border)}
+.icon-btn:disabled{opacity:.35;cursor:not-allowed}
+#sendBtn{
+  background:var(--accent);border:1px solid transparent;
+  padding:10px 16px;color:white;
+  border-radius:10px;cursor:pointer;font-size:16px;
+  flex-shrink:0;transition:opacity .15s;
+}
+#sendBtn:hover{opacity:.85}
+#sendBtn:disabled{opacity:.35;cursor:not-allowed}
+.input-area.dragover{outline:2px dashed var(--accent);border-radius:10px}
+
+/* ── IMAGE PREVIEW ── */
+#imagePreviewContainer{
+  display:none;position:absolute;
+  bottom:84px;left:100px;
+  background:var(--panel2);padding:8px;
+  border-radius:12px;border:1px solid var(--border);
+  box-shadow:0 4px 24px rgba(0,0,0,.5);z-index:2000;
+}
+#imagePreview{max-width:180px;border-radius:8px;display:block}
+#imagePreviewName{font-size:12px;padding:4px 2px;color:#94a3b8;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#clearPreviewBtn{
+  margin-top:4px;width:100%;
+  background:#ef4444;border:none;
+  color:white;padding:5px;
+  border-radius:6px;cursor:pointer;font-size:11px;
+}
+
+/* ══ STATUS BAR ══ */
+#statusBar{
+  font-size:11px;color:#4b5563;
+  padding:3px 20px 5px;flex-shrink:0;
+  text-align:right;background:var(--panel);
+}
+
+/* ══ MODALS ══ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  display:none;align-items:center;justify-content:center;z-index:5000;
+  backdrop-filter:blur(2px);
+}
 .modal-overlay.open{display:flex}
-.modal-box{background:#1f2937;padding:24px;border-radius:14px;width:340px;max-height:90vh;overflow-y:auto}
-.modal-box h3{margin:0 0 16px;font-size:16px}
-.modal-box input,.modal-box select{width:100%;margin-bottom:10px;padding:9px 10px;border-radius:6px;border:1px solid var(--border);background:#111827;color:white;font-size:13px;outline:none}
+.modal-box{
+  background:#1e2a3a;padding:24px;
+  border-radius:16px;width:360px;
+  max-height:90vh;overflow-y:auto;
+  border:1px solid var(--border);
+  box-shadow:0 8px 40px rgba(0,0,0,.5);
+}
+.modal-box h3{font-size:16px;margin-bottom:18px;color:white}
+.modal-box label{display:block;font-size:11px;color:#94a3b8;margin-bottom:4px;letter-spacing:.04em;text-transform:uppercase}
+.modal-box input,.modal-box select{
+  width:100%;margin-bottom:14px;
+  padding:9px 11px;border-radius:8px;
+  border:1px solid var(--border);
+  background:#111827;color:white;
+  font-size:13px;outline:none;transition:border-color .15s;
+}
 .modal-box input:focus{border-color:var(--accent)}
-.modal-box .save-btn{margin-top:6px;width:100%;padding:10px;background:var(--accent);border:none;color:white;border-radius:8px;cursor:pointer;font-size:14px}
-#chatMenu{position:fixed;display:none;background:#1f2937;border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:4000;min-width:140px;box-shadow:0 4px 16px rgba(0,0,0,.4)}
-.menuItem{padding:10px 14px;cursor:pointer;font-size:13px}
+.modal-box select option{background:#111827}
+.save-btn{
+  width:100%;padding:11px;margin-top:4px;
+  background:var(--accent);border:none;
+  color:white;border-radius:8px;
+  cursor:pointer;font-size:14px;font-weight:500;
+  transition:opacity .15s;
+}
+.save-btn:hover{opacity:.88}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ══ CONTEXT MENU ══ */
+#chatMenu{
+  position:fixed;display:none;
+  background:#1e2a3a;
+  border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;
+  z-index:9000;min-width:150px;
+  box-shadow:0 6px 24px rgba(0,0,0,.5);
+}
+.menuItem{padding:10px 16px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px}
 .menuItem:hover{background:var(--panel2)}
-.menuItem.danger{color:#ef4444}
-#statusBar{font-size:11px;opacity:.5;padding:4px 20px;flex-shrink:0;text-align:right}
+.menuItem.danger{color:#f87171}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:80px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:#1e2a3a;border:1px solid var(--border);
+  color:var(--text);padding:10px 20px;
+  border-radius:8px;font-size:13px;
+  opacity:0;transition:all .3s;
+  pointer-events:none;z-index:9999;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 
+<!-- ══ SIDEBAR ══ -->
 <div class="sidebar">
-  <button id="newChatBtn" onclick="createThread()">+ New Chat</button>
+  <button id="newChatBtn" onclick="createThread()">
+    <span>＋</span><span class="label">New Chat</span>
+  </button>
   <input id="chatSearch" placeholder="Search chats…" oninput="renderThreads()">
   <div id="threads"></div>
   <div id="archivedSection" style="display:none">Archived</div>
   <div id="archivedThreads"></div>
-  <div id="profileBtn">👤 <span id="profileName">User</span></div>
-</div>
-
-<div class="main">
-  <div class="chat" id="chat"></div>
-  <div id="statusBar"></div>
-  <div class="input-area" id="dropzone">
-    <button id="micBtn" title="Voice">🎤</button>
-    <button onclick="triggerFile()" title="Attach">📎</button>
-    <textarea id="input" placeholder="Ask Orbit anything…"></textarea>
-    <div id="imagePreviewContainer">
-      <img id="imagePreview" alt="preview">
-      <button id="clearPreviewBtn" onclick="clearImagePreview()">✕ Remove</button>
-    </div>
-    <button id="sendBtn" onclick="send()">➤</button>
-    <input type="file" id="fileInput" style="display:none" accept="image/*,application/pdf,.xlsx,.xls,.docx,.doc,.pptx">
+  <div id="profileBtn">
+    <span>👤</span>
+    <span id="profileName" class="label">Set up profile</span>
   </div>
 </div>
 
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="chat" id="chat"></div>
+  <div id="statusBar">—</div>
+
+  <div class="input-area" id="dropzone">
+    <button class="icon-btn" id="micBtn" title="Voice input">🎤</button>
+    <button class="icon-btn" onclick="triggerFile()" title="Attach file">📎</button>
+    <textarea id="input" placeholder="Ask Orbit anything…"></textarea>
+
+    <div id="imagePreviewContainer">
+      <img id="imagePreview" alt="">
+      <div id="imagePreviewName"></div>
+      <button id="clearPreviewBtn" onclick="clearImagePreview()">✕ Remove</button>
+    </div>
+
+    <button id="sendBtn" onclick="send()" title="Send">➤</button>
+    <input type="file" id="fileInput" style="display:none"
+      accept="image/*,application/pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.txt,.csv">
+  </div>
+</div>
+
+<!-- ══ PROFILE MODAL ══ -->
 <div id="profileModal" class="modal-overlay">
   <div class="modal-box">
-    <h3 id="profileModalTitle">Your Profile</h3>
-    <input id="p_name"       placeholder="Name (required)">
-    <input id="p_email"      placeholder="Email (required)" type="email">
-    <input id="p_age"        placeholder="Age">
-    <input id="p_dob"        type="date">
-    <input id="p_profession" placeholder="Profession">
-    <input id="p_hobby"      placeholder="Hobby">
-    <input id="p_country"    placeholder="Country">
-    <input id="p_skills"     placeholder="Skills (e.g. Python-Advanced)">
+    <h3 id="profileModalTitle">👤 Your Profile</h3>
+
+    <label>Name *</label>
+    <input id="p_name" placeholder="Your name">
+
+    <label>Email *</label>
+    <input id="p_email" type="email" placeholder="your@email.com">
+
+    <div class="field-row">
+      <div>
+        <label>Age</label>
+        <input id="p_age" placeholder="Age">
+      </div>
+      <div>
+        <label>Date of Birth</label>
+        <input id="p_dob" type="date">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label>Profession</label>
+        <input id="p_profession" placeholder="e.g. Engineer">
+      </div>
+      <div>
+        <label>Country</label>
+        <input id="p_country" placeholder="e.g. India">
+      </div>
+    </div>
+
+    <label>Hobbies</label>
+    <input id="p_hobby" placeholder="e.g. Photography, Reading">
+
+    <label>Skills</label>
+    <input id="p_skills" placeholder="e.g. Python-Advanced, Excel-Intermediate">
+
+    <label>Response Style</label>
     <select id="p_style">
-      <option>Professional</option><option>Friendly</option>
-      <option>Technical</option><option>Witty</option>
+      <option value="Professional">Professional</option>
+      <option value="Friendly">Friendly</option>
+      <option value="Technical">Technical</option>
+      <option value="Witty">Witty</option>
     </select>
+
     <button class="save-btn" onclick="saveProfile()">Save Profile</button>
   </div>
 </div>
 
+<!-- ══ CONTEXT MENU ══ -->
 <div id="chatMenu">
   <div class="menuItem"        onclick="handleChatAction('rename')">✏️ Rename</div>
-  <div class="menuItem"        onclick="handleChatAction('archive')">📁 Archive</div>
+  <div class="menuItem"        onclick="handleChatAction('archive')">📁 Archive / Unarchive</div>
   <div class="menuItem danger" onclick="handleChatAction('delete')">🗑 Delete</div>
 </div>
 
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
 <script>
-// ════════════════════════════════════════════
-// FIX 1: All API calls use absolute backend URL
-// ════════════════════════════════════════════
+/* ══════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════ */
 const BACKEND = "https://orbit-38iw.onrender.com";
 const WS_URL  = "wss://orbit-38iw.onrender.com/ws";
 
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
 let userProfile    = JSON.parse(localStorage.getItem("orbit_user_profile") || "null");
-let threads        = JSON.parse(localStorage.getItem("orbit_threads")       || "[]");
+let threads        = JSON.parse(localStorage.getItem("orbit_threads")      || "[]");
 let activeThreadId = null;
 let ws;
 let uploadedFileId  = null;
@@ -131,136 +354,130 @@ let recorder        = null;
 let audioChunks     = [];
 let isProcessing    = false;
 
-// ── INIT ──────────────────────────────────────
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
 window.addEventListener("load", () => {
   if (threads.length === 0) createThread();
   else openThread(threads[0].id);
 
-  if (!userProfile || !userProfile.name || !userProfile.email)
+  // Force profile if missing name or email
+  if (!userProfile?.name || !userProfile?.email) {
     openProfileModal(true);
+  }
 
   updateProfileUI();
   checkBirthday();
   initWS();
+
+  // Wake up Render backend immediately (free tier sleeps)
+  fetch(`${BACKEND}/health`).then(() => setStatus("Ready")).catch(() => setStatus("Connecting…"));
 });
 
-// ── WEBSOCKET ─────────────────────────────────
+/* ══════════════════════════════════════════════
+   WEBSOCKET
+══════════════════════════════════════════════ */
 function initWS() {
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
   ws = new WebSocket(WS_URL);
-  ws.onopen    = ()  => setStatus("Connected");
+  ws.onopen    = () => setStatus("Connected ●");
   ws.onmessage = (e) => {
     try {
-      const data = JSON.parse(e.data);
-      if (data.type === "token") appendAssistantToken(data.content);
-      if (data.type === "done")  finalizeAssistant(data.remaining);
-      if (data.error) { showError(data.error); finalizeAssistant(); }
-    } catch(err) { console.error("WS parse error:", err); }
+      const d = JSON.parse(e.data);
+      if (d.type === "token") appendAssistantToken(d.content);
+      if (d.type === "done")  finalizeAssistant(d.remaining);
+      if (d.error)            { showError(d.error); finalizeAssistant(); }
+    } catch(err) { console.error("WS parse:", err); }
   };
   ws.onclose = () => { setStatus("Reconnecting…"); finalizeAssistant(); setTimeout(initWS, 2500); };
-  ws.onerror = () => ws.close();
+  ws.onerror  = () => ws.close();
 }
 
-function setStatus(msg) { document.getElementById("statusBar").textContent = msg; }
-
-// ── THREADS ───────────────────────────────────
-function createThread() {
-  const id = crypto.randomUUID();
-  threads.unshift({ id, title: "New Chat", messages: [], archived: false });
-  saveThreads(); renderThreads(); openThread(id);
-}
-function openThread(id) { activeThreadId = id; renderThreads(); renderChat(); }
-
-function renderThreads() {
-  const active   = document.getElementById("threads");
-  const archived = document.getElementById("archivedThreads");
-  const arcSec   = document.getElementById("archivedSection");
-  const filter   = (document.getElementById("chatSearch")?.value || "").toLowerCase();
-  active.innerHTML = archived.innerHTML = "";
-  let hasArchived = false;
-  threads.filter(t => t.title.toLowerCase().includes(filter)).forEach(t => {
-    const div = document.createElement("div");
-    div.className = "thread" + (t.id === activeThreadId ? " active" : "");
-    div.innerHTML = `<span class="thread-title">${escHtml(t.title)}</span>`;
-    div.onclick = () => openThread(t.id);
-    div.oncontextmenu = (e) => { e.preventDefault(); openThreadMenu(t.id, e); };
-    if (t.archived) { archived.appendChild(div); hasArchived = true; }
-    else active.appendChild(div);
-  });
-  arcSec.style.display = hasArchived ? "block" : "none";
+function setStatus(msg) {
+  document.getElementById("statusBar").textContent = msg;
 }
 
-function saveThreads() {
-  const trimmed = threads.map(t => ({ ...t, messages: t.messages.slice(-200) }));
-  try { localStorage.setItem("orbit_threads", JSON.stringify(trimmed)); }
-  catch(e) { threads = threads.slice(0, 20); localStorage.setItem("orbit_threads", JSON.stringify(threads)); }
-}
-function getActiveThread() { return threads.find(t => t.id === activeThreadId); }
-
-// ── CHAT RENDER ───────────────────────────────
-function renderChat() {
-  const chat = document.getElementById("chat");
-  chat.innerHTML = "";
-  const thread = getActiveThread();
-  if (!thread) return;
-  thread.messages.forEach(m => chat.appendChild(buildMessageEl(m)));
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function buildMessageEl(msg) {
-  const div = document.createElement("div");
-  div.className = "message " + msg.role;
-  if (msg.text === "__TYPING__")
-    div.innerHTML = "<div class='typing'><span></span><span></span><span></span></div>";
-  else if (msg.text)
-    div.innerHTML = marked.parse(msg.text);
-  if (msg.images?.length) {
-    const gallery = document.createElement("div");
-    gallery.className = "gallery";
-    msg.images.forEach(src => {
-      const img = document.createElement("img");
-      img.src = src;
-      img.onclick = () => window.open(src, "_blank");
-      gallery.appendChild(img);
-    });
-    div.appendChild(gallery);
-  }
-  return div;
+/* ══════════════════════════════════════════════
+   PROFILE HELPERS
+   Full profile is sent with every message so
+   the backend AI can personalise every response.
+══════════════════════════════════════════════ */
+function getProfilePayload() {
+  if (!userProfile) return null;
+  return {
+    name:       userProfile.name       || "",
+    email:      userProfile.email      || "",
+    age:        userProfile.age        || "",
+    dob:        userProfile.dob        || "",
+    profession: userProfile.profession || "",
+    hobby:      userProfile.hobby      || "",
+    country:    userProfile.country    || "",
+    skills:     userProfile.skills     || "",
+    style:      userProfile.style      || "Professional",
+  };
 }
 
-// ── SEND ──────────────────────────────────────
+function setCookie(name, value, days = 365) {
+  const exp = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)};expires=${exp};path=/;SameSite=Lax`;
+}
+
+/* ══════════════════════════════════════════════
+   SEND
+   Attaches full profile to every WS message.
+══════════════════════════════════════════════ */
 function send() {
   if (isProcessing) return;
+
   const inputEl = document.getElementById("input");
   const text    = inputEl.value.trim();
   if (!text && !uploadedFileId) return;
 
-  // FIX 2: guard against sending when WS not ready
   if (!ws || ws.readyState !== WebSocket.OPEN) {
-    showError("Not connected. Reconnecting…"); initWS(); return;
+    toast("Not connected — reconnecting…"); initWS(); return;
   }
 
   const thread = getActiveThread();
   if (!thread) return;
 
-  thread.messages.push({ role: "user", text: text || "(file)", images: uploadedPreview ? [uploadedPreview] : null });
+  // Show user message
+  thread.messages.push({
+    role:   "user",
+    text:   text || "(file sent)",
+    images: uploadedPreview ? [uploadedPreview] : null
+  });
+
   inputEl.value   = "";
   uploadedPreview = null;
   document.getElementById("imagePreviewContainer").style.display = "none";
+
+  // Show typing indicator
   thread.messages.push({ role: "assistant", text: "__TYPING__" });
   saveThreads(); renderChat();
 
   isProcessing = true;
   setInputLock(true);
-  ws.send(JSON.stringify({ question: text || "User sent a file.", image_file_id: uploadedFileId || null }));
+
+  // ── Send message WITH full profile ──────────
+  ws.send(JSON.stringify({
+    question:      text || "User sent a file.",
+    image_file_id: uploadedFileId || null,
+    profile:       getProfilePayload(),     // ← full profile every time
+  }));
+
   uploadedFileId = null;
 }
 
-document.getElementById("input").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+// Enter = send, Shift+Enter = newline
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  });
 });
 
-// ── STREAM HANDLERS ───────────────────────────
+/* ══════════════════════════════════════════════
+   STREAM HANDLERS
+══════════════════════════════════════════════ */
 function appendAssistantToken(token) {
   const thread = getActiveThread();
   if (!thread) return;
@@ -268,15 +485,18 @@ function appendAssistantToken(token) {
   if (!last || last.role !== "assistant") return;
   if (last.text === "__TYPING__") last.text = "";
   last.text += token;
+
+  // Update only the last assistant bubble (fast, no full re-render)
   const chat  = document.getElementById("chat");
   const nodes = chat.querySelectorAll(".message.assistant");
-  const lastNode = nodes[nodes.length - 1];
-  if (lastNode) lastNode.innerHTML = marked.parse(last.text);
+  const node  = nodes[nodes.length - 1];
+  if (node) node.innerHTML = marked.parse(last.text);
   chat.scrollTop = chat.scrollHeight;
 }
 
 function finalizeAssistant(remaining) {
-  autoTitle(); saveThreads();
+  autoTitle();
+  saveThreads();
   isProcessing = false;
   setInputLock(false);
   if (remaining !== undefined) setStatus(`${remaining} messages left today`);
@@ -297,32 +517,121 @@ function showError(msg) {
   saveThreads(); renderChat();
 }
 
-// ── AUTO TITLE ────────────────────────────────
+/* ══════════════════════════════════════════════
+   THREADS
+══════════════════════════════════════════════ */
+function createThread() {
+  const id = crypto.randomUUID();
+  threads.unshift({ id, title: "New Chat", messages: [], archived: false });
+  saveThreads(); renderThreads(); openThread(id);
+}
+
+function openThread(id) {
+  activeThreadId = id;
+  renderThreads();
+  renderChat();
+}
+
+function renderThreads() {
+  const active   = document.getElementById("threads");
+  const archived = document.getElementById("archivedThreads");
+  const arcSec   = document.getElementById("archivedSection");
+  const filter   = (document.getElementById("chatSearch")?.value || "").toLowerCase();
+
+  active.innerHTML = archived.innerHTML = "";
+  let hasArchived = false;
+
+  threads.filter(t => t.title.toLowerCase().includes(filter)).forEach(t => {
+    const div = document.createElement("div");
+    div.className = "thread" + (t.id === activeThreadId ? " active" : "");
+    div.innerHTML = `<span class="label">${escHtml(t.title)}</span>`;
+    div.onclick = () => openThread(t.id);
+    div.oncontextmenu = (e) => { e.preventDefault(); openThreadMenu(t.id, e); };
+    if (t.archived) { archived.appendChild(div); hasArchived = true; }
+    else active.appendChild(div);
+  });
+
+  arcSec.style.display = hasArchived ? "block" : "none";
+}
+
+function saveThreads() {
+  const trimmed = threads.map(t => ({ ...t, messages: t.messages.slice(-200) }));
+  try {
+    localStorage.setItem("orbit_threads", JSON.stringify(trimmed));
+  } catch(e) {
+    threads = threads.slice(0, 20);
+    localStorage.setItem("orbit_threads", JSON.stringify(threads));
+  }
+}
+
+function getActiveThread() {
+  return threads.find(t => t.id === activeThreadId);
+}
+
+/* ══════════════════════════════════════════════
+   CHAT RENDER
+══════════════════════════════════════════════ */
+function renderChat() {
+  const chat = document.getElementById("chat");
+  chat.innerHTML = "";
+  const thread = getActiveThread();
+  if (!thread) return;
+  thread.messages.forEach(m => chat.appendChild(buildMessageEl(m)));
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function buildMessageEl(msg) {
+  const div = document.createElement("div");
+  div.className = "message " + msg.role;
+
+  if (msg.text === "__TYPING__") {
+    div.innerHTML = "<div class='typing'><span></span><span></span><span></span></div>";
+  } else if (msg.text) {
+    div.innerHTML = marked.parse(msg.text);
+  }
+
+  if (msg.images?.length) {
+    const gallery = document.createElement("div");
+    gallery.className = "gallery";
+    msg.images.forEach(src => {
+      const img = document.createElement("img");
+      img.src = src;
+      img.onclick = () => window.open(src, "_blank");
+      gallery.appendChild(img);
+    });
+    div.appendChild(gallery);
+  }
+
+  return div;
+}
+
+/* ══════════════════════════════════════════════
+   AUTO TITLE
+══════════════════════════════════════════════ */
 function autoTitle() {
   const thread = getActiveThread();
   if (!thread) return;
-  if (thread.title === "New Chat" && thread.messages.length > 0) {
-    const first = thread.messages.find(m => m.role === "user");
-    if (first) thread.title = (first.text || "Chat").slice(0, 35);
+  if (thread.title === "New Chat") {
+    const first = thread.messages.find(m => m.role === "user" && m.text && m.text !== "(file sent)");
+    if (first) thread.title = first.text.slice(0, 36).trim();
   }
   renderThreads();
 }
 
-// ── PROFILE ───────────────────────────────────
-// FIX 3: setCookie helper — backend reads orbit_name / orbit_email from cookies
-function setCookie(name, value, days = 365) {
-  const exp = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)};expires=${exp};path=/;SameSite=Lax`;
-}
-
+/* ══════════════════════════════════════════════
+   PROFILE
+══════════════════════════════════════════════ */
 function updateProfileUI() {
   document.getElementById("profileBtn").onclick = () => openProfileModal(false);
   const el = document.getElementById("profileName");
-  if (el && userProfile) el.textContent = userProfile.name || "User";
+  if (el) el.textContent = userProfile?.name ? userProfile.name : "Set up profile";
 }
 
 function openProfileModal(force) {
   document.getElementById("profileModal").classList.add("open");
+  document.getElementById("profileModalTitle").textContent =
+    force ? "👤 Complete Your Profile" : "👤 Edit Profile";
+
   if (userProfile) {
     document.getElementById("p_name").value       = userProfile.name       || "";
     document.getElementById("p_email").value      = userProfile.email      || "";
@@ -334,18 +643,22 @@ function openProfileModal(force) {
     document.getElementById("p_skills").value     = userProfile.skills     || "";
     document.getElementById("p_style").value      = userProfile.style      || "Professional";
   }
-  document.getElementById("profileModalTitle").textContent = force ? "Complete Your Profile" : "Edit Profile";
 }
 
 function saveProfile() {
   const name  = document.getElementById("p_name").value.trim();
   const email = document.getElementById("p_email").value.trim();
-  if (!name || !email) { alert("Name and Email are required."); return; }
+  if (!name)  { toast("Name is required."); return; }
+  if (!email) { toast("Email is required."); return; }
+
   const dob = document.getElementById("p_dob").value;
-  if (dob && new Date(dob) >= new Date()) { alert("DOB must be in the past."); return; }
+  if (dob && new Date(dob) >= new Date()) {
+    toast("Date of birth must be in the past."); return;
+  }
 
   userProfile = {
-    name, email,
+    name,
+    email,
     age:        document.getElementById("p_age").value.trim(),
     dob,
     profession: document.getElementById("p_profession").value.trim(),
@@ -354,51 +667,73 @@ function saveProfile() {
     skills:     document.getElementById("p_skills").value.trim(),
     style:      document.getElementById("p_style").value,
   };
+
   localStorage.setItem("orbit_user_profile", JSON.stringify(userProfile));
 
-  // FIX 3: set cookies so FastAPI backend can read them
+  // Keep cookies for basic backend fallback
   setCookie("orbit_name",  userProfile.name);
   setCookie("orbit_email", userProfile.email);
 
   updateProfileUI();
   document.getElementById("profileModal").classList.remove("open");
+  toast("Profile saved ✓");
 }
 
-// Close profile modal on backdrop click (only if profile complete)
+// Close modal on backdrop click (only if profile already complete)
 document.getElementById("profileModal").addEventListener("click", (e) => {
-  if (e.target === document.getElementById("profileModal"))
-    if (userProfile?.name && userProfile?.email)
+  if (e.target === document.getElementById("profileModal")) {
+    if (userProfile?.name && userProfile?.email) {
       document.getElementById("profileModal").classList.remove("open");
+    }
+  }
 });
 
-// ── BIRTHDAY ──────────────────────────────────
+/* ══════════════════════════════════════════════
+   BIRTHDAY
+══════════════════════════════════════════════ */
 function checkBirthday() {
   if (!userProfile?.dob) return;
-  const todayStr = new Date().toISOString().slice(0,10);
-  if (userProfile.dob.slice(5,10) !== todayStr.slice(5,10)) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (userProfile.dob.slice(5, 10) !== todayStr.slice(5, 10)) return;
   if (localStorage.getItem("orbit_last_birthday_wish") === todayStr) return;
+
   const thread = getActiveThread();
   if (thread) {
-    thread.messages.push({ role: "assistant", text: `🎉 Happy Birthday, ${userProfile.name}!` });
+    thread.messages.push({
+      role: "assistant",
+      text: `🎉 Happy Birthday, **${userProfile.name}**! Hope you have a wonderful day.`
+    });
     saveThreads(); renderChat();
   }
   localStorage.setItem("orbit_last_birthday_wish", todayStr);
 }
 
-// ── CONTEXT MENU ──────────────────────────────
+/* ══════════════════════════════════════════════
+   CONTEXT MENU
+══════════════════════════════════════════════ */
 let selectedThreadId = null;
+
 function openThreadMenu(id, event) {
   selectedThreadId = id;
   const menu = document.getElementById("chatMenu");
-  menu.style.left = event.pageX + "px";
-  menu.style.top  = event.pageY + "px";
+  menu.style.left    = Math.min(event.pageX, window.innerWidth - 160) + "px";
+  menu.style.top     = Math.min(event.pageY, window.innerHeight - 120) + "px";
   menu.style.display = "block";
+  event.stopPropagation();
 }
+
 function handleChatAction(action) {
   const t = threads.find(x => x.id === selectedThreadId);
   if (!t) return;
-  if (action === "rename") { const n = prompt("New name:", t.title); if (n) t.title = n; }
-  if (action === "archive") t.archived = !t.archived;
+
+  if (action === "rename") {
+    const n = prompt("New name:", t.title);
+    if (n?.trim()) t.title = n.trim();
+  }
+  if (action === "archive") {
+    t.archived = !t.archived;
+    toast(t.archived ? "Archived" : "Unarchived");
+  }
   if (action === "delete") {
     if (!confirm("Delete this chat permanently?")) return;
     threads = threads.filter(x => x.id !== selectedThreadId);
@@ -406,17 +741,20 @@ function handleChatAction(action) {
       if (threads.length) openThread(threads[0].id); else createThread();
     }
   }
+
   saveThreads(); renderThreads();
   document.getElementById("chatMenu").style.display = "none";
 }
-// FIX 4: close context menu on any outside click
-document.addEventListener("click", (e) => {
-  if (!document.getElementById("chatMenu").contains(e.target))
-    document.getElementById("chatMenu").style.display = "none";
+
+document.addEventListener("click", () => {
+  document.getElementById("chatMenu").style.display = "none";
 });
 
-// ── FILE UPLOAD ───────────────────────────────
+/* ══════════════════════════════════════════════
+   FILE UPLOAD
+══════════════════════════════════════════════ */
 function triggerFile() { document.getElementById("fileInput").click(); }
+
 function clearImagePreview() {
   uploadedPreview = uploadedFileId = null;
   document.getElementById("fileInput").value = "";
@@ -426,31 +764,41 @@ function clearImagePreview() {
 document.getElementById("fileInput").onchange = async () => {
   const file = document.getElementById("fileInput").files[0];
   if (!file) return;
+
+  toast("Uploading…");
   const form = new FormData();
   form.append("file", file);
-  try {
-    // FIX 1: absolute backend URL
-    const res  = await fetch(`${BACKEND}/upload`, { method: "POST", body: form });
-    const data = await res.json();
-    if (!data.file_id) { showError("Upload failed."); return; }
-    uploadedFileId = data.file_id;
-  } catch(err) { showError("Upload error: " + err.message); return; }
 
+  try {
+    const res  = await fetchWithTimeout(`${BACKEND}/upload`, { method: "POST", body: form }, 30000);
+    const data = await res.json();
+    if (!data.file_id) { toast("Upload failed."); return; }
+    uploadedFileId = data.file_id;
+    toast("File ready ✓");
+  } catch(err) {
+    toast("Upload error: " + (err.message || "timeout"));
+    return;
+  }
+
+  const container = document.getElementById("imagePreviewContainer");
   if (file.type.startsWith("image/")) {
     const reader = new FileReader();
     reader.onload = (e) => {
       uploadedPreview = e.target.result;
-      document.getElementById("imagePreview").src = uploadedPreview;
-      document.getElementById("imagePreviewContainer").style.display = "block";
+      document.getElementById("imagePreview").src   = uploadedPreview;
+      document.getElementById("imagePreview").style.display = "block";
+      document.getElementById("imagePreviewName").textContent = "";
+      container.style.display = "block";
     };
     reader.readAsDataURL(file);
   } else {
-    document.getElementById("imagePreview").alt = file.name;
-    document.getElementById("imagePreview").src = "";
-    document.getElementById("imagePreviewContainer").style.display = "block";
+    document.getElementById("imagePreview").style.display  = "none";
+    document.getElementById("imagePreviewName").textContent = file.name;
+    container.style.display = "block";
   }
 };
 
+// Drag & drop
 const dropzone = document.getElementById("dropzone");
 dropzone.addEventListener("dragover",  (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
 dropzone.addEventListener("dragleave", ()  => dropzone.classList.remove("dragover"));
@@ -462,47 +810,67 @@ dropzone.addEventListener("drop", (e) => {
   }
 });
 
-// ── VOICE RECORDING ───────────────────────────
-// FIX 5: onstop is attached immediately after recorder creation (not in else branch)
-//         so it's always wired up before stop() is ever called.
-// FIX 1: voice-to-text uses absolute backend URL.
+/* ══════════════════════════════════════════════
+   VOICE
+   onstop is attached immediately after recorder
+   creation — prevents the race condition where
+   stop() fires before onstop is assigned.
+══════════════════════════════════════════════ */
 document.getElementById("micBtn").addEventListener("click", toggleRecording);
 
 async function toggleRecording() {
   const btn = document.getElementById("micBtn");
 
   // STOP
-  if (recorder && recorder.state === "recording") { recorder.stop(); return; }
+  if (recorder && recorder.state === "recording") {
+    recorder.stop();
+    return;
+  }
 
   // START
   let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
-  catch(e) { alert("Microphone permission denied."); return; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    toast("Microphone permission denied.");
+    return;
+  }
 
   audioChunks = [];
   recorder    = new MediaRecorder(stream);
 
-  // FIX 5: attach BEFORE start() so it's always registered
   recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+
+  // Attach BEFORE start() — critical
   recorder.onstop = async () => {
     btn.classList.remove("recording");
     btn.textContent = "🎤";
-    document.getElementById("input").placeholder = "";
+    document.getElementById("input").placeholder = "Ask Orbit anything…";
     document.getElementById("input").disabled    = false;
     stream.getTracks().forEach(t => t.stop());
 
     const blob = new Blob(audioChunks, { type: "audio/webm" });
     if (blob.size < 100) { recorder = null; return; }
 
+    toast("Transcribing…");
     const form = new FormData();
     form.append("file", blob, "audio.webm");
+
     try {
-      // FIX 1: absolute backend URL
-      const res  = await fetch(`${BACKEND}/voice-to-text`, { method: "POST", body: form });
+      const res  = await fetchWithTimeout(`${BACKEND}/voice-to-text`, { method: "POST", body: form }, 20000);
       const data = await res.json();
-      if (data.text) { document.getElementById("input").value = data.text; send(); }
-    } catch(err) { showError("Voice transcription failed."); }
-    finally { recorder = null; audioChunks = []; }
+      if (data.text) {
+        document.getElementById("input").value = data.text;
+        send();
+      } else {
+        toast("Nothing heard. Try again.");
+      }
+    } catch(err) {
+      toast("Voice error: " + (err.message || "timeout"));
+    } finally {
+      recorder    = null;
+      audioChunks = [];
+    }
   };
 
   recorder.start();
@@ -510,11 +878,43 @@ async function toggleRecording() {
   btn.textContent = "⏹";
   document.getElementById("input").placeholder = "Listening…";
   document.getElementById("input").disabled    = true;
-  setTimeout(() => { if (recorder?.state === "recording") recorder.stop(); }, 60000);
+
+  // Auto-stop at 60s
+  setTimeout(() => {
+    if (recorder?.state === "recording") recorder.stop();
+  }, 60000);
 }
 
+/* ══════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════ */
 function escHtml(s) {
-  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return String(s)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+}
+
+function toast(msg, duration = 2800) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => el.classList.remove("show"), duration);
+}
+
+async function fetchWithTimeout(url, options = {}, ms = 25000) {
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, { ...options, signal: ctrl.signal });
+    clearTimeout(timer);
+    return res;
+  } catch(err) {
+    clearTimeout(timer);
+    if (err.name === "AbortError") throw new Error("Request timed out — server may be waking up, please retry");
+    throw err;
+  }
 }
 </script>
 </body>
