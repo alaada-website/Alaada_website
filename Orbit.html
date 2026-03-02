@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbit AI</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<style>
+:root{
+ --bg:#0f172a;
+ --panel:#111827;
+ --panel2:#1f2937;
+ --accent:#2563eb;
+ --border:#2d3748;
+ --text:#e5e7eb;
+}
+body{
+ margin:0;
+ background:var(--bg);
+ color:var(--text);
+ display:flex;
+ height:100vh;
+ font-family:Inter;
+}
+.typing{
+ display:flex;
+ gap:5px;
+}
+.typing span{
+ width:8px;
+ height:8px;
+ background:white;
+ border-radius:50%;
+ animation:blink 1.2s infinite;
+}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes blink{
+ 0%,100%{opacity:0.3}
+ 50%{opacity:1}
+}
+@media(max-width:768px){
+ .sidebar{
+   width:70px;
+ }
+ .thread{
+   font-size:12px;
+ }
+ textarea{
+   height:45px;
+ }
+}
+.recording{
+  background:#ef4444 !important;
+  animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+  0%{opacity:1}
+  50%{opacity:.6}
+  100%{opacity:1}
+}
+.menuItem{
+ padding:10px;
+ cursor:pointer;
+ font-size:14px;
+}
+.menuItem:hover{
+ background:var(--panel2);
+}
+
+.sidebar{
+ width:260px;
+ background:var(--panel);
+ border-right:1px solid var(--border);
+ display:flex;
+ flex-direction:column;
+}
+.thread{
+ padding:10px;
+ border-bottom:1px solid var(--border);
+ cursor:pointer;
+}
+.thread.active{background:var(--panel2)}
+.main{flex:1;display:flex;flex-direction:column}
+.chat{
+ flex:1;
+ overflow:auto;
+ padding:20px;
+ display:flex;
+ flex-direction:column;
+ gap:14px;
+}
+.message{
+ max-width:75%;
+ padding:12px;
+ border-radius:12px;
+ position:relative;
+ word-wrap:break-word;
+}
+.user{
+ align-self:flex-end;
+ background:var(--accent);
+}
+.assistant{
+ align-self:flex-start;
+ background:var(--panel2);
+}
+.gallery{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+ gap:8px;
+ margin-top:8px;
+}
+.gallery img{
+ width:100%;
+ border-radius:8px;
+}
+.input-area{
+ display:flex;
+ border-top:1px solid var(--border);
+ padding:10px;
+ gap:8px;
+ align-items:center;
+}
+textarea{
+ flex:1;
+ background:var(--panel2);
+ border:none;
+ color:white;
+ padding:8px;
+ border-radius:8px;
+ height:60px;
+}
+button{
+ background:var(--accent);
+ border:none;
+ padding:8px 12px;
+ color:white;
+ border-radius:6px;
+ cursor:pointer;
+}
+.dragover{outline:2px dashed var(--accent)}
+.preview-image{
+ margin-top:8px;
+ border-radius:8px;
+ max-width:250px;
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+
+  <button onclick="createThread()">+ New Chat</button>
+
+  <div id="threads"></div>
+
+  <div id="archivedSection" style="
+  padding:8px;
+  font-size:12px;
+  opacity:.6;">
+  Archived
+  </div>
+
+  <div id="archivedThreads"></div>
+
+  <div id="profileBtn" style="
+  margin-top:auto;
+  padding:10px;
+  border-top:1px solid var(--border);
+  cursor:pointer;
+  font-size:14px;
+  opacity:0.8;">
+  👤 <span id="profileName">User</span>
+  </div>
+
+</div>
+
+<div class="main">
+  <div class="chat" id="chat"></div>
+
+  <div class="input-area" id="dropzone">
+    <button id="micBtn" onclick="toggleRecording()">🎤</button>
+    <button onclick="triggerFile()">📎</button>
+    <textarea id="input"></textarea>
+	<div id="imagePreviewContainer" style="
+  display:none;
+  position:absolute;
+  bottom:80px;
+  left:280px;
+  background:#1f2937;
+  padding:8px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  z-index:2000;
+">
+  <img id="imagePreview" style="max-width:200px;border-radius:8px;">
+  <div style="text-align:right;margin-top:4px;">
+    <button onclick="clearImagePreview()" style="background:#ef4444;">✕</button>
+  </div>
+</div>
+    <button onclick="send()">Send</button>
+    <input type="file" id="fileInput" style="display:none" accept="image/*" capture="environment">
+  </div>
+</div>
+
+<div id="profileModal" style="
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.7);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:2000;">
+  <div style="
+  background:#1f2937;
+  padding:20px;
+  border-radius:12px;
+  width:320px;
+  max-height:90vh;
+  overflow:auto;">
+    <h3>User Profile</h3>
+
+    <input id="p_name" placeholder="Name (required)" style="width:100%;margin-bottom:8px;">
+    <input id="p_age" placeholder="Age (required)" style="width:100%;margin-bottom:8px;">
+    <input id="p_dob" type="date" style="width:100%;margin-bottom:8px;">
+    <input id="p_profession" placeholder="Profession">
+    <input id="p_hobby" placeholder="Hobby">
+    <input id="p_country" placeholder="Country">
+    <input id="p_skills" placeholder="Skills (Python-Advanced)">
+    <select id="p_style" style="width:100%;margin-top:8px;">
+      <option>Professional</option>
+      <option>Friendly</option>
+      <option>Technical</option>
+      <option>Witty</option>
+      <option>Custom</option>
+    </select>
+
+    <button onclick="saveProfile()" style="margin-top:12px;width:100%;">Save</button>
+  </div>
+</div>
+<div id="chatMenu" style="
+position:fixed;
+display:none;
+background:#1f2937;
+border:1px solid var(--border);
+border-radius:8px;
+overflow:hidden;
+z-index:4000;
+min-width:140px;">
+  <div class="menuItem" onclick="handleChatAction('rename')">Rename</div>
+  <div class="menuItem" onclick="handleChatAction('archive')">Archive</div>
+  <div class="menuItem" onclick="handleChatAction('delete')" style="color:#ef4444;">Delete</div>
+</div>
+
+<script>
+let userProfile = JSON.parse(localStorage.getItem("orbit_user_profile") || "null");
+let threads = JSON.parse(localStorage.getItem("orbit_threads") || "[]");
+let activeThreadId = null;
+let ws;
+let uploadedFileId = null;
+let uploadedPreview = null;
+let recorder, audioChunks=[];
+let isProcessing = false;
+let autoStopTimer = null;
+
+/* ================= INIT ================= */
+
+initWS();
+
+/* ========= WEBSOCKET ========= */
+function initWS(){
+ const protocol = location.protocol==="https:"?"wss":"ws";
+ ws = new WebSocket(`${protocol}://${location.host}/ws`);
+
+ ws.onmessage = (e)=>{
+   const data = JSON.parse(e.data);
+   if(data.type==="token") appendAssistantToken(data.content);
+   if(data.type==="done") finalizeAssistant();
+ };
+}
+
+/* ========= THREADS ========= */
+function createThread(){
+ const id=crypto.randomUUID();
+ threads.unshift({
+   id,
+   title:"New Chat",
+   messages:[],
+   memorySummary:"",
+   archived:false,
+   password:null
+ });
+ saveThreads();
+ renderThreads();
+ openThread(id);
+}
+
+function openThread(id){
+ activeThreadId=id;
+ renderThreads();
+ renderChat();
+}
+
+
+function renderThreads(){
+ const activeContainer=document.getElementById("threads");
+ const archivedContainer=document.getElementById("archivedThreads");
+ const archivedSection=document.getElementById("archivedSection");
+
+ activeContainer.innerHTML="";
+ archivedContainer.innerHTML="";
+
+ const filter = document.getElementById("chatSearch")?.value?.toLowerCase() || "";
+
+ let hasArchived=false;
+
+ threads
+ .filter(t => t.title.toLowerCase().includes(filter))
+ .forEach(t=>{
+   const div=document.createElement("div");
+   div.className="thread"+(t.id===activeThreadId?" active":"");
+   div.innerText=t.title;
+   div.onclick=()=>openThread(t.id);
+   div.oncontextmenu=(e)=>openThreadMenu(t.id,e);
+
+   if(t.archived){
+     archivedContainer.appendChild(div);
+     hasArchived=true;
+   } else {
+     activeContainer.appendChild(div);
+   }
+ });
+
+ archivedSection.style.display = hasArchived ? "block" : "none";
+}
+
+function saveThreads(){
+ localStorage.setItem("orbit_threads",JSON.stringify(threads));
+}
+
+function getActiveThread(){
+ return threads.find(t=>t.id===activeThreadId);
+}
+
+/* ========= CHAT ========= */
+function renderChat(){
+ chat.innerHTML="";
+ const thread=getActiveThread();
+ if(!thread) return;
+ thread.messages.forEach(m=>renderMessage(m));
+ chat.scrollTop=chat.scrollHeight;
+}
+
+function renderMessage(msg){
+ const div=document.createElement("div");
+ div.className="message "+msg.role;
+
+ if(msg.text==="__TYPING__"){
+   div.innerHTML="<div class='typing'><span></span><span></span><span></span></div>";
+ } else if(msg.text){
+   div.innerHTML=marked.parse(msg.text);
+ }
+
+ if(msg.images){
+   const gallery=document.createElement("div");
+   gallery.className="gallery";
+   msg.images.forEach(src=>{
+     const img=document.createElement("img");
+     img.src=src;
+     gallery.appendChild(img);
+   });
+   div.appendChild(gallery);
+ }
+
+ chat.appendChild(div);
+}
+
+/* ========= SEND ========= */
+function send(){
+
+ if(isProcessing) return; // 🔴 Block new sends
+
+ const text=input.value.trim();
+ if(!text && !uploadedFileId) return;
+
+ const thread=getActiveThread();
+
+ // Show user message immediately
+ thread.messages.push({
+   role:"user",
+   text:text || "",
+   images: uploadedPreview ? [uploadedPreview] : null
+ });
+
+ saveThreads();
+ renderChat();
+
+ input.value="";
+ uploadedPreview=null;
+ document.getElementById("imagePreviewContainer").style.display="none";
+
+ isProcessing = true;
+ toggleInputState(true);
+
+ ws.send(JSON.stringify({
+   question: buildPrompt(text || "User sent an image."),
+   image_file_id: uploadedFileId || null
+ }));
+
+ uploadedFileId=null;
+
+ thread.messages.push({
+   role:"assistant",
+   text:"__TYPING__"
+ });
+
+ saveThreads();
+ renderChat();
+}
+
+/* ========= STREAM ========= */
+function appendAssistantToken(token){
+ const thread=getActiveThread();
+ const last=thread.messages[thread.messages.length-1];
+
+ if(last.text==="__TYPING__") last.text="";
+ last.text+=token;
+
+ renderChat();
+}
+
+function finalizeAssistant(){
+ compressMemory();
+ autoTitle();
+ saveThreads();
+
+ isProcessing = false;
+ toggleInputState(false);
+}
+
+function toggleInputState(lock){
+ input.disabled = lock;
+ document.getElementById("micBtn").disabled = lock;
+}
+
+/* ========= MEMORY ========= */
+function buildPrompt(text){
+ const thread=getActiveThread();
+
+ let profileBlock="";
+ if(userProfile){
+   profileBlock = `
+User Profile:
+Name: ${userProfile.name}
+Age: ${userProfile.age}
+DOB: ${userProfile.dob}
+Profession: ${userProfile.profession || "N/A"}
+Hobby: ${userProfile.hobby || "N/A"}
+Country: ${userProfile.country || "N/A"}
+Skills: ${userProfile.skills || "N/A"}
+Preferred Output Style: ${userProfile.style || "Professional"}
+`;
+ }
+
+ return `
+${profileBlock}
+
+Memory Summary:
+${thread.memorySummary || "None"}
+
+User Question:
+${text}
+`;
+}
+
+function compressMemory(){
+ const thread=getActiveThread();
+ const combined=thread.messages.slice(-6)
+   .map(m=>m.role+": "+(m.text||""))
+   .join("\n");
+ thread.memorySummary=combined.slice(0,800);
+}
+
+/* ========= TITLE ========= */
+function autoTitle(){
+ const thread=getActiveThread();
+ if(thread.title==="New Chat" && thread.messages.length>0){
+   thread.title=thread.messages[0].text.slice(0,30);
+ }
+ renderThreads();
+}
+
+/* ========= CHAT MENU ========= */
+let selectedThreadId=null;
+
+function openThreadMenu(id,event){
+ event.preventDefault();
+ selectedThreadId=id;
+
+ const menu=document.getElementById("chatMenu");
+ menu.style.left=event.pageX+"px";
+ menu.style.top=event.pageY+"px";
+ menu.style.display="block";
+}
+
+function handleChatAction(action){
+ const t=threads.find(x=>x.id===selectedThreadId);
+ if(!t) return;
+
+ if(action==="rename"){
+   const newName=prompt("New name:");
+   if(newName) t.title=newName;
+ }
+
+ if(action==="archive"){
+   t.archived=true;
+ }
+
+ if(action==="delete"){
+  if(confirm("Delete this chat permanently?")){
+    threads=threads.filter(x=>x.id!==selectedThreadId);
+  } else {
+    return;
+  }
+}
+
+ saveThreads();
+ renderThreads();
+ document.getElementById("chatMenu").style.display="none";
+}
+
+window.addEventListener("load",()=>{
+
+ // Inject search first
+ const searchInput=document.createElement("input");
+ searchInput.id="chatSearch";
+ searchInput.placeholder="Search chats";
+ searchInput.style="margin:8px;border-radius:6px;padding:6px;border:none;background:#1f2937;color:white;";
+
+ document.querySelector(".sidebar").insertBefore(
+   searchInput,
+   document.getElementById("threads")
+ );
+
+ searchInput.addEventListener("input",()=>renderThreads());
+
+ // Then initialize threads
+ if(threads.length===0) createThread();
+ else openThread(threads[0].id);
+
+ if(!userProfile){
+   openProfileModal(true);
+ }
+
+ updateProfileUI();
+ checkBirthday();
+});
+/* ========= SEARCH ========= */
+
+
+/* ========= PROFILE ========= */
+function updateProfileUI(){
+ document.getElementById("profileBtn").onclick=()=>openProfileModal(false);
+ const el=document.getElementById("profileName");
+ if(userProfile && el) el.innerText=userProfile.name;
+}
+
+function openProfileModal(force){
+ const modal=document.getElementById("profileModal");
+ modal.style.display="flex";
+
+ if(userProfile){
+   p_name.value=userProfile.name||"";
+   p_age.value=userProfile.age||"";
+   p_dob.value=userProfile.dob||"";
+   p_profession.value=userProfile.profession||"";
+   p_hobby.value=userProfile.hobby||"";
+   p_country.value=userProfile.country||"";
+   p_skills.value=userProfile.skills||"";
+   p_style.value=userProfile.style||"Professional";
+ }
+
+ if(force){
+   modal.querySelector("h3").innerText="Complete Profile";
+ }
+}
+
+function saveProfile(){
+ if(!p_name.value || !p_age.value || !p_dob.value){
+   alert("Name, Age and DOB required.");
+   return;
+ }
+
+ const today=new Date();
+ today.setHours(0,0,0,0);
+
+ const dob=new Date(p_dob.value);
+ dob.setHours(0,0,0,0);
+
+ if(isNaN(dob.getTime()) || dob>=today){
+   alert("DOB must be earlier than today.");
+   return;
+ }
+
+ userProfile={
+   name:p_name.value.trim(),
+   age:p_age.value.trim(),
+   dob:p_dob.value,
+   profession:p_profession.value.trim(),
+   hobby:p_hobby.value.trim(),
+   country:p_country.value.trim(),
+   skills:p_skills.value.trim(),
+   style:p_style.value
+ };
+
+ localStorage.setItem("orbit_user_profile",JSON.stringify(userProfile));
+ updateProfileUI();
+ profileModal.style.display="none";
+}
+
+/* ========= BIRTHDAY ========= */
+function checkBirthday(){
+ if(!userProfile?.dob) return;
+
+ const todayFull=new Date().toISOString().slice(0,10);
+ const todayMD=todayFull.slice(5,10);
+ const dobMD=userProfile.dob.slice(5,10);
+
+ if(todayMD!==dobMD) return;
+
+ const last=localStorage.getItem("orbit_last_birthday_wish");
+ if(last===todayFull) return;
+
+ const thread=getActiveThread();
+ if(thread){
+   thread.messages.push({
+     role:"assistant",
+     text:`🎉 Happy Birthday ${userProfile.name}!`
+   });
+   saveThreads();
+   renderChat();
+ }
+
+ localStorage.setItem("orbit_last_birthday_wish",todayFull);
+}
+
+function clearImagePreview(){
+ uploadedPreview=null;
+ uploadedFileId=null;
+ fileInput.value="";
+ document.getElementById("imagePreviewContainer").style.display="none";
+}
+
+/* ========= FILE ========= */
+function triggerFile(){ fileInput.click(); }
+
+fileInput.onchange = async()=>{
+ const file=fileInput.files[0];
+ if(!file) return;
+
+ const form=new FormData();
+ form.append("file",file);
+
+ const res=await fetch("/upload",{method:"POST",body:form});
+ const data=await res.json();
+ uploadedFileId=data.file_id;
+
+ if(file.type.startsWith("image/")){
+   const reader=new FileReader();
+   reader.onload=e=>{
+     uploadedPreview=e.target.result;
+
+     const container=document.getElementById("imagePreviewContainer");
+     const img=document.getElementById("imagePreview");
+
+     img.src=uploadedPreview;
+     container.style.display="block";
+   };
+   reader.readAsDataURL(file);
+ }
+};
+
+dropzone.addEventListener("dragover",e=>{
+ e.preventDefault();
+ dropzone.classList.add("dragover");
+});
+dropzone.addEventListener("dragleave",()=>dropzone.classList.remove("dragover"));
+dropzone.addEventListener("drop",async e=>{
+ e.preventDefault();
+ dropzone.classList.remove("dragover");
+ fileInput.files=e.dataTransfer.files;
+ fileInput.onchange();
+});
+
+/* ========= MIC ========= */
+async function toggleRecording(){
+
+ const btn = document.getElementById("micBtn");
+ const maxDuration = 60000; // 60 seconds
+ let autoStopTimer;
+
+ if(!recorder){
+
+   try{
+     const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+     recorder = new MediaRecorder(stream);
+
+     audioChunks=[];
+     recorder.start();
+
+     btn.classList.add("recording");
+     btn.innerText="⏹";
+
+     input.placeholder="Listening...";
+     input.disabled=true;
+
+     recorder.ondataavailable = e => audioChunks.push(e.data);
+
+     // 🔥 Auto-stop after 60s
+     autoStopTimer = setTimeout(()=>{
+       if(recorder){
+         recorder.stop();
+       }
+     }, maxDuration);
+
+   }catch(err){
+     alert("Microphone permission denied.");
+   }
+
+ }else{
+
+   clearTimeout(autoStopTimer);
+   recorder.stop();
+
+ }
+
+ if(recorder){
+   recorder.onstop = async()=>{
+
+     btn.classList.remove("recording");
+     btn.innerText="🎤";
+
+     input.placeholder="";
+     input.disabled=false;
+
+     const blob = new Blob(audioChunks,{type:"audio/webm"});
+     const form = new FormData();
+     form.append("file",blob);
+
+     const res = await fetch("/voice-to-text",{method:"POST",body:form});
+     const data = await res.json();
+
+     recorder.stream.getTracks().forEach(track=>track.stop());
+     recorder=null;
+     audioChunks=[];
+
+     if(!data.text) return;
+
+     input.value = data.text;
+     send();
+   };
+ }
+}
+</script>
+</body>
+</html>
