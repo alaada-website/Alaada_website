@@ -150,7 +150,7 @@
 	</p>
 
     <div class="buttons">
-      <a href="/Orbit.html" class="cta">Try Orbit AI</a>
+      <a href="#" id="launch-orbit" class="cta">Try Orbit AI</a>
       <a href="#about" class="secondary">Learn More</a>
     </div>
 
@@ -177,33 +177,36 @@
 <section id="orbit" class="fade-section">
 
   <div style="
-    margin-bottom: 18px;
-    padding: 18px 22px;
-    background: rgba(11,114,255,0.10);
+    margin-bottom: 22px;
+    padding: 22px 26px;
+    background: rgba(11,114,255,0.08);
     border-left: 4px solid #0b72ff;
-    border-radius: 14px;
+    border-radius: 16px;
     font-size: 1rem;
-    line-height: 1.6;
+    line-height: 1.7;
   ">
-    <h2 style="margin-top:0;">Orbit AI</h2>
-    <p style="margin-bottom:10px;">
-      Orbit is Alaada’s central intelligence layer — built for structured thinking, 
-      deeper reasoning, and practical clarity.
+    <h2 style="margin-top:0; font-weight:600;">Orbit</h2>
+
+    <p style="margin-bottom:12px;">
+      Orbit is Alaada’s intelligence layer — designed for structured thinking,
+      analytical clarity, and deliberate reasoning.
     </p>
+
     <p style="margin-bottom:0;">
-      Explain complex ideas. Break down decisions. Debug strategies. 
-      Think through problems step by step.
+      Understand complex concepts. Deconstruct decisions.
+      Debug systems. Explore ideas with depth — not noise.
     </p>
-    <p style="margin-top:12px;font-size:0.9rem;opacity:0.85;">
+
+    <p style="margin-top:14px; font-size:0.9rem; opacity:0.75;">
       Built in India by <strong>Arzo Das</strong>.
     </p>
   </div>
 
-  <div style="text-align:center; margin-top: 20px;">
-    <a href="/Orbit.html" class="cta" style="
-      padding: 12px 22px;
+  <div style="text-align:center; margin-top: 24px;">
+    <a href="#" id="launch-orbit" class="cta" style="
+      padding: 14px 26px;
       font-size: 1rem;
-      border-radius: 10px;
+      border-radius: 12px;
       display: inline-block;
     ">
       Launch Orbit →
@@ -263,8 +266,8 @@ function logout() {
 
 <script>
 /* =========================================================
-   APPWRITE AUTH + COOKIE GUARD + ORBIT BOOTSTRAP
-   PRODUCTION SAFE & APPWRITE-CORRECT
+   ALAADA AUTH CONTROL (HOMEPAGE VERSION)
+   Clean • Controlled • No Auto-OAuth • Orbit Gated
 ========================================================= */
 (() => {
   "use strict";
@@ -275,31 +278,23 @@ function logout() {
   const APPWRITE_ENDPOINT = "https://sfo.cloud.appwrite.io/v1";
   const APPWRITE_PROJECT_ID = "6972444700208a437da1";
 
-  const OAUTH_RETURN_FLAG = "alaada_oauth_returned";
-
-  const AUTH_COOKIE  = "alaada_auth";
-  const IDENTITY_KEY = "orbit_identity";
-
-  // 🔒 Appwrite REQUIRES origin only (no path, no params)
   const ORIGIN = window.location.origin;
 
   const GOOGLE_LOGIN =
-  "https://sfo.cloud.appwrite.io/v1/account/sessions/oauth2/google" +
-  "?project=6972444700208a437da1" +
-  "&success=https://www.alaada.com" +
-  "&failure=https://www.alaada.com/fail";
+    "https://sfo.cloud.appwrite.io/v1/account/sessions/oauth2/google" +
+    "?project=6972444700208a437da1" +
+    "&success=https://www.alaada.com" +
+    "&failure=https://www.alaada.com/fail";
 
+  const AUTH_COOKIE = "alaada_auth";
+  const IDENTITY_KEY = "orbit_identity";
 
   /* =========================
      COOKIE HELPERS
-     (Optimization only — never trusted alone)
   ========================== */
   function setAuthCookie() {
     document.cookie =
-      `${AUTH_COOKIE}=1;` +
-      `path=/;` +
-      `max-age=${60 * 60 * 24 * 7};` +
-      `SameSite=Lax;Secure`;
+      `${AUTH_COOKIE}=1;path=/;max-age=${60 * 60 * 24 * 7};SameSite=Lax;Secure`;
   }
 
   function clearAuthCookie() {
@@ -307,26 +302,8 @@ function logout() {
       `${AUTH_COOKIE}=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT;SameSite=Lax;Secure`;
   }
 
-  function hasAuthCookie() {
-    return document.cookie.split("; ").some(c =>
-      c.startsWith(AUTH_COOKIE + "=")
-    );
-  }
-
   /* =========================
-     SAFE JSON
-  ========================== */
-  function safeJSON(v, f) {
-    try {
-      const p = JSON.parse(v);
-      return p && typeof p === "object" ? p : f;
-    } catch {
-      return f;
-    }
-  }
-
-  /* =========================
-     GLOBAL LOGOUT
+     LOGOUT (GLOBAL)
   ========================== */
   window.logout = async function () {
     try {
@@ -335,6 +312,8 @@ function logout() {
         credentials: "include",
         headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
       });
+    } catch (err) {
+      console.error("Logout failed:", err);
     } finally {
       clearAuthCookie();
       localStorage.removeItem(IDENTITY_KEY);
@@ -343,207 +322,51 @@ function logout() {
   };
 
   /* =========================
-     AUTHENTICATION FLOW
-     (SESSION IS SOURCE OF TRUTH)
+     ORBIT ACCESS CONTROL
+     (Only redirect if authenticated)
   ========================== */
-  async function authenticate() {
+  async function goToOrbitIfAuthenticated() {
     try {
       const res = await fetch(`${APPWRITE_ENDPOINT}/account`, {
         credentials: "include",
         headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
       });
 
-      // ❌ No valid session → OAuth
       if (!res.ok) {
-        if (sessionStorage.getItem(OAUTH_RETURN_FLAG)) {
-			return false;
-		}
-
-		sessionStorage.setItem(OAUTH_RETURN_FLAG, "1");
-		clearAuthCookie();
-		window.location.replace(GOOGLE_LOGIN);
-		return false;
-      }
-
-      const user = await res.json();
-	  sessionStorage.removeItem(OAUTH_RETURN_FLAG);
-
-
-      // ✅ Valid Appwrite session
-      setAuthCookie();
-
-      if (user?.email) {
-        localStorage.setItem(
-          IDENTITY_KEY,
-          JSON.stringify({
-            name: user.name || "User",
-            email: user.email
-          })
-        );
-      }
-
-      return true;
-
-    } 
-	catch (err) {
-  console.error("Auth error:", err);
-
-  if (sessionStorage.getItem(OAUTH_RETURN_FLAG)) {
-    return false;
-  }
-
-  sessionStorage.setItem(OAUTH_RETURN_FLAG, "1");
-  clearAuthCookie();
-  window.location.replace(GOOGLE_LOGIN);
-  return false;
-}
-
-  }
-
-  /* =========================
-     ORBIT CORE
-  ========================== */
-  const BACKEND_WS = "wss://orbit-38iw.onrender.com";
-
-  const HISTORY_KEY = "orbit_history_backup";
-  const MEMORY_KEY  = "orbit_prompt_memory";
-
-  const MAX_MEMORY   = 3;
-  const COOLDOWN_MS  = 4000;
-  const DAILY_LIMIT  = 10;
-  const SHARE_BONUS  = 3;
-
-  let lastAskTime = 0;
-  let inFlight = false;
-  let orbitWS = null;
-
-  function todayKey() {
-    return "orbit_usage_" + new Date().toISOString().slice(0, 10);
-  }
-
-  function getUsageData() {
-    const d = safeJSON(localStorage.getItem(todayKey()), {});
-    return {
-      used: Number(d.used) || 0,
-      bonus: Number(d.bonus) || 0,
-      shared: Boolean(d.shared)
-    };
-  }
-
-  function saveUsageData(d) {
-    localStorage.setItem(todayKey(), JSON.stringify(d));
-  }
-
-  function incrementUsage() {
-    const d = getUsageData();
-    d.used++;
-    saveUsageData(d);
-  }
-
-  function canAsk() {
-    const d = getUsageData();
-    return d.used < (DAILY_LIMIT + d.bonus);
-  }
-
-  function getIdentity() {
-    return safeJSON(localStorage.getItem(IDENTITY_KEY), null);
-  }
-
-  function renderMarkdown(md) {
-    return DOMPurify.sanitize(marked.parse(md || "", { breaks: true }));
-  }
-
-  function enhanceCode(el) {
-    el.querySelectorAll("pre code").forEach(Prism.highlightElement);
-  }
-
-  /* =========================
-     ORBIT API
-  ========================== */
-  window.Orbit = {
-
-    init() {
-      const meta = document.getElementById("orbit-meta");
-      const box  = document.getElementById("orbit-identity");
-      const id   = getIdentity();
-
-      if (!id || !id.email) {
-        box.style.display = "block";
-        meta.textContent = "Please sign in to continue.";
+        // No valid session → OAuth
+        window.location.replace(GOOGLE_LOGIN);
         return;
       }
 
-      box.style.display = "none";
-      meta.textContent = `Welcome back, ${id.name}.`;
-    },
+      // Valid session
+      setAuthCookie();
+      window.location.href = "/Orbit.html";
 
-    askStream() {
-
-  if (!canAsk()) {
-    document.getElementById("orbit-meta").textContent =
-      "Daily limit reached. Share Orbit to unlock more prompts.";
-    return;
+    } catch (err) {
+      console.error("Orbit access check failed:", err);
+      window.location.replace(GOOGLE_LOGIN);
+    }
   }
-
-  const now = Date.now();
-  if (inFlight || now - lastAskTime < COOLDOWN_MS) return;
-
-  const input = document.getElementById("orbit-input");
-  const out   = document.getElementById("orbit-response");
-  const meta  = document.getElementById("orbit-meta");
-
-  const q = input.value.trim();
-  if (!q) return;
-
-  inFlight = true;
-  lastAskTime = now;
-
-  out.innerHTML = "";
-  meta.textContent = "Orbit is thinking…";
-
-  orbitWS = new WebSocket(`${BACKEND_WS}/ws`);
-  orbitWS.onopen = () =>
-    orbitWS.send(JSON.stringify({ question: q }));
-
-  let raw = "";
-
-  orbitWS.onmessage = e => {
-    const msg = JSON.parse(e.data);
-    if (msg.type === "token") {
-      raw += msg.content;
-      out.innerHTML = renderMarkdown(raw);
-      enhanceCode(out);
-    }
-    if (msg.type === "done") {
-      incrementUsage();
-      input.value = "";
-      meta.textContent = "✓ Complete";
-      inFlight = false;
-      orbitWS.close();
-    }
-  };
-
-  orbitWS.onerror = () => {
-    meta.textContent = "Connection error";
-    inFlight = false;
-  };
-}
-
-  };
 
   /* =========================
      BOOT SEQUENCE
   ========================== */
-  window.addEventListener("load", async () => {
-  await authenticate();
-  window.Orbit.init();
-});
+  window.addEventListener("load", () => {
 
+    // Attach click handlers to ALL Orbit buttons
+    const orbitButtons = document.querySelectorAll("#launch-orbit");
+
+    orbitButtons.forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        await goToOrbitIfAuthenticated();
+      });
+    });
+
+  });
 
 })();
 </script>
-
-
 </body>
 </html>
 
