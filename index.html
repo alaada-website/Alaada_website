@@ -150,7 +150,7 @@
 	</p>
 
     <div class="buttons">
-      <a href="#orbit" class="cta">Try Orbit AI</a>
+      <a href="/Orbit.html" class="cta">Try Orbit AI</a>
       <a href="#about" class="secondary">Learn More</a>
     </div>
 
@@ -173,80 +173,43 @@
 </section>
 
 <!-- ABOUT ORBIT -->
+<!-- ORBIT -->
 <section id="orbit" class="fade-section">
 
-	<div id="orbit-identity" style="margin-bottom:14px;display:none">
-  <input id="orbit-name" placeholder="Your name"
-         style="padding:6px;border-radius:6px;border:none;width:48%">
-  <input id="orbit-email" placeholder="Your email"
-         style="padding:6px;border-radius:6px;border:none;width:48%;margin-left:4%">
-  <button onclick="Orbit.saveIdentity()" style="margin-top:8px">Continue</button>
-</div>
-
-<div style="
-  margin-top:18px;
-  margin-bottom:10px;
-  padding:12px 14px;
-  background:rgba(11,114,255,0.12);
-  border-left:4px solid #0b72ff;
-  border-radius:10px;
-  font-size:0.95rem;
-  line-height:1.5;
-">
-  <strong>What can Orbit help with?</strong><br>
-  Ask Orbit to explain concepts, analyze decisions, debug ideas, or reason through problems — not just give quick answers.
-  <br><br>
-  Built at Alaada by <strong>Arzo Das</strong>.
-</div>
-
-	<textarea
-  id="orbit-input"
-  placeholder="Ask Orbit anything…"
-  maxlength="2000"
-  ></textarea>
-    <button onclick="Orbit.askStream()">Ask Orbit →</button>
-
-  <div id="orbit-meta"></div>
-  <div id="orbit-response"></div>
-
-  <!-- Chat history toggle -->
-<div style="margin-top:22px">
-  <button onclick="Orbit.toggleHistory()" style="
-    background: transparent;
-    border: 1px solid #444;
-    color: #ccc;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    cursor: pointer;
+  <div style="
+    margin-bottom: 18px;
+    padding: 18px 22px;
+    background: rgba(11,114,255,0.10);
+    border-left: 4px solid #0b72ff;
+    border-radius: 14px;
+    font-size: 1rem;
+    line-height: 1.6;
   ">
-    Show chat history
-  </button>
-</div>
-
-<!-- Chat history panel -->
-<div id="orbit-history" style="
-  display:none;
-  margin-top:14px;
-  padding:14px;
-  background:rgba(0,0,0,0.55);
-  border-radius:10px;
-  font-size:0.9rem;
-  line-height:1.5;
-  max-height:320px;
-  overflow-y:auto;
-">
-  <em style="opacity:0.7">No history yet.</em>
-</div>
-
-
-  <div class="share-links" style="margin-top:18px">
-    Get more prompts by sharing online:
-    <span onclick="Orbit.share('twitter')">X</span>
-    <span onclick="Orbit.share('facebook')">Facebook</span>
-    <span onclick="Orbit.share('linkedin')">LinkedIn</span>
-    <span onclick="Orbit.share('copy')">Copy link</span>
+    <h2 style="margin-top:0;">Orbit AI</h2>
+    <p style="margin-bottom:10px;">
+      Orbit is Alaada’s central intelligence layer — built for structured thinking, 
+      deeper reasoning, and practical clarity.
+    </p>
+    <p style="margin-bottom:0;">
+      Explain complex ideas. Break down decisions. Debug strategies. 
+      Think through problems step by step.
+    </p>
+    <p style="margin-top:12px;font-size:0.9rem;opacity:0.85;">
+      Built in India by <strong>Arzo Das</strong>.
+    </p>
   </div>
+
+  <div style="text-align:center; margin-top: 20px;">
+    <a href="/Orbit.html" class="cta" style="
+      padding: 12px 22px;
+      font-size: 1rem;
+      border-radius: 10px;
+      display: inline-block;
+    ">
+      Launch Orbit →
+    </a>
+  </div>
+
 </section>
 
 <!-- Alaada Web Analyser -->

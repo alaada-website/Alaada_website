@@ -976,18 +976,22 @@ document.getElementById("inputTextarea").addEventListener("keydown", (e) => {
 function applyDownloadLinks(node) {
   node.querySelectorAll("a").forEach(a => {
     const href = a.getAttribute("href") || "";
-    if (href.startsWith("/download/")) {
-      a.href    = `${BACKEND}${href}`;
-      a.target  = "_blank";
-      a.rel     = "noopener noreferrer";
-      a.setAttribute("download", "");
-      a.innerHTML = `⬇️ ${a.textContent || "Download file"}`;
-      a.style.cssText = (
-        "display:inline-block;padding:8px 16px;margin:6px 2px;"
-        + "background:#2563eb;color:white;border-radius:8px;"
-        + "text-decoration:none;font-weight:600;font-size:13px;"
-      );
-    }
+    // Match both relative /download/ paths and absolute URLs containing /download/
+    const isDownload = href.includes("/download/");
+    if (!isDownload) return;
+    const fullUrl = href.startsWith("http") ? href : `${BACKEND}${href}`;
+    a.href    = fullUrl;
+    a.target  = "_blank";
+    a.rel     = "noopener noreferrer";
+    a.setAttribute("download", "");
+    const label = a.textContent.trim() || "Download file";
+    a.innerHTML = `⬇️ ${label}`;
+    a.style.cssText = (
+      "display:inline-block;padding:9px 18px;margin:8px 2px 4px;"
+      + "background:#2563eb;color:white;border-radius:10px;"
+      + "text-decoration:none;font-weight:600;font-size:14px;"
+      + "box-shadow:0 2px 8px rgba(37,99,235,.35);"
+    );
   });
 }
 
