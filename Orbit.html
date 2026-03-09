@@ -9,7 +9,6 @@
 <meta name="theme-color" content="#0f172a">
 <title>Orbit AI</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<!-- MathJax for mathematical expressions -->
 <script>
   MathJax = {
     tex: {
@@ -41,7 +40,6 @@
   --radius-msg:  16px;
   --radius-btn:  12px;
 
-  /* iOS / Android safe-area notch support */
   --sat: env(safe-area-inset-top,    0px);
   --sar: env(safe-area-inset-right,  0px);
   --sab: env(safe-area-inset-bottom, 0px);
@@ -49,33 +47,24 @@
 
   --sidebar-w: 285px;
   --hdr-h:     54px;
-  --btn-touch: 48px;   /* minimum touch target */
+  --btn-touch: 48px;
 }
 
-/* ═══════════════════════════════════════════
-   RESET & BASE
-═══════════════════════════════════════════ */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0; padding: 0;
   -webkit-tap-highlight-color: transparent;
 }
 
-html {
-  /* interactive-widget=resizes-content handles keyboard on modern browsers.
-     height:100% is the fallback for older ones. */
-  height: 100%;
-}
+html { height: 100%; }
 
 body {
   height: 100%;
-  /* dvh = dynamic viewport height — shrinks when browser chrome appears */
   min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
   overflow: hidden;
-  /* Prevent iOS rubber-band scroll on the body */
   overscroll-behavior: none;
 }
 
@@ -104,7 +93,6 @@ body {
   z-index: 400;
   transition: transform .26s cubic-bezier(.4, 0, .2, 1);
   will-change: transform;
-  /* notch padding */
   padding-left: var(--sal);
 }
 
@@ -173,75 +161,30 @@ body {
   padding: 12px 8px;
   background: transparent;
   border: none;
+  border-bottom: 2px solid transparent;
   color: var(--muted);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all .2s;
-  border-bottom: 2px solid transparent;
+  white-space: nowrap;
 }
-
 .sidebar-tab:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
 }
-
 .sidebar-tab.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
-  font-weight: 600;
+  background: rgba(37, 99, 235, 0.1);
 }
 
-/* Images Gallery */
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  padding: 10px;
-}
-
-.image-item {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: 8px;
+/* ── Chats section ── */
+#chatsSection {
+  flex: 1;
   overflow: hidden;
-  cursor: pointer;
-  transition: transform .2s;
-  background: var(--panel2);
-}
-
-.image-item:hover {
-  transform: scale(1.05);
-}
-
-.image-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.image-item-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-  padding: 6px 8px;
-  font-size: 10px;
-  color: white;
-  opacity: 0;
-  transition: opacity .2s;
-}
-
-.image-item:hover .image-item-overlay {
-  opacity: 1;
-}
-
-.no-images-msg {
-  padding: 40px 20px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
 }
 
 #threads, #archivedThreads {
@@ -251,37 +194,19 @@ body {
 }
 #threads { flex: 1; }
 
-/* Sidebar Tabs */
-.sidebar-tab {
+/* ── Image Gallery ── */
+#imagesSection {
   flex: 1;
-  padding: 12px 8px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all .2s;
-  white-space: nowrap;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: none;
+  padding: 10px;
 }
 
-.sidebar-tab:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.sidebar-tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-  background: rgba(37, 99, 235, 0.1);
-}
-
-/* Image Gallery */
-#imageGallery {
+.image-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
 .gallery-item {
@@ -294,18 +219,15 @@ body {
   border: 1px solid var(--border);
   transition: transform .2s, box-shadow .2s;
 }
-
 .gallery-item:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
-
 .gallery-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-
 .gallery-item-overlay {
   position: absolute;
   inset: 0;
@@ -317,24 +239,15 @@ body {
   justify-content: space-between;
   padding: 8px;
 }
-
-.gallery-item:hover .gallery-item-overlay {
-  opacity: 1;
-}
-
+.gallery-item:hover .gallery-item-overlay { opacity: 1; }
 .gallery-item-date {
   font-size: 10px;
   color: white;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
-
-.gallery-item-actions {
-  display: flex;
-  gap: 4px;
-}
-
+.gallery-item-actions { display: flex; gap: 4px; }
 .gallery-action-btn {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255,255,255,0.2);
   border: none;
   color: white;
   border-radius: 4px;
@@ -343,22 +256,14 @@ body {
   cursor: pointer;
   backdrop-filter: blur(4px);
 }
-
-.gallery-action-btn:active {
-  background: rgba(255, 255, 255, 0.3);
-}
+.gallery-action-btn:active { background: rgba(255,255,255,0.3); }
 
 .no-images-message {
   text-align: center;
   padding: 40px 20px;
   color: var(--muted);
   font-size: 14px;
-}
-
-.no-images-message div:first-child {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
+  line-height: 2;
 }
 
 .thread {
@@ -422,7 +327,7 @@ body {
 .p-email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ═══════════════════════════════════════════
-   OVERLAY (tap to close sidebar on mobile)
+   OVERLAY
 ═══════════════════════════════════════════ */
 #overlay {
   display: none;
@@ -446,7 +351,6 @@ body {
   padding-right: var(--sar);
 }
 
-/* ── MOBILE HEADER ── */
 #mobileHeader {
   display: none;
   flex-shrink: 0;
@@ -505,14 +409,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  /* subtle bottom fade so last message doesn't sit right against the input */
   padding-bottom: 12px;
 }
 .chat::-webkit-scrollbar { width: 3px; }
 .chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ═══════════════════════════════════════════
-   WELCOME SCREEN (for new/empty chats)
+   WELCOME SCREEN
 ═══════════════════════════════════════════ */
 .welcome-container {
   flex: 1;
@@ -527,17 +430,16 @@ body {
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .welcome-icon {
   font-size: 64px;
   animation: float 3s ease-in-out infinite;
 }
-
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50%       { transform: translateY(-10px); }
 }
 
 .welcome-title {
@@ -558,7 +460,6 @@ body {
   max-width: 400px;
 }
 
-/* Suggested Prompts */
 .suggested-prompts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -580,30 +481,15 @@ body {
   gap: 12px;
   user-select: none;
 }
-
 .prompt-card:hover {
   background: var(--panel);
   border-color: var(--accent);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
 }
-
-.prompt-card:active {
-  transform: translateY(0);
-}
-
-.prompt-icon {
-  font-size: 24px;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-.prompt-text {
-  flex: 1;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text);
-}
+.prompt-card:active { transform: translateY(0); }
+.prompt-icon { font-size: 24px; flex-shrink: 0; line-height: 1; }
+.prompt-text { flex: 1; font-size: 14px; line-height: 1.5; color: var(--text); }
 
 /* ── MESSAGES ── */
 .message {
@@ -622,13 +508,12 @@ body {
 .message.user      { align-self: flex-end;  background: var(--accent);  border-bottom-right-radius: 4px; }
 .message.assistant { align-self: flex-start; background: var(--panel2); border-bottom-left-radius:  4px; }
 
-/* Copy button for messages */
+/* Copy button */
 .message-copy-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  top: 8px; right: 8px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
   color: var(--text);
   border-radius: 6px;
   padding: 4px 8px;
@@ -636,66 +521,40 @@ body {
   cursor: pointer;
   opacity: 0;
   transition: opacity .2s, background .2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  display: flex; align-items: center; gap: 4px;
   z-index: 10;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
-
-.message:hover .message-copy-btn {
-  opacity: 1;
-}
-
-.message-copy-btn:hover {
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.message-copy-btn:active {
-  background: rgba(0, 0, 0, 0.7);
-  transform: scale(0.95);
-}
-
+.message:hover .message-copy-btn { opacity: 1; }
+.message-copy-btn:hover { background: rgba(0,0,0,0.5); }
+.message-copy-btn:active { background: rgba(0,0,0,0.7); transform: scale(0.95); }
 .message-copy-btn.copied {
-  background: rgba(34, 197, 94, 0.3);
-  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(34,197,94,0.3);
+  border-color: rgba(34,197,94,0.5);
   color: #4ade80;
 }
 
-/* Touch devices - always show copy button */
-@media (hover: none) {
-  .message-copy-btn {
-    opacity: 0.7;
-  }
-}
+@media (hover: none) { .message-copy-btn { opacity: 0.7; } }
 
-.message p              { margin: 0 0 8px; }
-.message p:last-child   { margin: 0; }
+.message p             { margin: 0 0 8px; }
+.message p:last-child  { margin: 0; }
 .message h1, .message h2, .message h3 { margin: 10px 0 5px; font-size: 1em; font-weight: 600; }
 .message ul, .message ol { padding-left: 18px; margin: 5px 0; }
-.message li             { margin: 3px 0; }
-.message strong         { font-weight: 600; }
-.message a              { color: #60a5fa; text-decoration: underline; word-break: break-all; }
-.message img            { max-width: 100%; border-radius: 8px; display: block; }
-.message pre            { background: #0d1117; padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 12px; margin: 8px 0; -webkit-overflow-scrolling: touch; }
-.message code           { font-size: 12.5px; background: #0d1117; padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; }
-.message pre code       { background: none; padding: 0; }
-.message table          { border-collapse: collapse; width: 100%; font-size: 13px; overflow-x: auto; display: block; }
-.message th, .message td{ border: 1px solid var(--border); padding: 6px 10px; }
+.message li            { margin: 3px 0; }
+.message strong        { font-weight: 600; }
+.message a             { color: #60a5fa; text-decoration: underline; word-break: break-all; }
+.message img           { max-width: 100%; border-radius: 8px; display: block; }
+.message pre           { background: #0d1117; padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 12px; margin: 8px 0; -webkit-overflow-scrolling: touch; }
+.message code          { font-size: 12.5px; background: #0d1117; padding: 1px 6px; border-radius: 4px; font-family: "SF Mono", Menlo, Consolas, monospace; }
+.message pre code      { background: none; padding: 0; }
+.message table         { border-collapse: collapse; width: 100%; font-size: 13px; overflow-x: auto; display: block; }
+.message th, .message td { border: 1px solid var(--border); padding: 6px 10px; }
 
-/* Math expressions */
-.message .MathJax {
-  font-size: 1.1em !important;
-}
+.message .MathJax { font-size: 1.1em !important; }
+.message mjx-container { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
-.message mjx-container {
-  overflow-x: auto;
-  overflow-y: hidden;
-  max-width: 100%;
-}
-
-/* gallery */
+/* gallery in message */
 .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 8px; margin-top: 10px; }
 .gallery img { width: 100%; border-radius: 8px; cursor: pointer; }
 
@@ -708,7 +567,6 @@ body {
 
 /* ═══════════════════════════════════════════
    INPUT WRAPPER
-   Sticks to bottom, above home indicator.
 ═══════════════════════════════════════════ */
 .input-wrapper {
   flex-shrink: 0;
@@ -718,7 +576,6 @@ body {
 }
 .input-wrapper.dragover { outline: 2px dashed var(--accent); }
 
-/* file preview strip */
 #previewBar {
   display: none;
   align-items: center;
@@ -739,7 +596,6 @@ body {
   flex-shrink: 0;
 }
 
-/* input row */
 .input-row {
   display: flex;
   align-items: flex-end;
@@ -764,9 +620,8 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   transition: border-color .15s;
-  /* stops iOS zooming the page when textarea is tapped (requires font-size ≥ 16px on iOS — we use 15px but the meta viewport prevents zoom) */
 }
-#inputTextarea:focus   { border-color: var(--accent); }
+#inputTextarea:focus { border-color: var(--accent); }
 #inputTextarea::placeholder { color: var(--muted); }
 
 .rnd-btn {
@@ -804,55 +659,29 @@ body {
 #sendBtn:disabled { opacity: .35; pointer-events: none; }
 
 /* ═══════════════════════════════════════════
-   RECORDING ANIMATION - Audio Wave Visualization
+   RECORDING ANIMATION
 ═══════════════════════════════════════════ */
-.recording { 
-  background: var(--danger) !important; 
+.recording {
+  background: var(--danger) !important;
   position: relative;
   overflow: visible;
 }
-
-/* Audio wave bars container */
-.recording::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 200%;
-  height: 200%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: -1;
-}
-
-/* Pulsing glow effect */
 .recording::after {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(239, 68, 68, 0.4) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  width: 100%; height: 100%;
+  background: radial-gradient(circle, rgba(239,68,68,0.4) 0%, transparent 70%);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   animation: glowPulse 1.5s ease-in-out infinite;
 }
-
 @keyframes glowPulse {
-  0%, 100% {
-    width: 100%;
-    height: 100%;
-    opacity: 0.6;
-  }
-  50% {
-    width: 180%;
-    height: 180%;
-    opacity: 0.3;
-  }
+  0%, 100% { width: 100%;  height: 100%;  opacity: 0.6; }
+  50%       { width: 180%; height: 180%; opacity: 0.3; }
 }
 
-/* Audio wave bars - positioned around the button */
+/* Audio wave */
 .audio-wave {
   position: fixed;
   display: none;
@@ -862,20 +691,15 @@ body {
   pointer-events: none;
   z-index: 1000;
 }
-
-.audio-wave.active {
-  display: flex;
-}
-
+.audio-wave.active { display: flex; }
 .audio-wave .bar {
   width: 3px;
   background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
   border-radius: 2px;
   animation: audioWave 0.8s ease-in-out infinite;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 8px rgba(239,68,68,0.5);
 }
-
-.audio-wave .bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+.audio-wave .bar:nth-child(1) { height: 8px;  animation-delay: 0s; }
 .audio-wave .bar:nth-child(2) { height: 16px; animation-delay: 0.1s; }
 .audio-wave .bar:nth-child(3) { height: 24px; animation-delay: 0.2s; }
 .audio-wave .bar:nth-child(4) { height: 28px; animation-delay: 0.3s; }
@@ -883,28 +707,21 @@ body {
 .audio-wave .bar:nth-child(6) { height: 28px; animation-delay: 0.35s; }
 .audio-wave .bar:nth-child(7) { height: 24px; animation-delay: 0.25s; }
 .audio-wave .bar:nth-child(8) { height: 16px; animation-delay: 0.15s; }
-.audio-wave .bar:nth-child(9) { height: 8px; animation-delay: 0.05s; }
-
+.audio-wave .bar:nth-child(9) { height: 8px;  animation-delay: 0.05s; }
 @keyframes audioWave {
-  0%, 100% {
-    transform: scaleY(0.3);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
+  0%, 100% { transform: scaleY(0.3); opacity: 0.5; }
+  50%       { transform: scaleY(1);   opacity: 1; }
 }
 
-/* Recording indicator dot */
+/* Recording indicator */
 .recording-indicator {
   position: fixed;
   display: none;
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.3);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 500;
@@ -913,24 +730,20 @@ body {
   z-index: 1001;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  left: 50%;
+  transform: translateX(-50%);
 }
-
-.recording-indicator.active {
-  display: flex;
-}
-
+.recording-indicator.active { display: flex; }
 .recording-indicator .dot {
-  width: 8px;
-  height: 8px;
+  width: 8px; height: 8px;
   background: #ef4444;
   border-radius: 50%;
   animation: recordingDot 1s ease-in-out infinite;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 8px rgba(239,68,68,0.8);
 }
-
 @keyframes recordingDot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(0.8); }
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.8); }
 }
 
 /* status bar */
@@ -943,7 +756,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   PROFILE MODAL — BOTTOM SHEET on mobile
+   PROFILE MODAL — BOTTOM SHEET
 ═══════════════════════════════════════════ */
 .modal-bg {
   position: fixed; inset: 0;
@@ -969,12 +782,10 @@ body {
   padding: 0 20px calc(20px + var(--sab));
   box-shadow: 0 -10px 50px rgba(0,0,0,.55);
   animation: sheetUp .24s cubic-bezier(.4,0,.2,1);
-  /* touch-based swipe dismiss is handled in JS */
   touch-action: pan-y;
 }
 @keyframes sheetUp { from { transform:translateY(100%); } to { transform:none; } }
 
-/* drag handle */
 .sheet-handle {
   width: 40px; height: 4px;
   background: var(--border);
@@ -999,13 +810,18 @@ body {
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--text);
-  font-size: 16px; /* 16px = no iOS auto-zoom */
+  font-size: 16px;
   outline: none;
   -webkit-appearance: none;
   appearance: none;
 }
 .sheet input:focus { border-color: var(--accent); }
-.sheet select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%236b7280'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.sheet select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%236b7280'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
 
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
@@ -1075,8 +891,7 @@ body {
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ═══════════════════════════════════════════
-   MOBILE LAYOUT  (≤ 639px)
-   Sidebar slides in as a drawer.
+   MOBILE (≤639px)
 ═══════════════════════════════════════════ */
 @media (max-width: 639px) {
   .sidebar {
@@ -1087,32 +902,23 @@ body {
   }
   .sidebar.open { transform: translateX(0); }
   #overlay.open { display: block; }
-
   #closeSidebarBtn { display: flex; }
   #mobileHeader    { display: flex; }
 
   .message { font-size: 14.5px; max-width: 92%; }
-  
   .welcome-title { font-size: 24px; }
   .suggested-prompts { grid-template-columns: 1fr; }
-
-  /* On tiny screens (320px) collapse the field-row to single column */
-  @media (max-width: 360px) {
-    .field-row { grid-template-columns: 1fr; }
-  }
 }
 
 /* ═══════════════════════════════════════════
-   DESKTOP OVERRIDES  (≥ 640px)
-   Sidebar always visible; modal is centred.
+   DESKTOP (≥640px)
 ═══════════════════════════════════════════ */
 @media (min-width: 640px) {
   .sidebar   { transform: none !important; position: relative; }
-  #mobileHeader { display: none !important; }
-  #overlay      { display: none !important; }
+  #mobileHeader    { display: none !important; }
+  #overlay         { display: none !important; }
   #closeSidebarBtn { display: none !important; }
 
-  /* centred modal on desktop */
   .modal-bg { align-items: center; }
   .sheet {
     border-radius: 18px;
@@ -1124,10 +930,8 @@ body {
   }
   .sheet-handle { display: none; }
 
-  /* slightly bigger chat padding */
   .chat  { padding: 20px 24px 12px; }
   .message { max-width: 74%; font-size: 14px; }
-
   .input-row { padding: 10px 14px; gap: 8px; }
   #inputTextarea { border-radius: 14px; font-size: 14px; }
   .rnd-btn, #sendBtn { border-radius: 12px; width: auto; height: auto; padding: 10px 14px; }
@@ -1148,27 +952,23 @@ body {
     <div style="padding: 8px 14px; font-size: 11px; color: var(--muted); line-height: 1.4; border-bottom: 1px solid var(--border);">
       ⚠️ Orbit AI can make mistakes, please double-check the responses
     </div>
-    
+
     <!-- Tab Navigation -->
     <div style="display: flex; border-bottom: 1px solid var(--border);">
-      <button id="chatsTab" class="sidebar-tab active" onclick="switchTab('chats')">
-        💬 Chats
-      </button>
-      <button id="imagesTab" class="sidebar-tab" onclick="switchTab('images')">
-        🖼️ Images
-      </button>
+      <button id="chatsTab"  class="sidebar-tab active" onclick="switchTab('chats')">💬 Chats</button>
+      <button id="imagesTab" class="sidebar-tab"        onclick="switchTab('images')">🖼️ Images</button>
     </div>
-    
+
     <!-- Chats Section -->
-    <div id="chatsSection" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+    <div id="chatsSection">
       <div id="threads"></div>
       <div id="archivedSection" style="display:none">Archived</div>
       <div id="archivedThreads"></div>
     </div>
-    
+
     <!-- Images Gallery Section -->
-    <div id="imagesSection" style="flex: 1; overflow-y: auto; display: none; padding: 10px;">
-      <div id="imageGallery"></div>
+    <div id="imagesSection">
+      <div id="imageGalleryGrid"></div>
     </div>
 
     <div id="profileBtn" onclick="openSheet()">
@@ -1184,8 +984,6 @@ body {
 
   <!-- ══ MAIN ══ -->
   <div class="main">
-
-    <!-- Mobile-only header -->
     <div id="mobileHeader">
       <button id="menuBtn" onclick="openSidebar()">☰</button>
       <span id="mobileTitle">Orbit AI</span>
@@ -1196,13 +994,11 @@ body {
     <div id="statusBar">—</div>
 
     <div class="input-wrapper" id="inputWrapper">
-      <!-- file/image preview strip -->
       <div id="previewBar">
         <img id="prevThumb" src="" alt="" style="display:none">
         <div id="prevName"></div>
         <button id="prevClose" onclick="clearPreview()">✕</button>
       </div>
-
       <div class="input-row">
         <button class="rnd-btn" id="micBtn">🎤</button>
         <button class="rnd-btn" onclick="triggerFile()">📎</button>
@@ -1212,9 +1008,8 @@ body {
           accept="image/*,application/pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.txt,.csv">
       </div>
     </div>
-
-  </div><!-- .main -->
-</div><!-- #app -->
+  </div>
+</div>
 
 <!-- ══ PROFILE SHEET ══ -->
 <div class="modal-bg" id="profileModal">
@@ -1277,17 +1072,11 @@ body {
 
 <div id="toast"></div>
 
-<!-- ══ AUDIO WAVE VISUALIZATION ══ -->
+<!-- ══ AUDIO WAVE ══ -->
 <div class="audio-wave" id="audioWave">
-  <div class="bar"></div>
-  <div class="bar"></div>
-  <div class="bar"></div>
-  <div class="bar"></div>
-  <div class="bar"></div>
-  <div class="bar"></div>
-  <div class="bar"></div>
-  <div class="bar"></div>
-  <div class="bar"></div>
+  <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+  <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+  <div class="bar"></div><div class="bar"></div><div class="bar"></div>
 </div>
 
 <!-- ══ RECORDING INDICATOR ══ -->
@@ -1317,19 +1106,28 @@ const SUGGESTED_PROMPTS = [
 
 /* ════════════════════════════════════════════
    STATE
+   FIX: imageGallery items use {id, url, prompt, timestamp} consistently.
+        Removed the duplicate renderImageGallery / saveImageToGallery definitions.
 ════════════════════════════════════════════ */
-let profile    = JSON.parse(localStorage.getItem("orbit_profile") || "null");
-let threads    = JSON.parse(localStorage.getItem("orbit_threads") || "[]");
-let imageGallery = JSON.parse(localStorage.getItem("orbit_images") || "[]");
-let userMemory = JSON.parse(localStorage.getItem("orbit_memory") || "{}");
-let activeId   = null;
+let profile      = JSON.parse(localStorage.getItem("orbit_profile") || "null");
+let threads      = JSON.parse(localStorage.getItem("orbit_threads") || "[]");
+// FIX: Migrate old gallery items that used 'data' key to 'url' key
+let imageGallery = (JSON.parse(localStorage.getItem("orbit_images") || "[]")).map(img => ({
+  id:        img.id        || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+  url:       img.url       || img.data || "",  // 'data' was old key
+  prompt:    img.prompt    || "",
+  timestamp: img.timestamp || Date.now(),
+})).filter(img => img.url);
+
+let userMemory   = JSON.parse(localStorage.getItem("orbit_memory") || "{}");
+let activeId     = null;
 let ws;
-let fileId      = null;
-let fileIsImage = false;   // true = image (image_file_id), false = document (file_id)
-let filePreview = null;
-let recorder   = null;
-let chunks     = [];
-let busy       = false;
+let fileId       = null;
+let fileIsImage  = false;
+let filePreview  = null;
+let recorder     = null;
+let chunks       = [];
+let busy         = false;
 
 /* ════════════════════════════════════════════
    BOOT
@@ -1338,7 +1136,6 @@ window.addEventListener("load", () => {
   autoResizeTA();
   swipeToDismissSheet();
 
-  // Always create a new chat when user enters
   if (!threads.length || threads[0].messages.length > 0) {
     createThread();
   } else {
@@ -1350,23 +1147,13 @@ window.addEventListener("load", () => {
   refreshProfileUI();
   checkBirthday();
   connectWS();
-  
-  // Initialize image gallery
   renderImageGallery();
-  
-  // Initialize user memory from conversations if empty
-  if (Object.keys(userMemory).length === 0) {
-    initializeUserMemory();
-  }
 
-  // Wake Render free-tier cold start
   fetch(`${BACKEND}/health`).then(() => setStatus("Ready")).catch(() => setStatus("Connecting…"));
 });
 
 /* ════════════════════════════════════════════
-   TEXTAREA — auto-resize + iOS 16px rule
-   (font-size 15px needs a non-scalable viewport
-    meta, which we already have)
+   TEXTAREA AUTO-RESIZE
 ════════════════════════════════════════════ */
 function autoResizeTA() {
   const ta = document.getElementById("inputTextarea");
@@ -1375,25 +1162,21 @@ function autoResizeTA() {
     ta.style.height = Math.min(ta.scrollHeight, 150) + "px";
   };
   ta.addEventListener("input", resize);
-  // also resize after voice transcription fills it
   window._resizeTA = resize;
 }
 
 /* ════════════════════════════════════════════
    SWIPE-TO-DISMISS SHEET
-   Drag down ≥ 80px = close modal.
 ════════════════════════════════════════════ */
 function swipeToDismissSheet() {
-  const sheet  = document.getElementById("profileSheet");
-  const modal  = document.getElementById("profileModal");
-  let startY   = 0;
-  let dragging = false;
+  const sheet = document.getElementById("profileSheet");
+  const modal = document.getElementById("profileModal");
+  let startY = 0, dragging = false;
 
   sheet.addEventListener("touchstart", (e) => {
-    // only fire when touching near top of sheet
     const rect = sheet.getBoundingClientRect();
     if (e.touches[0].clientY - rect.top < 60) {
-      startY   = e.touches[0].clientY;
+      startY = e.touches[0].clientY;
       dragging = true;
     }
   }, { passive: true });
@@ -1408,7 +1191,7 @@ function swipeToDismissSheet() {
     if (!dragging) return;
     dragging = false;
     const dy = e.changedTouches[0].clientY - startY;
-    if (dy > 80 && (profile?.name && profile?.email)) {
+    if (dy > 80 && profile?.name && profile?.email) {
       sheet.style.transform = "";
       closeSheet();
     } else {
@@ -1421,17 +1204,17 @@ function swipeToDismissSheet() {
    SIDEBAR TAB SWITCHING
 ════════════════════════════════════════════ */
 function switchTab(tab) {
-  const chatsTab = document.getElementById("chatsTab");
-  const imagesTab = document.getElementById("imagesTab");
+  const chatsTab     = document.getElementById("chatsTab");
+  const imagesTab    = document.getElementById("imagesTab");
   const chatsSection = document.getElementById("chatsSection");
   const imagesSection = document.getElementById("imagesSection");
-  
+
   if (tab === "chats") {
     chatsTab.classList.add("active");
     imagesTab.classList.remove("active");
     chatsSection.style.display = "flex";
     imagesSection.style.display = "none";
-  } else if (tab === "images") {
+  } else {
     chatsTab.classList.remove("active");
     imagesTab.classList.add("active");
     chatsSection.style.display = "none";
@@ -1442,193 +1225,151 @@ function switchTab(tab) {
 
 /* ════════════════════════════════════════════
    IMAGE GALLERY
+   FIX: Single canonical implementation.
+        Items use { id, url, prompt, timestamp }.
+        'url' can be a remote DALL-E URL or a data: URI.
 ════════════════════════════════════════════ */
+function saveImageGallery() {
+  try {
+    // Keep only last 100 images to avoid storage overflow
+    if (imageGallery.length > 100) imageGallery = imageGallery.slice(-100);
+    localStorage.setItem("orbit_images", JSON.stringify(imageGallery));
+  } catch (e) {
+    console.error("Failed to save image gallery:", e);
+    // If quota exceeded, trim and retry
+    imageGallery = imageGallery.slice(-30);
+    try { localStorage.setItem("orbit_images", JSON.stringify(imageGallery)); } catch {}
+  }
+}
+
+function addImageToGallery(url, prompt) {
+  if (!url) return;
+  imageGallery.push({
+    id:        (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())),
+    url,
+    prompt:    prompt || "",
+    timestamp: Date.now(),
+  });
+  saveImageGallery();
+}
+
 function renderImageGallery() {
-  const container = document.getElementById("imageGallery");
+  const container = document.getElementById("imageGalleryGrid");
+  if (!container) return;
   container.innerHTML = "";
-  
-  if (imageGallery.length === 0) {
-    container.innerHTML = '<div class="no-images-msg">📷<br><br>No images yet<br><small style="opacity: 0.7;">Generated images will appear here</small></div>';
+
+  if (!imageGallery.length) {
+    container.innerHTML = `
+      <div class="no-images-message">
+        🖼️<br>No images yet<br>
+        <small style="opacity:.7">Generated images appear here</small>
+      </div>`;
     return;
   }
-  
+
   const grid = document.createElement("div");
   grid.className = "image-grid";
-  
-  // Show most recent images first
-  [...imageGallery].reverse().forEach((img, index) => {
+
+  // Show newest first
+  [...imageGallery].reverse().forEach((img, revIdx) => {
+    const origIdx = imageGallery.length - 1 - revIdx;
     const item = document.createElement("div");
-    item.className = "image-item";
-    
-    const imgEl = document.createElement("img");
-    imgEl.src = img.url;
-    imgEl.alt = img.prompt || "Generated image";
-    imgEl.loading = "lazy";
-    
-    const overlay = document.createElement("div");
-    overlay.className = "image-item-overlay";
-    overlay.textContent = new Date(img.timestamp).toLocaleDateString();
-    
-    item.appendChild(imgEl);
-    item.appendChild(overlay);
-    
-    item.onclick = () => openImageModal(imageGallery.length - 1 - index);
-    
+    item.className = "gallery-item";
+
+    const date = new Date(img.timestamp).toLocaleDateString("en-US", {
+      month: "short", day: "numeric"
+    });
+
+    item.innerHTML = `
+      <img src="${escHtml(img.url)}" alt="${escHtml(img.prompt || 'Image')}" loading="lazy">
+      <div class="gallery-item-overlay">
+        <div class="gallery-item-date">${date}</div>
+        <div class="gallery-item-actions">
+          <button class="gallery-action-btn" title="Download">⬇️</button>
+          <button class="gallery-action-btn" title="Delete">🗑️</button>
+        </div>
+      </div>`;
+
+    const [dlBtn, delBtn] = item.querySelectorAll(".gallery-action-btn");
+
+    item.querySelector("img").onclick = () => viewImageFullscreen(img);
+
+    dlBtn.onclick = (e) => {
+      e.stopPropagation();
+      downloadGalleryImage(img);
+    };
+
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (!confirm("Delete this image?")) return;
+      imageGallery.splice(origIdx, 1);
+      saveImageGallery();
+      renderImageGallery();
+      toast("Image deleted");
+    };
+
     grid.appendChild(item);
   });
-  
+
   container.appendChild(grid);
 }
 
-function openImageModal(index) {
-  const img = imageGallery[index];
-  if (!img) return;
-  
-  // Create modal
-  const modal = document.createElement("div");
-  modal.style.cssText = `
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.95);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 20px;
-    backdrop-filter: blur(10px);
-  `;
-  
+function viewImageFullscreen(img) {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = [
+    "position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;",
+    "display:flex;flex-direction:column;align-items:center;justify-content:center;",
+    "padding:20px;cursor:zoom-out;",
+  ].join("");
+
   const imgEl = document.createElement("img");
   imgEl.src = img.url;
-  imgEl.style.cssText = `
-    max-width: 90%;
-    max-height: 70vh;
-    border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  `;
-  
+  imgEl.alt = img.prompt || "Image";
+  imgEl.style.cssText = "max-width:100%;max-height:70vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);";
+
   const info = document.createElement("div");
-  info.style.cssText = `
-    margin-top: 20px;
-    color: white;
-    text-align: center;
-    max-width: 600px;
-  `;
+  info.style.cssText = "margin-top:20px;color:white;text-align:center;max-width:600px;";
   info.innerHTML = `
-    <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.8;">
-      ${new Date(img.timestamp).toLocaleString()}
-    </div>
-    ${img.prompt ? `<div style="font-size: 13px; line-height: 1.4; opacity: 0.6;">"${escHtml(img.prompt)}"</div>` : ''}
-  `;
-  
+    <div style="font-size:14px;margin-bottom:8px;opacity:.8">${new Date(img.timestamp).toLocaleString()}</div>
+    ${img.prompt ? `<div style="font-size:13px;opacity:.6">"${escHtml(img.prompt)}"</div>` : ""}`;
+
   const actions = document.createElement("div");
-  actions.style.cssText = `
-    margin-top: 16px;
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-  `;
-  
-  const downloadBtn = document.createElement("button");
-  downloadBtn.textContent = "⬇️ Download";
-  downloadBtn.style.cssText = `
-    padding: 10px 20px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-  `;
-  downloadBtn.onclick = (e) => {
-    e.stopPropagation();
-    downloadImage(img.url, `orbit-image-${Date.now()}.png`);
+  actions.style.cssText = "margin-top:16px;display:flex;gap:12px;justify-content:center;";
+
+  const mkBtn = (label, bg, fn) => {
+    const b = document.createElement("button");
+    b.textContent = label;
+    b.style.cssText = `padding:10px 20px;background:${bg};color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;`;
+    b.onclick = (e) => { e.stopPropagation(); fn(); };
+    return b;
   };
-  
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "🗑️ Delete";
-  deleteBtn.style.cssText = `
-    padding: 10px 20px;
-    background: var(--danger);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-  `;
-  deleteBtn.onclick = (e) => {
-    e.stopPropagation();
-    if (confirm("Delete this image?")) {
-      imageGallery.splice(index, 1);
-      saveImageGallery();
-      document.body.removeChild(modal);
-      renderImageGallery();
-      toast("Image deleted");
-    }
-  };
-  
-  const closeBtn = document.createElement("button");
-  closeBtn.textContent = "✕ Close";
-  closeBtn.style.cssText = `
-    padding: 10px 20px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-  `;
-  closeBtn.onclick = () => document.body.removeChild(modal);
-  
-  actions.appendChild(downloadBtn);
-  actions.appendChild(deleteBtn);
-  actions.appendChild(closeBtn);
-  
-  modal.appendChild(imgEl);
-  modal.appendChild(info);
-  modal.appendChild(actions);
-  
-  modal.onclick = () => document.body.removeChild(modal);
+
+  actions.appendChild(mkBtn("⬇️ Download", "var(--accent)", () => downloadGalleryImage(img)));
+  actions.appendChild(mkBtn("✕ Close", "rgba(255,255,255,.1)", () => document.body.removeChild(overlay)));
+
+  overlay.appendChild(imgEl);
+  overlay.appendChild(info);
+  overlay.appendChild(actions);
+  overlay.onclick = () => document.body.removeChild(overlay);
   imgEl.onclick = (e) => e.stopPropagation();
-  info.onclick = (e) => e.stopPropagation();
+  info.onclick   = (e) => e.stopPropagation();
   actions.onclick = (e) => e.stopPropagation();
-  
-  document.body.appendChild(modal);
+
+  document.body.appendChild(overlay);
 }
 
-function downloadImage(url, filename) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  toast("Downloaded!");
-}
-
-function saveImageGallery() {
-  try {
-    localStorage.setItem("orbit_images", JSON.stringify(imageGallery));
-  } catch (e) {
-    console.error("Failed to save images:", e);
-    // Keep only last 50 images if storage is full
-    imageGallery = imageGallery.slice(-50);
-    localStorage.setItem("orbit_images", JSON.stringify(imageGallery));
+function downloadGalleryImage(img) {
+  // For data: URIs, download directly. For remote URLs, open in new tab.
+  if (img.url.startsWith("data:")) {
+    const a = document.createElement("a");
+    a.href = img.url;
+    a.download = `orbit-image-${Date.now()}.png`;
+    a.click();
+    toast("Downloaded!");
+  } else {
+    window.open(img.url, "_blank");
+    toast("Opened image in new tab");
   }
-}
-
-function addImageToGallery(imageUrl, prompt) {
-  const imageData = {
-    url: imageUrl,
-    prompt: prompt || "",
-    timestamp: Date.now()
-  };
-  imageGallery.push(imageData);
-  saveImageGallery();
 }
 
 /* ════════════════════════════════════════════
@@ -1653,9 +1394,10 @@ function connectWS() {
   ws.onmessage = ({ data }) => {
     try {
       const d = JSON.parse(data);
-      if (d.type === "token") streamToken(d.content);
-      if (d.type === "done")  finalize(d.remaining);
-      if (d.error)            { showErr(d.error); finalize(); }
+      if (d.type === "token")  streamToken(d.content);
+      if (d.type === "images") handleIncomingImages(d.images, d.prompt);
+      if (d.type === "done")   finalize(d.remaining);
+      if (d.error)             { showErr(d.error); finalize(); }
     } catch (e) { console.error("WS:", e); }
   };
   ws.onclose = () => { setStatus("Reconnecting…"); finalize(); setTimeout(connectWS, 2500); };
@@ -1665,18 +1407,37 @@ function connectWS() {
 function setStatus(t) { document.getElementById("statusBar").textContent = t; }
 
 /* ════════════════════════════════════════════
+   HANDLE INCOMING AI-GENERATED IMAGES
+   FIX: Backend now sends a {type:"images"} message when generate_image succeeds.
+        We append them to the last assistant message and save to gallery.
+════════════════════════════════════════════ */
+function handleIncomingImages(urls, prompt) {
+  if (!urls || !urls.length) return;
+  const t = activeThread();
+  if (!t) return;
+
+  const last = t.messages[t.messages.length - 1];
+  if (last && last.role === "assistant") {
+    last.images = last.images || [];
+    last.images.push(...urls);
+  } else {
+    t.messages.push({ role: "assistant", text: "", images: urls });
+  }
+
+  // Save each URL to gallery
+  urls.forEach(u => addImageToGallery(u, prompt || ""));
+
+  saveThreads();
+  renderChat();
+}
+
+/* ════════════════════════════════════════════
    PROFILE HELPERS
 ════════════════════════════════════════════ */
 function profilePayload() {
   if (!profile) return null;
-  
-  // Get recent conversation history for context
-  const t = activeThread();
-  const conversationHistory = t ? t.messages.slice(-10).map(m => ({
-    role: m.role,
-    content: m.text || ""
-  })) : [];
-  
+  // FIX: Don't send full conversation history — it bloats WS messages.
+  //      The backend already maintains SESSION_MEMORY server-side.
   return {
     name:       profile.name       || "",
     email:      profile.email      || "",
@@ -1687,8 +1448,6 @@ function profilePayload() {
     country:    profile.country    || "",
     skills:     profile.skills     || "",
     style:      profile.style      || "Professional",
-    memory:     userMemory,
-    history:    conversationHistory
   };
 }
 
@@ -1703,7 +1462,7 @@ function setCookie(n, v, d = 365) {
 function send() {
   if (busy) return;
   const ta   = document.getElementById("inputTextarea");
-  const text = ta.value; // Don't trim - preserve formatting and newlines
+  const text = ta.value;
   if (!text.trim() && !fileId) return;
 
   if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -1713,21 +1472,21 @@ function send() {
   const t = activeThread();
   if (!t) return;
 
-  // Save uploaded images to gallery
-  if (filePreview && fileIsImage) {
-    saveImageToGallery(filePreview, text || "Uploaded image");
-  }
+  t.messages.push({
+    role: "user",
+    text: text || "(file sent)",
+    images: (filePreview && fileIsImage) ? [filePreview] : null,
+  });
 
-  // Add user message
-  t.messages.push({ role: "user", text: text || "(file sent)", images: filePreview ? [filePreview] : null });
-
-  // Reset input
-  ta.value       = "";
+  ta.value = "";
   ta.style.height = "auto";
-  filePreview    = null;
+  const prevFileId      = fileId;
+  const prevFileIsImage = fileIsImage;
+  filePreview = null;
+  fileId      = null;
+  fileIsImage = false;
   hidePreview();
 
-  // Typing indicator
   t.messages.push({ role: "assistant", text: "__TYPING__" });
   saveThreads(); renderChat();
 
@@ -1736,17 +1495,14 @@ function send() {
 
   ws.send(JSON.stringify({
     question:      text || "User sent a file.",
-    image_file_id: (fileId && fileIsImage)  ? fileId : null,
-    file_id:       (fileId && !fileIsImage) ? fileId : null,
+    image_file_id: (prevFileId && prevFileIsImage)  ? prevFileId : null,
+    file_id:       (prevFileId && !prevFileIsImage) ? prevFileId : null,
     profile:       profilePayload(),
   }));
 
-  fileId = null;
-  fileIsImage = false;
   closeSidebar();
 }
 
-// Enter = send on desktop; newline on mobile
 document.getElementById("inputTextarea").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey && window.innerWidth >= 640) {
     e.preventDefault();
@@ -1760,9 +1516,7 @@ document.getElementById("inputTextarea").addEventListener("keydown", (e) => {
 function applyDownloadLinks(node) {
   node.querySelectorAll("a").forEach(a => {
     const href = a.getAttribute("href") || "";
-    // Match both relative /download/ paths and absolute URLs containing /download/
-    const isDownload = href.includes("/download/");
-    if (!isDownload) return;
+    if (!href.includes("/download/")) return;
     const fullUrl = href.startsWith("http") ? href : `${BACKEND}${href}`;
     a.href    = fullUrl;
     a.target  = "_blank";
@@ -1770,12 +1524,12 @@ function applyDownloadLinks(node) {
     a.setAttribute("download", "");
     const label = a.textContent.trim() || "Download file";
     a.innerHTML = `⬇️ ${label}`;
-    a.style.cssText = (
-      "display:inline-block;padding:9px 18px;margin:8px 2px 4px;"
-      + "background:#2563eb;color:white;border-radius:10px;"
-      + "text-decoration:none;font-weight:600;font-size:14px;"
-      + "box-shadow:0 2px 8px rgba(37,99,235,.35);"
-    );
+    a.style.cssText = [
+      "display:inline-block;padding:9px 18px;margin:8px 2px 4px;",
+      "background:#2563eb;color:white;border-radius:10px;",
+      "text-decoration:none;font-weight:600;font-size:14px;",
+      "box-shadow:0 2px 8px rgba(37,99,235,.35);",
+    ].join("");
   });
 }
 
@@ -1790,40 +1544,37 @@ function streamToken(tok) {
   const chat    = document.getElementById("chat");
   const bubbles = chat.querySelectorAll(".message.assistant");
   const node    = bubbles[bubbles.length - 1];
-  if (node) { 
-    // Preserve newlines during streaming
-    const textWithBreaks = last.text.replace(/\n/g, '  \n');
-    node.innerHTML = marked.parse(textWithBreaks); 
+  if (node) {
+    node.innerHTML = marked.parse(last.text);
     applyDownloadLinks(node);
-    // Render math expressions with MathJax
-    if (window.MathJax && window.MathJax.typesetPromise) {
-      MathJax.typesetPromise([node]).catch(err => console.log('MathJax error:', err));
+    // Re-add copy button after innerHTML reset
+    ensureCopyBtn(node, last);
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise([node]).catch(() => {});
     }
   }
   chat.scrollTop = chat.scrollHeight;
 }
 
+function ensureCopyBtn(node, msg) {
+  if (node.querySelector(".message-copy-btn")) return;
+  const btn = document.createElement("button");
+  btn.className = "message-copy-btn";
+  btn.innerHTML = "📋 Copy";
+  btn.onclick = (e) => { e.stopPropagation(); copyMessageContent(msg, btn); };
+  node.appendChild(btn);
+}
+
 function finalize(remaining) {
   const t = activeThread();
   if (t && t.messages.length >= 2) {
-    const lastUserMsg = t.messages[t.messages.length - 2];
-    const lastAiMsg = t.messages[t.messages.length - 1];
-    
-    // Update user memory with this interaction
-    if (lastUserMsg?.role === "user" && lastAiMsg?.role === "assistant") {
-      updateUserMemory(lastUserMsg.text, lastAiMsg.text);
-    }
-    
-    // Extract and save any AI-generated images from the response
-    if (lastAiMsg?.images && lastAiMsg.images.length > 0) {
-      lastAiMsg.images.forEach(imgSrc => {
-        if (imgSrc.startsWith('data:image')) {
-          saveImageToGallery(imgSrc, lastUserMsg?.text || "AI generated image");
-        }
-      });
+    const lastUser = t.messages[t.messages.length - 2];
+    const lastAI   = t.messages[t.messages.length - 1];
+    if (lastUser?.role === "user" && lastAI?.role === "assistant") {
+      updateUserMemory(lastUser.text, lastAI.text);
     }
   }
-  
+
   autoTitle();
   saveThreads();
   busy = false;
@@ -1850,7 +1601,7 @@ function showErr(msg) {
    THREADS
 ════════════════════════════════════════════ */
 function createThread() {
-  const id = crypto.randomUUID();
+  const id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
   threads.unshift({ id, title: "New Chat", messages: [], archived: false });
   saveThreads(); renderThreads(); openThread(id); closeSidebar();
 }
@@ -1863,8 +1614,8 @@ function openThread(id) {
 }
 
 function renderThreads() {
-  const aEl   = document.getElementById("threads");
-  const arEl  = document.getElementById("archivedThreads");
+  const aEl    = document.getElementById("threads");
+  const arEl   = document.getElementById("archivedThreads");
   const arcSec = document.getElementById("archivedSection");
   const filter = (document.getElementById("chatSearch")?.value || "").toLowerCase();
   aEl.innerHTML = arEl.innerHTML = "";
@@ -1874,54 +1625,25 @@ function renderThreads() {
     const div = document.createElement("div");
     div.className = "thread" + (t.id === activeId ? " active" : "");
     div.innerHTML = `<span class="thread-ico">💬</span><span class="thread-label">${escHtml(t.title)}</span>`;
-    
-    // Click to open thread
-    div.onclick = (e) => { 
-      // Only open thread if not long-pressing
-      if (!div._longPressing) {
-        openThread(t.id); 
-        closeSidebar(); 
-      }
-      div._longPressing = false;
-    };
-    
-    // Right-click for desktop
-    div.oncontextmenu = (e) => { 
-      e.preventDefault(); 
-      openCtx(t.id, e); 
-    };
 
-    // Long-press for mobile (520ms)
-    let longPressTimer;
-    let longPressTriggered = false;
-    
-    div.addEventListener("touchstart", (e) => { 
-      longPressTriggered = false;
+    div.onclick = (e) => {
+      if (!div._longPressing) { openThread(t.id); closeSidebar(); }
       div._longPressing = false;
-      longPressTimer = setTimeout(() => { 
-        longPressTriggered = true;
+    };
+    div.oncontextmenu = (e) => { e.preventDefault(); openCtx(t.id, e); };
+
+    let longPressTimer;
+    div.addEventListener("touchstart", () => {
+      div._longPressing = false;
+      longPressTimer = setTimeout(() => {
         div._longPressing = true;
         openCtxCenter(t.id);
-        // Haptic feedback if available
         if (navigator.vibrate) navigator.vibrate(50);
-      }, 520); 
+      }, 520);
     }, { passive: true });
-    
-    div.addEventListener("touchend", () => { 
-      clearTimeout(longPressTimer);
-      // Reset long-press flag after a short delay to allow click handler to check it
-      setTimeout(() => { div._longPressing = false; }, 100);
-    });
-    
-    div.addEventListener("touchcancel", () => { 
-      clearTimeout(longPressTimer);
-      div._longPressing = false;
-    });
-    
-    div.addEventListener("touchmove", () => { 
-      clearTimeout(longPressTimer);
-      div._longPressing = false;
-    }, { passive: true });
+    div.addEventListener("touchend",   () => { clearTimeout(longPressTimer); setTimeout(() => { div._longPressing = false; }, 100); });
+    div.addEventListener("touchcancel",() => { clearTimeout(longPressTimer); div._longPressing = false; });
+    div.addEventListener("touchmove",  () => { clearTimeout(longPressTimer); div._longPressing = false; }, { passive: true });
 
     if (t.archived) { arEl.appendChild(div); hasArc = true; }
     else aEl.appendChild(div);
@@ -1939,16 +1661,16 @@ function saveThreads() {
 function activeThread() { return threads.find(t => t.id === activeId); }
 
 /* ════════════════════════════════════════════
-   RENDER CHAT — with Welcome Screen
+   RENDER CHAT
 ════════════════════════════════════════════ */
 function renderChat() {
   const chat = document.getElementById("chat");
   chat.innerHTML = "";
   const t = activeThread();
   if (!t) return;
-  
-  // Show welcome screen if no messages
-  if (t.messages.length === 0) {
+
+  if (!t.messages.length) {
+    // Welcome screen
     const welcome = document.createElement("div");
     welcome.className = "welcome-container";
     welcome.innerHTML = `
@@ -1957,370 +1679,86 @@ function renderChat() {
         <div class="welcome-title">Ask Anything to Orbit AI</div>
         <div class="welcome-subtitle">Your intelligent assistant for creative ideas, coding help, analysis, and more</div>
       </div>
-      <div class="suggested-prompts" id="suggestedPrompts"></div>
-    `;
+      <div class="suggested-prompts" id="suggestedPrompts"></div>`;
     chat.appendChild(welcome);
-    
-    // Add suggested prompts
-    const promptsContainer = document.getElementById("suggestedPrompts");
-    SUGGESTED_PROMPTS.forEach(prompt => {
+
+    const pc = document.getElementById("suggestedPrompts");
+    SUGGESTED_PROMPTS.forEach(p => {
       const card = document.createElement("div");
       card.className = "prompt-card";
-      card.innerHTML = `
-        <div class="prompt-icon">${prompt.icon}</div>
-        <div class="prompt-text">${prompt.text}</div>
-      `;
+      card.innerHTML = `<div class="prompt-icon">${p.icon}</div><div class="prompt-text">${p.text}</div>`;
       card.onclick = () => {
-        document.getElementById("inputTextarea").value = prompt.text;
+        document.getElementById("inputTextarea").value = p.text;
         window._resizeTA?.();
         document.getElementById("inputTextarea").focus();
       };
-      promptsContainer.appendChild(card);
+      pc.appendChild(card);
     });
   } else {
-    // Show regular messages
     t.messages.forEach(m => chat.appendChild(makeBubble(m)));
-    
-    // Render all math expressions in the chat
-    if (window.MathJax && window.MathJax.typesetPromise) {
-      MathJax.typesetPromise([chat]).catch(err => console.log('MathJax error:', err));
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise([chat]).catch(() => {});
     }
   }
-  
+
   chat.scrollTop = chat.scrollHeight;
 }
 
 function makeBubble(msg) {
   const div = document.createElement("div");
   div.className = "message " + msg.role;
-  
+
   if (msg.text === "__TYPING__") {
     div.innerHTML = "<div class='typing'><span></span><span></span><span></span></div>";
   } else if (msg.text) {
-    // Preserve newlines by converting them to <br> before markdown parsing
-    const textWithBreaks = msg.text.replace(/\n/g, '  \n'); // Markdown line break syntax
-    div.innerHTML = marked.parse(textWithBreaks);
+    div.innerHTML = marked.parse(msg.text);
     applyDownloadLinks(div);
-    
-    // Add copy button
-    const copyBtn = document.createElement("button");
-    copyBtn.className = "message-copy-btn";
-    copyBtn.innerHTML = "📋 Copy";
-    copyBtn.onclick = (e) => {
-      e.stopPropagation();
-      copyMessageContent(msg, copyBtn);
-    };
-    div.appendChild(copyBtn);
-    
-    // Render math expressions with MathJax
-    if (window.MathJax && window.MathJax.typesetPromise) {
-      MathJax.typesetPromise([div]).catch(err => console.log('MathJax error:', err));
+    ensureCopyBtn(div, msg);
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise([div]).catch(() => {});
     }
   }
-  
+
   if (msg.images?.length) {
     const g = document.createElement("div");
     g.className = "gallery";
     msg.images.forEach(src => {
+      if (!src) return;
       const img = document.createElement("img");
       img.src = src;
       img.loading = "lazy";
+      img.alt = "Generated image";
       img.onclick = () => window.open(src, "_blank");
       g.appendChild(img);
     });
     div.appendChild(g);
   }
-  
+
   return div;
 }
 
 /* ════════════════════════════════════════════
-   SIDEBAR TAB SWITCHING
-════════════════════════════════════════════ */
-function switchTab(tab) {
-  const chatsTab = document.getElementById("chatsTab");
-  const imagesTab = document.getElementById("imagesTab");
-  const chatsSection = document.getElementById("chatsSection");
-  const imagesSection = document.getElementById("imagesSection");
-  
-  if (tab === "chats") {
-    chatsTab.classList.add("active");
-    imagesTab.classList.remove("active");
-    chatsSection.style.display = "flex";
-    imagesSection.style.display = "none";
-  } else if (tab === "images") {
-    chatsTab.classList.remove("active");
-    imagesTab.classList.add("active");
-    chatsSection.style.display = "none";
-    imagesSection.style.display = "block";
-    renderImageGallery();
-  }
-}
-
-/* ════════════════════════════════════════════
-   IMAGE GALLERY MANAGEMENT
-════════════════════════════════════════════ */
-function saveImageToGallery(imageData, prompt) {
-  const imageEntry = {
-    id: crypto.randomUUID(),
-    data: imageData,
-    prompt: prompt,
-    timestamp: Date.now()
-  };
-  
-  imageGallery.unshift(imageEntry);
-  
-  // Keep only last 100 images to prevent storage overflow
-  if (imageGallery.length > 100) {
-    imageGallery = imageGallery.slice(0, 100);
-  }
-  
-  localStorage.setItem("orbit_images", JSON.stringify(imageGallery));
-}
-
-function renderImageGallery() {
-  const container = document.getElementById("imageGallery");
-  container.innerHTML = "";
-  
-  if (imageGallery.length === 0) {
-    container.innerHTML = `
-      <div class="no-images-message">
-        <div>🖼️</div>
-        <div>No images yet</div>
-        <div style="font-size: 12px; margin-top: 8px; opacity: 0.7;">Images you upload or generate will appear here</div>
-      </div>
-    `;
-    return;
-  }
-  
-  imageGallery.forEach(img => {
-    const item = document.createElement("div");
-    item.className = "gallery-item";
-    
-    const date = new Date(img.timestamp).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
-    
-    item.innerHTML = `
-      <img src="${img.data}" alt="${img.prompt || 'Image'}" loading="lazy">
-      <div class="gallery-item-overlay">
-        <div class="gallery-item-date">${date}</div>
-        <div class="gallery-item-actions">
-          <button class="gallery-action-btn" onclick="downloadImage('${img.id}')">⬇️</button>
-          <button class="gallery-action-btn" onclick="deleteImage('${img.id}')">🗑️</button>
-        </div>
-      </div>
-    `;
-    
-    item.querySelector("img").onclick = () => viewImageFullscreen(img);
-    container.appendChild(item);
-  });
-}
-
-function viewImageFullscreen(img) {
-  const overlay = document.createElement("div");
-  overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    cursor: zoom-out;
-  `;
-  
-  const imgEl = document.createElement("img");
-  imgEl.src = img.data;
-  imgEl.style.cssText = "max-width: 100%; max-height: 80vh; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);";
-  
-  const prompt = document.createElement("div");
-  prompt.textContent = img.prompt || "Image";
-  prompt.style.cssText = "color: white; margin-top: 16px; font-size: 14px; text-align: center; max-width: 80%;";
-  
-  overlay.appendChild(imgEl);
-  overlay.appendChild(prompt);
-  overlay.onclick = () => overlay.remove();
-  document.body.appendChild(overlay);
-}
-
-function downloadImage(id) {
-  const img = imageGallery.find(i => i.id === id);
-  if (!img) return;
-  
-  const link = document.createElement("a");
-  link.href = img.data;
-  link.download = `orbit-image-${Date.now()}.png`;
-  link.click();
-  toast("Image downloaded!");
-}
-
-function deleteImage(id) {
-  if (!confirm("Delete this image from your gallery?")) return;
-  
-  imageGallery = imageGallery.filter(i => i.id !== id);
-  localStorage.setItem("orbit_images", JSON.stringify(imageGallery));
-  renderImageGallery();
-  toast("Image deleted");
-}
-
-/* ════════════════════════════════════════════
-   USER MEMORY & LEARNING
-════════════════════════════════════════════ */
-function initializeUserMemory() {
-  // Analyze past conversations to build user memory
-  const allMessages = threads.flatMap(t => t.messages);
-  
-  // Extract patterns and preferences
-  userMemory = {
-    preferences: {},
-    topics: [],
-    interactions: allMessages.length,
-    lastActive: Date.now(),
-    commonQuestions: []
-  };
-  
-  // Analyze message patterns
-  const userMessages = allMessages.filter(m => m.role === "user");
-  
-  // Track topics and keywords
-  const topicMap = {};
-  userMessages.forEach(msg => {
-    if (!msg.text) return;
-    const words = msg.text.toLowerCase().split(/\s+/);
-    words.forEach(word => {
-      if (word.length > 4) { // Only meaningful words
-        topicMap[word] = (topicMap[word] || 0) + 1;
-      }
-    });
-  });
-  
-  // Get top topics
-  userMemory.topics = Object.entries(topicMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([topic]) => topic);
-  
-  saveUserMemory();
-}
-
-function updateUserMemory(userMessage, aiResponse) {
-  userMemory.interactions = (userMemory.interactions || 0) + 1;
-  userMemory.lastActive = Date.now();
-  
-  // Track common question patterns
-  if (userMessage) {
-    const question = userMessage.toLowerCase();
-    if (question.includes("how") || question.includes("what") || question.includes("why")) {
-      userMemory.commonQuestions = userMemory.commonQuestions || [];
-      userMemory.commonQuestions.push({
-        q: userMessage.substring(0, 100),
-        timestamp: Date.now()
-      });
-      
-      // Keep only recent 20 questions
-      if (userMemory.commonQuestions.length > 20) {
-        userMemory.commonQuestions = userMemory.commonQuestions.slice(-20);
-      }
-    }
-  }
-  
-  saveUserMemory();
-}
-
-function saveUserMemory() {
-  localStorage.setItem("orbit_memory", JSON.stringify(userMemory));
-}
-
-/* ════════════════════════════════════════════
-   COPY MESSAGE FUNCTIONALITY
+   COPY MESSAGE
 ════════════════════════════════════════════ */
 async function copyMessageContent(msg, btnElement) {
   try {
     let textContent = msg.text || "";
-    
-    // If message has images, try to copy both text and images
-    if (msg.images && msg.images.length > 0) {
-      // Try to use ClipboardItem API for rich content (images + text)
-      if (navigator.clipboard && window.ClipboardItem) {
-        try {
-          const items = [];
-          const textBlob = new Blob([textContent], { type: 'text/plain' });
-          
-          // Add text to clipboard items
-          const clipboardItems = { 'text/plain': textBlob };
-          
-          // Try to fetch and add images
-          let imagesCopied = 0;
-          for (const imgSrc of msg.images) {
-            try {
-              // Only copy data URLs (base64 images)
-              if (imgSrc.startsWith('data:image')) {
-                const response = await fetch(imgSrc);
-                const blob = await response.blob();
-                clipboardItems[blob.type] = blob;
-                imagesCopied++;
-                break; // Most browsers only support one image
-              }
-            } catch (imgErr) {
-              console.log('Could not copy image:', imgErr);
-            }
-          }
-          
-          const item = new ClipboardItem(clipboardItems);
-          await navigator.clipboard.write([item]);
-          
-          // Show success message
-          const originalText = btnElement.innerHTML;
-          btnElement.innerHTML = "✓ Copied!";
-          btnElement.classList.add("copied");
-          
-          if (imagesCopied > 0) {
-            toast(`Copied text and ${imagesCopied} image(s)!`);
-          } else {
-            toast("Copied to clipboard!");
-          }
-          
-          setTimeout(() => {
-            btnElement.innerHTML = originalText;
-            btnElement.classList.remove("copied");
-          }, 2000);
-          
-          return;
-        } catch (richCopyErr) {
-          console.log('Rich copy failed, falling back to text only:', richCopyErr);
-        }
-      }
-      
-      // Fallback: copy text with image URLs mentioned
-      textContent += '\n\n[Images in this message: ' + msg.images.length + ']';
+
+    if (msg.images?.length) {
+      textContent += "\n\n[Images: " + msg.images.length + "]";
       msg.images.forEach((img, i) => {
-        if (!img.startsWith('data:')) {
-          textContent += '\nImage ' + (i + 1) + ': ' + img;
-        }
+        if (!img.startsWith("data:")) textContent += `\nImage ${i + 1}: ${img}`;
       });
     }
-    
-    // Copy text content
+
     await navigator.clipboard.writeText(textContent);
-    
-    // Show success feedback
-    const originalText = btnElement.innerHTML;
+    const orig = btnElement.innerHTML;
     btnElement.innerHTML = "✓ Copied!";
     btnElement.classList.add("copied");
     toast("Copied to clipboard!");
-    
-    setTimeout(() => {
-      btnElement.innerHTML = originalText;
-      btnElement.classList.remove("copied");
-    }, 2000);
-    
-  } catch (err) {
-    console.error('Copy failed:', err);
-    toast("Failed to copy. Please try again.");
+    setTimeout(() => { btnElement.innerHTML = orig; btnElement.classList.remove("copied"); }, 2000);
+  } catch {
+    toast("Failed to copy. Try selecting the text manually.");
   }
 }
 
@@ -2345,7 +1783,6 @@ function refreshProfileUI() {
   const name   = profile?.name  || "";
   const email  = profile?.email || "";
   const letter = name ? name[0].toUpperCase() : "?";
-
   document.getElementById("sidebarAvatar").textContent   = letter;
   document.getElementById("mobileAvatarBtn").textContent = letter;
   document.getElementById("sidebarName").textContent     = name  || "Set up profile";
@@ -2399,7 +1836,6 @@ function saveProfile() {
   toast("Profile saved ✓");
 }
 
-// Close sheet when tapping the dark backdrop
 document.getElementById("profileModal").addEventListener("click", (e) => {
   if (e.target === document.getElementById("profileModal"))
     if (profile?.name && profile?.email) closeSheet();
@@ -2423,110 +1859,88 @@ function checkBirthday() {
 
 /* ════════════════════════════════════════════
    CONTEXT MENU
+   FIX: ctxAction('delete') now correctly handles activeId after deletion.
 ════════════════════════════════════════════ */
 let ctxId = null;
 
 function openCtx(id, e) {
   ctxId = id;
   const m = document.getElementById("ctxMenu");
+  m.style.transform = "";
   m.style.left    = Math.min(e.pageX, window.innerWidth  - 178) + "px";
   m.style.top     = Math.min(e.pageY, window.innerHeight - 155) + "px";
   m.style.display = "block";
   e.stopPropagation();
 }
+
 function openCtxCenter(id) {
   ctxId = id;
   const m = document.getElementById("ctxMenu");
-  const menuWidth = 168;
-  const menuHeight = 145;
-  
-  // Center on mobile screens
+  m.style.left      = "50%";
+  m.style.top       = "50%";
+  m.style.transform = "translate(-50%, -50%)";
+  m.style.display   = "block";
+
   if (window.innerWidth <= 639) {
-    m.style.left = "50%";
-    m.style.top = "50%";
-    m.style.transform = "translate(-50%, -50%)";
-  } else {
-    // Position near cursor on desktop
-    m.style.left = Math.min(window.innerWidth / 2, window.innerWidth - menuWidth - 10) + "px";
-    m.style.top = Math.min(window.innerHeight / 2, window.innerHeight - menuHeight - 10) + "px";
-    m.style.transform = "";
-  }
-  
-  m.style.display = "block";
-  
-  // Add overlay for mobile to make it clear the menu is open
-  if (window.innerWidth <= 639) {
-    const overlay = document.getElementById("overlay");
-    overlay.classList.add("open");
-    overlay.style.zIndex = "799"; // Just below context menu (800)
+    const ov = document.getElementById("overlay");
+    ov.classList.add("open");
+    ov._ctxOverlay = true;  // mark so we can clean up without closing sidebar
   }
 }
+
 function closeCtx() {
-  const m = document.getElementById("ctxMenu");
+  const m  = document.getElementById("ctxMenu");
   m.style.display   = "none";
   m.style.transform = "";
-  
-  // Remove overlay if it was added
-  const overlay = document.getElementById("overlay");
-  if (overlay.style.zIndex === "799") {
-    overlay.classList.remove("open");
-    overlay.style.zIndex = "";
+  const ov = document.getElementById("overlay");
+  if (ov._ctxOverlay) {
+    ov.classList.remove("open");
+    ov._ctxOverlay = false;
   }
 }
 
 function ctxAction(action) {
   const t = threads.find(x => x.id === ctxId);
-  if (!t) { closeCtx(); return; }
-  
-  if (action === "rename") { 
-    // Close context menu first
-    closeCtx();
-    // Use a timeout to ensure context menu is closed before prompt appears
+  closeCtx();
+  if (!t) return;
+
+  if (action === "rename") {
     setTimeout(() => {
       const newName = prompt("Enter new chat name:", t.title);
       if (newName?.trim()) {
         t.title = newName.trim();
-        saveThreads(); 
-        renderThreads();
-        // Update mobile header if this is the active thread
-        if (t.id === activeId) {
-          document.getElementById("mobileTitle").textContent = t.title;
-        }
+        saveThreads(); renderThreads();
+        if (t.id === activeId) document.getElementById("mobileTitle").textContent = t.title;
         toast("Chat renamed ✓");
       }
     }, 100);
   }
-  
-  if (action === "archive") { 
-    t.archived = !t.archived; 
-    const message = t.archived ? "Archived ✓" : "Unarchived ✓";
-    saveThreads(); 
-    renderThreads(); 
-    closeCtx();
-    toast(message);
+
+  if (action === "archive") {
+    t.archived = !t.archived;
+    saveThreads(); renderThreads();
+    toast(t.archived ? "Archived ✓" : "Unarchived ✓");
   }
-  
+
   if (action === "delete") {
-    // Close context menu first
-    closeCtx();
-    // Use a timeout to ensure context menu is closed before confirm appears
     setTimeout(() => {
-      const confirmed = confirm(`Delete "${t.title}" permanently?\n\nThis action cannot be undone.`);
-      if (!confirmed) return;
-      
-      threads = threads.filter(x => x.id !== ctxId);
-      
-      // If deleting active thread, switch to another or create new
-      if (activeId === ctxId) {
-        if (threads.length) {
+      if (!confirm(`Delete "${t.title}" permanently?\n\nThis cannot be undone.`)) return;
+      const deletedId = ctxId;
+      threads = threads.filter(x => x.id !== deletedId);
+
+      if (activeId === deletedId) {
+        // FIX: Switch to remaining thread or create new one
+        if (threads.length > 0) {
           openThread(threads[0].id);
         } else {
-          createThread();
+          // createThread sets activeId internally
+          const newId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+          threads.unshift({ id: newId, title: "New Chat", messages: [], archived: false });
+          activeId = newId;
         }
       }
-      
-      saveThreads(); 
-      renderThreads();
+
+      saveThreads(); renderThreads(); renderChat();
       toast("Chat deleted ✓");
     }, 100);
   }
@@ -2534,26 +1948,19 @@ function ctxAction(action) {
 
 // Close context menu when clicking outside
 document.addEventListener("click", (e) => {
-  const menu = document.getElementById("ctxMenu");
-  if (menu.style.display === "block" && !menu.contains(e.target)) {
-    closeCtx();
-  }
+  const m = document.getElementById("ctxMenu");
+  if (m.style.display === "block" && !m.contains(e.target)) closeCtx();
 });
-
-// Close context menu on touch outside (for mobile)
 document.addEventListener("touchstart", (e) => {
-  const menu = document.getElementById("ctxMenu");
-  if (menu.style.display === "block" && !menu.contains(e.target)) {
-    closeCtx();
-  }
+  const m = document.getElementById("ctxMenu");
+  if (m.style.display === "block" && !m.contains(e.target)) closeCtx();
 }, { passive: true });
 
 /* ════════════════════════════════════════════
    FILE UPLOAD
 ════════════════════════════════════════════ */
 function triggerFile() { document.getElementById("fileInput").click(); }
-
-function hidePreview() { document.getElementById("previewBar").style.display = "none"; }
+function hidePreview()  { document.getElementById("previewBar").style.display = "none"; }
 
 function clearPreview() {
   filePreview = fileId = null;
@@ -2590,17 +1997,15 @@ document.getElementById("fileInput").onchange = async () => {
     reader.readAsDataURL(file);
   } else {
     document.getElementById("prevThumb").style.display = "none";
-    // Show file type icon
     const icons = { pdf:"📄", xlsx:"📊", xls:"📊", docx:"📝", doc:"📝",
                     pptx:"📊", ppt:"📊", csv:"📊", txt:"📄", xml:"📄" };
-    const ext  = file.name.split(".").pop().toLowerCase();
-    const icon = icons[ext] || "📎";
-    document.getElementById("prevName").textContent = `${icon} ${file.name}`;
+    const ext   = file.name.split(".").pop().toLowerCase();
+    document.getElementById("prevName").textContent = `${icons[ext] || "📎"} ${file.name}`;
     bar.style.display = "flex";
   }
 };
 
-// Drag & drop — desktop only
+// Drag & drop
 const iw = document.getElementById("inputWrapper");
 iw.addEventListener("dragover",  (e) => { e.preventDefault(); iw.classList.add("dragover"); });
 iw.addEventListener("dragleave", ()  => iw.classList.remove("dragover"));
@@ -2613,20 +2018,18 @@ iw.addEventListener("drop", (e) => {
 });
 
 /* ════════════════════════════════════════════
-   VOICE RECORDING with Animation
-   onstop wired BEFORE start() to avoid race.
+   VOICE RECORDING
+   FIX: Audio wave is positioned next to mic button properly.
+        Recording indicator bottom offset uses px not undefined var.
 ════════════════════════════════════════════ */
 document.getElementById("micBtn").addEventListener("click", toggleMic);
 
 async function toggleMic() {
-  const btn = document.getElementById("micBtn");
-  const audioWave = document.getElementById("audioWave");
+  const btn               = document.getElementById("micBtn");
+  const audioWave         = document.getElementById("audioWave");
   const recordingIndicator = document.getElementById("recordingIndicator");
-  
-  if (recorder?.state === "recording") { 
-    recorder.stop(); 
-    return; 
-  }
+
+  if (recorder?.state === "recording") { recorder.stop(); return; }
 
   let stream;
   try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
@@ -2637,7 +2040,7 @@ async function toggleMic() {
   recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
   recorder.onstop = async () => {
-    btn.classList.remove("recording"); 
+    btn.classList.remove("recording");
     btn.textContent = "🎤";
     audioWave.classList.remove("active");
     recordingIndicator.classList.remove("active");
@@ -2668,36 +2071,62 @@ async function toggleMic() {
   };
 
   recorder.start();
-  btn.classList.add("recording"); 
+  btn.classList.add("recording");
   btn.textContent = "⏹";
-  
-  // Position audio wave next to the button
+
+  // FIX: Position audio wave using getBoundingClientRect
   const btnRect = btn.getBoundingClientRect();
-  audioWave.style.left = (btnRect.left - 120) + "px";
-  audioWave.style.top = (btnRect.top + btnRect.height / 2 - 15) + "px";
+  const waveWidth = 9 * 4 + 8 * 3; // 9 bars × 3px + 8 gaps × 3px ≈ 60px
+  audioWave.style.left = Math.max(4, btnRect.left - waveWidth - 8) + "px";
+  audioWave.style.top  = (btnRect.top + btnRect.height / 2 - 14) + "px";
   audioWave.classList.add("active");
-  
-  // Position recording indicator above the input area
-  recordingIndicator.style.left = "50%";
-  recordingIndicator.style.transform = "translateX(-50%)";
+
+  // Position recording indicator above input area
   recordingIndicator.style.bottom = (window.innerHeight - btnRect.top + 10) + "px";
   recordingIndicator.classList.add("active");
-  
+
   document.getElementById("inputTextarea").placeholder = "Listening…";
   document.getElementById("inputTextarea").disabled    = true;
+
+  // Auto-stop after 60 seconds
   setTimeout(() => { if (recorder?.state === "recording") recorder.stop(); }, 60000);
+}
+
+/* ════════════════════════════════════════════
+   USER MEMORY
+════════════════════════════════════════════ */
+function updateUserMemory(userMessage, aiResponse) {
+  userMemory.interactions = (userMemory.interactions || 0) + 1;
+  userMemory.lastActive   = Date.now();
+
+  if (userMessage) {
+    const q = userMessage.toLowerCase();
+    if (q.includes("how") || q.includes("what") || q.includes("why")) {
+      userMemory.commonQuestions = userMemory.commonQuestions || [];
+      userMemory.commonQuestions.push({ q: userMessage.substring(0, 100), timestamp: Date.now() });
+      if (userMemory.commonQuestions.length > 20)
+        userMemory.commonQuestions = userMemory.commonQuestions.slice(-20);
+    }
+  }
+
+  localStorage.setItem("orbit_memory", JSON.stringify(userMemory));
 }
 
 /* ════════════════════════════════════════════
    UTILS
 ════════════════════════════════════════════ */
 function escHtml(s) {
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function toast(msg, ms = 2800) {
   const el = document.getElementById("toast");
-  el.textContent = msg; el.classList.add("show");
+  el.textContent = msg;
+  el.classList.add("show");
   clearTimeout(toast._t);
   toast._t = setTimeout(() => el.classList.remove("show"), ms);
 }
@@ -2707,7 +2136,8 @@ async function timedFetch(url, opts = {}, ms = 25000) {
   const timer = setTimeout(() => ctrl.abort(), ms);
   try {
     const res = await fetch(url, { ...opts, signal: ctrl.signal });
-    clearTimeout(timer); return res;
+    clearTimeout(timer);
+    return res;
   } catch (e) {
     clearTimeout(timer);
     if (e.name === "AbortError") throw new Error("Request timed out — server waking up, please retry");
