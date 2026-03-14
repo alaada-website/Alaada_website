@@ -1281,11 +1281,71 @@ function saveImageGallery() {
   }
 }
 
-function addImageToGallery(url, prompt) {
+/* ════════════════════════════════════════════
+   PERSIST IMAGE TO OUR BACKEND
+   DALL-E URLs expire in ~1 hour.
+   This fetches the image blob immediately and re-uploads it to our own
+   /upload endpoint, which serves it permanently via /download/{file_id}.
+   Falls back to the original URL if the fetch/upload fails.
+════════════════════════════════════════════ */
+/* ════════════════════════════════════════════
+   IMAGE PERSISTENCE — canvas base64 approach
+   ─────────────────────────────────────────
+   DALL-E URLs expire in ~1 hour and Render's disk
+   is ephemeral (resets on every redeploy/restart).
+   Instead we:
+     1. Fetch the image while the URL is hot
+     2. Draw it onto an off-screen canvas
+     3. Scale it down to max 800 px (keeps file small)
+     4. Export as JPEG quality 0.82 → ~60-120 KB
+     5. Store the data: URI in localStorage
+   Result: images are permanent, zero server dependency.
+════════════════════════════════════════════ */
+async function fetchAsBase64(remoteUrl) {
+  // Already a data URI — nothing to do
+  if (!remoteUrl || remoteUrl.startsWith("data:")) return remoteUrl;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    // Allow cross-origin (DALL-E CDN supports CORS)
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      try {
+        const MAX = 800; // max dimension in px
+        let { naturalWidth: w, naturalHeight: h } = img;
+        if (w > MAX || h > MAX) {
+          if (w >= h) { h = Math.round((h / w) * MAX); w = MAX; }
+          else        { w = Math.round((w / h) * MAX); h = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width  = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        // JPEG at 0.82 quality ≈ 60–120 KB for a typical AI image
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      } catch (e) {
+        console.warn("canvas export failed:", e);
+        resolve(remoteUrl); // keep original as fallback
+      }
+    };
+
+    img.onerror = () => {
+      console.warn("Image fetch failed (CORS or network):", remoteUrl);
+      resolve(remoteUrl); // keep original; will work for ~1 h
+    };
+
+    img.src = remoteUrl;
+  });
+}
+
+async function addImageToGallery(url, prompt) {
   if (!url) return;
+  // Convert to permanent base64 data URI before storing
+  const permanentUrl = await fetchAsBase64(url);
   imageGallery.push({
     id:        (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())),
-    url,
+    url:       permanentUrl,
     prompt:    prompt || "",
     timestamp: Date.now(),
   });
@@ -1330,7 +1390,8 @@ function renderImageGallery() {
 
     const [dlBtn, delBtn] = item.querySelectorAll(".gallery-action-btn");
 
-    item.querySelector("img").onclick = () => viewImageFullscreen(img);
+    // Clicking anywhere on the card (except action buttons) opens fullscreen
+    item.onclick = () => viewImageFullscreen(img);
 
     dlBtn.onclick = (e) => {
       e.stopPropagation();
@@ -1353,42 +1414,92 @@ function renderImageGallery() {
 }
 
 function viewImageFullscreen(img) {
+  const close = () => {
+    overlay.style.opacity  = "0";
+    overlay.style.transform = "scale(1.04)";
+    setTimeout(() => { if (overlay.parentNode) document.body.removeChild(overlay); }, 220);
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+
   const overlay = document.createElement("div");
   overlay.style.cssText = [
     "position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;",
     "display:flex;flex-direction:column;align-items:center;justify-content:center;",
     "padding:20px;cursor:zoom-out;",
+    /* start state for fade-in */
+    "opacity:0;transform:scale(0.97);",
+    "transition:opacity .22s ease, transform .22s ease;",
   ].join("");
+
+  // Trigger fade-in on next paint
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    overlay.style.opacity   = "1";
+    overlay.style.transform = "scale(1)";
+  }));
 
   const imgEl = document.createElement("img");
   imgEl.src = img.url;
   imgEl.alt = img.prompt || "Image";
-  imgEl.style.cssText = "max-width:100%;max-height:70vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);";
+  imgEl.style.cssText = [
+    "max-width:100%;max-height:70vh;",
+    "border-radius:14px;",
+    "box-shadow:0 20px 60px rgba(0,0,0,.6);",
+    "cursor:default;",
+    "object-fit:contain;",
+  ].join("");
 
   const info = document.createElement("div");
-  info.style.cssText = "margin-top:20px;color:white;text-align:center;max-width:600px;";
+  info.style.cssText = "margin-top:18px;color:white;text-align:center;max-width:640px;padding:0 12px;";
   info.innerHTML = `
-    <div style="font-size:14px;margin-bottom:8px;opacity:.8">${new Date(img.timestamp).toLocaleString()}</div>
-    ${img.prompt ? `<div style="font-size:13px;opacity:.6">"${escHtml(img.prompt)}"</div>` : ""}`;
+    <div style="font-size:13px;margin-bottom:6px;opacity:.55">${new Date(img.timestamp).toLocaleString()}</div>
+    ${img.prompt ? `<div style="font-size:13px;opacity:.7;font-style:italic;">"${escHtml(img.prompt)}"</div>` : ""}`;
 
   const actions = document.createElement("div");
-  actions.style.cssText = "margin-top:16px;display:flex;gap:12px;justify-content:center;";
+  actions.style.cssText = "margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;";
 
   const mkBtn = (label, bg, fn) => {
     const b = document.createElement("button");
-    b.textContent = label;
-    b.style.cssText = `padding:10px 20px;background:${bg};color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;`;
+    b.innerHTML = label;
+    b.style.cssText = [
+      `padding:10px 20px;background:${bg};`,
+      "color:white;border:none;border-radius:10px;cursor:pointer;",
+      "font-size:14px;font-weight:600;transition:opacity .15s;",
+    ].join("");
+    b.onmouseenter = () => b.style.opacity = ".8";
+    b.onmouseleave = () => b.style.opacity = "1";
     b.onclick = (e) => { e.stopPropagation(); fn(); };
     return b;
   };
 
   actions.appendChild(mkBtn("⬇️ Download", "var(--accent)", () => downloadGalleryImage(img)));
-  actions.appendChild(mkBtn("✕ Close", "rgba(255,255,255,.1)", () => document.body.removeChild(overlay)));
+
+  // Copy link button (only for non-data URIs)
+  if (!img.url.startsWith("data:")) {
+    actions.appendChild(mkBtn("🔗 Copy Link", "rgba(255,255,255,.12)", async () => {
+      try {
+        await navigator.clipboard.writeText(img.url);
+        toast("Link copied!");
+      } catch { toast("Could not copy link."); }
+    }));
+    // Native share
+    if (navigator.share) {
+      actions.appendChild(mkBtn("📤 Share", "rgba(255,255,255,.12)", async () => {
+        try { await navigator.share({ title: "Orbit AI", url: img.url }); }
+        catch (e) { if (e.name !== "AbortError") toast("Share failed."); }
+      }));
+    }
+  }
+
+  actions.appendChild(mkBtn("✕ Close", "rgba(255,255,255,.08)", close));
 
   overlay.appendChild(imgEl);
   overlay.appendChild(info);
   overlay.appendChild(actions);
-  overlay.onclick = () => document.body.removeChild(overlay);
+
+  // Click backdrop to close, but not clicks on the image/info/buttons
+  overlay.onclick = close;
   imgEl.onclick   = (e) => e.stopPropagation();
   info.onclick    = (e) => e.stopPropagation();
   actions.onclick = (e) => e.stopPropagation();
@@ -1445,22 +1556,41 @@ function setStatus(t) { document.getElementById("statusBar").textContent = t; }
 
 /* ════════════════════════════════════════════
    HANDLE INCOMING AI-GENERATED IMAGES
+   Converts each DALL-E URL to a permanent base64
+   data URI before storing anywhere, so images
+   survive URL expiry and server restarts.
 ════════════════════════════════════════════ */
-function handleIncomingImages(urls, prompt) {
+async function handleIncomingImages(urls, prompt) {
   if (!urls || !urls.length) return;
   const t = activeThread();
   if (!t) return;
 
+  toast("💾 Saving images…");
+
+  // Convert all DALL-E URLs → base64 in parallel while they're still hot
+  const permanentUrls = await Promise.all(
+    urls.map(u => fetchAsBase64(u))
+  );
+
   const last = t.messages[t.messages.length - 1];
   if (last && last.role === "assistant") {
     last.images = last.images || [];
-    last.images.push(...urls);
+    last.images.push(...permanentUrls);
   } else {
-    t.messages.push({ role: "assistant", text: "", images: urls });
+    t.messages.push({ role: "assistant", text: "", images: permanentUrls });
   }
 
-  urls.forEach(u => addImageToGallery(u, prompt || ""));
-
+  // Save each to the sidebar gallery
+  permanentUrls.forEach(u => {
+    if (!u) return;
+    imageGallery.push({
+      id:        (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())),
+      url:       u,
+      prompt:    prompt || "",
+      timestamp: Date.now(),
+    });
+  });
+  saveImageGallery();
   saveThreads();
   renderChat();
 }
