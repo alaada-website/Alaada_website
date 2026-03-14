@@ -408,7 +408,7 @@ body {
   padding: 16px 12px 8px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
   padding-bottom: 12px;
 }
 .chat::-webkit-scrollbar { width: 3px; }
@@ -491,9 +491,26 @@ body {
 .prompt-icon { font-size: 24px; flex-shrink: 0; line-height: 1; }
 .prompt-text { flex: 1; font-size: 14px; line-height: 1.5; color: var(--text); }
 
-/* ── MESSAGES ── */
-.message {
+/* ═══════════════════════════════════════════
+   MESSAGE WRAP + BUBBLE
+   Each message is:
+     .message-wrap.user/.assistant
+       .message.user/.assistant   ← the bubble
+       .message-actions            ← action bar BELOW bubble
+═══════════════════════════════════════════ */
+.message-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   max-width: 86%;
+  /* spacing between message groups */
+  margin-bottom: 8px;
+}
+.message-wrap.user      { align-self: flex-end; }
+.message-wrap.assistant { align-self: flex-start; }
+
+.message {
+  max-width: 100%;
   padding: 11px 14px;
   border-radius: var(--radius-msg);
   word-wrap: break-word;
@@ -505,37 +522,65 @@ body {
 }
 @keyframes msgIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
 
-.message.user      { align-self: flex-end;  background: var(--accent);  border-bottom-right-radius: 4px; }
-.message.assistant { align-self: flex-start; background: var(--panel2); border-bottom-left-radius:  4px; }
+.message.user      { background: var(--accent);  border-bottom-right-radius: 4px; }
+.message.assistant { background: var(--panel2); border-bottom-left-radius:  4px; }
 
-/* Copy button */
-.message-copy-btn {
-  position: absolute;
-  top: 8px; right: 8px;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: var(--text);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 11px;
-  cursor: pointer;
+/* ── ACTION BAR BELOW EACH BUBBLE ── */
+.message-actions {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
   opacity: 0;
-  transition: opacity .2s, background .2s;
-  display: flex; align-items: center; gap: 4px;
-  z-index: 10;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  transition: opacity .18s;
+  padding: 0 3px;
 }
-.message:hover .message-copy-btn { opacity: 1; }
-.message-copy-btn:hover { background: rgba(0,0,0,0.5); }
-.message-copy-btn:active { background: rgba(0,0,0,0.7); transform: scale(0.95); }
-.message-copy-btn.copied {
-  background: rgba(34,197,94,0.3);
-  border-color: rgba(34,197,94,0.5);
+/* Show on hover of the whole wrap */
+.message-wrap:hover .message-actions,
+.message-actions:focus-within { opacity: 1; }
+
+/* On touch devices keep them always softly visible */
+@media (hover: none) {
+  .message-actions { opacity: 0.75; }
+}
+
+/* User messages → right-align the action bar */
+.message-wrap.user .message-actions { justify-content: flex-end; }
+.message-wrap.assistant .message-actions { justify-content: flex-start; }
+
+/* Individual action pill button */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s, transform .1s;
+  white-space: nowrap;
+  user-select: none;
+  touch-action: manipulation;
+}
+.action-btn:hover {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--accent);
+}
+.action-btn:active { transform: scale(0.93); }
+.action-btn.success {
+  background: rgba(34,197,94,0.15);
+  border-color: rgba(34,197,94,0.4);
   color: #4ade80;
 }
-
-@media (hover: none) { .message-copy-btn { opacity: 0.7; } }
+.action-btn.danger-btn {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.3);
+}
+.action-btn.danger-btn:hover { background: rgba(248,113,113,0.1); border-color: #f87171; }
 
 .message p             { margin: 0 0 8px; }
 .message p:last-child  { margin: 0; }
@@ -905,7 +950,8 @@ body {
   #closeSidebarBtn { display: flex; }
   #mobileHeader    { display: flex; }
 
-  .message { font-size: 14.5px; max-width: 92%; }
+  .message { font-size: 14.5px; }
+  .message-wrap { max-width: 92%; }
   .welcome-title { font-size: 24px; }
   .suggested-prompts { grid-template-columns: 1fr; }
 }
@@ -931,7 +977,8 @@ body {
   .sheet-handle { display: none; }
 
   .chat  { padding: 20px 24px 12px; }
-  .message { max-width: 74%; font-size: 14px; }
+  .message-wrap { max-width: 74%; }
+  .message { font-size: 14px; }
   .input-row { padding: 10px 14px; gap: 8px; }
   #inputTextarea { border-radius: 14px; font-size: 14px; }
   .rnd-btn, #sendBtn { border-radius: 12px; width: auto; height: auto; padding: 10px 14px; }
@@ -1106,15 +1153,12 @@ const SUGGESTED_PROMPTS = [
 
 /* ════════════════════════════════════════════
    STATE
-   FIX: imageGallery items use {id, url, prompt, timestamp} consistently.
-        Removed the duplicate renderImageGallery / saveImageToGallery definitions.
 ════════════════════════════════════════════ */
 let profile      = JSON.parse(localStorage.getItem("orbit_profile") || "null");
 let threads      = JSON.parse(localStorage.getItem("orbit_threads") || "[]");
-// FIX: Migrate old gallery items that used 'data' key to 'url' key
 let imageGallery = (JSON.parse(localStorage.getItem("orbit_images") || "[]")).map(img => ({
   id:        img.id        || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
-  url:       img.url       || img.data || "",  // 'data' was old key
+  url:       img.url       || img.data || "",
   prompt:    img.prompt    || "",
   timestamp: img.timestamp || Date.now(),
 })).filter(img => img.url);
@@ -1204,9 +1248,9 @@ function swipeToDismissSheet() {
    SIDEBAR TAB SWITCHING
 ════════════════════════════════════════════ */
 function switchTab(tab) {
-  const chatsTab     = document.getElementById("chatsTab");
-  const imagesTab    = document.getElementById("imagesTab");
-  const chatsSection = document.getElementById("chatsSection");
+  const chatsTab      = document.getElementById("chatsTab");
+  const imagesTab     = document.getElementById("imagesTab");
+  const chatsSection  = document.getElementById("chatsSection");
   const imagesSection = document.getElementById("imagesSection");
 
   if (tab === "chats") {
@@ -1225,18 +1269,13 @@ function switchTab(tab) {
 
 /* ════════════════════════════════════════════
    IMAGE GALLERY
-   FIX: Single canonical implementation.
-        Items use { id, url, prompt, timestamp }.
-        'url' can be a remote DALL-E URL or a data: URI.
 ════════════════════════════════════════════ */
 function saveImageGallery() {
   try {
-    // Keep only last 100 images to avoid storage overflow
     if (imageGallery.length > 100) imageGallery = imageGallery.slice(-100);
     localStorage.setItem("orbit_images", JSON.stringify(imageGallery));
   } catch (e) {
     console.error("Failed to save image gallery:", e);
-    // If quota exceeded, trim and retry
     imageGallery = imageGallery.slice(-30);
     try { localStorage.setItem("orbit_images", JSON.stringify(imageGallery)); } catch {}
   }
@@ -1270,7 +1309,6 @@ function renderImageGallery() {
   const grid = document.createElement("div");
   grid.className = "image-grid";
 
-  // Show newest first
   [...imageGallery].reverse().forEach((img, revIdx) => {
     const origIdx = imageGallery.length - 1 - revIdx;
     const item = document.createElement("div");
@@ -1351,15 +1389,14 @@ function viewImageFullscreen(img) {
   overlay.appendChild(info);
   overlay.appendChild(actions);
   overlay.onclick = () => document.body.removeChild(overlay);
-  imgEl.onclick = (e) => e.stopPropagation();
-  info.onclick   = (e) => e.stopPropagation();
+  imgEl.onclick   = (e) => e.stopPropagation();
+  info.onclick    = (e) => e.stopPropagation();
   actions.onclick = (e) => e.stopPropagation();
 
   document.body.appendChild(overlay);
 }
 
 function downloadGalleryImage(img) {
-  // For data: URIs, download directly. For remote URLs, open in new tab.
   if (img.url.startsWith("data:")) {
     const a = document.createElement("a");
     a.href = img.url;
@@ -1408,8 +1445,6 @@ function setStatus(t) { document.getElementById("statusBar").textContent = t; }
 
 /* ════════════════════════════════════════════
    HANDLE INCOMING AI-GENERATED IMAGES
-   FIX: Backend now sends a {type:"images"} message when generate_image succeeds.
-        We append them to the last assistant message and save to gallery.
 ════════════════════════════════════════════ */
 function handleIncomingImages(urls, prompt) {
   if (!urls || !urls.length) return;
@@ -1424,7 +1459,6 @@ function handleIncomingImages(urls, prompt) {
     t.messages.push({ role: "assistant", text: "", images: urls });
   }
 
-  // Save each URL to gallery
   urls.forEach(u => addImageToGallery(u, prompt || ""));
 
   saveThreads();
@@ -1436,8 +1470,6 @@ function handleIncomingImages(urls, prompt) {
 ════════════════════════════════════════════ */
 function profilePayload() {
   if (!profile) return null;
-  // FIX: Don't send full conversation history — it bloats WS messages.
-  //      The backend already maintains SESSION_MEMORY server-side.
   return {
     name:       profile.name       || "",
     email:      profile.email      || "",
@@ -1542,27 +1574,30 @@ function streamToken(tok) {
   last.text += tok;
 
   const chat    = document.getElementById("chat");
-  const bubbles = chat.querySelectorAll(".message.assistant");
-  const node    = bubbles[bubbles.length - 1];
+  const wraps   = chat.querySelectorAll(".message-wrap.assistant");
+  const wrap    = wraps[wraps.length - 1];
+  if (!wrap) return;
+  const node    = wrap.querySelector(".message.assistant");
   if (node) {
     node.innerHTML = marked.parse(last.text);
     applyDownloadLinks(node);
-    // Re-add copy button after innerHTML reset
-    ensureCopyBtn(node, last);
     if (window.MathJax && MathJax.typesetPromise) {
       MathJax.typesetPromise([node]).catch(() => {});
     }
   }
+  // Ensure actions bar exists (created once streaming starts)
+  ensureActionsBar(wrap, last);
   chat.scrollTop = chat.scrollHeight;
 }
 
-function ensureCopyBtn(node, msg) {
-  if (node.querySelector(".message-copy-btn")) return;
-  const btn = document.createElement("button");
-  btn.className = "message-copy-btn";
-  btn.innerHTML = "📋 Copy";
-  btn.onclick = (e) => { e.stopPropagation(); copyMessageContent(msg, btn); };
-  node.appendChild(btn);
+/* Ensure the action bar exists under a message-wrap.
+   Called during streaming and after renderChat. */
+function ensureActionsBar(wrap, msg) {
+  if (!wrap) return;
+  if (wrap.querySelector(".message-actions")) return;
+  if (msg.text === "__TYPING__") return;
+  const bar = buildActionsBar(msg);
+  wrap.appendChild(bar);
 }
 
 function finalize(remaining) {
@@ -1641,9 +1676,9 @@ function renderThreads() {
         if (navigator.vibrate) navigator.vibrate(50);
       }, 520);
     }, { passive: true });
-    div.addEventListener("touchend",   () => { clearTimeout(longPressTimer); setTimeout(() => { div._longPressing = false; }, 100); });
-    div.addEventListener("touchcancel",() => { clearTimeout(longPressTimer); div._longPressing = false; });
-    div.addEventListener("touchmove",  () => { clearTimeout(longPressTimer); div._longPressing = false; }, { passive: true });
+    div.addEventListener("touchend",    () => { clearTimeout(longPressTimer); setTimeout(() => { div._longPressing = false; }, 100); });
+    div.addEventListener("touchcancel", () => { clearTimeout(longPressTimer); div._longPressing = false; });
+    div.addEventListener("touchmove",   () => { clearTimeout(longPressTimer); div._longPressing = false; }, { passive: true });
 
     if (t.archived) { arEl.appendChild(div); hasArc = true; }
     else aEl.appendChild(div);
@@ -1670,7 +1705,6 @@ function renderChat() {
   if (!t) return;
 
   if (!t.messages.length) {
-    // Welcome screen
     const welcome = document.createElement("div");
     welcome.className = "welcome-container";
     welcome.innerHTML = `
@@ -1704,7 +1738,18 @@ function renderChat() {
   chat.scrollTop = chat.scrollHeight;
 }
 
+/* ════════════════════════════════════════════
+   MAKE BUBBLE
+   Returns a .message-wrap div containing:
+     - .message bubble
+     - .message-actions bar (below the bubble)
+════════════════════════════════════════════ */
 function makeBubble(msg) {
+  // Outer wrap — controls alignment and houses both bubble + actions
+  const wrap = document.createElement("div");
+  wrap.className = "message-wrap " + msg.role;
+
+  // Inner bubble
   const div = document.createElement("div");
   div.className = "message " + msg.role;
 
@@ -1713,7 +1758,6 @@ function makeBubble(msg) {
   } else if (msg.text) {
     div.innerHTML = marked.parse(msg.text);
     applyDownloadLinks(div);
-    ensureCopyBtn(div, msg);
     if (window.MathJax && MathJax.typesetPromise) {
       MathJax.typesetPromise([div]).catch(() => {});
     }
@@ -1734,32 +1778,155 @@ function makeBubble(msg) {
     div.appendChild(g);
   }
 
-  return div;
+  wrap.appendChild(div);
+
+  // Action bar — only for non-typing messages
+  if (msg.text !== "__TYPING__") {
+    wrap.appendChild(buildActionsBar(msg));
+  }
+
+  return wrap;
 }
 
 /* ════════════════════════════════════════════
-   COPY MESSAGE
+   ACTION BAR
+   Builds the pill-button row shown below each bubble.
+   Buttons: Copy Text | Share | (per image: ⬇️ Download | 🔗 Copy Link | 📤 Share Image)
 ════════════════════════════════════════════ */
-async function copyMessageContent(msg, btnElement) {
-  try {
-    let textContent = msg.text || "";
+function buildActionsBar(msg) {
+  const bar = document.createElement("div");
+  bar.className = "message-actions";
 
-    if (msg.images?.length) {
-      textContent += "\n\n[Images: " + msg.images.length + "]";
-      msg.images.forEach((img, i) => {
-        if (!img.startsWith("data:")) textContent += `\nImage ${i + 1}: ${img}`;
-      });
+  /* ── 1. Copy Text ── */
+  const copyBtn = makeActionBtn("📋", "Copy", async (btn) => {
+    try {
+      let text = msg.text || "";
+      // Strip markdown for clipboard
+      text = text
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/\*(.*?)\*/g, "$1")
+        .replace(/#{1,6} /g, "")
+        .trim();
+      if (msg.images?.length) {
+        text += "\n\n[Images: " + msg.images.length + "]";
+        msg.images.forEach((u, i) => {
+          if (!u.startsWith("data:")) text += `\nImage ${i + 1}: ${u}`;
+        });
+      }
+      await navigator.clipboard.writeText(text);
+      showBtnSuccess(btn, "Copied!");
+      toast("Copied to clipboard!");
+    } catch {
+      toast("Couldn't copy — try selecting text manually.");
     }
+  });
+  bar.appendChild(copyBtn);
 
-    await navigator.clipboard.writeText(textContent);
-    const orig = btnElement.innerHTML;
-    btnElement.innerHTML = "✓ Copied!";
-    btnElement.classList.add("copied");
-    toast("Copied to clipboard!");
-    setTimeout(() => { btnElement.innerHTML = orig; btnElement.classList.remove("copied"); }, 2000);
-  } catch {
-    toast("Failed to copy. Try selecting the text manually.");
+  /* ── 2. Share ── */
+  const shareBtn = makeActionBtn("📤", "Share", async (btn) => {
+    let text = msg.text || "";
+    text = text
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/#{1,6} /g, "")
+      .trim()
+      .substring(0, 800);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Orbit AI", text });
+        showBtnSuccess(btn, "Shared!");
+      } catch (e) {
+        if (e.name !== "AbortError") toast("Share failed — try Copy instead.");
+      }
+    } else {
+      // Desktop fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(text);
+        showBtnSuccess(btn, "Copied!");
+        toast("Copied! (Native share not available on this browser)");
+      } catch {
+        toast("Share not supported on this browser.");
+      }
+    }
+  });
+  bar.appendChild(shareBtn);
+
+  /* ── 3. Per-image buttons (if message has images) ── */
+  if (msg.images?.length) {
+    msg.images.forEach((imgUrl, i) => {
+      if (!imgUrl) return;
+      const suffix = msg.images.length > 1 ? ` ${i + 1}` : "";
+
+      // Download
+      const dlBtn = makeActionBtn("⬇️", `Download${suffix}`, (btn) => {
+        if (imgUrl.startsWith("data:")) {
+          const a = document.createElement("a");
+          a.href = imgUrl;
+          a.download = `orbit-image-${Date.now()}.png`;
+          a.click();
+        } else {
+          window.open(imgUrl, "_blank");
+        }
+        showBtnSuccess(btn, "Saved!");
+      });
+      bar.appendChild(dlBtn);
+
+      // Copy image link (only for remote URLs — data URIs are too long)
+      if (!imgUrl.startsWith("data:")) {
+        const linkBtn = makeActionBtn("🔗", `Copy Link${suffix}`, async (btn) => {
+          try {
+            await navigator.clipboard.writeText(imgUrl);
+            showBtnSuccess(btn, "Copied!");
+            toast("Image link copied!");
+          } catch {
+            toast("Couldn't copy link.");
+          }
+        });
+        bar.appendChild(linkBtn);
+
+        // Share image (Web Share API with URL)
+        if (navigator.share) {
+          const shareImgBtn = makeActionBtn("📲", `Share Image${suffix}`, async (btn) => {
+            try {
+              await navigator.share({ title: "Orbit AI image", url: imgUrl });
+              showBtnSuccess(btn, "Shared!");
+            } catch (e) {
+              if (e.name !== "AbortError") {
+                // Fallback: open in new tab
+                window.open(imgUrl, "_blank");
+                toast("Opened in new tab.");
+              }
+            }
+          });
+          bar.appendChild(shareImgBtn);
+        }
+      }
+    });
   }
+
+  return bar;
+}
+
+/* ── Helper: create one pill button ── */
+function makeActionBtn(icon, label, onClick) {
+  const btn = document.createElement("button");
+  btn.className = "action-btn";
+  btn._icon  = icon;
+  btn._label = label;
+  btn.innerHTML = `<span>${icon}</span><span>${label}</span>`;
+  btn.onclick = (e) => { e.stopPropagation(); onClick(btn); };
+  return btn;
+}
+
+/* ── Helper: flash success state on a button ── */
+function showBtnSuccess(btn, successLabel) {
+  btn.innerHTML = `<span>✓</span><span>${successLabel}</span>`;
+  btn.classList.add("success");
+  setTimeout(() => {
+    btn.innerHTML = `<span>${btn._icon}</span><span>${btn._label}</span>`;
+    btn.classList.remove("success");
+  }, 2000);
 }
 
 /* ════════════════════════════════════════════
@@ -1859,7 +2026,6 @@ function checkBirthday() {
 
 /* ════════════════════════════════════════════
    CONTEXT MENU
-   FIX: ctxAction('delete') now correctly handles activeId after deletion.
 ════════════════════════════════════════════ */
 let ctxId = null;
 
@@ -1884,7 +2050,7 @@ function openCtxCenter(id) {
   if (window.innerWidth <= 639) {
     const ov = document.getElementById("overlay");
     ov.classList.add("open");
-    ov._ctxOverlay = true;  // mark so we can clean up without closing sidebar
+    ov._ctxOverlay = true;
   }
 }
 
@@ -1929,11 +2095,9 @@ function ctxAction(action) {
       threads = threads.filter(x => x.id !== deletedId);
 
       if (activeId === deletedId) {
-        // FIX: Switch to remaining thread or create new one
         if (threads.length > 0) {
           openThread(threads[0].id);
         } else {
-          // createThread sets activeId internally
           const newId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
           threads.unshift({ id: newId, title: "New Chat", messages: [], archived: false });
           activeId = newId;
@@ -1946,7 +2110,6 @@ function ctxAction(action) {
   }
 }
 
-// Close context menu when clicking outside
 document.addEventListener("click", (e) => {
   const m = document.getElementById("ctxMenu");
   if (m.style.display === "block" && !m.contains(e.target)) closeCtx();
@@ -2019,14 +2182,12 @@ iw.addEventListener("drop", (e) => {
 
 /* ════════════════════════════════════════════
    VOICE RECORDING
-   FIX: Audio wave is positioned next to mic button properly.
-        Recording indicator bottom offset uses px not undefined var.
 ════════════════════════════════════════════ */
 document.getElementById("micBtn").addEventListener("click", toggleMic);
 
 async function toggleMic() {
-  const btn               = document.getElementById("micBtn");
-  const audioWave         = document.getElementById("audioWave");
+  const btn                = document.getElementById("micBtn");
+  const audioWave          = document.getElementById("audioWave");
   const recordingIndicator = document.getElementById("recordingIndicator");
 
   if (recorder?.state === "recording") { recorder.stop(); return; }
@@ -2074,21 +2235,18 @@ async function toggleMic() {
   btn.classList.add("recording");
   btn.textContent = "⏹";
 
-  // FIX: Position audio wave using getBoundingClientRect
-  const btnRect = btn.getBoundingClientRect();
-  const waveWidth = 9 * 4 + 8 * 3; // 9 bars × 3px + 8 gaps × 3px ≈ 60px
+  const btnRect  = btn.getBoundingClientRect();
+  const waveWidth = 9 * 4 + 8 * 3;
   audioWave.style.left = Math.max(4, btnRect.left - waveWidth - 8) + "px";
   audioWave.style.top  = (btnRect.top + btnRect.height / 2 - 14) + "px";
   audioWave.classList.add("active");
 
-  // Position recording indicator above input area
   recordingIndicator.style.bottom = (window.innerHeight - btnRect.top + 10) + "px";
   recordingIndicator.classList.add("active");
 
   document.getElementById("inputTextarea").placeholder = "Listening…";
   document.getElementById("inputTextarea").disabled    = true;
 
-  // Auto-stop after 60 seconds
   setTimeout(() => { if (recorder?.state === "recording") recorder.stop(); }, 60000);
 }
 
