@@ -493,17 +493,12 @@ body {
 
 /* ═══════════════════════════════════════════
    MESSAGE WRAP + BUBBLE
-   Each message is:
-     .message-wrap.user/.assistant
-       .message.user/.assistant   ← the bubble
-       .message-actions            ← action bar BELOW bubble
 ═══════════════════════════════════════════ */
 .message-wrap {
   display: flex;
   flex-direction: column;
   gap: 5px;
   max-width: 86%;
-  /* spacing between message groups */
   margin-bottom: 8px;
 }
 .message-wrap.user      { align-self: flex-end; }
@@ -525,7 +520,7 @@ body {
 .message.user      { background: var(--accent);  border-bottom-right-radius: 4px; }
 .message.assistant { background: var(--panel2); border-bottom-left-radius:  4px; }
 
-/* ── ACTION BAR BELOW EACH BUBBLE ── */
+/* ── ACTION BAR ── */
 .message-actions {
   display: flex;
   gap: 5px;
@@ -534,20 +529,16 @@ body {
   transition: opacity .18s;
   padding: 0 3px;
 }
-/* Show on hover of the whole wrap */
 .message-wrap:hover .message-actions,
 .message-actions:focus-within { opacity: 1; }
 
-/* On touch devices keep them always softly visible */
 @media (hover: none) {
   .message-actions { opacity: 0.75; }
 }
 
-/* User messages → right-align the action bar */
 .message-wrap.user .message-actions { justify-content: flex-end; }
 .message-wrap.assistant .message-actions { justify-content: flex-start; }
 
-/* Individual action pill button */
 .action-btn {
   display: inline-flex;
   align-items: center;
@@ -582,6 +573,18 @@ body {
 }
 .action-btn.danger-btn:hover { background: rgba(248,113,113,0.1); border-color: #f87171; }
 
+/* Speaking action button highlight */
+.action-btn.speaking-btn {
+  background: rgba(37,99,235,0.15);
+  border-color: rgba(37,99,235,0.5);
+  color: #60a5fa;
+  animation: btnPulse 1.5s ease-in-out infinite;
+}
+@keyframes btnPulse {
+  0%, 100% { border-color: rgba(37,99,235,0.4); }
+  50%       { border-color: rgba(37,99,235,0.9); }
+}
+
 .message p             { margin: 0 0 8px; }
 .message p:last-child  { margin: 0; }
 .message h1, .message h2, .message h3 { margin: 10px 0 5px; font-size: 1em; font-weight: 600; }
@@ -599,11 +602,9 @@ body {
 .message .MathJax { font-size: 1.1em !important; }
 .message mjx-container { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
-/* gallery in message */
 .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 8px; margin-top: 10px; }
 .gallery img { width: 100%; border-radius: 8px; cursor: pointer; }
 
-/* typing indicator */
 .typing { display: flex; gap: 5px; align-items: center; padding: 2px 0; }
 .typing span { width: 7px; height: 7px; background: #94a3b8; border-radius: 50%; animation: blink 1.3s infinite; }
 .typing span:nth-child(2) { animation-delay: .2s; }
@@ -681,10 +682,27 @@ body {
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   touch-action: manipulation;
-  transition: background .1s;
+  transition: background .1s, border-color .1s;
 }
 .rnd-btn:active   { background: var(--border); }
 .rnd-btn:disabled { opacity: .35; pointer-events: none; }
+
+/* ── VOICE BUTTON STATES ── */
+#voiceBtn.voice-loading {
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: .7;
+}
+#voiceBtn.voice-speaking {
+  background: rgba(37,99,235,0.2);
+  border-color: var(--accent);
+  color: #60a5fa;
+  animation: voicePulse 1.5s ease-in-out infinite;
+}
+@keyframes voicePulse {
+  0%, 100% { box-shadow: 0 0 0 0   rgba(37,99,235,0.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(37,99,235,0);   }
+}
 
 #sendBtn {
   width: var(--btn-touch);
@@ -726,7 +744,6 @@ body {
   50%       { width: 180%; height: 180%; opacity: 0.3; }
 }
 
-/* Audio wave */
 .audio-wave {
   position: fixed;
   display: none;
@@ -758,7 +775,6 @@ body {
   50%       { transform: scaleY(1);   opacity: 1; }
 }
 
-/* Recording indicator */
 .recording-indicator {
   position: fixed;
   display: none;
@@ -791,7 +807,53 @@ body {
   50%       { opacity: 0.3; transform: scale(0.8); }
 }
 
-/* status bar */
+/* ── NOW-SPEAKING INDICATOR ── */
+#speakingBar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(37,99,235,0.1);
+  border-top: 1px solid rgba(37,99,235,0.2);
+  font-size: 12px;
+  color: #60a5fa;
+  flex-shrink: 0;
+}
+#speakingBar.active { display: flex; }
+#speakingBar .speak-waves {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+#speakingBar .speak-waves span {
+  display: block;
+  width: 2px;
+  border-radius: 1px;
+  background: #60a5fa;
+  animation: speakWave .8s ease-in-out infinite;
+}
+#speakingBar .speak-waves span:nth-child(1) { height: 6px;  animation-delay: 0s; }
+#speakingBar .speak-waves span:nth-child(2) { height: 12px; animation-delay: .1s; }
+#speakingBar .speak-waves span:nth-child(3) { height: 8px;  animation-delay: .2s; }
+#speakingBar .speak-waves span:nth-child(4) { height: 14px; animation-delay: .15s; }
+#speakingBar .speak-waves span:nth-child(5) { height: 8px;  animation-delay: .05s; }
+@keyframes speakWave {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1); }
+}
+#speakingBar .speak-label { flex: 1; }
+#speakStopBtn {
+  background: none;
+  border: 1px solid rgba(37,99,235,0.4);
+  border-radius: 10px;
+  color: #60a5fa;
+  font-size: 11px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: background .15s;
+}
+#speakStopBtn:hover { background: rgba(37,99,235,0.2); }
+
 #statusBar {
   font-size: 11px;
   color: var(--muted);
@@ -801,7 +863,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   PROFILE MODAL — BOTTOM SHEET
+   BOTTOM SHEET (shared by profile + voice modals)
 ═══════════════════════════════════════════ */
 .modal-bg {
   position: fixed; inset: 0;
@@ -885,6 +947,105 @@ body {
 }
 .save-btn:active { background: var(--accent-h); }
 
+/* ── Voice slider ── */
+.voice-slider-wrap {
+  width: 100%;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.voice-slider-wrap input[type=range] {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  height: 6px;
+  border-radius: 3px;
+  border: none;
+  background: var(--border);
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.voice-slider-wrap span {
+  font-size: 13px;
+  color: var(--text);
+  min-width: 36px;
+  text-align: right;
+  background: var(--panel);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+/* Toggle row */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.toggle-row input[type=checkbox] {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin: 0; padding: 0;
+  border: none;
+}
+.toggle-row .toggle-label {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.toggle-row .toggle-desc {
+  font-size: 11px;
+  color: var(--muted);
+  display: block;
+  margin-top: 2px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+/* Voice cards */
+.voice-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.voice-card {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all .15s;
+  user-select: none;
+}
+.voice-card:hover { border-color: var(--accent); background: rgba(37,99,235,0.05); }
+.voice-card.selected { border-color: var(--accent); background: rgba(37,99,235,0.12); }
+.voice-card .vc-name { font-size: 13px; font-weight: 600; color: var(--text); display: block; }
+.voice-card .vc-desc { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; }
+
+/* Secondary button */
+.save-btn.secondary {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.save-btn.secondary:active { background: var(--border); }
+
 /* ═══════════════════════════════════════════
    CONTEXT MENU
 ═══════════════════════════════════════════ */
@@ -954,6 +1115,8 @@ body {
   .message-wrap { max-width: 92%; }
   .welcome-title { font-size: 24px; }
   .suggested-prompts { grid-template-columns: 1fr; }
+
+  .voice-cards { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ═══════════════════════════════════════════
@@ -1038,6 +1201,16 @@ body {
     </div>
 
     <div class="chat" id="chat"></div>
+
+    <!-- Now-speaking indicator bar (sits above input) -->
+    <div id="speakingBar">
+      <div class="speak-waves">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <span class="speak-label" id="speakingLabel">Speaking…</span>
+      <button id="speakStopBtn" onclick="stopSpeaking()">⏹ Stop</button>
+    </div>
+
     <div id="statusBar">—</div>
 
     <div class="input-wrapper" id="inputWrapper">
@@ -1048,6 +1221,8 @@ body {
       </div>
       <div class="input-row">
         <button class="rnd-btn" id="micBtn">🎤</button>
+        <!-- Voice output button — tap to speak/stop, long-press / right-click for settings -->
+        <button class="rnd-btn" id="voiceBtn" title="Read aloud  •  Long-press for settings">🔊</button>
         <button class="rnd-btn" onclick="triggerFile()">📎</button>
         <textarea id="inputTextarea" placeholder="Ask Orbit anything…" rows="1"></textarea>
         <button id="sendBtn" onclick="send()">➤</button>
@@ -1110,6 +1285,44 @@ body {
   </div>
 </div>
 
+<!-- ══ VOICE SETTINGS SHEET ══ -->
+<div class="modal-bg" id="voiceModal">
+  <div class="sheet" id="voiceSheet">
+    <div class="sheet-handle"></div>
+    <h3>🔊 Voice Settings</h3>
+
+    <label>Voice</label>
+    <div class="voice-cards" id="voiceCards">
+      <!-- injected by JS -->
+    </div>
+
+    <label>Speed</label>
+    <div class="voice-slider-wrap">
+      <input type="range" id="v_speed" min="0.5" max="2" step="0.25" value="1.0"
+        oninput="document.getElementById('v_speed_val').textContent = parseFloat(this.value).toFixed(2).replace(/\.?0+$/, '') + '×'">
+      <span id="v_speed_val">1×</span>
+    </div>
+
+    <label>Quality</label>
+    <select id="v_model">
+      <option value="tts-1">Standard — faster response</option>
+      <option value="tts-1-hd">HD — higher quality</option>
+    </select>
+
+    <label style="margin-bottom:8px">Auto-Speak</label>
+    <div class="toggle-row" onclick="document.getElementById('v_autospeak').click()">
+      <input type="checkbox" id="v_autospeak">
+      <div>
+        <span class="toggle-label">Read responses aloud automatically</span>
+        <span class="toggle-desc">Every AI response will be spoken after it finishes</span>
+      </div>
+    </div>
+
+    <button class="save-btn secondary" onclick="testVoice()">▶ Test Voice</button>
+    <button class="save-btn" onclick="saveVoiceSettings()">Save Settings</button>
+  </div>
+</div>
+
 <!-- ══ CONTEXT MENU ══ -->
 <div id="ctxMenu">
   <div class="ctx-item"        onclick="ctxAction('rename')">✏️ Rename</div>
@@ -1119,7 +1332,7 @@ body {
 
 <div id="toast"></div>
 
-<!-- ══ AUDIO WAVE ══ -->
+<!-- ══ AUDIO WAVE (recording) ══ -->
 <div class="audio-wave" id="audioWave">
   <div class="bar"></div><div class="bar"></div><div class="bar"></div>
   <div class="bar"></div><div class="bar"></div><div class="bar"></div>
@@ -1152,6 +1365,31 @@ const SUGGESTED_PROMPTS = [
 ];
 
 /* ════════════════════════════════════════════
+   VOICE CONFIG
+════════════════════════════════════════════ */
+const VOICE_OPTIONS = [
+  { id: "nova",    label: "Nova",    desc: "Warm & natural" },
+  { id: "alloy",   label: "Alloy",   desc: "Neutral" },
+  { id: "echo",    label: "Echo",    desc: "Clear" },
+  { id: "fable",   label: "Fable",   desc: "Expressive" },
+  { id: "onyx",    label: "Onyx",    desc: "Deep" },
+  { id: "shimmer", label: "Shimmer", desc: "Soft" },
+];
+const MAX_SPEAK_CHARS = 1500;
+
+let voiceConfig = (function() {
+  try {
+    return JSON.parse(localStorage.getItem("orbit_voice") || "null") || {
+      voice: "nova", model: "tts-1", speed: 1.0, autoSpeak: false
+    };
+  } catch { return { voice: "nova", model: "tts-1", speed: 1.0, autoSpeak: false }; }
+})();
+
+let voiceAudio    = null;
+let voiceSpeaking = false;
+let voiceAbort    = null;
+
+/* ════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════ */
 let profile      = JSON.parse(localStorage.getItem("orbit_profile") || "null");
@@ -1178,7 +1416,8 @@ let busy         = false;
 ════════════════════════════════════════════ */
 window.addEventListener("load", () => {
   autoResizeTA();
-  swipeToDismissSheet();
+  swipeToDismissSheet("profileSheet",  "profileModal",  () => profile?.name && profile?.email);
+  swipeToDismissSheet("voiceSheet",    "voiceModal",    () => true);
 
   if (!threads.length || threads[0].messages.length > 0) {
     createThread();
@@ -1192,8 +1431,224 @@ window.addEventListener("load", () => {
   checkBirthday();
   connectWS();
   renderImageGallery();
+  buildVoiceCards();
+  syncVoiceBtn();
+
+  // Voice button: tap = speak/stop; long-press / right-click = settings
+  const vBtn = document.getElementById("voiceBtn");
+  vBtn.addEventListener("click", handleVoiceBtn);
+  vBtn.addEventListener("contextmenu", (e) => { e.preventDefault(); openVoiceModal(); });
+  let vpTimer;
+  vBtn.addEventListener("touchstart", () => {
+    vpTimer = setTimeout(() => { openVoiceModal(); if (navigator.vibrate) navigator.vibrate(50); }, 520);
+  }, { passive: true });
+  vBtn.addEventListener("touchend",    () => clearTimeout(vpTimer));
+  vBtn.addEventListener("touchcancel", () => clearTimeout(vpTimer));
+  vBtn.addEventListener("touchmove",   () => clearTimeout(vpTimer), { passive: true });
 
   fetch(`${BACKEND}/health`).then(() => setStatus("Ready")).catch(() => setStatus("Connecting…"));
+});
+
+/* ════════════════════════════════════════════
+   VOICE — CORE
+════════════════════════════════════════════ */
+
+/** Strip markdown so TTS reads clean prose. */
+function prepareTextForSpeech(raw) {
+  return raw
+    .replace(/```[\s\S]*?```/g, " code block. ")
+    .replace(/`[^`]+`/g, "")
+    .replace(/\*{1,3}(.*?)\*{1,3}/g, "$1")
+    .replace(/#{1,6}\s*/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/!\[.*?\]\(.*?\)/g, "")
+    .replace(/https?:\/\/\S+/g, " link. ")
+    .replace(/⬇️[^\n]*/g, "")
+    .replace(/[|_~]/g, "")
+    .replace(/\n{2,}/g, ". ")
+    .replace(/\n/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+    .slice(0, MAX_SPEAK_CHARS);
+}
+
+async function speakText(text) {
+  if (!text || text === "__TYPING__") return;
+  stopSpeaking();
+
+  const clean = prepareTextForSpeech(text);
+  if (!clean) return;
+
+  setVoiceState("loading");
+
+  try {
+    voiceAbort = new AbortController();
+
+    const res = await fetch(`${BACKEND}/text-to-voice`, {
+      method:      "POST",
+      credentials: "include",
+      headers:     { "Content-Type": "application/json" },
+      signal:      voiceAbort.signal,
+      body: JSON.stringify({
+        text:  clean,
+        voice: voiceConfig.voice,
+        model: voiceConfig.model,
+        speed: voiceConfig.speed,
+      }),
+    });
+
+    if (!res.ok) throw new Error(`TTS ${res.status}`);
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    voiceAudio = new Audio(url);
+
+    voiceAudio.onended = () => {
+      URL.revokeObjectURL(url);
+      voiceAudio = null;
+      setVoiceState("idle");
+    };
+    voiceAudio.onerror = () => {
+      URL.revokeObjectURL(url);
+      voiceAudio = null;
+      setVoiceState("idle");
+      toast("Voice playback failed — check connection.");
+    };
+
+    await voiceAudio.play();
+    setVoiceState("playing");
+
+  } catch (e) {
+    if (e.name === "AbortError") {
+      setVoiceState("idle");
+    } else {
+      setVoiceState("idle");
+      toast("Voice error: " + (e.message || "unknown"));
+    }
+  }
+}
+
+function stopSpeaking() {
+  if (voiceAbort) { voiceAbort.abort(); voiceAbort = null; }
+  if (voiceAudio) {
+    voiceAudio.pause();
+    voiceAudio.src = "";
+    voiceAudio = null;
+  }
+  setVoiceState("idle");
+}
+
+function setVoiceState(state) {
+  voiceSpeaking = state === "playing";
+  const btn  = document.getElementById("voiceBtn");
+  const bar  = document.getElementById("speakingBar");
+  const lbl  = document.getElementById("speakingLabel");
+
+  btn.classList.remove("voice-loading", "voice-speaking");
+
+  if (state === "loading") {
+    btn.textContent = "⏳";
+    btn.classList.add("voice-loading");
+    bar.classList.remove("active");
+  } else if (state === "playing") {
+    btn.textContent = "⏹";
+    btn.classList.add("voice-speaking");
+    lbl.textContent = "Speaking with " + voiceConfig.voice + "…";
+    bar.classList.add("active");
+  } else {
+    btn.textContent = "🔊";
+    bar.classList.remove("active");
+  }
+}
+
+function handleVoiceBtn() {
+  if (voiceSpeaking) { stopSpeaking(); return; }
+  // Speak the last assistant message
+  const t = activeThread();
+  if (!t) return;
+  const lastAI = [...t.messages].reverse().find(m => m.role === "assistant" && m.text && m.text !== "__TYPING__");
+  if (lastAI) speakText(lastAI.text);
+  else toast("No response to read yet.");
+}
+
+/* ════════════════════════════════════════════
+   VOICE MODAL
+════════════════════════════════════════════ */
+function buildVoiceCards() {
+  const container = document.getElementById("voiceCards");
+  if (!container) return;
+  container.innerHTML = "";
+  VOICE_OPTIONS.forEach(v => {
+    const card = document.createElement("div");
+    card.className = "voice-card" + (v.id === voiceConfig.voice ? " selected" : "");
+    card.dataset.voice = v.id;
+    card.innerHTML = `<span class="vc-name">${v.label}</span><span class="vc-desc">${v.desc}</span>`;
+    card.onclick = () => {
+      container.querySelectorAll(".voice-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+    };
+    container.appendChild(card);
+  });
+}
+
+function openVoiceModal() {
+  buildVoiceCards();
+  document.getElementById("v_speed").value = voiceConfig.speed;
+  document.getElementById("v_speed_val").textContent =
+    parseFloat(voiceConfig.speed).toFixed(2).replace(/\.?0+$/, "") + "×";
+  document.getElementById("v_model").value     = voiceConfig.model;
+  document.getElementById("v_autospeak").checked = voiceConfig.autoSpeak;
+  document.getElementById("voiceModal").classList.add("open");
+}
+
+function closeVoiceModal() {
+  document.getElementById("voiceModal").classList.remove("open");
+}
+
+function saveVoiceSettings() {
+  const selCard = document.querySelector("#voiceCards .voice-card.selected");
+  voiceConfig = {
+    voice:     selCard ? selCard.dataset.voice : voiceConfig.voice,
+    speed:     parseFloat(document.getElementById("v_speed").value),
+    model:     document.getElementById("v_model").value,
+    autoSpeak: document.getElementById("v_autospeak").checked,
+  };
+  localStorage.setItem("orbit_voice", JSON.stringify(voiceConfig));
+  syncVoiceBtn();
+  closeVoiceModal();
+  toast("Voice settings saved ✓");
+}
+
+function syncVoiceBtn() {
+  const btn = document.getElementById("voiceBtn");
+  if (!btn) return;
+  btn.title = voiceConfig.autoSpeak
+    ? "Auto-speak ON  •  Long-press for settings"
+    : "Read aloud  •  Long-press for settings";
+  // Subtle glow when auto-speak is on
+  btn.style.borderColor = voiceConfig.autoSpeak ? "var(--accent)" : "";
+  btn.style.color       = voiceConfig.autoSpeak ? "var(--accent)" : "";
+}
+
+async function testVoice() {
+  const selCard = document.querySelector("#voiceCards .voice-card.selected");
+  const testConfig = {
+    voice: selCard ? selCard.dataset.voice : voiceConfig.voice,
+    model: document.getElementById("v_model").value,
+    speed: parseFloat(document.getElementById("v_speed").value),
+  };
+
+  // Temporarily use the settings-in-progress
+  const prev = { ...voiceConfig };
+  Object.assign(voiceConfig, testConfig);
+
+  await speakText("Hello! I'm Orbit, your personal AI assistant. I'm ready to help you today.");
+
+  Object.assign(voiceConfig, prev);
+}
+
+document.getElementById("voiceModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("voiceModal")) closeVoiceModal();
 });
 
 /* ════════════════════════════════════════════
@@ -1210,11 +1665,11 @@ function autoResizeTA() {
 }
 
 /* ════════════════════════════════════════════
-   SWIPE-TO-DISMISS SHEET
+   SWIPE-TO-DISMISS SHEET (generic)
 ════════════════════════════════════════════ */
-function swipeToDismissSheet() {
-  const sheet = document.getElementById("profileSheet");
-  const modal = document.getElementById("profileModal");
+function swipeToDismissSheet(sheetId, modalId, canClose) {
+  const sheet = document.getElementById(sheetId);
+  const modal = document.getElementById(modalId);
   let startY = 0, dragging = false;
 
   sheet.addEventListener("touchstart", (e) => {
@@ -1235,12 +1690,8 @@ function swipeToDismissSheet() {
     if (!dragging) return;
     dragging = false;
     const dy = e.changedTouches[0].clientY - startY;
-    if (dy > 80 && profile?.name && profile?.email) {
-      sheet.style.transform = "";
-      closeSheet();
-    } else {
-      sheet.style.transform = "";
-    }
+    sheet.style.transform = "";
+    if (dy > 80 && canClose()) modal.classList.remove("open");
   });
 }
 
@@ -1275,73 +1726,37 @@ function saveImageGallery() {
     if (imageGallery.length > 100) imageGallery = imageGallery.slice(-100);
     localStorage.setItem("orbit_images", JSON.stringify(imageGallery));
   } catch (e) {
-    console.error("Failed to save image gallery:", e);
     imageGallery = imageGallery.slice(-30);
     try { localStorage.setItem("orbit_images", JSON.stringify(imageGallery)); } catch {}
   }
 }
 
-/* ════════════════════════════════════════════
-   PERSIST IMAGE TO OUR BACKEND
-   DALL-E URLs expire in ~1 hour.
-   This fetches the image blob immediately and re-uploads it to our own
-   /upload endpoint, which serves it permanently via /download/{file_id}.
-   Falls back to the original URL if the fetch/upload fails.
-════════════════════════════════════════════ */
-/* ════════════════════════════════════════════
-   IMAGE PERSISTENCE — canvas base64 approach
-   ─────────────────────────────────────────
-   DALL-E URLs expire in ~1 hour and Render's disk
-   is ephemeral (resets on every redeploy/restart).
-   Instead we:
-     1. Fetch the image while the URL is hot
-     2. Draw it onto an off-screen canvas
-     3. Scale it down to max 800 px (keeps file small)
-     4. Export as JPEG quality 0.82 → ~60-120 KB
-     5. Store the data: URI in localStorage
-   Result: images are permanent, zero server dependency.
-════════════════════════════════════════════ */
 async function fetchAsBase64(remoteUrl) {
-  // Already a data URI — nothing to do
   if (!remoteUrl || remoteUrl.startsWith("data:")) return remoteUrl;
-
   return new Promise((resolve) => {
     const img = new Image();
-    // Allow cross-origin (DALL-E CDN supports CORS)
     img.crossOrigin = "anonymous";
-
     img.onload = () => {
       try {
-        const MAX = 800; // max dimension in px
+        const MAX = 800;
         let { naturalWidth: w, naturalHeight: h } = img;
         if (w > MAX || h > MAX) {
           if (w >= h) { h = Math.round((h / w) * MAX); w = MAX; }
           else        { w = Math.round((w / h) * MAX); h = MAX; }
         }
         const canvas = document.createElement("canvas");
-        canvas.width  = w;
-        canvas.height = h;
+        canvas.width = w; canvas.height = h;
         canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        // JPEG at 0.82 quality ≈ 60–120 KB for a typical AI image
         resolve(canvas.toDataURL("image/jpeg", 0.82));
-      } catch (e) {
-        console.warn("canvas export failed:", e);
-        resolve(remoteUrl); // keep original as fallback
-      }
+      } catch (e) { resolve(remoteUrl); }
     };
-
-    img.onerror = () => {
-      console.warn("Image fetch failed (CORS or network):", remoteUrl);
-      resolve(remoteUrl); // keep original; will work for ~1 h
-    };
-
+    img.onerror = () => resolve(remoteUrl);
     img.src = remoteUrl;
   });
 }
 
 async function addImageToGallery(url, prompt) {
   if (!url) return;
-  // Convert to permanent base64 data URI before storing
   const permanentUrl = await fetchAsBase64(url);
   imageGallery.push({
     id:        (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())),
@@ -1374,10 +1789,7 @@ function renderImageGallery() {
     const item = document.createElement("div");
     item.className = "gallery-item";
 
-    const date = new Date(img.timestamp).toLocaleDateString("en-US", {
-      month: "short", day: "numeric"
-    });
-
+    const date = new Date(img.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     item.innerHTML = `
       <img src="${escHtml(img.url)}" alt="${escHtml(img.prompt || 'Image')}" loading="lazy">
       <div class="gallery-item-overlay">
@@ -1389,21 +1801,13 @@ function renderImageGallery() {
       </div>`;
 
     const [dlBtn, delBtn] = item.querySelectorAll(".gallery-action-btn");
-
-    // Clicking anywhere on the card (except action buttons) opens fullscreen
     item.onclick = () => viewImageFullscreen(img);
-
-    dlBtn.onclick = (e) => {
-      e.stopPropagation();
-      downloadGalleryImage(img);
-    };
-
+    dlBtn.onclick  = (e) => { e.stopPropagation(); downloadGalleryImage(img); };
     delBtn.onclick = (e) => {
       e.stopPropagation();
       if (!confirm("Delete this image?")) return;
       imageGallery.splice(origIdx, 1);
-      saveImageGallery();
-      renderImageGallery();
+      saveImageGallery(); renderImageGallery();
       toast("Image deleted");
     };
 
@@ -1415,8 +1819,7 @@ function renderImageGallery() {
 
 function viewImageFullscreen(img) {
   const close = () => {
-    overlay.style.opacity  = "0";
-    overlay.style.transform = "scale(1.04)";
+    overlay.style.opacity = "0"; overlay.style.transform = "scale(1.04)";
     setTimeout(() => { if (overlay.parentNode) document.body.removeChild(overlay); }, 220);
     document.removeEventListener("keydown", onKey);
   };
@@ -1428,27 +1831,16 @@ function viewImageFullscreen(img) {
     "position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;",
     "display:flex;flex-direction:column;align-items:center;justify-content:center;",
     "padding:20px;cursor:zoom-out;",
-    /* start state for fade-in */
     "opacity:0;transform:scale(0.97);",
     "transition:opacity .22s ease, transform .22s ease;",
   ].join("");
-
-  // Trigger fade-in on next paint
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    overlay.style.opacity   = "1";
-    overlay.style.transform = "scale(1)";
+    overlay.style.opacity = "1"; overlay.style.transform = "scale(1)";
   }));
 
   const imgEl = document.createElement("img");
-  imgEl.src = img.url;
-  imgEl.alt = img.prompt || "Image";
-  imgEl.style.cssText = [
-    "max-width:100%;max-height:70vh;",
-    "border-radius:14px;",
-    "box-shadow:0 20px 60px rgba(0,0,0,.6);",
-    "cursor:default;",
-    "object-fit:contain;",
-  ].join("");
+  imgEl.src = img.url; imgEl.alt = img.prompt || "Image";
+  imgEl.style.cssText = "max-width:100%;max-height:70vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);cursor:default;object-fit:contain;";
 
   const info = document.createElement("div");
   info.style.cssText = "margin-top:18px;color:white;text-align:center;max-width:640px;padding:0 12px;";
@@ -1462,11 +1854,7 @@ function viewImageFullscreen(img) {
   const mkBtn = (label, bg, fn) => {
     const b = document.createElement("button");
     b.innerHTML = label;
-    b.style.cssText = [
-      `padding:10px 20px;background:${bg};`,
-      "color:white;border:none;border-radius:10px;cursor:pointer;",
-      "font-size:14px;font-weight:600;transition:opacity .15s;",
-    ].join("");
+    b.style.cssText = `padding:10px 20px;background:${bg};color:white;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:opacity .15s;`;
     b.onmouseenter = () => b.style.opacity = ".8";
     b.onmouseleave = () => b.style.opacity = "1";
     b.onclick = (e) => { e.stopPropagation(); fn(); };
@@ -1474,16 +1862,11 @@ function viewImageFullscreen(img) {
   };
 
   actions.appendChild(mkBtn("⬇️ Download", "var(--accent)", () => downloadGalleryImage(img)));
-
-  // Copy link button (only for non-data URIs)
   if (!img.url.startsWith("data:")) {
     actions.appendChild(mkBtn("🔗 Copy Link", "rgba(255,255,255,.12)", async () => {
-      try {
-        await navigator.clipboard.writeText(img.url);
-        toast("Link copied!");
-      } catch { toast("Could not copy link."); }
+      try { await navigator.clipboard.writeText(img.url); toast("Link copied!"); }
+      catch { toast("Could not copy link."); }
     }));
-    // Native share
     if (navigator.share) {
       actions.appendChild(mkBtn("📤 Share", "rgba(255,255,255,.12)", async () => {
         try { await navigator.share({ title: "Orbit AI", url: img.url }); }
@@ -1491,28 +1874,18 @@ function viewImageFullscreen(img) {
       }));
     }
   }
-
   actions.appendChild(mkBtn("✕ Close", "rgba(255,255,255,.08)", close));
 
-  overlay.appendChild(imgEl);
-  overlay.appendChild(info);
-  overlay.appendChild(actions);
-
-  // Click backdrop to close, but not clicks on the image/info/buttons
+  overlay.appendChild(imgEl); overlay.appendChild(info); overlay.appendChild(actions);
   overlay.onclick = close;
-  imgEl.onclick   = (e) => e.stopPropagation();
-  info.onclick    = (e) => e.stopPropagation();
-  actions.onclick = (e) => e.stopPropagation();
-
+  imgEl.onclick = info.onclick = actions.onclick = (e) => e.stopPropagation();
   document.body.appendChild(overlay);
 }
 
 function downloadGalleryImage(img) {
   if (img.url.startsWith("data:")) {
     const a = document.createElement("a");
-    a.href = img.url;
-    a.download = `orbit-image-${Date.now()}.png`;
-    a.click();
+    a.href = img.url; a.download = `orbit-image-${Date.now()}.png`; a.click();
     toast("Downloaded!");
   } else {
     window.open(img.url, "_blank");
@@ -1555,22 +1928,15 @@ function connectWS() {
 function setStatus(t) { document.getElementById("statusBar").textContent = t; }
 
 /* ════════════════════════════════════════════
-   HANDLE INCOMING AI-GENERATED IMAGES
-   Converts each DALL-E URL to a permanent base64
-   data URI before storing anywhere, so images
-   survive URL expiry and server restarts.
+   HANDLE INCOMING IMAGES
 ════════════════════════════════════════════ */
 async function handleIncomingImages(urls, prompt) {
   if (!urls || !urls.length) return;
   const t = activeThread();
   if (!t) return;
-
   toast("💾 Saving images…");
 
-  // Convert all DALL-E URLs → base64 in parallel while they're still hot
-  const permanentUrls = await Promise.all(
-    urls.map(u => fetchAsBase64(u))
-  );
+  const permanentUrls = await Promise.all(urls.map(u => fetchAsBase64(u)));
 
   const last = t.messages[t.messages.length - 1];
   if (last && last.role === "assistant") {
@@ -1580,19 +1946,14 @@ async function handleIncomingImages(urls, prompt) {
     t.messages.push({ role: "assistant", text: "", images: permanentUrls });
   }
 
-  // Save each to the sidebar gallery
   permanentUrls.forEach(u => {
     if (!u) return;
     imageGallery.push({
       id:        (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())),
-      url:       u,
-      prompt:    prompt || "",
-      timestamp: Date.now(),
+      url:       u, prompt: prompt || "", timestamp: Date.now(),
     });
   });
-  saveImageGallery();
-  saveThreads();
-  renderChat();
+  saveImageGallery(); saveThreads(); renderChat();
 }
 
 /* ════════════════════════════════════════════
@@ -1644,9 +2005,7 @@ function send() {
   ta.style.height = "auto";
   const prevFileId      = fileId;
   const prevFileIsImage = fileIsImage;
-  filePreview = null;
-  fileId      = null;
-  fileIsImage = false;
+  filePreview = null; fileId = null; fileIsImage = false;
   hidePreview();
 
   t.messages.push({ role: "assistant", text: "__TYPING__" });
@@ -1654,6 +2013,9 @@ function send() {
 
   busy = true;
   lockInput(true);
+
+  // Stop speaking when a new message is sent
+  stopSpeaking();
 
   ws.send(JSON.stringify({
     question:      text || "User sent a file.",
@@ -1680,9 +2042,7 @@ function applyDownloadLinks(node) {
     const href = a.getAttribute("href") || "";
     if (!href.includes("/download/")) return;
     const fullUrl = href.startsWith("http") ? href : `${BACKEND}${href}`;
-    a.href    = fullUrl;
-    a.target  = "_blank";
-    a.rel     = "noopener noreferrer";
+    a.href = fullUrl; a.target = "_blank"; a.rel = "noopener noreferrer";
     a.setAttribute("download", "");
     const label = a.textContent.trim() || "Download file";
     a.innerHTML = `⬇️ ${label}`;
@@ -1703,31 +2063,25 @@ function streamToken(tok) {
   if (last.text === "__TYPING__") last.text = "";
   last.text += tok;
 
-  const chat    = document.getElementById("chat");
-  const wraps   = chat.querySelectorAll(".message-wrap.assistant");
-  const wrap    = wraps[wraps.length - 1];
+  const chat  = document.getElementById("chat");
+  const wraps = chat.querySelectorAll(".message-wrap.assistant");
+  const wrap  = wraps[wraps.length - 1];
   if (!wrap) return;
-  const node    = wrap.querySelector(".message.assistant");
+  const node  = wrap.querySelector(".message.assistant");
   if (node) {
     node.innerHTML = marked.parse(last.text);
     applyDownloadLinks(node);
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise([node]).catch(() => {});
-    }
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([node]).catch(() => {});
   }
-  // Ensure actions bar exists (created once streaming starts)
   ensureActionsBar(wrap, last);
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* Ensure the action bar exists under a message-wrap.
-   Called during streaming and after renderChat. */
 function ensureActionsBar(wrap, msg) {
   if (!wrap) return;
   if (wrap.querySelector(".message-actions")) return;
   if (msg.text === "__TYPING__") return;
-  const bar = buildActionsBar(msg);
-  wrap.appendChild(bar);
+  wrap.appendChild(buildActionsBar(msg));
 }
 
 function finalize(remaining) {
@@ -1737,6 +2091,11 @@ function finalize(remaining) {
     const lastAI   = t.messages[t.messages.length - 1];
     if (lastUser?.role === "user" && lastAI?.role === "assistant") {
       updateUserMemory(lastUser.text, lastAI.text);
+
+      // Auto-speak if enabled
+      if (voiceConfig.autoSpeak && lastAI.text && lastAI.text !== "__TYPING__") {
+        speakText(lastAI.text);
+      }
     }
   }
 
@@ -1773,6 +2132,7 @@ function createThread() {
 
 function openThread(id) {
   activeId = id;
+  stopSpeaking();
   renderThreads(); renderChat();
   const t = threads.find(x => x.id === id);
   if (t) document.getElementById("mobileTitle").textContent = t.title;
@@ -1860,9 +2220,7 @@ function renderChat() {
     });
   } else {
     t.messages.forEach(m => chat.appendChild(makeBubble(m)));
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise([chat]).catch(() => {});
-    }
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([chat]).catch(() => {});
   }
 
   chat.scrollTop = chat.scrollHeight;
@@ -1870,16 +2228,11 @@ function renderChat() {
 
 /* ════════════════════════════════════════════
    MAKE BUBBLE
-   Returns a .message-wrap div containing:
-     - .message bubble
-     - .message-actions bar (below the bubble)
 ════════════════════════════════════════════ */
 function makeBubble(msg) {
-  // Outer wrap — controls alignment and houses both bubble + actions
   const wrap = document.createElement("div");
   wrap.className = "message-wrap " + msg.role;
 
-  // Inner bubble
   const div = document.createElement("div");
   div.className = "message " + msg.role;
 
@@ -1888,9 +2241,7 @@ function makeBubble(msg) {
   } else if (msg.text) {
     div.innerHTML = marked.parse(msg.text);
     applyDownloadLinks(div);
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise([div]).catch(() => {});
-    }
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([div]).catch(() => {});
   }
 
   if (msg.images?.length) {
@@ -1899,9 +2250,7 @@ function makeBubble(msg) {
     msg.images.forEach(src => {
       if (!src) return;
       const img = document.createElement("img");
-      img.src = src;
-      img.loading = "lazy";
-      img.alt = "Generated image";
+      img.src = src; img.loading = "lazy"; img.alt = "Generated image";
       img.onclick = () => window.open(src, "_blank");
       g.appendChild(img);
     });
@@ -1909,124 +2258,93 @@ function makeBubble(msg) {
   }
 
   wrap.appendChild(div);
-
-  // Action bar — only for non-typing messages
-  if (msg.text !== "__TYPING__") {
-    wrap.appendChild(buildActionsBar(msg));
-  }
-
+  if (msg.text !== "__TYPING__") wrap.appendChild(buildActionsBar(msg));
   return wrap;
 }
 
 /* ════════════════════════════════════════════
    ACTION BAR
-   Builds the pill-button row shown below each bubble.
-   Buttons: Copy Text | Share | (per image: ⬇️ Download | 🔗 Copy Link | 📤 Share Image)
 ════════════════════════════════════════════ */
 function buildActionsBar(msg) {
   const bar = document.createElement("div");
   bar.className = "message-actions";
 
-  /* ── 1. Copy Text ── */
+  /* ── 1. Read aloud (assistant messages only) ── */
+  if (msg.role === "assistant" && msg.text && msg.text !== "__TYPING__") {
+    const speakBtn = makeActionBtn("🔊", "Read", (btn) => {
+      if (voiceSpeaking) {
+        stopSpeaking();
+        btn.innerHTML = `<span>🔊</span><span>Read</span>`;
+        btn.classList.remove("speaking-btn");
+        return;
+      }
+      btn.classList.add("speaking-btn");
+      btn.innerHTML = `<span>⏹</span><span>Stop</span>`;
+      speakText(msg.text).then(() => {
+        // reset button after done (state already handled by setVoiceState)
+        btn.innerHTML = `<span>🔊</span><span>Read</span>`;
+        btn.classList.remove("speaking-btn");
+      });
+    });
+    bar.appendChild(speakBtn);
+  }
+
+  /* ── 2. Copy Text ── */
   const copyBtn = makeActionBtn("📋", "Copy", async (btn) => {
     try {
       let text = msg.text || "";
-      // Strip markdown for clipboard
-      text = text
-        .replace(/\*\*(.*?)\*\*/g, "$1")
-        .replace(/\*(.*?)\*/g, "$1")
-        .replace(/#{1,6} /g, "")
-        .trim();
+      text = text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").replace(/#{1,6} /g, "").trim();
       if (msg.images?.length) {
         text += "\n\n[Images: " + msg.images.length + "]";
-        msg.images.forEach((u, i) => {
-          if (!u.startsWith("data:")) text += `\nImage ${i + 1}: ${u}`;
-        });
+        msg.images.forEach((u, i) => { if (!u.startsWith("data:")) text += `\nImage ${i + 1}: ${u}`; });
       }
       await navigator.clipboard.writeText(text);
       showBtnSuccess(btn, "Copied!");
       toast("Copied to clipboard!");
-    } catch {
-      toast("Couldn't copy — try selecting text manually.");
-    }
+    } catch { toast("Couldn't copy — try selecting text manually."); }
   });
   bar.appendChild(copyBtn);
 
-  /* ── 2. Share ── */
+  /* ── 3. Share ── */
   const shareBtn = makeActionBtn("📤", "Share", async (btn) => {
-    let text = msg.text || "";
-    text = text
-      .replace(/\*\*(.*?)\*\*/g, "$1")
-      .replace(/\*(.*?)\*/g, "$1")
-      .replace(/#{1,6} /g, "")
-      .trim()
-      .substring(0, 800);
-
+    let text = (msg.text || "").replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").replace(/#{1,6} /g, "").trim().substring(0, 800);
     if (navigator.share) {
-      try {
-        await navigator.share({ title: "Orbit AI", text });
-        showBtnSuccess(btn, "Shared!");
-      } catch (e) {
-        if (e.name !== "AbortError") toast("Share failed — try Copy instead.");
-      }
+      try { await navigator.share({ title: "Orbit AI", text }); showBtnSuccess(btn, "Shared!"); }
+      catch (e) { if (e.name !== "AbortError") toast("Share failed — try Copy instead."); }
     } else {
-      // Desktop fallback: copy to clipboard
-      try {
-        await navigator.clipboard.writeText(text);
-        showBtnSuccess(btn, "Copied!");
-        toast("Copied! (Native share not available on this browser)");
-      } catch {
-        toast("Share not supported on this browser.");
-      }
+      try { await navigator.clipboard.writeText(text); showBtnSuccess(btn, "Copied!"); toast("Copied! (Native share not available on this browser)"); }
+      catch { toast("Share not supported on this browser."); }
     }
   });
   bar.appendChild(shareBtn);
 
-  /* ── 3. Per-image buttons (if message has images) ── */
+  /* ── 4. Per-image buttons ── */
   if (msg.images?.length) {
     msg.images.forEach((imgUrl, i) => {
       if (!imgUrl) return;
       const suffix = msg.images.length > 1 ? ` ${i + 1}` : "";
 
-      // Download
       const dlBtn = makeActionBtn("⬇️", `Download${suffix}`, (btn) => {
         if (imgUrl.startsWith("data:")) {
           const a = document.createElement("a");
-          a.href = imgUrl;
-          a.download = `orbit-image-${Date.now()}.png`;
-          a.click();
-        } else {
-          window.open(imgUrl, "_blank");
-        }
+          a.href = imgUrl; a.download = `orbit-image-${Date.now()}.png`; a.click();
+        } else { window.open(imgUrl, "_blank"); }
         showBtnSuccess(btn, "Saved!");
       });
       bar.appendChild(dlBtn);
 
-      // Copy image link (only for remote URLs — data URIs are too long)
       if (!imgUrl.startsWith("data:")) {
         const linkBtn = makeActionBtn("🔗", `Copy Link${suffix}`, async (btn) => {
-          try {
-            await navigator.clipboard.writeText(imgUrl);
-            showBtnSuccess(btn, "Copied!");
-            toast("Image link copied!");
-          } catch {
-            toast("Couldn't copy link.");
-          }
+          try { await navigator.clipboard.writeText(imgUrl); showBtnSuccess(btn, "Copied!"); toast("Image link copied!"); }
+          catch { toast("Couldn't copy link."); }
         });
         bar.appendChild(linkBtn);
 
-        // Share image (Web Share API with URL)
         if (navigator.share) {
           const shareImgBtn = makeActionBtn("📲", `Share Image${suffix}`, async (btn) => {
-            try {
-              await navigator.share({ title: "Orbit AI image", url: imgUrl });
-              showBtnSuccess(btn, "Shared!");
-            } catch (e) {
-              if (e.name !== "AbortError") {
-                // Fallback: open in new tab
-                window.open(imgUrl, "_blank");
-                toast("Opened in new tab.");
-              }
+            try { await navigator.share({ title: "Orbit AI image", url: imgUrl }); showBtnSuccess(btn, "Shared!"); }
+            catch (e) {
+              if (e.name !== "AbortError") { window.open(imgUrl, "_blank"); toast("Opened in new tab."); }
             }
           });
           bar.appendChild(shareImgBtn);
@@ -2038,18 +2356,15 @@ function buildActionsBar(msg) {
   return bar;
 }
 
-/* ── Helper: create one pill button ── */
 function makeActionBtn(icon, label, onClick) {
   const btn = document.createElement("button");
   btn.className = "action-btn";
-  btn._icon  = icon;
-  btn._label = label;
+  btn._icon = icon; btn._label = label;
   btn.innerHTML = `<span>${icon}</span><span>${label}</span>`;
   btn.onclick = (e) => { e.stopPropagation(); onClick(btn); };
   return btn;
 }
 
-/* ── Helper: flash success state on a button ── */
 function showBtnSuccess(btn, successLabel) {
   btn.innerHTML = `<span>✓</span><span>${successLabel}</span>`;
   btn.classList.add("success");
@@ -2102,9 +2417,7 @@ function openSheet(force = false) {
   }
 }
 
-function closeSheet() {
-  document.getElementById("profileModal").classList.remove("open");
-}
+function closeSheet() { document.getElementById("profileModal").classList.remove("open"); }
 
 function saveProfile() {
   const name  = document.getElementById("p_name").value.trim();
@@ -2172,27 +2485,20 @@ function openCtx(id, e) {
 function openCtxCenter(id) {
   ctxId = id;
   const m = document.getElementById("ctxMenu");
-  m.style.left      = "50%";
-  m.style.top       = "50%";
+  m.style.left = "50%"; m.style.top = "50%";
   m.style.transform = "translate(-50%, -50%)";
-  m.style.display   = "block";
-
+  m.style.display = "block";
   if (window.innerWidth <= 639) {
     const ov = document.getElementById("overlay");
-    ov.classList.add("open");
-    ov._ctxOverlay = true;
+    ov.classList.add("open"); ov._ctxOverlay = true;
   }
 }
 
 function closeCtx() {
   const m  = document.getElementById("ctxMenu");
-  m.style.display   = "none";
-  m.style.transform = "";
+  m.style.display = "none"; m.style.transform = "";
   const ov = document.getElementById("overlay");
-  if (ov._ctxOverlay) {
-    ov.classList.remove("open");
-    ov._ctxOverlay = false;
-  }
+  if (ov._ctxOverlay) { ov.classList.remove("open"); ov._ctxOverlay = false; }
 }
 
 function ctxAction(action) {
@@ -2223,17 +2529,14 @@ function ctxAction(action) {
       if (!confirm(`Delete "${t.title}" permanently?\n\nThis cannot be undone.`)) return;
       const deletedId = ctxId;
       threads = threads.filter(x => x.id !== deletedId);
-
       if (activeId === deletedId) {
-        if (threads.length > 0) {
-          openThread(threads[0].id);
-        } else {
+        if (threads.length > 0) { openThread(threads[0].id); }
+        else {
           const newId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
           threads.unshift({ id: newId, title: "New Chat", messages: [], archived: false });
           activeId = newId;
         }
       }
-
       saveThreads(); renderThreads(); renderChat();
       toast("Chat deleted ✓");
     }, 100);
@@ -2256,8 +2559,7 @@ function triggerFile() { document.getElementById("fileInput").click(); }
 function hidePreview()  { document.getElementById("previewBar").style.display = "none"; }
 
 function clearPreview() {
-  filePreview = fileId = null;
-  fileIsImage = false;
+  filePreview = fileId = null; fileIsImage = false;
   document.getElementById("fileInput").value = "";
   hidePreview();
 }
@@ -2272,8 +2574,7 @@ document.getElementById("fileInput").onchange = async () => {
     const res  = await timedFetch(`${BACKEND}/upload`, { method: "POST", body: form }, 30000);
     const data = await res.json();
     if (!data.file_id) { toast("Upload failed."); return; }
-    fileId      = data.file_id;
-    fileIsImage = file.type.startsWith("image/");
+    fileId = data.file_id; fileIsImage = file.type.startsWith("image/");
     toast("File ready ✓");
   } catch (e) { toast("Upload error: " + (e.message || "timeout")); return; }
 
@@ -2290,15 +2591,13 @@ document.getElementById("fileInput").onchange = async () => {
     reader.readAsDataURL(file);
   } else {
     document.getElementById("prevThumb").style.display = "none";
-    const icons = { pdf:"📄", xlsx:"📊", xls:"📊", docx:"📝", doc:"📝",
-                    pptx:"📊", ppt:"📊", csv:"📊", txt:"📄", xml:"📄" };
-    const ext   = file.name.split(".").pop().toLowerCase();
+    const icons = { pdf:"📄", xlsx:"📊", xls:"📊", docx:"📝", doc:"📝", pptx:"📊", ppt:"📊", csv:"📊", txt:"📄", xml:"📄" };
+    const ext = file.name.split(".").pop().toLowerCase();
     document.getElementById("prevName").textContent = `${icons[ext] || "📎"} ${file.name}`;
     bar.style.display = "flex";
   }
 };
 
-// Drag & drop
 const iw = document.getElementById("inputWrapper");
 iw.addEventListener("dragover",  (e) => { e.preventDefault(); iw.classList.add("dragover"); });
 iw.addEventListener("dragleave", ()  => iw.classList.remove("dragover"));
@@ -2311,7 +2610,7 @@ iw.addEventListener("drop", (e) => {
 });
 
 /* ════════════════════════════════════════════
-   VOICE RECORDING
+   VOICE RECORDING (microphone input)
 ════════════════════════════════════════════ */
 document.getElementById("micBtn").addEventListener("click", toggleMic);
 
@@ -2326,7 +2625,7 @@ async function toggleMic() {
   try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
   catch { toast("Microphone access denied."); return; }
 
-  chunks   = [];
+  chunks = [];
   recorder = new MediaRecorder(stream);
   recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
@@ -2353,9 +2652,7 @@ async function toggleMic() {
         ta.value = data.text;
         window._resizeTA?.();
         send();
-      } else {
-        toast("Nothing heard — try again.");
-      }
+      } else { toast("Nothing heard — try again."); }
     } catch (e) {
       toast("Voice error: " + (e.message || "timeout"));
     } finally { recorder = null; chunks = []; }
@@ -2386,17 +2683,14 @@ async function toggleMic() {
 function updateUserMemory(userMessage, aiResponse) {
   userMemory.interactions = (userMemory.interactions || 0) + 1;
   userMemory.lastActive   = Date.now();
-
   if (userMessage) {
     const q = userMessage.toLowerCase();
     if (q.includes("how") || q.includes("what") || q.includes("why")) {
       userMemory.commonQuestions = userMemory.commonQuestions || [];
       userMemory.commonQuestions.push({ q: userMessage.substring(0, 100), timestamp: Date.now() });
-      if (userMemory.commonQuestions.length > 20)
-        userMemory.commonQuestions = userMemory.commonQuestions.slice(-20);
+      if (userMemory.commonQuestions.length > 20) userMemory.commonQuestions = userMemory.commonQuestions.slice(-20);
     }
   }
-
   localStorage.setItem("orbit_memory", JSON.stringify(userMemory));
 }
 
@@ -2405,10 +2699,8 @@ function updateUserMemory(userMessage, aiResponse) {
 ════════════════════════════════════════════ */
 function escHtml(s) {
   return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 function toast(msg, ms = 2800) {
