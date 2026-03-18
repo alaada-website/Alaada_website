@@ -6,16 +6,15 @@
 
   <title>Alaada — Where Perfection meets Possibility</title>
 
-  <meta name="description" content="Orbit is Alaada’s AI for thoughtful questions and clear thinking." />
-  <meta name="keywords" content="Alaada, Orbit, AI, Website Analyser, Arzo Das" />
+  <meta name="description" content="Orbit is Alaada's AI for thoughtful questions and clear thinking." />
+  <meta name="keywords" content="Alaada, Orbit, AI, Sheets, Spreadsheets, Website Analyser, Arzo Das" />
 
   <link rel="icon" href="images/alaada-icon.png" type="image/png" />
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 
-  <!-- VISIBILITY + HERO CONTROL -->
   <style>
-    /* limit hero dominance */
+    /* ── HERO ─────────────────────────────────────────────────── */
     #hero {
       min-height: 75vh;
       position: relative;
@@ -43,7 +42,6 @@
       background: rgba(0,0,0,0.35);
     }
 
-    /* scroll hint */
     .scroll-hint {
       position: absolute;
       bottom: 20px;
@@ -53,12 +51,12 @@
     }
 
     @keyframes float {
-      0% { transform: translateY(0); }
-      50% { transform: translateY(6px); }
+      0%   { transform: translateY(0); }
+      50%  { transform: translateY(6px); }
       100% { transform: translateY(0); }
     }
 
-    /* force fade sections visible */
+    /* ── FADE SECTIONS ────────────────────────────────────────── */
     .fade-section {
       opacity: 1 !important;
       transform: none !important;
@@ -67,7 +65,7 @@
       z-index: 5;
     }
 
-    /* ORBIT */
+    /* ── ORBIT ────────────────────────────────────────────────── */
     #orbit {
       max-width: 900px;
       margin: 80px auto;
@@ -117,12 +115,192 @@
       font-weight: 600;
     }
 
-    /* Web Analyser */
+    /* ── WEB ANALYSER ─────────────────────────────────────────── */
     #web-analyser {
       max-width: 900px;
       margin: 80px auto;
       text-align: center;
     }
+
+    /* ── ALAADA SHEETS ────────────────────────────────────────── */
+    #sheets-section {
+      max-width: 900px;
+      margin: 80px auto;
+      color: #fff;
+    }
+
+    .sheets-card {
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: 18px;
+      padding: 40px;
+      display: flex;
+      gap: 36px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 640px) {
+      .sheets-card { flex-direction: column; gap: 22px; }
+    }
+
+    .sheets-icon {
+      flex-shrink: 0;
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #f0a500, #e09000);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(240,165,0,.35);
+    }
+
+    .sheets-icon svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .sheets-body {
+      flex: 1;
+    }
+
+    .sheets-body h2 {
+      margin: 0 0 14px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #f0a500;
+    }
+
+    .sheets-body p {
+      margin: 0 0 10px;
+      line-height: 1.7;
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    .sheets-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0 24px;
+    }
+
+    .sheets-pill {
+      background: rgba(240,165,0,.12);
+      border: 1px solid rgba(240,165,0,.3);
+      color: #f0c84a;
+      border-radius: 20px;
+      padding: 4px 13px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .sheets-launch {
+      display: inline-block;
+      padding: 13px 26px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f0a500, #e09000);
+      color: #1a0f00;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+      box-shadow: 0 3px 14px rgba(240,165,0,.35);
+    }
+
+    .sheets-launch:hover {
+      background: linear-gradient(135deg, #ffc444, #f0a500);
+      box-shadow: 0 5px 20px rgba(240,165,0,.5);
+      transform: translateY(-1px);
+    }
+
+    /* ── AUTH SPINNER OVERLAY ─────────────────────────────────── */
+    #auth-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: Inter, sans-serif;
+      gap: 16px;
+    }
+
+    #auth-overlay.show { display: flex; }
+
+    .auth-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,.2);
+      border-top-color: #f0a500;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #auth-msg {
+      font-size: 1rem;
+      opacity: .9;
+      letter-spacing: .2px;
+    }
+
+    /* ── RETURNING USER BADGE ─────────────────────────────────── */
+    #user-badge {
+      display: none;
+      position: fixed;
+      top: 14px;
+      right: 16px;
+      z-index: 500;
+      background: rgba(0,0,0,.75);
+      border: 1px solid rgba(240,165,0,.4);
+      border-radius: 24px;
+      padding: 6px 14px 6px 10px;
+      color: #fff;
+      font-family: Inter, sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+    }
+
+    #user-badge.hidden { display: none !important; }
+
+    .badge-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0b72ff, #00d4a0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .badge-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    #badge-logout {
+      margin-left: 4px;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      font-size: .8rem;
+      padding: 0;
+      line-height: 1;
+      transition: color .15s;
+    }
+
+    #badge-logout:hover { color: #ff4d6a; }
   </style>
 </head>
 
@@ -137,7 +315,20 @@
   gtag('config', 'G-BJGLCGLMK5');
 </script>
 
-<!-- Hero -->
+<!-- ── RETURNING USER BADGE ──────────────────────────────────── -->
+<div id="user-badge" class="hidden">
+  <div class="badge-avatar" id="badge-initial">?</div>
+  <span class="badge-name" id="badge-name">...</span>
+  <button id="badge-logout" onclick="logout()" title="Sign out">✕</button>
+</div>
+
+<!-- ── AUTH SPINNER ──────────────────────────────────────────── -->
+<div id="auth-overlay">
+  <div class="auth-spinner"></div>
+  <div id="auth-msg">Checking your account…</div>
+</div>
+
+<!-- ── HERO ──────────────────────────────────────────────────── -->
 <section id="hero">
   <video autoplay muted loop playsinline id="bg-video">
     <source src="images/alaada-space.mp4" type="video/mp4">
@@ -146,11 +337,10 @@
 
   <div class="hero-overlay">
     <h1>Alaada — <span>Where Perfection meets Possibility.</span></h1>
-    <p>Exploring imagination, building systems, and shaping intelligent tools. Try Orbit — an AI built to help you understand, reason, and decide.
-	</p>
+    <p>Exploring imagination, building systems, and shaping intelligent tools. Try Orbit — an AI built to help you understand, reason, and decide.</p>
 
     <div class="buttons">
-      <a href="#" id="launch-orbit" class="cta">Try Orbit AI</a>
+      <a href="#" class="launch-orbit-btn cta">Try Orbit AI</a>
       <a href="#about" class="secondary">Learn More</a>
     </div>
 
@@ -158,106 +348,109 @@
   </div>
 </section>
 
-
-<!-- About Alaada -->
+<!-- ── ABOUT ──────────────────────────────────────────────────── -->
 <section id="about" class="fade-section">
   <h2>Why Alaada?</h2>
   <p>
     Alaada is a space for exploring ideas, creating projects, and bringing simple yet meaningful innovations to life.
     Most platforms either overwhelm you with raw data or provide generic AI responses with little context. Alaada is built to do neither.
 
-	Alaada helps you understand what is happening on your website and why it matters. It turns usage data into clear insights and pairs it with intelligent reasoning, so you can make decisions faster and with confidence.
+    Alaada helps you understand what is happening on your website and why it matters. It turns usage data into clear insights and pairs it with intelligent reasoning, so you can make decisions faster and with confidence.
 
-	Instead of switching between analytics dashboards and AI tools, Alaada brings understanding and action into one place. It is designed for creators, developers, and teams who value clarity, accuracy, and practical results over complexity and noise.
+    Instead of switching between analytics dashboards and AI tools, Alaada brings understanding and action into one place. It is designed for creators, developers, and teams who value clarity, accuracy, and practical results over complexity and noise.
   </p>
 </section>
 
-<!-- ABOUT ORBIT -->
-<!-- ORBIT -->
+<!-- ── ORBIT ──────────────────────────────────────────────────── -->
 <section id="orbit" class="fade-section">
-
-  <div style="
-    margin-bottom: 22px;
-    padding: 22px 26px;
-    background: rgba(11,114,255,0.08);
-    border-left: 4px solid #0b72ff;
-    border-radius: 16px;
-    font-size: 1rem;
-    line-height: 1.7;
-  ">
-    <h2 style="margin-top:0; font-weight:600;">Orbit</h2>
-
+  <div style="margin-bottom:22px;padding:22px 26px;background:rgba(11,114,255,0.08);border-left:4px solid #0b72ff;border-radius:16px;font-size:1rem;line-height:1.7;">
+    <h2 style="margin-top:0;font-weight:600;">Orbit</h2>
     <p style="margin-bottom:12px;">
-      Orbit is Alaada’s intelligence layer — designed for structured thinking,
+      Orbit is Alaada's intelligence layer — designed for structured thinking,
       analytical clarity, and deliberate reasoning.
     </p>
-
     <p style="margin-bottom:0;">
       Understand complex concepts. Deconstruct decisions.
       Debug systems. Explore ideas with depth — not noise.
     </p>
-
-    <p style="margin-top:14px; font-size:0.9rem; opacity:0.75;">
-      Built in India by <strong>Arzo Das</strong>.
-    </p>
+    <p style="margin-top:14px;font-size:.9rem;opacity:.75;">Built in India by <strong>Arzo Das</strong>.</p>
   </div>
 
-  <div style="text-align:center; margin-top: 24px;">
-    <a href="#" id="launch-orbit" class="cta" style="
-      padding: 14px 26px;
-      font-size: 1rem;
-      border-radius: 12px;
-      display: inline-block;
-    ">
+  <div style="text-align:center;margin-top:24px;">
+    <a href="#" class="launch-orbit-btn cta" style="padding:14px 26px;font-size:1rem;border-radius:12px;display:inline-block;">
       Launch Orbit →
     </a>
   </div>
-
 </section>
 
-<!-- Alaada Web Analyser -->
+<!-- ── ALAADA SHEETS ───────────────────────────────────────────── -->
+<section id="sheets-section" class="fade-section">
+  <div class="sheets-card">
+    <div class="sheets-icon">
+      <svg viewBox="0 0 32 32" fill="none">
+        <rect x="2" y="2" width="12" height="12" rx="2" fill="rgba(255,255,255,.9)"/>
+        <rect x="18" y="2" width="12" height="12" rx="2" fill="rgba(255,255,255,.9)"/>
+        <rect x="2" y="18" width="12" height="12" rx="2" fill="rgba(255,255,255,.9)"/>
+        <rect x="18" y="18" width="12" height="12" rx="2" fill="rgba(255,255,255,.9)"/>
+      </svg>
+    </div>
+
+    <div class="sheets-body">
+      <h2>Alaada Sheets</h2>
+      <p>
+        A full-featured spreadsheet built for the web — Excel-level power with AI
+        built directly in. Write formulas, sort, filter, and reshape data, then
+        ask AI to do it for you in plain English.
+      </p>
+      <p>
+        No installs. No subscriptions. Sign in once and your session is remembered.
+      </p>
+
+      <div class="sheets-features">
+        <span class="sheets-pill">50+ Formulas</span>
+        <span class="sheets-pill">AI NLP Commands</span>
+        <span class="sheets-pill">Save as Excel</span>
+        <span class="sheets-pill">Export SQL · HTML · JSON · Tally</span>
+        <span class="sheets-pill">Multi-sheet</span>
+        <span class="sheets-pill">Real-time Formula Engine</span>
+      </div>
+
+      <a href="#" id="launch-sheets" class="sheets-launch">
+        Open Alaada Sheets →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── WEB ANALYSER ───────────────────────────────────────────── -->
 <section id="web-analyser" class="fade-section">
   <h2>Alaada Web Analyser</h2>
   <p>
     Analytics should explain behavior, not just report numbers.
-	The Alaada Web Analyser turns website data into meaningful insights by highlighting engagement patterns, performance trends, and areas that matter most. It helps you understand how users interact with your site and where to focus, so improvements are driven by evidence, not assumptions.
+    The Alaada Web Analyser turns website data into meaningful insights by highlighting engagement patterns,
+    performance trends, and areas that matter most. It helps you understand how users interact with your site
+    and where to focus, so improvements are driven by evidence, not assumptions.
   </p>
   <br>
   <a href="website-analyzer.html" class="cta">Open Web Analyser</a>
 </section>
 
-<!-- Footer -->
+<!-- ── FOOTER ─────────────────────────────────────────────────── -->
 <footer>
   <p>&copy; 2026 Alaada. All rights reserved.</p>
   <div class="social">
     <a href="https://discord.gg/r4G7dynh" target="_blank">Discord</a>
+	<a href="https://www.linkedin.com/in/arzo-das-782539391/" target="_blank">Linkedin</a>
     <a href="https://www.facebook.com/profile.php?id=61583515497634" target="_blank">Facebook</a>
     <span>alaada@alaada.com</span>
   </div>
   <button onclick="logout()">Logout</button>
-
-<script>
-function logout() {
-  fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: {
-      "X-Appwrite-Project": APPWRITE_PROJECT_ID
-    }
-  }).then(() => {
-    localStorage.removeItem("orbit_identity");
-    location.reload();
-  });
-}
-</script>
-
 </footer>
 
+<!-- ── LIBS ───────────────────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
-
-<link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
@@ -265,103 +458,223 @@ function logout() {
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
 
 <script>
-/* =========================================================
-   ALAADA AUTH CONTROL (HOMEPAGE VERSION)
-   Clean • Controlled • No Auto-OAuth • Orbit Gated
-========================================================= */
+/* =================================================================
+   ALAADA AUTH — OAuth + Persistent Cookie (7-day session)
+   Flow:
+     1. On click → check cookie first (fast path, no network call)
+     2. If cookie hit → verify Appwrite session silently
+     3. If session valid → go straight to product (no login page)
+     4. If cookie miss / session expired → OAuth redirect
+     5. After OAuth return → set cookie + cache identity
+================================================================= */
 (() => {
   "use strict";
 
-  /* =========================
-     CONFIG
-  ========================== */
-  const APPWRITE_ENDPOINT = "https://sfo.cloud.appwrite.io/v1";
-  const APPWRITE_PROJECT_ID = "6972444700208a437da1";
+  /* ── CONFIG ─────────────────────────────────────────────────── */
+  const APPWRITE_ENDPOINT  = "https://sfo.cloud.appwrite.io/v1";
+  const APPWRITE_PROJECT   = "6972444700208a437da1";
 
-  const ORIGIN = window.location.origin;
+  const GOOGLE_OAUTH =
+    `${APPWRITE_ENDPOINT}/account/sessions/oauth2/google` +
+    `?project=${APPWRITE_PROJECT}` +
+    `&success=${encodeURIComponent("https://www.alaada.com")}` +
+    `&failure=${encodeURIComponent("https://www.alaada.com")}`;
 
-  const GOOGLE_LOGIN =
-    "https://sfo.cloud.appwrite.io/v1/account/sessions/oauth2/google" +
-    "?project=6972444700208a437da1" +
-    "&success=https://www.alaada.com" +
-    "&failure=https://www.alaada.com/fail";
+  const AUTH_COOKIE   = "alaada_auth";          // presence = likely logged in
+  const IDENTITY_KEY  = "alaada_identity";      // cached {name, email, id}
+  const COOKIE_DAYS   = 7;
 
-  const AUTH_COOKIE = "alaada_auth";
-  const IDENTITY_KEY = "orbit_identity";
+  /* ── DESTINATIONS ───────────────────────────────────────────── */
+  const DEST = {
+    orbit:  "/Orbit.html",
+    sheets: "/Spreadsheets.html",     
+  };
 
-  /* =========================
-     COOKIE HELPERS
-  ========================== */
-  function setAuthCookie() {
-    document.cookie =
-      `${AUTH_COOKIE}=1;path=/;max-age=${60 * 60 * 24 * 7};SameSite=Lax;Secure`;
+  /* ── COOKIE HELPERS ─────────────────────────────────────────── */
+  function cookieGet(name) {
+    return document.cookie.split(';').map(c => c.trim())
+      .find(c => c.startsWith(name + '='))?.split('=')[1] || null;
   }
 
-  function clearAuthCookie() {
-    document.cookie =
-      `${AUTH_COOKIE}=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT;SameSite=Lax;Secure`;
+  function cookieSet(name, value, days) {
+    const exp = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${value};path=/;expires=${exp};SameSite=Lax;Secure`;
   }
 
-  /* =========================
-     LOGOUT (GLOBAL)
-  ========================== */
+  function cookieDel(name) {
+    document.cookie = `${name}=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT;SameSite=Lax;Secure`;
+  }
+
+  /* ── IDENTITY HELPERS ───────────────────────────────────────── */
+  function identitySave(user) {
+    try {
+      localStorage.setItem(IDENTITY_KEY, JSON.stringify({
+        id:    user.$id,
+        name:  user.name || user.email.split('@')[0],
+        email: user.email,
+        ts:    Date.now()
+      }));
+    } catch (_) {}
+  }
+
+  function identityLoad() {
+    try { return JSON.parse(localStorage.getItem(IDENTITY_KEY)); } catch { return null; }
+  }
+
+  function identityClear() {
+    try { localStorage.removeItem(IDENTITY_KEY); } catch (_) {}
+  }
+
+  /* ── APPWRITE ACCOUNT FETCH ─────────────────────────────────── */
+  async function fetchAccount() {
+    const res = await fetch(`${APPWRITE_ENDPOINT}/account`, {
+      credentials: "include",
+      headers: { "X-Appwrite-Project": APPWRITE_PROJECT }
+    });
+    if (!res.ok) throw new Error("No session");
+    return res.json();
+  }
+
+  /* ── UI HELPERS ─────────────────────────────────────────────── */
+  const overlay = document.getElementById("auth-overlay");
+  const authMsg  = document.getElementById("auth-msg");
+
+  function showSpinner(msg) {
+    authMsg.textContent = msg || "Checking your account…";
+    overlay.classList.add("show");
+  }
+
+  function hideSpinner() {
+    overlay.classList.remove("show");
+  }
+
+  function showBadge(identity) {
+    if (!identity) return;
+    const badge = document.getElementById("user-badge");
+    const initial = document.getElementById("badge-initial");
+    const nameEl  = document.getElementById("badge-name");
+    const letter  = (identity.name || identity.email || "?")[0].toUpperCase();
+    initial.textContent = letter;
+    nameEl.textContent  = identity.name || identity.email;
+    badge.classList.remove("hidden");
+  }
+
+  /* ── CORE AUTH: check session, set cookie, return user ──────── */
+  async function verifySession() {
+    const user = await fetchAccount();   // throws if no session
+    cookieSet(AUTH_COOKIE, "1", COOKIE_DAYS);
+    identitySave(user);
+    return user;
+  }
+
+  /* ── LAUNCH WITH AUTH GATE ──────────────────────────────────── */
+  async function launchProduct(destination, spinnerMsg) {
+    showSpinner(spinnerMsg || "Verifying your account…");
+    try {
+      // FAST PATH: if we have a cookie, try to verify the Appwrite session silently
+      const hasCookie = !!cookieGet(AUTH_COOKIE);
+      if (hasCookie) {
+        const cached = identityLoad();
+        // Show badge immediately from cache while we verify in background
+        if (cached) showBadge(cached);
+      }
+      // Always verify with Appwrite (cookie just skips the "thinking about it" UX)
+      await verifySession();
+      hideSpinner();
+      window.location.href = destination;
+    } catch (_) {
+      // Session gone / expired — clear stale cookie and go to OAuth
+      cookieDel(AUTH_COOKIE);
+      identityClear();
+      authMsg.textContent = "Redirecting to Google sign-in…";
+      // Store where the user wanted to go so we can redirect after OAuth
+      try { sessionStorage.setItem("alaada_dest", destination); } catch (_) {}
+      setTimeout(() => window.location.replace(GOOGLE_OAUTH), 600);
+    }
+  }
+
+  /* ── LOGOUT ─────────────────────────────────────────────────── */
   window.logout = async function () {
+    showSpinner("Signing out…");
     try {
       await fetch(`${APPWRITE_ENDPOINT}/account/sessions/current`, {
         method: "DELETE",
         credentials: "include",
-        headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
+        headers: { "X-Appwrite-Project": APPWRITE_PROJECT }
       });
-    } catch (err) {
-      console.error("Logout failed:", err);
-    } finally {
-      clearAuthCookie();
-      localStorage.removeItem(IDENTITY_KEY);
-      location.replace(ORIGIN);
-    }
+    } catch (_) {}
+    cookieDel(AUTH_COOKIE);
+    identityClear();
+    hideSpinner();
+    location.replace(window.location.origin);
   };
 
-  /* =========================
-     ORBIT ACCESS CONTROL
-     (Only redirect if authenticated)
-  ========================== */
-  async function goToOrbitIfAuthenticated() {
+  /* ── POST-OAUTH RETURN: refresh cookie if session just created ─ */
+  async function handleReturn() {
+    // If we just came back from OAuth (Appwrite sets a session cookie),
+    // verify immediately and redirect to stored destination
     try {
-      const res = await fetch(`${APPWRITE_ENDPOINT}/account`, {
-        credentials: "include",
-        headers: { "X-Appwrite-Project": APPWRITE_PROJECT_ID }
-      });
-
-      if (!res.ok) {
-        // No valid session → OAuth
-        window.location.replace(GOOGLE_LOGIN);
-        return;
+      const user = await verifySession();
+      const dest  = sessionStorage.getItem("alaada_dest");
+      sessionStorage.removeItem("alaada_dest");
+      showBadge(identityLoad());
+      if (dest) {
+        showSpinner("Signing you in…");
+        setTimeout(() => window.location.href = dest, 400);
       }
-
-      // Valid session
-      setAuthCookie();
-      window.location.href = "/Orbit.html";
-
-    } catch (err) {
-      console.error("Orbit access check failed:", err);
-      window.location.replace(GOOGLE_LOGIN);
+    } catch (_) {
+      // No fresh session — normal homepage visit, do nothing
     }
   }
 
-  /* =========================
-     BOOT SEQUENCE
-  ========================== */
-  window.addEventListener("load", () => {
+  /* ── SILENT SESSION CHECK ON LOAD (show badge if remembered) ── */
+  async function silentCheck() {
+    const hasCookie = !!cookieGet(AUTH_COOKIE);
+    if (!hasCookie) return;                // definitely not logged in
 
-    // Attach click handlers to ALL Orbit buttons
-    const orbitButtons = document.querySelectorAll("#launch-orbit");
+    const cached = identityLoad();
+    if (cached) showBadge(cached);         // show badge instantly from cache
 
-    orbitButtons.forEach(btn => {
-      btn.addEventListener("click", async (e) => {
+    // Refresh silently in background
+    try {
+      const user = await fetchAccount();
+      cookieSet(AUTH_COOKIE, "1", COOKIE_DAYS); // renew cookie
+      identitySave(user);
+      showBadge(identityLoad());
+    } catch (_) {
+      // Session expired silently — clear stale state
+      cookieDel(AUTH_COOKIE);
+      identityClear();
+      const badge = document.getElementById("user-badge");
+      badge.classList.add("hidden");
+    }
+  }
+
+  /* ── BOOT ───────────────────────────────────────────────────── */
+  window.addEventListener("load", async () => {
+
+    // 1. Handle post-OAuth return (check for fresh Appwrite session)
+    await handleReturn();
+
+    // 2. Silent session check for returning users (shows badge)
+    silentCheck();
+
+    // 3. Orbit launch buttons
+    document.querySelectorAll(".launch-orbit-btn").forEach(btn => {
+      btn.addEventListener("click", e => {
         e.preventDefault();
-        await goToOrbitIfAuthenticated();
+        launchProduct(DEST.orbit, "Launching Orbit…");
       });
     });
+
+    // 4. Sheets launch button
+    const sheetsBtn = document.getElementById("launch-sheets");
+    if (sheetsBtn) {
+      sheetsBtn.addEventListener("click", e => {
+        e.preventDefault();
+        launchProduct(DEST.sheets, "Launching Alaada Sheets…");
+      });
+    }
 
   });
 
@@ -369,4 +682,3 @@ function logout() {
 </script>
 </body>
 </html>
-
