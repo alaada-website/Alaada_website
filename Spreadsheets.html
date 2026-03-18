@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alaada Sheets</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0e14;--ink2:#13141d;--ink3:#1a1c27;--ink4:#22263a;
+  --wire:#2e3248;--wire2:#3d4260;--dim:#5a6080;--mist:#8892b0;--fog:#c0c8de;
+  --pearl:#ffffff;--pearl2:#f7f8fc;--pearl3:#eef0f8;
+  --grid:#e4e8f0;--grid2:#d0d6e8;--ctxt:#1a1d2e;
+  --gold:#f0a500;--gold2:#ffc444;
+  --teal:#00d4a0;--teal-s:rgba(0,212,160,.12);
+  --blue:#3d8fff;--blue-s:rgba(61,143,255,.10);
+  --red:#ff4d6a;
+  --sel:#3d8fff;--sel-bg:rgba(61,143,255,.10);
+  --hdr-sel:#dde8ff;
+}
+html,body{height:100%;overflow:hidden;background:var(--ink);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;-webkit-font-smoothing:antialiased}
+
+/* ─── TITLE BAR ─────────────────────────────────────────────── */
+#tbar{height:48px;background:var(--ink2);border-bottom:1px solid var(--wire);display:flex;align-items:center;padding:0 14px;gap:6px;flex-shrink:0;z-index:60;position:relative}
+#logo{display:flex;align-items:center;gap:8px;margin-right:4px}
+#lgem{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--gold),#e09000);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(240,165,0,.4)}
+#lgem svg{width:14px;height:14px}
+#lname{font-size:14px;font-weight:700;color:#f0f2ff;letter-spacing:-.4px}
+#lname b{color:var(--gold)}
+.tdiv{width:1px;height:20px;background:var(--wire);margin:0 2px;flex-shrink:0}
+.tb{height:30px;padding:0 11px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--mist);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .13s;white-space:nowrap;flex-shrink:0}
+.tb:hover{background:var(--ink3);border-color:var(--wire);color:var(--fog)}
+.tb.gold{background:linear-gradient(135deg,var(--gold),#e09000);color:#1a0f00;border:none;font-weight:700;box-shadow:0 2px 8px rgba(240,165,0,.3)}
+.tb.gold:hover{background:linear-gradient(135deg,var(--gold2),var(--gold));box-shadow:0 3px 14px rgba(240,165,0,.45);transform:translateY(-1px)}
+.tb svg{width:13px;height:13px;flex-shrink:0}
+#docwrap{flex:1;display:flex;justify-content:center}
+#docname{font-size:13px;font-weight:600;color:var(--fog);border:1px solid transparent;border-radius:5px;padding:4px 10px;cursor:pointer;transition:all .13s;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#docname:hover{background:var(--ink3);border-color:var(--wire);color:#fff}
+#conn{display:flex;align-items:center;gap:7px}
+#cdot{width:6px;height:6px;border-radius:50%;background:var(--red);transition:background .4s}
+#cdot.on{background:var(--teal);box-shadow:0 0 8px rgba(0,212,160,.5)}
+#ctxt{font-size:11px;color:var(--dim);font-weight:500}
+
+/* ─── RIBBON ────────────────────────────────────────────────── */
+#rband{background:var(--ink2);border-bottom:1px solid var(--wire);flex-shrink:0}
+#rtabs{display:flex;padding:0 14px;gap:1px;border-bottom:1px solid rgba(255,255,255,.04)}
+.rtab{padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;color:var(--dim);letter-spacing:.2px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .13s;text-transform:uppercase}
+.rtab:hover{color:var(--mist)}
+.rtab.active{color:var(--gold);border-bottom-color:var(--gold)}
+#rbody{min-height:52px;display:flex;align-items:center;padding:0 10px;gap:1px;overflow-x:auto;scrollbar-width:none}
+#rbody::-webkit-scrollbar{display:none}
+.rg{display:flex;align-items:center;gap:2px;padding:0 8px;border-right:1px solid var(--wire);height:100%;flex-shrink:0}
+.rg:last-child{border-right:none}
+.rs{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ri{display:flex;align-items:center;gap:2px}
+.rl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;text-align:center;width:100%}
+.rb{height:26px;padding:0 8px;border-radius:5px;border:1px solid transparent;background:transparent;color:var(--mist);font-family:inherit;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:all .11s;white-space:nowrap;min-width:26px;font-weight:500}
+.rb:hover{background:var(--ink3);border-color:var(--wire);color:var(--fog)}
+.rb.on{background:rgba(240,165,0,.12);border-color:rgba(240,165,0,.35);color:var(--gold)}
+select.rb{padding-right:20px;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%235a6080'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;min-width:72px;cursor:pointer;background-color:transparent}
+select.rb option{background:#1a1c27;color:#e0e4f0}
+input[type=color].rb{width:30px;padding:2px 3px;cursor:pointer}
+input[type=number].rb{width:46px;text-align:center;-moz-appearance:textfield}
+input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
+
+/* ─── FORMULA BAR ───────────────────────────────────────────── */
+#fbar{height:34px;background:var(--pearl);border-bottom:2px solid var(--grid2);display:flex;align-items:center;flex-shrink:0}
+#namebox{width:72px;flex-shrink:0;height:100%;border:none;border-right:2px solid var(--grid2);text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ctxt);background:var(--pearl2);outline:none;font-weight:600;padding:0 6px;transition:all .15s;cursor:pointer}
+#namebox:focus{background:var(--hdr-sel);border-right-color:var(--blue)}
+#fxlbl{padding:0 10px;font-family:'IBM Plex Mono',monospace;font-style:italic;font-size:13px;color:#a0a8c0;flex-shrink:0;user-select:none}
+#fbarinput{flex:1;height:100%;border:none;outline:none;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ctxt);background:transparent;padding:0 8px}
+#fbarinput:focus{background:rgba(61,143,255,.04)}
+
+/* ─── LAYOUT ────────────────────────────────────────────────── */
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+#gzone{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+#gscroll{flex:1;overflow:scroll;background:var(--pearl);position:relative;scrollbar-width:thin;scrollbar-color:var(--grid2) transparent;outline:none}
+#gscroll::-webkit-scrollbar{width:10px;height:10px}
+#gscroll::-webkit-scrollbar-thumb{background:var(--grid2);border-radius:5px;border:2px solid var(--pearl)}
+#gscroll::-webkit-scrollbar-corner{background:var(--pearl2)}
+
+/* ─── COLUMN HEADERS ────────────────────────────────────────── */
+#chdr{position:sticky;top:0;z-index:20;display:flex;background:var(--pearl2);border-bottom:2px solid var(--grid2)}
+#corner{width:52px;min-width:52px;height:26px;background:var(--pearl2);border-right:2px solid var(--grid2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:#a0a8c0;transition:background .1s;flex-shrink:0}
+#corner:hover{background:var(--hdr-sel)}
+#colrow{display:flex;overflow:hidden}
+.ch{flex-shrink:0;height:26px;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;color:#8090b0;letter-spacing:.3px;border-right:1px solid var(--grid);cursor:pointer;user-select:none;position:relative;transition:background .08s;text-transform:uppercase}
+.ch:hover,.ch.sc{background:var(--hdr-sel);color:var(--blue)}
+.chr{position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;z-index:2}
+
+/* ─── GRID BODY ─────────────────────────────────────────────── */
+#gbody{display:flex}
+#rhdrs{width:52px;flex-shrink:0;background:var(--pearl2);border-right:2px solid var(--grid2)}
+.rh{display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:10.5px;font-weight:600;color:#8090b0;border-bottom:1px solid var(--grid);cursor:pointer;user-select:none;transition:background .08s;width:52px}
+.rh:hover,.rh.sr{background:var(--hdr-sel);color:var(--blue)}
+#cellarea{position:relative}
+.grow{display:flex}
+.cell{flex-shrink:0;border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);padding:0 5px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ctxt);cursor:cell;user-select:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:flex;align-items:center}
+.cell.ssel{background:var(--sel-bg)}
+.cell.active{background:rgba(61,143,255,.06)!important;outline:2.5px solid var(--sel);outline-offset:-2px;z-index:5}
+.cell.err{color:var(--red)!important}
+
+/* ─── SELECTION BOX ─────────────────────────────────────────── */
+#selbox{position:absolute;pointer-events:none;z-index:8;border:2.5px solid var(--sel);display:none}
+#fhandle{position:absolute;width:8px;height:8px;background:var(--sel);border:2px solid #fff;cursor:crosshair;z-index:14;display:none;box-shadow:0 1px 4px rgba(61,143,255,.5)}
+
+/* ─── INLINE EDITOR ─────────────────────────────────────────── */
+#ced{position:absolute;z-index:200;display:none;border:2.5px solid var(--blue);box-shadow:0 4px 20px rgba(61,143,255,.25);background:#fff}
+#cta{width:100%;height:100%;border:none;outline:none;resize:none;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ctxt);background:#fff;padding:1px 5px;line-height:normal}
+
+/* ─── SHEET TABS ─────────────────────────────────────────────── */
+#stbar{height:32px;background:var(--ink);border-top:1px solid var(--wire);display:flex;align-items:flex-end;padding:0 10px;gap:2px;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+#stbar::-webkit-scrollbar{display:none}
+#stablist{display:flex;align-items:flex-end;gap:2px}
+.stab{padding:4px 14px 3px;border-radius:5px 5px 0 0;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--dim);background:var(--ink2);border:1px solid var(--wire);border-bottom:none;transition:all .11s;user-select:none;align-self:flex-end}
+.stab:hover{color:var(--fog);background:var(--ink3)}
+.stab.active{background:var(--pearl);color:var(--ctxt);font-weight:700;border-color:var(--grid2)}
+#addst{width:24px;height:24px;border-radius:6px;border:1px dashed var(--wire);background:transparent;color:var(--dim);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s;align-self:center;margin-left:2px;flex-shrink:0}
+#addst:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-s)}
+
+/* ─── AI BAR ────────────────────────────────────────────────── */
+#aibar{height:52px;flex-shrink:0;background:linear-gradient(135deg,#0a0b14,#0e1020);border-top:1px solid rgba(61,143,255,.15);display:flex;align-items:center;gap:10px;padding:0 16px;position:relative;overflow:hidden}
+#aibar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(61,143,255,.4) 30%,rgba(0,212,160,.4) 70%,transparent)}
+#aiorb{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#1e40ff,#0d9488);display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(30,64,255,.4);flex-shrink:0}
+#aiorb svg{width:15px;height:15px}
+#aiin{flex:1;height:34px;border-radius:8px;border:1px solid rgba(61,143,255,.2);background:rgba(255,255,255,.04);color:#dde4ff;font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;padding:0 14px;outline:none;transition:all .2s}
+#aiin:focus{border-color:rgba(61,143,255,.5);background:rgba(255,255,255,.07);box-shadow:0 0 0 3px rgba(61,143,255,.1)}
+#aiin::placeholder{color:rgba(255,255,255,.18)}
+#aist{font-size:11px;color:rgba(255,255,255,.3);flex-shrink:0;min-width:60px;text-align:right}
+#airun{height:34px;padding:0 18px;border-radius:8px;background:linear-gradient(135deg,#1e40ff,#0d9488);border:none;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;flex-shrink:0;box-shadow:0 2px 10px rgba(30,64,255,.4)}
+#airun:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(30,64,255,.5)}
+#airun:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* ─── CONTEXT MENU ──────────────────────────────────────────── */
+#cmenu{position:fixed;z-index:9000;background:var(--ink2);border:1px solid var(--wire2);border-radius:9px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:4px;min-width:170px;display:none;animation:cpop .1s ease}
+@keyframes cpop{from{opacity:0;transform:scale(.95) translateY(-3px)}to{opacity:1;transform:none}}
+.ci{padding:7px 12px;font-size:12px;cursor:pointer;border-radius:5px;color:var(--fog);transition:all .1s;display:flex;align-items:center;gap:8px;font-weight:500}
+.ci:hover{background:var(--ink3);color:#fff}
+.ci.red:hover{background:rgba(255,77,106,.1);color:var(--red)}
+.csep{height:1px;background:var(--wire);margin:3px 0}
+
+/* ─── EXPORT MODAL ──────────────────────────────────────────── */
+#exov{position:fixed;inset:0;z-index:8000;display:none;align-items:center;justify-content:center;background:rgba(5,6,15,.75);backdrop-filter:blur(8px)}
+#exbox{background:var(--ink2);border:1px solid var(--wire2);border-radius:14px;width:520px;max-width:95vw;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:mdin .18s ease}
+@keyframes mdin{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+#exhdr{background:linear-gradient(135deg,#0a0b14,#101325);border-bottom:1px solid var(--wire);padding:18px 20px;display:flex;align-items:center;justify-content:space-between}
+#exttl{font-size:14px;font-weight:700;color:#e8eeff;display:flex;align-items:center;gap:9px}
+#exx{width:26px;height:26px;background:var(--ink3);border:1px solid var(--wire);border-radius:5px;cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center;transition:all .12s}
+#exx:hover{color:var(--fog)}
+#exbody{padding:18px 20px}
+#exgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ecrd{display:flex;align-items:center;gap:10px;padding:12px 13px;border:1px solid var(--wire);border-radius:8px;background:var(--ink3);cursor:pointer;text-align:left;transition:all .14s;font-family:inherit}
+.ecrd:hover{border-color:var(--blue);background:rgba(61,143,255,.08);transform:translateY(-1px)}
+.ecrd.xl:hover{border-color:var(--gold);background:rgba(240,165,0,.08)}
+.eic{font-size:21px;flex-shrink:0}
+.en{font-size:12px;font-weight:600;color:var(--fog)}
+.ed{font-size:11px;color:var(--dim);margin-top:1px}
+.exft{font-size:11px;color:var(--dim);padding-top:12px;border-top:1px solid var(--wire)}
+.exft b{color:var(--fog)}
+
+/* ─── TOAST ─────────────────────────────────────────────────── */
+#toast{position:fixed;bottom:68px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--ink2);color:var(--fog);padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;opacity:0;transition:all .2s;pointer-events:none;z-index:9999;border:1px solid var(--wire2);box-shadow:0 8px 20px rgba(0,0,0,.5);white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:var(--teal);color:var(--teal)}
+#toast.err{border-color:var(--red);color:var(--red)}
+#toast.inf{border-color:var(--blue);color:var(--blue)}
+#filein{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TITLE BAR -->
+<div id="tbar">
+  <div id="logo">
+    <div id="lgem"><svg viewBox="0 0 14 14" fill="rgba(255,255,255,.95)"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg></div>
+    <span id="lname">Alaada <b>Sheets</b></span>
+  </div>
+  <div class="tdiv"></div>
+  <button class="tb" onclick="G.newFile()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>New</button>
+  <button class="tb" onclick="G.openFile()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Open</button>
+  <div class="tdiv"></div>
+  <button class="tb gold" onclick="G.saveXL()" title="Ctrl+S"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save as Excel</button>
+  <button class="tb" onclick="showEx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+  <div class="tdiv"></div>
+  <button class="tb" onclick="G.undo()" title="Ctrl+Z">↩</button>
+  <button class="tb" onclick="G.redo()" title="Ctrl+Y">↪</button>
+  <div id="docwrap"><div id="docname" onclick="G.renDoc()">Untitled Spreadsheet</div></div>
+  <div id="conn"><div id="cdot"></div><span id="ctxt">Offline</span></div>
+</div>
+
+<!-- RIBBON -->
+<div id="rband">
+  <div id="rtabs">
+    <div class="rtab active" data-t="home" onclick="rTab('home')">Home</div>
+    <div class="rtab" data-t="insert" onclick="rTab('insert')">Insert</div>
+    <div class="rtab" data-t="data" onclick="rTab('data')">Data</div>
+    <div class="rtab" data-t="view" onclick="rTab('view')">View</div>
+    <div class="rtab" data-t="ai" onclick="rTab('ai')">⚡ AI</div>
+  </div>
+  <div id="rbody">
+    <!-- HOME -->
+    <div class="rg" data-t="home"><div class="rs"><div class="ri">
+      <button class="rb" onclick="G.cut()">✂ Cut</button>
+      <button class="rb" onclick="G.copy()">⎘ Copy</button>
+      <button class="rb" onclick="G.paste()">📋 Paste</button>
+    </div><div class="rl">Clipboard</div></div></div>
+
+    <div class="rg" data-t="home"><div class="rs"><div class="ri">
+      <select class="rb" id="rfont" onchange="G.fmt('fontFamily',this.value)" style="min-width:110px">
+        <option>IBM Plex Mono</option><option>Plus Jakarta Sans</option><option>Georgia</option><option>Arial</option>
+      </select>
+      <input type="number" class="rb" id="rsize" value="12" min="6" max="72" onchange="G.fmt('fontSize',this.value+'px')">
+    </div><div class="ri" style="gap:2px">
+      <button class="rb" id="rbb" onclick="G.tog('bold')"><b>B</b></button>
+      <button class="rb" id="rbi" onclick="G.tog('italic')"><i>I</i></button>
+      <button class="rb" id="rbu" onclick="G.tog('underline')"><u>U</u></button>
+    </div><div class="rl">Font</div></div></div>
+
+    <div class="rg" data-t="home"><div class="rs"><div class="ri" style="gap:5px">
+      <span style="font-size:10px;color:var(--dim)">A</span>
+      <input type="color" class="rb" id="rcolor" value="#1a1d2e" onchange="G.fmt('color',this.value)">
+      <span style="font-size:10px;color:var(--dim)">BG</span>
+      <input type="color" class="rb" id="rbg" value="#ffffff" onchange="G.fmt('background',this.value)">
+    </div><div class="rl">Color</div></div></div>
+
+    <div class="rg" data-t="home"><div class="rs"><div class="ri">
+      <button class="rb" id="ral" onclick="G.setAlign('left')">⬅</button>
+      <button class="rb" id="rac" onclick="G.setAlign('center')">↔</button>
+      <button class="rb" id="rar" onclick="G.setAlign('right')">➡</button>
+    </div><div class="rl">Align</div></div></div>
+
+    <div class="rg" data-t="home"><div class="rs"><div class="ri">
+      <select class="rb" id="rnf" onchange="G.fmt('numfmt',this.value)" style="min-width:80px">
+        <option value="">General</option><option value="number">1,234</option>
+        <option value="currency">$1,234</option><option value="percent">12.3%</option>
+      </select>
+    </div><div class="rl">Format</div></div></div>
+
+    <div class="rg" data-t="home"><div class="rs"><div class="ri">
+      <button class="rb" onclick="G.clrCell()">Clear</button>
+      <button class="rb" onclick="G.clrFmt()">Clear Fmt</button>
+    </div><div class="rl">Erase</div></div></div>
+
+    <!-- INSERT -->
+    <div class="rg" data-t="insert" style="display:none"><div class="rs"><div class="ri">
+      <button class="rb" onclick="G.insRow()">＋Row</button>
+      <button class="rb" onclick="G.delRow()">−Row</button>
+      <button class="rb" onclick="G.insCol()">＋Col</button>
+      <button class="rb" onclick="G.delCol()">−Col</button>
+    </div><div class="rl">Rows &amp; Columns</div></div></div>
+    <div class="rg" data-t="insert" style="display:none"><div class="rs"><div class="ri">
+      <button class="rb" onclick="G.fmt('border',true)">Border</button>
+      <button class="rb" onclick="G.fmt('border',false)">No Border</button>
+    </div><div class="rl">Borders</div></div></div>
+
+    <!-- DATA -->
+    <div class="rg" data-t="data" style="display:none"><div class="rs"><div class="ri">
+      <button class="rb" onclick="G.sort('asc')">A→Z</button>
+      <button class="rb" onclick="G.sort('desc')">Z→A</button>
+      <button class="rb" onclick="G.dedupe()">Dedupe</button>
+      <button class="rb" onclick="G.fillSeries()">Fill Series</button>
+    </div><div class="rl">Data</div></div></div>
+
+    <!-- VIEW -->
+    <div class="rg" data-t="view" style="display:none"><div class="rs"><div class="ri">
+      <button class="rb" id="rgl" onclick="G.togGrid()">Grid ✓</button>
+      <button class="rb" onclick="G.zOut()">−</button>
+      <button class="rb" id="rzoom" onclick="G.zReset()">100%</button>
+      <button class="rb" onclick="G.zIn()">+</button>
+    </div><div class="rl">View</div></div></div>
+
+    <!-- AI -->
+    <div class="rg" data-t="ai" style="display:none"><div class="rs"><div class="ri">
+      <button class="rb" onclick="G.aiAnalyze()">📊 Analyze</button>
+      <button class="rb" onclick="G.aiFormula()">🔮 Formula</button>
+    </div><div class="rl">AI</div></div></div>
+  </div>
+</div>
+
+<!-- FORMULA BAR -->
+<div id="fbar">
+  <input id="namebox" type="text" value="A1" readonly onclick="this.removeAttribute('readonly');this.select()" onblur="this.setAttribute('readonly','')" onkeydown="nbKey(event)">
+  <span id="fxlbl">ƒx</span>
+  <input id="fbarinput" type="text" placeholder="Value or =formula…" onkeydown="G.fbKey(event)" oninput="G.fbSync()">
+</div>
+
+<!-- GRID -->
+<div id="gzone">
+  <div id="gscroll" tabindex="0">
+    <div id="chdr">
+      <div id="corner" onclick="G.selAll()">◻</div>
+      <div id="colrow"></div>
+    </div>
+    <div id="gbody">
+      <div id="rhdrs"></div>
+      <div id="cellarea">
+        <div id="grows"></div>
+        <div id="selbox"></div>
+        <div id="fhandle"></div>
+        <div id="ced"><textarea id="cta" spellcheck="false"></textarea></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stbar">
+    <div id="stablist"></div>
+    <button id="addst" onclick="G.addSheet()">+</button>
+  </div>
+</div>
+
+<!-- AI BAR -->
+<div id="aibar">
+  <div id="aiorb"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div>
+  <input id="aiin" type="text" placeholder='AI: "Sum column B", "Bold header row", "Sort by Revenue desc", "Copy column A to C"…' onkeydown="if(event.key==='Enter')G.aiRun()">
+  <span id="aist"></span>
+  <button id="airun" onclick="G.aiRun()">Run ⚡</button>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="cmenu">
+  <div class="ci" onclick="G.cut()">✂ Cut</div>
+  <div class="ci" onclick="G.copy()">⎘ Copy</div>
+  <div class="ci" onclick="G.paste()">📋 Paste</div>
+  <div class="csep"></div>
+  <div class="ci" onclick="G.insRow()">＋ Insert Row</div>
+  <div class="ci" onclick="G.insCol()">＋ Insert Column</div>
+  <div class="csep"></div>
+  <div class="ci red" onclick="G.delRow()">− Delete Row</div>
+  <div class="ci red" onclick="G.delCol()">− Delete Column</div>
+  <div class="csep"></div>
+  <div class="ci" onclick="G.clrCell()">🗑 Clear</div>
+</div>
+
+<!-- EXPORT -->
+<div id="exov" onclick="if(event.target===this)hideEx()">
+  <div id="exbox">
+    <div id="exhdr">
+      <div id="exttl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export &amp; Convert</div>
+      <div id="exx" onclick="hideEx()">✕</div>
+    </div>
+    <div id="exbody">
+      <div id="exgrid"></div>
+      <div class="exft">Active sheet: <b id="exsn"></b> · Excel includes all sheets with formatting.</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="filein" accept=".xlsx,.csv" onchange="G.loadFile(event)">
+
+<script>
+'use strict';
+const API='http://localhost:8000';
+const ROWS=5000,COLS=52,HW=52,HH=26;
+
+/* ═══════════════════════════════════════════════════════════════
+   GRID ENGINE
+═══════════════════════════════════════════════════════════════ */
+const G={
+  sheets:[], si:0,
+  row:0, col:0,               // active cell
+  sel:{r1:0,c1:0,r2:0,c2:0}, // selection (may be multi-cell)
+  editing:false,              // is the inline editor open?
+  eRow:0, eCol:0,             // which cell is being edited
+  cb:null,                    // clipboard
+  undoStack:[], redoStack:[],
+  showGrid:true, zoom:1,
+  sL:0, sT:0,
+  _tt:null, _ailog:[],
+
+  get sh(){return this.sheets[this.si]},
+  get cells(){return this.sh.cells},
+
+  // ── Coord helpers ─────────────────────────────────────────────
+  n2c(n){let s='',i=n+1;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s},
+  c2n(s){let n=0;for(const c of s.toUpperCase())n=n*26+(c.charCodeAt(0)-64);return n-1},
+  ref(r,c){return`${this.n2c(c)}${r+1}`},
+  pRef(s){const m=s.match(/^([A-Z]+)(\d+)$/i);return m?{c:this.c2n(m[1]),r:+m[2]-1}:null},
+  colX(c){let x=0;for(let i=0;i<c;i++)x+=this.sh.cw[i]||100;return x},
+  rowY(r){let y=0;for(let i=0;i<r;i++)y+=this.sh.rh[i]||24;return y},
+  cellVal(ref){const c=this.cells[ref];return c?String(c.computed??c.value??''):''},
+
+  // ── INIT ──────────────────────────────────────────────────────
+  init(){
+    const cw=Array(COLS).fill(100),rh=Array(ROWS).fill(24);
+    this.sheets=[{name:'Sheet1',cells:{},cw:[...cw],rh:[...rh]}];
+    this.loadDemo();
+    this.render();
+    this.renderTabs();
+    this.bindEvents();
+    this.moveTo(0,0);
+    this.checkConn();
+    setInterval(()=>this.checkConn(),12000);
+  },
+
+  // ── RENDER ────────────────────────────────────────────────────
+  render(){
+    const scr=document.getElementById('gscroll');
+    const sl=scr.scrollLeft,st=scr.scrollTop,sw=scr.clientWidth,sh=scr.clientHeight;
+    const B=6;
+    // Visible column range
+    let cx=0,c0=0,c1=COLS-1;
+    for(let c=0;c<COLS;c++){const w=this.sh.cw[c]||100;if(cx+w<sl-B*100)c0=c;if(cx>sl+sw+B*100){c1=c;break}cx+=w}
+    // Visible row range
+    let ry=0,r0=0,r1=ROWS-1;
+    for(let r=0;r<ROWS;r++){const h=this.sh.rh[r]||24;if(ry+h<st-B*24)r0=r;if(ry>st+sh+B*24){r1=r;break}ry+=h}
+    c0=Math.max(0,c0);r0=Math.max(0,r0);
+
+    let tw=0;for(let c=0;c<COLS;c++)tw+=this.sh.cw[c]||100;
+    let th=0;for(let r=0;r<ROWS;r++)th+=this.sh.rh[r]||24;
+
+    // Col headers
+    const chEl=document.getElementById('colrow');
+    let chH=`<div style="width:${this.colX(c0)}px;flex-shrink:0"></div>`;
+    for(let c=c0;c<=c1;c++){
+      const w=this.sh.cw[c]||100;
+      const sel=c>=Math.min(this.sel.c1,this.sel.c2)&&c<=Math.max(this.sel.c1,this.sel.c2);
+      chH+=`<div class="ch${sel?' sc':''}" style="width:${w}px" data-hc="${c}">${this.n2c(c)}<div class="chr" data-rsz="${c}"></div></div>`;
+    }
+    chEl.innerHTML=chH; chEl.style.width=tw+'px';
+
+    // Canvas
+    document.getElementById('cellarea').style.cssText=`position:relative;width:${tw}px;height:${th}px`;
+    document.getElementById('rhdrs').style.height=th+'px';
+
+    // Rows
+    let rH='',gH='';
+    const ts=this.rowY(r0);
+    rH+=`<div style="height:${ts}px"></div>`;
+    gH+=`<div style="height:${ts}px"></div>`;
+
+    for(let r=r0;r<=r1;r++){
+      const rh=this.sh.rh[r]||24;
+      const rSel=r>=Math.min(this.sel.r1,this.sel.r2)&&r<=Math.max(this.sel.r1,this.sel.r2);
+      rH+=`<div class="rh${rSel?' sr':''}" style="height:${rh}px" data-hr="${r}">${r+1}</div>`;
+      let row=`<div style="width:${this.colX(c0)}px;height:${rh}px;flex-shrink:0;display:inline-block"></div>`;
+      for(let c=c0;c<=c1;c++){
+        const cw=this.sh.cw[c]||100;
+        const ref=this.ref(r,c);
+        const cell=this.cells[ref]||{};
+        const fmt=cell.format||{};
+        const inSel=r>=Math.min(this.sel.r1,this.sel.r2)&&r<=Math.max(this.sel.r1,this.sel.r2)&&c>=Math.min(this.sel.c1,this.sel.c2)&&c<=Math.max(this.sel.c1,this.sel.c2);
+        const isAc=(r===this.row&&c===this.col);
+        const v=this.applyNumFmt(cell.computed??cell.value??'',fmt.numfmt);
+        const isErr=String(v).startsWith('#');
+        let cls='cell';
+        if(inSel&&!isAc)cls+=' ssel';
+        if(isAc)cls+=' active';
+        if(isErr)cls+=' err';
+        row+=`<div class="${cls}" style="${this.cellCss(fmt,cw,rh)}" data-r="${r}" data-c="${c}">${this.esc(String(v))}</div>`;
+      }
+      gH+=`<div class="grow" style="height:${rh}px">${row}</div>`;
+    }
+    document.getElementById('rhdrs').innerHTML=rH;
+    document.getElementById('grows').innerHTML=gH;
+    this.renderSel();
+    this.renderFH();
+    // If editor is open, reposition it (column widths may have changed)
+    if(this.editing)this.posEditor();
+  },
+
+  cellCss(f,w,h){
+    let s=`width:${w}px;min-width:${w}px;height:${h}px;`;
+    if(f.bold)s+='font-weight:700;';
+    if(f.italic)s+='font-style:italic;';
+    if(f.underline)s+='text-decoration:underline;';
+    if(f.fontSize)s+=`font-size:${f.fontSize};`;
+    if(f.fontFamily)s+=`font-family:'${f.fontFamily}',sans-serif;`;
+    if(f.color)s+=`color:${f.color};`;
+    if(f.background)s+=`background:${f.background};`;
+    if(f.textAlign){const jc=f.textAlign==='right'?'flex-end':f.textAlign==='center'?'center':'flex-start';s+=`justify-content:${jc};text-align:${f.textAlign};`}
+    if(f.border)s+='box-shadow:inset 0 0 0 1px #888;';
+    if(!this.showGrid)s+='border-right-color:transparent;border-bottom-color:transparent;';
+    return s;
+  },
+
+  applyNumFmt(v,nf){
+    const n=parseFloat(v);if(isNaN(n)||v==='')return v;
+    if(nf==='currency')return'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(nf==='percent')return(n*100).toFixed(2)+'%';
+    if(nf==='number')return n.toLocaleString();
+    return v;
+  },
+
+  esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')},
+
+  renderSel(){
+    const b=document.getElementById('selbox');
+    const{r1,c1,r2,c2}=this.sel;
+    if(r1===r2&&c1===c2){b.style.display='none';return}
+    const x=this.colX(Math.min(c1,c2)),y=this.rowY(Math.min(r1,r2));
+    let w=0,h=0;
+    for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++)w+=this.sh.cw[c]||100;
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)h+=this.sh.rh[r]||24;
+    b.style.cssText=`display:block;left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+  },
+
+  renderFH(){
+    const fh=document.getElementById('fhandle');
+    const c2=Math.max(this.sel.c1,this.sel.c2),r2=Math.max(this.sel.r1,this.sel.r2);
+    fh.style.cssText=`display:block;left:${this.colX(c2)+(this.sh.cw[c2]||100)-5}px;top:${this.rowY(r2)+(this.sh.rh[r2]||24)-5}px`;
+  },
+
+  // ── MOVE TO CELL ──────────────────────────────────────────────
+  moveTo(r,c){
+    r=Math.max(0,Math.min(r,ROWS-1));
+    c=Math.max(0,Math.min(c,COLS-1));
+    this.row=r; this.col=c;
+    this.sel={r1:r,c1:c,r2:r,c2:c};
+    this.syncFbar();
+    this.syncRibbon();
+    this.scrollIntoView(r,c);
+    this.render();
+  },
+
+  syncFbar(){
+    const ref=this.ref(this.row,this.col);
+    document.getElementById('namebox').value=ref;
+    const cell=this.cells[ref]||{};
+    document.getElementById('fbarinput').value=cell.value??'';
+  },
+
+  scrollIntoView(r,c){
+    const s=document.getElementById('gscroll');
+    const x=this.colX(c),y=this.rowY(r),cw=this.sh.cw[c]||100,rh=this.sh.rh[r]||24;
+    if(x<s.scrollLeft)s.scrollLeft=Math.max(0,x-HW);
+    else if(x+cw>s.scrollLeft+s.clientWidth)s.scrollLeft=x+cw-s.clientWidth+10;
+    if(y<s.scrollTop)s.scrollTop=Math.max(0,y-4);
+    else if(y+rh>s.scrollTop+s.clientHeight)s.scrollTop=y+rh-s.clientHeight+4;
+  },
+
+  // ── INLINE EDITOR ─────────────────────────────────────────────
+  openEditor(r,c,initChar){
+    this.editing=true; this.eRow=r; this.eCol=c;
+    const ref=this.ref(r,c);
+    const cell=this.cells[ref]||{};
+    const ta=document.getElementById('cta');
+    if(initChar!==undefined){
+      ta.value=initChar;
+    } else {
+      ta.value=cell.value??'';
+    }
+    document.getElementById('fbarinput').value=ta.value;
+    this.posEditor();
+    document.getElementById('ced').style.display='block';
+    ta.focus();
+    if(initChar!==undefined){
+      ta.setSelectionRange(ta.value.length,ta.value.length);
+    } else {
+      ta.select();
+    }
+  },
+
+  posEditor(){
+    const r=this.eRow, c=this.eCol;
+    const ed=document.getElementById('ced');
+    const x=this.colX(c), y=this.rowY(r);
+    const w=Math.max(this.sh.cw[c]||100, 160);
+    const h=this.sh.rh[r]||24;
+    ed.style.left=x+'px'; ed.style.top=y+'px';
+    ed.style.width=w+'px'; ed.style.height=Math.max(h,26)+'px';
+  },
+
+  closeEditor(save){
+    if(!this.editing)return;
+    this.editing=false;
+    const r=this.eRow, c=this.eCol;
+    const ta=document.getElementById('cta');
+    const val=ta.value;
+    document.getElementById('ced').style.display='none';
+    if(save){
+      this.setCell(r,c,val);
+      this.recalc();
+    }
+  },
+
+  // ── SET CELL VALUE ────────────────────────────────────────────
+  setCell(r,c,val){
+    this.pushUndo();
+    const ref=this.ref(r,c);
+    if(val===''&&!this.cells[ref]?.format){
+      delete this.cells[ref]; return;
+    }
+    if(!this.cells[ref])this.cells[ref]={};
+    this.cells[ref].value=val;
+    if(val&&val.startsWith('=')){
+      this.cells[ref].computed=this.evalFormula(val);
+      this.evalBackend(ref,val);
+    } else {
+      delete this.cells[ref].computed;
+    }
+  },
+
+  // ── FORMULA ENGINE (local) ────────────────────────────────────
+  evalFormula(f){
+    if(!f||!f.startsWith('='))return f;
+    try{
+      const flat={};
+      for(const[k,v]of Object.entries(this.cells))flat[k]=(typeof v==='object'?v?.value??'':String(v));
+      return this._expr(f.slice(1),flat,0);
+    }catch{return'#ERROR!'}
+  },
+
+  _rng(rng,fl){
+    const[a,b]=rng.split(':');if(!b)return[];
+    const p1=this.pRef(a),p2=this.pRef(b);if(!p1||!p2)return[];
+    const n=[];
+    for(let r=Math.min(p1.r,p2.r);r<=Math.max(p1.r,p2.r);r++)
+      for(let c=Math.min(p1.c,p2.c);c<=Math.max(p1.c,p2.c);c++){
+        const v=fl[this.ref(r,c)]??'';const f=parseFloat(v);if(!isNaN(f))n.push(f);
+      }
+    return n;
+  },
+
+  _expr(e,fl,d){
+    if(d>6)return'#REF!';
+    const fn=(nm,as)=>{
+      const sp=s=>{const p=[],x=[0];let c='';for(const ch of s){if(ch==='(')x[0]++;else if(ch===')')x[0]--;if(ch===','&&x[0]===0){p.push(c.trim());c=''}else c+=ch}if(c.trim())p.push(c.trim());return p};
+      const a=sp(as);
+      const nums=()=>a.flatMap(x=>x.includes(':')?this._rng(x,fl):[parseFloat(this._expr(x,fl,d+1))]).filter(n=>!isNaN(n));
+      const N=nm.toUpperCase();
+      if(N==='SUM')return String(nums().reduce((a,b)=>a+b,0));
+      if(N==='AVERAGE'||N==='AVG'){const n=nums();return n.length?String(n.reduce((a,b)=>a+b,0)/n.length):'0'}
+      if(N==='COUNT')return String(nums().length);
+      if(N==='MAX'){const n=nums();return n.length?String(Math.max(...n)):'0'}
+      if(N==='MIN'){const n=nums();return n.length?String(Math.min(...n)):'0'}
+      if(N==='ROUND'){const n=nums();const dp=parseInt(this._expr(a[1]??'0',fl,d+1))||0;return n.length?String(Math.round(n[0]*10**dp)/10**dp):'0'}
+      if(N==='ABS'){const n=nums();return n.length?String(Math.abs(n[0])):'0'}
+      if(N==='SQRT'){const n=nums();return n.length?String(Math.sqrt(Math.max(0,n[0]))):'0'}
+      if(N==='IF'){const cv=this._expr(a[0],fl,d+1);const t=!!cv&&cv!=='0'&&cv!=='false';return this._expr(t?a[1]:(a[2]??''),fl,d+1)}
+      if(N==='CONCAT'||N==='CONCATENATE')return a.map(x=>String(this._expr(x,fl,d+1)).replace(/^"|"$/g,'')).join('');
+      if(N==='LEN')return String(String(this._expr(a[0],fl,d+1)).replace(/^"|"$/g,'').length);
+      if(N==='UPPER')return String(this._expr(a[0],fl,d+1)).toUpperCase();
+      if(N==='LOWER')return String(this._expr(a[0],fl,d+1)).toLowerCase();
+      if(N==='TRIM')return String(this._expr(a[0],fl,d+1)).trim();
+      if(N==='LEFT'){const s=String(this._expr(a[0],fl,d+1)).replace(/^"|"$/g,'');return s.slice(0,+this._expr(a[1]??'1',fl,d+1))}
+      if(N==='RIGHT'){const s=String(this._expr(a[0],fl,d+1)).replace(/^"|"$/g,'');const n=+this._expr(a[1]??'1',fl,d+1);return s.slice(-n)}
+      if(N==='IFERROR'){try{const v=this._expr(a[0],fl,d+1);return String(v).startsWith('#')?String(this._expr(a[1]??'',fl,d+1)):v}catch{return String(this._expr(a[1]??'',fl,d+1))}}
+      return'#NAME?';
+    };
+    for(let i=0;i<6;i++){let ch=false;e=e.replace(/([A-Z][A-Z0-9]*)\(([^()]*)\)/gi,(m,nm,as)=>{ch=true;const r=fn(nm,as);if(typeof r==='string'&&isNaN(parseFloat(r))&&!r.startsWith('"')&&r!=='TRUE'&&r!=='FALSE'&&!r.startsWith('#'))return`"${r}"`;return String(r)});if(!ch)break}
+    e=e.replace(/\$?([A-Z]+)\$?(\d+)/gi,(m,col,row)=>{const v=fl[`${col.toUpperCase()}${row}`]??'';const f=parseFloat(v);return isNaN(f)?`"${v}"`:String(f)});
+    try{return Function('"use strict";return('+e+')')()}catch{return'#ERROR!'}
+  },
+
+  async evalBackend(ref,formula){
+    try{
+      const flat={};for(const[k,v]of Object.entries(this.cells))flat[k]=(typeof v==='object'?v?.value??'':String(v));
+      const r=await fetch(`${API}/api/formula/eval`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({formula,cells:flat})});
+      if(!r.ok)return;const d=await r.json();
+      if(d.success&&this.cells[ref]){this.cells[ref].computed=d.result;this.render()}
+    }catch{}
+  },
+
+  recalc(){
+    const flat={};
+    for(const[k,v]of Object.entries(this.cells))flat[k]=(typeof v==='object'?v?.value??'':String(v));
+    for(const[,cell]of Object.entries(this.cells))
+      if(cell?.value?.startsWith?.('='))cell.computed=this.evalFormula(cell.value);
+  },
+
+  // ── FORMAT ────────────────────────────────────────────────────
+  fmt(p,v){
+    this.pushUndo();
+    const{r1,c1,r2,c2}=this.sel;
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)
+      for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){
+        const ref=this.ref(r,c);
+        if(!this.cells[ref])this.cells[ref]={value:''};
+        if(!this.cells[ref].format)this.cells[ref].format={};
+        this.cells[ref].format[p]=v;
+      }
+    this.render();
+    this.syncRibbon();
+  },
+
+  tog(p){
+    const ref=this.ref(this.row,this.col);
+    const cur=this.cells[ref]?.format?.[p];
+    this.fmt(p,!cur);
+  },
+
+  setAlign(v){
+    const ref=this.ref(this.row,this.col);
+    const cur=this.cells[ref]?.format?.textAlign;
+    this.fmt('textAlign',cur===v?'':v);
+  },
+
+  clrCell(){
+    this.pushUndo();
+    const{r1,c1,r2,c2}=this.sel;
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)
+      for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++)delete this.cells[this.ref(r,c)];
+    this.render();
+  },
+
+  clrFmt(){
+    this.pushUndo();
+    const{r1,c1,r2,c2}=this.sel;
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)
+      for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){
+        const ref=this.ref(r,c);if(this.cells[ref])delete this.cells[ref].format;
+      }
+    this.render();
+    this.syncRibbon();
+  },
+
+  syncRibbon(){
+    const ref=this.ref(this.row,this.col);
+    const f=this.cells[ref]?.format||{};
+    document.getElementById('rbb')?.classList.toggle('on',!!f.bold);
+    document.getElementById('rbi')?.classList.toggle('on',!!f.italic);
+    document.getElementById('rbu')?.classList.toggle('on',!!f.underline);
+    document.getElementById('ral')?.classList.toggle('on',f.textAlign==='left');
+    document.getElementById('rac')?.classList.toggle('on',f.textAlign==='center');
+    document.getElementById('rar')?.classList.toggle('on',f.textAlign==='right');
+    const fs=document.getElementById('rfont');if(fs&&f.fontFamily)fs.value=f.fontFamily;
+    const si=document.getElementById('rsize');if(si)si.value=f.fontSize?parseInt(f.fontSize):12;
+    const co=document.getElementById('rcolor');if(co)co.value=f.color||'#1a1d2e';
+    const bg=document.getElementById('rbg');if(bg)bg.value=f.background||'#ffffff';
+    const nf=document.getElementById('rnf');if(nf)nf.value=f.numfmt||'';
+  },
+
+  // ── CLIPBOARD ─────────────────────────────────────────────────
+  copy(cut=false){
+    this.cb={sel:{...this.sel},data:{},cut};
+    const{r1,c1,r2,c2}=this.sel;
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)
+      for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){
+        const ref=this.ref(r,c);
+        if(this.cells[ref])this.cb.data[this.ref(r-Math.min(r1,r2),c-Math.min(c1,c2))]=JSON.parse(JSON.stringify(this.cells[ref]));
+      }
+    this.toast('Copied','ok');
+  },
+  cut(){this.copy(true);this.toast('Cut','inf')},
+  paste(){
+    if(!this.cb)return;
+    this.pushUndo();
+    const{r,c}=this;
+    for(const[rr,cell]of Object.entries(this.cb.data)){
+      const p=this.pRef(rr);if(!p)continue;
+      this.cells[this.ref(this.row+p.r,this.col+p.c)]=JSON.parse(JSON.stringify(cell));
+    }
+    if(this.cb.cut){
+      const{r1,c1,r2,c2}=this.cb.sel;
+      for(let rr=Math.min(r1,r2);rr<=Math.max(r1,r2);rr++)
+        for(let cc=Math.min(c1,c2);cc<=Math.max(c1,c2);cc++)delete this.cells[this.ref(rr,cc)];
+      this.cb=null;
+    }
+    this.recalc();this.render();this.toast('Pasted','ok');
+  },
+
+  // ── UNDO / REDO ───────────────────────────────────────────────
+  pushUndo(){this.undoStack.push(JSON.stringify(this.sheets));if(this.undoStack.length>80)this.undoStack.shift();this.redoStack=[]},
+  undo(){if(!this.undoStack.length)return;this.redoStack.push(JSON.stringify(this.sheets));this.sheets=JSON.parse(this.undoStack.pop());this.recalc();this.render();this.renderTabs();this.toast('Undo','inf')},
+  redo(){if(!this.redoStack.length)return;this.undoStack.push(JSON.stringify(this.sheets));this.sheets=JSON.parse(this.redoStack.pop());this.recalc();this.render();this.renderTabs();this.toast('Redo','inf')},
+
+  // ── STRUCTURAL ────────────────────────────────────────────────
+  _shiftR(t,d){const n={};for(const[ref,cell]of Object.entries(this.cells)){const p=this.pRef(ref);if(!p)continue;if(d<0&&p.r===t)continue;n[p.r>t?this.ref(p.r+d,p.c):ref]=cell}this.sh.cells=n},
+  _shiftC(t,d){const n={};for(const[ref,cell]of Object.entries(this.cells)){const p=this.pRef(ref);if(!p)continue;if(d<0&&p.c===t)continue;n[p.c>t?this.ref(p.r,p.c+d):ref]=cell}this.sh.cells=n},
+  insRow(){this.pushUndo();this._shiftR(this.row-1,1);this.render()},
+  delRow(){this.pushUndo();this._shiftR(this.row,-1);this.render()},
+  insCol(){this.pushUndo();this._shiftC(this.col-1,1);this.render()},
+  delCol(){this.pushUndo();this._shiftC(this.col,-1);this.render()},
+
+  sort(dir){
+    this.pushUndo();const c=this.col;
+    let mr=0;for(const ref of Object.keys(this.cells)){const p=this.pRef(ref);if(p)mr=Math.max(mr,p.r)}
+    const rows=[];
+    for(let r=0;r<=mr;r++){const d={};for(let cc=0;cc<COLS;cc++){const ref=this.ref(r,cc);if(this.cells[ref])d[cc]=this.cells[ref]}rows.push({d,k:this.cells[this.ref(r,c)]?.value??''})}
+    rows.sort((a,b)=>{const na=parseFloat(a.k),nb=parseFloat(b.k);if(!isNaN(na)&&!isNaN(nb))return dir==='asc'?na-nb:nb-na;return dir==='asc'?a.k.localeCompare(b.k):b.k.localeCompare(a.k)});
+    const nc={};rows.forEach((row,nr)=>{for(const[cc,cell]of Object.entries(row.d))nc[this.ref(nr,+cc)]=cell});
+    this.sh.cells=nc;this.render();this.toast('Sorted','ok');
+  },
+
+  dedupe(){
+    this.pushUndo();const c=this.col;const seen=new Set();const rm=[];
+    const refs=Object.keys(this.cells).filter(r=>{const p=this.pRef(r);return p&&p.c===c}).sort((a,b)=>this.pRef(a).r-this.pRef(b).r);
+    for(const ref of refs){const v=this.cells[ref]?.value??'';if(seen.has(v))rm.push(this.pRef(ref).r);else seen.add(v)}
+    for(const r of rm)for(let cc=0;cc<COLS;cc++)delete this.cells[this.ref(r,cc)];
+    this.render();this.toast(`Removed ${rm.length} dupes`,'ok');
+  },
+
+  fillSeries(){
+    const{r1,c1,r2,c2}=this.sel;
+    const sv=parseFloat(this.cells[this.ref(Math.min(r1,r2),Math.min(c1,c2))]?.value??'1')||1;
+    this.pushUndo();let i=0;
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){
+      const ref=this.ref(r,c);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=String(sv+i++);
+    }
+    this.render();
+  },
+
+  // ── VIEW ──────────────────────────────────────────────────────
+  togGrid(){this.showGrid=!this.showGrid;document.getElementById('rgl').textContent='Grid '+(this.showGrid?'✓':'✗');this.render()},
+  zIn(){this.zoom=Math.min(2,this.zoom+.1);this._applyZoom()},
+  zOut(){this.zoom=Math.max(.5,this.zoom-.1);this._applyZoom()},
+  zReset(){this.zoom=1;this._applyZoom()},
+  _applyZoom(){const s=document.getElementById('gscroll');s.style.transform=`scale(${this.zoom})`;s.style.transformOrigin='top left';document.getElementById('rzoom').textContent=Math.round(this.zoom*100)+'%'},
+
+  // ── EVENT BINDING ─────────────────────────────────────────────
+  bindEvents(){
+    const ca=document.getElementById('cellarea');
+    const ta=document.getElementById('cta');
+    const scr=document.getElementById('gscroll');
+
+    // ── CELL CLICK — single left click: move to cell ───────────
+    ca.addEventListener('click',e=>{
+      const el=e.target.closest('.cell');
+      if(!el)return;
+      const r=+el.dataset.r, c=+el.dataset.c;
+      // If editor is open on a DIFFERENT cell, save and close first
+      if(this.editing&&(this.eRow!==r||this.eCol!==c)){
+        this.closeEditor(true);
+        this.moveTo(r,c);
+        this.render();
+        return;
+      }
+      if(!this.editing){
+        if(e.shiftKey){
+          this.sel.r2=r;this.sel.c2=c;this.render();
+        } else {
+          this.moveTo(r,c);
+        }
+        scr.focus({preventScroll:true});
+      }
+    });
+
+    // ── CELL DOUBLE CLICK — open editor ───────────────────────
+    ca.addEventListener('dblclick',e=>{
+      const el=e.target.closest('.cell');
+      if(!el)return;
+      this.openEditor(+el.dataset.r,+el.dataset.c,undefined);
+    });
+
+    // ── CELL DRAG — extend selection ──────────────────────────
+    ca.addEventListener('mousedown',e=>{
+      if(e.button!==0||this.editing)return;
+      const el=e.target.closest('.cell');
+      if(!el)return;
+      const startR=+el.dataset.r,startC=+el.dataset.c;
+      const mv=ev=>{
+        const t=ev.target.closest('.cell');
+        if(t){const nr=+t.dataset.r,nc=+t.dataset.c;
+          if(nr!==this.sel.r2||nc!==this.sel.c2){this.sel.r2=nr;this.sel.c2=nc;this.render()}}
+      };
+      const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up)};
+      document.addEventListener('mousemove',mv);
+      document.addEventListener('mouseup',up);
+    });
+
+    // ── CONTEXT MENU ──────────────────────────────────────────
+    ca.addEventListener('contextmenu',e=>{
+      e.preventDefault();
+      const el=e.target.closest('.cell');
+      if(el&&!this.editing){this.moveTo(+el.dataset.r,+el.dataset.c)}
+      const m=document.getElementById('cmenu');
+      m.style.cssText=`display:block;left:${Math.min(e.clientX,window.innerWidth-180)}px;top:${Math.min(e.clientY,window.innerHeight-230)}px`;
+      const close=ev=>{if(!m.contains(ev.target)){m.style.display='none';document.removeEventListener('mousedown',close)}};
+      setTimeout(()=>document.addEventListener('mousedown',close),20);
+    });
+
+    // ── TEXTAREA KEYS ─────────────────────────────────────────
+    ta.addEventListener('keydown',e=>{
+      const r=this.eRow,c=this.eCol;
+      if(e.key==='Enter'&&!e.shiftKey){
+        e.preventDefault();
+        this.closeEditor(true);
+        this.moveTo(r+1,c);
+        this.render();
+      } else if(e.key==='Tab'){
+        e.preventDefault();
+        this.closeEditor(true);
+        this.moveTo(r,c+(e.shiftKey?-1:1));
+        this.render();
+      } else if(e.key==='Escape'){
+        e.preventDefault();
+        this.closeEditor(false);
+        this.moveTo(r,c);
+        this.render();
+        scr.focus({preventScroll:true});
+      }
+      // Sync formula bar while typing
+      document.getElementById('fbarinput').value=ta.value;
+    });
+
+    ta.addEventListener('input',()=>{
+      document.getElementById('fbarinput').value=ta.value;
+    });
+
+    // ── FORMULA BAR KEYS ──────────────────────────────────────
+    document.getElementById('fbarinput').addEventListener('keydown',e=>{
+      if(e.key==='Enter'){
+        e.preventDefault();
+        const v=document.getElementById('fbarinput').value;
+        this.setCell(this.row,this.col,v);
+        this.recalc();
+        this.moveTo(this.row+1,this.col);
+        this.render();
+        scr.focus({preventScroll:true});
+      }
+      if(e.key==='Escape'){
+        this.syncFbar();
+        scr.focus({preventScroll:true});
+      }
+    });
+
+    // ── NAMEBOX ───────────────────────────────────────────────
+    document.getElementById('namebox').addEventListener('keydown',e=>{
+      if(e.key==='Enter'){
+        const p=this.pRef(e.target.value.toUpperCase().trim());
+        if(p)this.moveTo(p.r,p.c);
+        scr.focus({preventScroll:true});
+      }
+      if(e.key==='Escape')scr.focus({preventScroll:true});
+    });
+
+    // ── GRID KEYBOARD ─────────────────────────────────────────
+    scr.addEventListener('keydown',e=>{
+      const C=e.ctrlKey||e.metaKey;
+      // Editor keys go to textarea — don't intercept
+      if(this.editing)return;
+
+      if(C){
+        switch(e.key.toLowerCase()){
+          case'z':e.preventDefault();this.undo();break;
+          case'y':e.preventDefault();this.redo();break;
+          case'c':e.preventDefault();this.copy();break;
+          case'x':e.preventDefault();this.cut();break;
+          case'v':e.preventDefault();this.paste();break;
+          case'b':e.preventDefault();this.tog('bold');break;
+          case'i':e.preventDefault();this.tog('italic');break;
+          case'u':e.preventDefault();this.tog('underline');break;
+          case'a':e.preventDefault();this.sel={r1:0,c1:0,r2:ROWS-1,c2:COLS-1};this.render();break;
+          case's':e.preventDefault();this.saveXL();break;
+        }
+        return;
+      }
+
+      switch(e.key){
+        case'ArrowUp':e.preventDefault();if(e.shiftKey){this.sel.r2=Math.max(0,this.sel.r2-1);this.render()}else this.moveTo(this.row-1,this.col);break;
+        case'ArrowDown':e.preventDefault();if(e.shiftKey){this.sel.r2=Math.min(ROWS-1,this.sel.r2+1);this.render()}else this.moveTo(this.row+1,this.col);break;
+        case'ArrowLeft':e.preventDefault();if(e.shiftKey){this.sel.c2=Math.max(0,this.sel.c2-1);this.render()}else this.moveTo(this.row,this.col-1);break;
+        case'ArrowRight':e.preventDefault();if(e.shiftKey){this.sel.c2=Math.min(COLS-1,this.sel.c2+1);this.render()}else this.moveTo(this.row,this.col+1);break;
+        case'Tab':e.preventDefault();this.moveTo(this.row,this.col+(e.shiftKey?-1:1));break;
+        case'Enter':e.preventDefault();this.openEditor(this.row,this.col,undefined);break;
+        case'F2':e.preventDefault();this.openEditor(this.row,this.col,undefined);break;
+        case'Delete':case'Backspace':e.preventDefault();this.clrCell();break;
+        case'PageDown':e.preventDefault();this.moveTo(this.row+25,this.col);break;
+        case'PageUp':e.preventDefault();this.moveTo(this.row-25,this.col);break;
+        case'Home':e.preventDefault();this.moveTo(this.row,0);break;
+        case'Escape':break;
+        default:
+          if(e.key.length===1&&!C&&!e.altKey){
+            e.preventDefault();
+            this.openEditor(this.row,this.col,e.key);
+          }
+      }
+    });
+
+    // ── COLUMN HEADER EVENTS ──────────────────────────────────
+    document.getElementById('colrow').addEventListener('click',e=>{
+      const hc=e.target.closest('[data-hc]');
+      if(hc){const c=+hc.dataset.hc;this.sel={r1:0,c1:c,r2:ROWS-1,c2:c};this.col=c;this.render()}
+    });
+    document.getElementById('colrow').addEventListener('mousedown',e=>{
+      const rsz=e.target.closest('[data-rsz]');
+      if(!rsz)return;
+      e.preventDefault();
+      const c=+rsz.dataset.rsz,sx=e.clientX,sw=this.sh.cw[c]||100;
+      const mv=ev=>{this.sh.cw[c]=Math.max(30,sw+(ev.clientX-sx));this.render()};
+      const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up)};
+      document.addEventListener('mousemove',mv);
+      document.addEventListener('mouseup',up);
+    });
+
+    // ── ROW HEADER EVENTS ─────────────────────────────────────
+    document.getElementById('rhdrs').addEventListener('click',e=>{
+      const hr=e.target.closest('[data-hr]');
+      if(hr){const r=+hr.dataset.hr;this.sel={r1:r,c1:0,r2:r,c2:COLS-1};this.row=r;this.render()}
+    });
+
+    // ── FILL HANDLE ───────────────────────────────────────────
+    document.getElementById('fhandle').addEventListener('mousedown',e=>{
+      e.preventDefault();
+      const{r1,c1}=this.sel;const sv=this.cells[this.ref(r1,c1)]?.value;if(sv===undefined)return;
+      const sY=e.clientY;
+      const mv=ev=>{const dy=ev.clientY-sY;const er=Math.max(r1,r1+Math.round(dy/24));
+        for(let r=r1+1;r<=er;r++){if(!this.cells[this.ref(r,c1)])this.cells[this.ref(r,c1)]={};const n=parseFloat(sv);this.cells[this.ref(r,c1)].value=isNaN(n)?sv:String(n+(r-r1))}
+        this.sel.r2=er;this.render()};
+      const up=()=>{this.recalc();this.render();document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up)};
+      document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+    });
+
+    // ── CORNER ────────────────────────────────────────────────
+    document.getElementById('corner').addEventListener('click',()=>{this.sel={r1:0,c1:0,r2:ROWS-1,c2:COLS-1};this.render()});
+
+    // ── SCROLL ────────────────────────────────────────────────
+    let stk=false;
+    scr.addEventListener('scroll',()=>{
+      if(!stk){stk=true;requestAnimationFrame(()=>{
+        const s=document.getElementById('gscroll');
+        if(Math.abs(s.scrollLeft-this.sL)>30||Math.abs(s.scrollTop-this.sT)>30){this.sL=s.scrollLeft;this.sT=s.scrollTop;this.render()}
+        stk=false;
+      })}
+    },{passive:true});
+  },
+
+  // ── SHEET TABS ────────────────────────────────────────────────
+  renderTabs(){
+    document.getElementById('stablist').innerHTML=this.sheets.map((s,i)=>
+      `<div class="stab${i===this.si?' active':''}" onclick="G.goSheet(${i})" ondblclick="G.rnSheet(${i})">${s.name}</div>`
+    ).join('');
+  },
+  goSheet(i){
+    if(this.editing)this.closeEditor(true);
+    this.si=i;this.moveTo(0,0);this.render();this.renderTabs();
+  },
+  addSheet(){this.sheets.push({name:'Sheet'+(this.sheets.length+1),cells:{},cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24)});this.goSheet(this.sheets.length-1)},
+  rnSheet(i){const n=prompt('Sheet name:',this.sheets[i].name);if(n){this.sheets[i].name=n;this.renderTabs()}},
+
+  // ── FILE OPS ─────────────────────────────────────────────────
+  newFile(){if(!confirm('New spreadsheet? Unsaved changes will be lost.'))return;this.sheets=[{name:'Sheet1',cells:{},cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24)}];this.si=0;this.undoStack=[];this.redoStack=[];document.getElementById('docname').textContent='Untitled';this.moveTo(0,0);this.renderTabs();this.toast('New spreadsheet','ok')},
+  openFile(){document.getElementById('filein').click()},
+  renDoc(){const n=prompt('Name:',document.getElementById('docname').textContent);if(n)document.getElementById('docname').textContent=n},
+
+  saveXL(){
+    const wb=XLSX.utils.book_new();
+    for(const sh of this.sheets){
+      const ws={};let mr=0,mc=0;
+      for(const ref of Object.keys(sh.cells)){const m=ref.match(/^([A-Z]+)(\d+)$/);if(m){mr=Math.max(mr,+m[2]);mc=Math.max(mc,this.c2n(m[1])+1)}}
+      for(const[ref,cell]of Object.entries(sh.cells)){
+        if(!cell||typeof cell!=='object')continue;
+        const raw=cell.value??'';
+        if(raw.startsWith('=')){ws[ref]={f:raw.slice(1)};continue}
+        const n=parseFloat(raw);
+        ws[ref]={v:isNaN(n)?String(raw):n,t:isNaN(n)?'s':'n'};
+        const fmt=cell.format||{};
+        if(Object.keys(fmt).length)ws[ref].s={font:{bold:!!fmt.bold,italic:!!fmt.italic},fill:fmt.background&&fmt.background!=='#ffffff'?{fgColor:{rgb:fmt.background.replace('#','')},patternType:'solid'}:{}};
+      }
+      ws['!ref']=mr>0?`A1:${this.n2c(mc-1)}${mr}`:'A1';
+      ws['!cols']=(sh.cw||[]).slice(0,mc).map(w=>({wch:Math.max(8,(w||100)/7)}));
+      XLSX.utils.book_append_sheet(wb,ws,sh.name.slice(0,31));
+    }
+    XLSX.writeFile(wb,(document.getElementById('docname').textContent||'Spreadsheet')+'.xlsx');
+    this.toast('Saved as Excel ✓','ok');
+  },
+
+  loadFile(e){
+    const file=e.target.files[0];if(!file)return;
+    const ext=file.name.split('.').pop().toLowerCase();
+    const rd=new FileReader();
+    if(ext==='xlsx'){
+      rd.onload=ev=>{
+        const wb=XLSX.read(ev.target.result,{type:'array',cellFormula:true});
+        this.sheets=wb.SheetNames.map(name=>{
+          const ws=wb.Sheets[name];const cells={};
+          const range=XLSX.utils.decode_range(ws['!ref']||'A1');
+          for(let r=range.s.r;r<=range.e.r;r++)for(let c=range.s.c;c<=range.e.c;c++){
+            const addr=XLSX.utils.encode_cell({r,c});const xc=ws[addr];if(!xc)continue;
+            cells[this.ref(r,c)]={value:xc.f?'='+xc.f:String(xc.v??'')};
+          }
+          return{name,cells,cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24)};
+        });
+        this.si=0;document.getElementById('docname').textContent=file.name.replace(/\.xlsx$/,'');
+        this.moveTo(0,0);this.renderTabs();this.recalc();this.render();this.toast('Opened','ok');
+      };rd.readAsArrayBuffer(file);
+    } else if(ext==='csv'){
+      rd.onload=ev=>{
+        const cells={};ev.target.result.split('\n').forEach((line,r)=>{line.split(',').forEach((v,c)=>{const val=v.trim().replace(/^"|"$/g,'');if(val)cells[this.ref(r,c)]={value:val}})});
+        this.sheets=[{name:file.name,cells,cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24)}];
+        this.si=0;document.getElementById('docname').textContent=file.name;
+        this.moveTo(0,0);this.renderTabs();this.recalc();this.render();this.toast('Imported CSV','ok');
+      };rd.readAsText(file);
+    }
+    e.target.value='';
+  },
+
+  exportCSV(){
+    let mr=0,mc=0;for(const ref of Object.keys(this.cells)){const p=this.pRef(ref);if(p){mr=Math.max(mr,p.r);mc=Math.max(mc,p.c)}}
+    let csv='';for(let r=0;r<=mr;r++){const row=[];for(let c=0;c<=mc;c++){const v=this.cellVal(this.ref(r,c));row.push(v.includes(',')?`"${v}"`:v)}csv+=row.join(',')+'\n'}
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=(document.getElementById('docname').textContent||'export')+'.csv';a.click();this.toast('CSV exported','ok');
+  },
+
+  // ── AI ────────────────────────────────────────────────────────
+  async aiRun(){
+    const cmd=document.getElementById('aiin').value.trim();if(!cmd)return;
+    const btn=document.getElementById('airun'),st=document.getElementById('aist');
+    btn.disabled=true;st.textContent='Thinking…';
+    const sample={};for(const[k,v]of Object.entries(this.cells))sample[k]=v?.value??v;
+    try{
+      const r=await fetch(`${API}/api/ai/command`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command:cmd,sheet_data:sample,active_cell:this.ref(this.row,this.col)})});
+      if(!r.ok)throw new Error('API '+r.status);
+      const d=await r.json();
+      this.execOps(d.operations||[]);
+      this._ailog.push({cmd,msg:d.message,ts:new Date().toLocaleTimeString()});
+      this.recalc();this.render();this.toast(d.message||'Done','ok');
+      document.getElementById('aiin').value='';
+      st.textContent='✓';
+    }catch(err){this.toast('AI: '+err.message,'err');st.textContent='✗'}
+    btn.disabled=false;setTimeout(()=>st.textContent='',3000);
+  },
+
+  execOps(ops){for(const op of ops){try{this._op(op)}catch(e){console.warn(op,e)}}},
+  _op(op){
+    this.pushUndo();
+    switch(op.type){
+      case'set_cell':{const p=this.pRef(op.ref||op.cell||'A1');if(p)this.setCell(p.r,p.c,String(op.value??''));break}
+      case'set_formula':{const p=this.pRef(op.ref||op.cell||'A1');if(p)this.setCell(p.r,p.c,op.formula||'');break}
+      case'copy_column':{const s=this.c2n(op.from||op.source||'A'),d=this.c2n(op.to||op.target||'B');for(let r=0;r<ROWS;r++){const sr=this.ref(r,s);if(this.cells[sr])this.cells[this.ref(r,d)]=JSON.parse(JSON.stringify(this.cells[sr]))}break}
+      case'sort':{this.col=this.c2n(op.col||op.column||'A');this.sort(op.dir||op.direction||'asc');break}
+      case'format_range':case'highlight':{
+        const[a,b]=(op.range||op.ref||'A1:A1').split(':');
+        const p1=this.pRef(a),p2=this.pRef(b||a);
+        if(p1&&p2){
+          for(let r=Math.min(p1.r,p2.r);r<=Math.max(p1.r,p2.r);r++)
+            for(let c=Math.min(p1.c,p2.c);c<=Math.max(p1.c,p2.c);c++){
+              const ref=this.ref(r,c);if(!this.cells[ref])this.cells[ref]={value:''};if(!this.cells[ref].format)this.cells[ref].format={};
+              for(const k of['bold','italic','underline','fontSize','fontFamily','color','background','border','textAlign','numfmt'])if(op[k]!==undefined)this.cells[ref].format[k]=op[k];
+              if(op.type==='highlight'&&(op.background||op.color))this.cells[ref].format.background=op.background||op.color;
+            }
+        }break}
+      case'clear_range':{const[a,b]=(op.range||'A1:A1').split(':');const p1=this.pRef(a),p2=this.pRef(b||a);if(p1&&p2)for(let r=Math.min(p1.r,p2.r);r<=Math.max(p1.r,p2.r);r++)for(let c=Math.min(p1.c,p2.c);c<=Math.max(p1.c,p2.c);c++)delete this.cells[this.ref(r,c)];break}
+      case'sum_column':{const c=this.c2n(op.col||'A');let mr=0;for(const ref of Object.keys(this.cells)){const p=this.pRef(ref);if(p&&p.c===c)mr=Math.max(mr,p.r)}const p=this.pRef(op.result_ref||`${op.col||'A'}${mr+2}`);if(p)this.setCell(p.r,p.c,`=SUM(${op.col||'A'}1:${op.col||'A'}${mr+1})`);break}
+      case'delete_row':{this.row=(op.row||1)-1;this.delRow();break}
+      case'delete_column':{this.col=this.c2n(op.col||op.column||'A');this.delCol();break}
+      case'insert_row':{this.row=(op.row||1)-1;this.insRow();break}
+      case'find_replace':{for(const[,cell]of Object.entries(this.cells))if(cell?.value?.includes?.(op.find||''))cell.value=cell.value.replace(new RegExp(op.find,'g'),op.replace||'');break}
+    }
+  },
+
+  aiAnalyze(){document.getElementById('aiin').value='Analyze this sheet and give 3 key insights';this.aiRun()},
+  aiFormula(){const d=prompt('Describe the formula:');if(d){document.getElementById('aiin').value=`Create formula for: ${d} in cell ${this.ref(this.row,this.col)}`;this.aiRun()}},
+
+  // ── CONN ──────────────────────────────────────────────────────
+  async checkConn(){
+    try{const r=await fetch(`${API}/api/health`,{signal:AbortSignal.timeout(3000)});document.getElementById('cdot').className=r.ok?'on':'';document.getElementById('ctxt').textContent=r.ok?'Connected':'Offline'}
+    catch{document.getElementById('cdot').className='';document.getElementById('ctxt').textContent='Offline'}
+  },
+
+  // ── TOAST ─────────────────────────────────────────────────────
+  toast(msg,type='ok'){
+    const t=document.getElementById('toast');t.textContent=msg;t.className='show '+type;
+    clearTimeout(this._tt);this._tt=setTimeout(()=>t.className='',2600);
+  },
+
+  // ── DEMO DATA ─────────────────────────────────────────────────
+  loadDemo(){
+    const set=(ref,val,fmt={})=>{
+      this.cells[ref]={value:val,...(Object.keys(fmt).length?{format:fmt}:{})};
+      if(val.startsWith('='))this.cells[ref].computed=this.evalFormula(val);
+    };
+    const H={bold:true,background:'#0d0e14',color:'#f0a500',fontFamily:'Plus Jakarta Sans',fontSize:'12px'};
+    set('A1','Product',H);set('B1','Q1',H);set('C1','Q2',H);set('D1','Q3',H);set('E1','Total',H);set('F1','Growth%',H);
+    [['Orbit AI','48200','61500','74000'],['Web Analyser','32100','38900','45200'],['Alaada DB','15800','24300','33500'],['Sheets Pro','9200','18700','26400'],['Analytics API','22400','29800','36100']].forEach(([p,q1,q2,q3],i)=>{
+      const r=i+2;
+      set(`A${r}`,p,{fontFamily:'Plus Jakarta Sans'});
+      set(`B${r}`,q1);set(`C${r}`,q2);set(`D${r}`,q3);
+      set(`E${r}`,`=B${r}+C${r}+D${r}`);
+      set(`F${r}`,`=ROUND((D${r}-B${r})/B${r}*100,1)`);
+    });
+    const T={bold:true,background:'#f0a500',color:'#1a0f00',fontFamily:'Plus Jakarta Sans'};
+    set('A8','TOTAL',T);set('B8','=SUM(B2:B7)',T);set('C8','=SUM(C2:C7)',T);set('D8','=SUM(D2:D7)',T);set('E8','=SUM(E2:E7)',T);set('F8','=ROUND(AVERAGE(F2:F7),1)',T);
+    this.sh.cw[0]=150;this.sh.cw[1]=90;this.sh.cw[2]=90;this.sh.cw[3]=90;this.sh.cw[4]=110;this.sh.cw[5]=90;
+    this.recalc();
+  }
+};
+
+/* ─── RIBBON TAB ──────────────────────────────────────────────── */
+function rTab(t){
+  document.querySelectorAll('.rtab').forEach(el=>el.classList.toggle('active',el.dataset.t===t));
+  document.querySelectorAll('#rbody .rg').forEach(g=>g.style.display=g.dataset.t===t?'':'none');
+}
+
+/* ─── EXPORT ──────────────────────────────────────────────────── */
+const EXFMTS=[
+  {f:'xlsx',ic:'📊',n:'Excel (.xlsx)',d:'All sheets + formatting + formulas',xl:true},
+  {f:'csv', ic:'📄',n:'CSV (.csv)',   d:'Active sheet, plain text'},
+  {f:'sql', ic:'🗄️',n:'SQL (.sql)',   d:'CREATE TABLE + INSERT rows'},
+  {f:'html',ic:'🌐',n:'HTML (.html)', d:'Styled responsive table'},
+  {f:'docx',ic:'📝',n:'Word (.docx)', d:'Formatted Word document'},
+  {f:'json',ic:'{ }',n:'JSON (.json)',d:'Array of typed objects'},
+  {f:'xml', ic:'🔖',n:'XML (.xml)',   d:'Structured records'},
+  {f:'tally',ic:'🧾',n:'Tally XML',  d:'Tally ERP import'},
+  {f:'md',  ic:'📋',n:'Markdown',    d:'GitHub pipe table'},
+];
+function showEx(){
+  document.getElementById('exsn').textContent=G.sh.name;
+  document.getElementById('exgrid').innerHTML=EXFMTS.map(f=>`<button class="ecrd${f.xl?' xl':''}" onclick="doEx('${f.f}')"><span class="eic">${f.ic}</span><div><div class="en">${f.n}</div><div class="ed">${f.d}</div></div></button>`).join('');
+  document.getElementById('exov').style.display='flex';
+}
+function hideEx(){document.getElementById('exov').style.display='none'}
+async function doEx(fmt){
+  hideEx();
+  if(fmt==='xlsx'){G.saveXL();return}
+  if(fmt==='csv'){G.exportCSV();return}
+  G.toast('Preparing…','inf');
+  const payload={sheets:G.sheets.map(s=>({name:s.name,cells:s.cells,cw:s.cw,rh:s.rh})),active_sheet:G.si,format:fmt};
+  try{
+    const r=await fetch(`${API}/api/export`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error('Export failed '+r.status);
+    const blob=await r.blob();
+    const exts={sql:'sql',html:'html',docx:'docx',xml:'xml',json:'json',tally:'xml',md:'md'};
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=(document.getElementById('docname').textContent||'export')+'.'+exts[fmt];
+    a.click();G.toast('Exported .'+exts[fmt],'ok');
+  }catch(e){G.toast('Error: '+e.message,'err')}
+}
+
+window.addEventListener('load',()=>G.init());
+</script>
+</body>
+</html>
