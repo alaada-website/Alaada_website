@@ -18,13 +18,17 @@
 
     :root {
       --void:      #050810;
-      --card:      rgba(6,10,22,0.55);
-      --card-b:    rgba(255,255,255,0.11);
+      --deep:      #090d1a;
+      --surface:   #0e1428;
+      --card:      rgba(255,255,255,0.04);
+      --card-b:    rgba(255,255,255,0.09);
       --blue:      #0b72ff;
+      --blue-glow: rgba(11,114,255,0.18);
       --gold:      #f0a500;
+      --gold-glow: rgba(240,165,0,0.18);
       --white:     #ffffff;
-      --muted:     rgba(255,255,255,0.65);
-      --faint:     rgba(255,255,255,0.1);
+      --muted:     rgba(255,255,255,0.55);
+      --faint:     rgba(255,255,255,0.12);
       --radius-sm: 10px;
       --radius-md: 16px;
       --radius-lg: 24px;
@@ -34,7 +38,7 @@
 
     body {
       font-family: 'DM Sans', sans-serif;
-      background: transparent;
+      background: var(--void);
       color: var(--white);
       overflow-x: hidden;
       line-height: 1.7;
@@ -42,38 +46,13 @@
     }
 
     /* ══════════════════════════════════════════════
-       SPACE VIDEO — fixed, full page
-    ══════════════════════════════════════════════ */
-    #bg-video-wrap {
-      position: fixed;
-      inset: 0;
-      z-index: -2;
-      background: var(--void);
-    }
-
-    #bg-video-wrap video {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      opacity: 0.65;
-    }
-
-    /* thin dark veil so text stays readable everywhere */
-    #bg-video-wrap::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(4,7,18,0.42);
-    }
-
-    /* ══════════════════════════════════════════════
-       STARFIELD — subtle layer on top of video
+       STARFIELD CANVAS
     ══════════════════════════════════════════════ */
     #starfield {
       position: fixed;
       inset: 0;
-      z-index: -1;
+      z-index: 0;
       pointer-events: none;
-      opacity: 0.5;
     }
 
     /* ══════════════════════════════════════════════
@@ -88,10 +67,10 @@
       justify-content: space-between;
       padding: 0 40px;
       height: 64px;
-      background: rgba(4,7,18,0.35);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-bottom: 0.5px solid rgba(255,255,255,0.07);
+      background: rgba(5,8,16,0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid var(--faint);
       transition: background 0.3s;
     }
 
@@ -169,13 +148,22 @@
       z-index: 1;
     }
 
+    #bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      opacity: 0.35;
+    }
+
     .hero-vignette {
       position: absolute;
       inset: 0;
       z-index: 0;
       background:
-        radial-gradient(ellipse 80% 40% at 50% 100%, rgba(4,7,18,0.9) 0%, transparent 70%),
-        radial-gradient(ellipse 60% 30% at 50% 0%,   rgba(4,7,18,0.5) 0%, transparent 80%);
+        radial-gradient(ellipse 80% 50% at 50% 100%, transparent 30%, var(--void) 80%),
+        radial-gradient(ellipse 100% 40% at 50% 0%,   transparent 40%, rgba(5,8,16,0.6) 100%);
       pointer-events: none;
     }
 
@@ -404,17 +392,15 @@
     }
 
     .about-card {
-      background: rgba(6,10,24,0.55);
-      border: 1px solid rgba(255,255,255,0.1);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: var(--card);
+      border: 1px solid var(--card-b);
       border-radius: var(--radius-md);
       padding: 32px 28px;
       transition: border-color 0.25s, transform 0.25s;
     }
 
     .about-card:hover {
-      border-color: rgba(11,114,255,0.35);
+      border-color: rgba(11,114,255,0.3);
       transform: translateY(-4px);
     }
 
@@ -465,10 +451,8 @@
     }
 
     .orbit-hero-card {
-      background: rgba(6,10,24,0.55);
-      border: 1px solid rgba(255,255,255,0.1);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      background: var(--card);
+      border: 1px solid var(--card-b);
       border-radius: var(--radius-lg);
       padding: 64px 56px;
       position: relative;
@@ -577,10 +561,8 @@
     }
 
     .sheets-card {
-      background: rgba(6,10,24,0.55);
-      border: 1px solid rgba(255,255,255,0.1);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      background: var(--card);
+      border: 1px solid var(--card-b);
       border-radius: var(--radius-lg);
       padding: 64px 56px;
       display: grid;
@@ -685,10 +667,8 @@
     }
 
     .analyser-card {
-      background: rgba(6,10,24,0.55);
-      border: 1px solid rgba(255,255,255,0.1);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      background: var(--card);
+      border: 1px solid var(--card-b);
       border-radius: var(--radius-lg);
       padding: 64px 56px;
       display: grid;
@@ -998,14 +978,6 @@
 <!-- Starfield canvas -->
 <canvas id="starfield"></canvas>
 
-<!-- Fixed space video — covers entire page -->
-<div id="bg-video-wrap">
-  <video autoplay muted loop playsinline>
-    <source src="images/alaada-space.mp4" type="video/mp4">
-    <img src="images/alaada-space-fallback.jpg" alt="Space Background">
-  </video>
-</div>
-
 <!-- User badge -->
 <div id="user-badge" class="hidden">
   <div class="badge-avatar" id="badge-initial">?</div>
@@ -1036,6 +1008,10 @@
 
 <!-- ── HERO ──────────────────────────────────────────────────── -->
 <section id="hero">
+  <video autoplay muted loop playsinline id="bg-video">
+    <source src="images/alaada-space.mp4" type="video/mp4">
+    <img src="images/alaada-space-fallback.jpg" alt="Space Background">
+  </video>
   <div class="hero-vignette"></div>
 
   <div class="hero-content">
@@ -1201,7 +1177,7 @@
   <div class="footer-left">
     <div class="footer-brand">Alaada</div>
     <p>Where Perfection meets Possibility.</p>
-    <p><a href="/cdn-cgi/l/email-protection#b6d7dad7d7d2d7f6d7dad7d7d2d798d5d9db"><span class="__cf_email__" data-cfemail="d0b1bcb1b1b4b190b1bcb1b1b4b1feb3bfbd">[email&#160;protected]</span></a></p>
+    <p><a href="mailto:alaada@alaada.com">alaada@alaada.com</a></p>
   </div>
   <div class="footer-right">
     <div class="footer-links">
@@ -1215,7 +1191,7 @@
 </footer>
 
 <!-- ── JS ─────────────────────────────────────────────────────── -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 /* ── STARFIELD ────────────────────────────────────────────── */
 (() => {
   const canvas = document.getElementById('starfield');
@@ -1438,4 +1414,14 @@
     if (sheetsBtn) {
       sheetsBtn.addEventListener("click", e => {
         e.preventDefault();
-        launchProduct(DEST.sheets, "Launching Alaada Sheets�
+        launchProduct(DEST.sheets, "Launching Alaada Sheets…");
+      });
+    }
+  });
+})();
+</script>
+
+<!-- Cloudflare Web Analytics -->
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2e5783d5c76f4c71a1e6bf7761b05d08"}'></script>
+</body>
+</html>
