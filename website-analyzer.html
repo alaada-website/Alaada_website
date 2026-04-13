@@ -214,8 +214,7 @@ async function analyze() {
         }
     } catch (err) {
         output.innerHTML = `❌ Network error: ${err.message}<br><br>
-            <small>Check: Is the backend running at alaada-analyzer.onrender.com?<br>
-            Render free tier spins down after inactivity — first request may take 30–60s.</small>`;
+            Please try again later`;
     } finally {
         loading.style.display = "none";
         btn.disabled = false;
