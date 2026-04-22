@@ -128,7 +128,8 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
 .rh:hover,.rh.sr{background:var(--hdr-sel);color:var(--blue)}
 #cellarea{position:relative}
 .grow{display:flex}
-.cell{flex-shrink:0;border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);padding:0 5px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ctxt);cursor:cell;user-select:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:flex;align-items:center;touch-action:none}
+.cell{flex-shrink:0;border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);padding:0 5px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ctxt);cursor:cell;user-select:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:flex;align-items:center;touch-action:pan-x pan-y}
+@media(max-width:768px){.cell{font-size:13px}#gscroll{overscroll-behavior:contain}}
 .cell.ssel{background:var(--sel-bg)}
 .cell.active{background:rgba(61,143,255,.06)!important;outline:2.5px solid var(--sel);outline-offset:-2px;z-index:5}
 /* ── IMPROVED ERROR CELL STYLING ── */
@@ -557,7 +558,8 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
 
 <div id="toast"></div>
 <input type="file" id="filein" accept=".xlsx,.csv,.xls,.tsv,.json" onchange="G.loadFile(event)">
-<input type="file" id="imgin" accept="image/*" capture="environment" style="display:none" onchange="G.loadImage(event)">
+<input type="file" id="imgin" accept="image/*" style="display:none" onchange="G.loadImage(event)">
+<input type="file" id="imgcam" accept="image/*" capture="environment" style="display:none" onchange="G.loadImage(event)">
 
 <script>
 'use strict';
@@ -1558,28 +1560,36 @@ const G={
   newFile(){if(!confirm('New spreadsheet? Unsaved changes will be lost.'))return;this.sheets=[{name:'Sheet1',cells:{},cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24)}];this.si=0;this.undoStack=[];this.redoStack=[];document.getElementById('docname').textContent='Untitled';this.moveTo(0,0);this.renderTabs();this.toast('New spreadsheet','ok')},
   openFile(){document.getElementById('filein').click()},
   scanImage(){
-    // Mobile shows camera+gallery, desktop shows file picker
-    document.getElementById('imgin').click();
+    // On mobile let user pick: camera vs gallery; desktop -> file picker
+    const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if(isMobile){
+      const choice=confirm('OK = Take a photo with camera\nCancel = Pick from gallery / files');
+      document.getElementById(choice?'imgcam':'imgin').click();
+    } else {
+      document.getElementById('imgin').click();
+    }
   },
   async loadImage(e){
-    const file=e.target.files[0];if(!file)return;
+    const file=e.target.files&&e.target.files[0];if(!file){return}
     e.target.value='';
-    if(file.size>10*1024*1024){this.toast('Image too large (max 10MB)','err');return}
+    if(!/^image\//.test(file.type)){this.toast('Not an image file','err');return}
+    if(file.size>12*1024*1024){this.toast('Image too large (max 12MB)','err');return}
     this.toast('Reading image…','ok');
     const rd=new FileReader();
+    rd.onerror=()=>this.toast('Could not read image','err');
     rd.onload=async ev=>{
       try{
         const r=await fetch(`${API}/api/ocr/image`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:ev.target.result})});
-        if(!r.ok){this.toast('OCR failed (backend offline?)','err');return}
+        if(!r.ok){this.toast(`OCR failed (${r.status}). Backend offline?`,'err');return}
         const d=await r.json();
-        if(!d.success||!Array.isArray(d.rows)){this.toast(d.error||'No table detected','err');return}
+        if(!d.success||!Array.isArray(d.rows)||!d.rows.length){this.toast(d.error||'No table detected in image','err');return}
         this.pushUndo();
         const cells={};
-        d.rows.forEach((row,r)=>row.forEach((v,c)=>{if(String(v).trim()!=='')cells[this.ref(r,c)]={value:String(v)}}));
+        d.rows.forEach((row,r)=>row.forEach((v,c)=>{const s=String(v??'').trim();if(s!=='')cells[this.ref(r,c)]={value:s}}));
         this.sheets[this.si].cells=cells;
         this.recalc();this.render();
         this.toast(`Imported ${d.rows.length}×${(d.rows[0]||[]).length} from image ✓`,'ok');
-      }catch(err){this.toast('Image import failed: '+err.message,'err')}
+      }catch(err){this.toast('Image import failed: '+(err.message||err),'err')}
     };
     rd.readAsDataURL(file);
   },
@@ -1589,22 +1599,34 @@ const G={
     const wb=XLSX.utils.book_new();
     for(const sh of this.sheets){
       const ws={};let mr=0,mc=0;
+      // ensure formulas are calculated so cached values get written (Excel-safe)
+      try{this.recalc&&this.recalc()}catch(_){}
       for(const ref of Object.keys(sh.cells)){const m=ref.match(/^([A-Z]+)(\d+)$/);if(m){mr=Math.max(mr,+m[2]);mc=Math.max(mc,this.c2n(m[1])+1)}}
       for(const[ref,cell]of Object.entries(sh.cells)){
         if(!cell||typeof cell!=='object')continue;
-        const raw=cell.value??'';
-        if(raw.startsWith('=')){ws[ref]={f:raw.slice(1)};continue}
-        const n=parseFloat(raw);
-        ws[ref]={v:isNaN(n)?String(raw):n,t:isNaN(n)?'s':'n'};
+        const raw=cell.value==null?'':String(cell.value);
         const fmt=cell.format||{};
-        if(Object.keys(fmt).length)ws[ref].s={font:{bold:!!fmt.bold,italic:!!fmt.italic},fill:fmt.background&&fmt.background!=='#ffffff'?{fgColor:{rgb:fmt.background.replace('#','')},patternType:'solid'}:{}};
+        const styleObj=Object.keys(fmt).length?{font:{bold:!!fmt.bold,italic:!!fmt.italic},fill:fmt.background&&fmt.background!=='#ffffff'?{fgColor:{rgb:fmt.background.replace('#','')},patternType:'solid'}:{}}:null;
+        if(raw.startsWith('=')){
+          // Preserve formula AND cached value/type so Excel/Tally read it correctly
+          const cached=cell.computed!==undefined?cell.computed:(cell.display!==undefined?cell.display:'');
+          const cn=parseFloat(cached);
+          const isNum=cached!==''&&cached!==null&&!isNaN(cn)&&isFinite(cn);
+          ws[ref]={f:raw.slice(1),t:isNum?'n':'s',v:isNum?cn:String(cached)};
+          if(styleObj)ws[ref].s=styleObj;
+          continue;
+        }
+        const n=parseFloat(raw);
+        const isNum=raw!==''&&!isNaN(n)&&isFinite(n)&&/^-?\d*\.?\d+(e[-+]?\d+)?$/i.test(raw.trim());
+        ws[ref]={v:isNum?n:raw,t:isNum?'n':'s'};
+        if(styleObj)ws[ref].s=styleObj;
       }
-      ws['!ref']=mr>0?`A1:${this.n2c(mc-1)}${mr}`:'A1';
+      ws['!ref']=mr>0?`A1:${this.n2c(Math.max(0,mc-1))}${mr}`:'A1';
       ws['!cols']=(sh.cw||[]).slice(0,mc).map(w=>({wch:Math.max(8,(w||100)/7)}));
-      XLSX.utils.book_append_sheet(wb,ws,sh.name.slice(0,31));
+      XLSX.utils.book_append_sheet(wb,ws,(sh.name||'Sheet').slice(0,31));
     }
-    XLSX.writeFile(wb,(document.getElementById('docname').textContent||'Spreadsheet')+'.xlsx');
-    this.toast('Saved ✓','ok');
+    XLSX.writeFile(wb,(document.getElementById('docname').textContent||'Spreadsheet')+'.xlsx',{bookType:'xlsx',cellStyles:true});
+    this.toast('Saved ✓ (formulas preserved)','ok');
   },
 
   loadFile(e){
