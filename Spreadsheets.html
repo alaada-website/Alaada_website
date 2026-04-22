@@ -6,7 +6,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Alaada Sheets</title>
+<title>Alaada Sheets — v4</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -243,6 +243,75 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
 @media (hover:none){
   .tb:hover,.rb:hover,.ecrd:hover,.ci:hover,.stab:hover{transform:none;background:inherit}
 }
+
+/* ─── v4 ADDITIONS ─────────────────────────────────────────────── */
+#chatPanel{position:fixed;top:0;right:-440px;width:420px;max-width:92vw;height:100dvh;background:linear-gradient(180deg,#0f1119,#13141d);border-left:1px solid var(--wire);z-index:200;display:flex;flex-direction:column;transition:right .28s cubic-bezier(.2,.8,.2,1);box-shadow:-12px 0 36px rgba(0,0,0,.4)}
+#chatPanel.open{right:0}
+#chatHdr{height:54px;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--wire);background:var(--ink2);flex-shrink:0}
+#chatHdr .gem{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#3d8fff,#7c5cff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;box-shadow:0 2px 10px rgba(61,143,255,.4)}
+#chatHdr h3{flex:1;font-size:14px;color:#f0f2ff;font-weight:700;letter-spacing:-.2px}
+#chatHdr h3 small{display:block;font-size:10.5px;color:var(--mist);font-weight:500;margin-top:1px}
+#chatClose{width:32px;height:32px;border-radius:7px;background:transparent;border:1px solid var(--wire);color:var(--mist);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+#chatClose:hover{background:var(--ink3);color:#fff;border-color:var(--wire2)}
+#chatBody{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--wire) transparent}
+#chatBody::-webkit-scrollbar{width:6px}#chatBody::-webkit-scrollbar-thumb{background:var(--wire);border-radius:3px}
+.cmsg{max-width:88%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;animation:fadeUp .25s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.cmsg.user{align-self:flex-end;background:linear-gradient(135deg,#3d8fff,#5b6cff);color:#fff;border-bottom-right-radius:4px}
+.cmsg.bot{align-self:flex-start;background:var(--ink3);color:#dde4ff;border:1px solid var(--wire);border-bottom-left-radius:4px}
+.cmsg.bot.thinking{color:var(--mist);font-style:italic}
+.cmsg.bot .ops-tag{display:inline-block;margin-top:8px;padding:3px 8px;border-radius:5px;background:rgba(0,212,160,.15);color:var(--teal);font-size:10.5px;font-weight:600;border:1px solid rgba(0,212,160,.3)}
+#chatSugg{padding:0 16px 8px;display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0}
+.csugg{padding:6px 11px;border-radius:14px;background:rgba(61,143,255,.08);border:1px solid rgba(61,143,255,.25);color:#aac4ff;font-size:11px;cursor:pointer;transition:all .15s;font-family:inherit}
+.csugg:hover{background:rgba(61,143,255,.18);border-color:rgba(61,143,255,.5);transform:translateY(-1px)}
+#chatInput{padding:12px 14px;border-top:1px solid var(--wire);background:var(--ink2);display:flex;gap:8px;flex-shrink:0;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+#chatTxt{flex:1;min-width:0;background:var(--ink3);color:#e8ecff;border:1px solid var(--wire);border-radius:10px;padding:9px 12px;font-family:inherit;font-size:13px;outline:none;resize:none;max-height:120px;line-height:1.4;transition:all .15s}
+#chatTxt:focus{border-color:var(--blue);background:#1d2030;box-shadow:0 0 0 3px rgba(61,143,255,.1)}
+#chatSend{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#3d8fff,#5b6cff);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:14px;font-weight:700}
+#chatSend:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(61,143,255,.4)}
+#chatSend:disabled{opacity:.4;cursor:not-allowed;transform:none}
+#chatBackdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;opacity:0;pointer-events:none;transition:opacity .2s}
+#chatBackdrop.open{opacity:1;pointer-events:auto}
+
+/* Anomaly drawer (bottom sheet) */
+#anoDrawer{position:fixed;bottom:-100%;left:0;right:0;max-height:62dvh;background:linear-gradient(180deg,#13141d,#0f1119);border-top:1px solid var(--wire);z-index:180;transition:bottom .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;border-radius:16px 16px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+#anoDrawer.open{bottom:0}
+#anoHdr{padding:14px 18px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--wire);flex-shrink:0}
+#anoHdr h3{flex:1;font-size:14px;color:#f0f2ff;font-weight:700}
+#anoHdr h3 small{color:var(--mist);font-weight:500;margin-left:6px;font-size:11.5px}
+#anoClose{width:30px;height:30px;border-radius:7px;background:var(--ink3);border:1px solid var(--wire);color:var(--mist);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+#anoBody{flex:1;overflow-y:auto;padding:10px 14px 18px}
+.ano-card{background:var(--ink3);border:1px solid var(--wire);border-radius:10px;padding:11px 13px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:all .15s}
+.ano-card:hover{border-color:var(--wire2);background:var(--ink4);transform:translateX(2px)}
+.ano-pip{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.ano-pip.high{background:var(--red);box-shadow:0 0 8px rgba(255,77,106,.5)}
+.ano-pip.medium{background:var(--amber)}
+.ano-pip.low{background:var(--blue)}
+.ano-body{flex:1;min-width:0}
+.ano-ttl{font-size:12.5px;font-weight:600;color:#e8ecff;margin-bottom:3px}
+.ano-msg{font-size:11.5px;color:var(--fog);line-height:1.45}
+.ano-cells{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+.ano-cell{padding:2px 7px;border-radius:4px;background:rgba(61,143,255,.15);border:1px solid rgba(61,143,255,.3);color:#aac4ff;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600}
+.ano-empty{padding:30px 20px;text-align:center;color:var(--mist);font-size:13px}
+.ano-empty .ok{color:var(--teal);font-size:32px;display:block;margin-bottom:8px}
+
+/* Mobile cell-ref pill (always visible) */
+#mobilePill{display:none;position:fixed;left:50%;transform:translateX(-50%);top:calc(48px + 52px + 34px + 6px);z-index:50;padding:5px 12px;border-radius:99px;background:rgba(13,14,20,.92);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.4px;box-shadow:0 4px 16px rgba(0,0,0,.3);pointer-events:none}
+#mobilePill .v{color:var(--gold);margin-left:8px;font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle}
+
+/* Smoother formula bar selection */
+#fbarinput{transition:background .15s}
+#namebox{transition:all .18s}
+
+@media(max-width:640px){
+  #chatPanel{width:100vw;max-width:100vw}
+  #mobilePill{display:block}
+  .tb-hide-sm{display:none!important}
+  #lname{font-size:12.5px}
+  #lname b::after{content:""}
+  .cmsg{font-size:13.5px;max-width:92%}
+}
+
 </style>
 </head>
 <body>
@@ -397,6 +466,8 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
 <div id="aibar">
   <div id="aiorb"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div>
   <input id="aiin" type="text" placeholder='Ask Orbit AI… "sum column B", "bold header", "fix errors", "sort by revenue"' onkeydown="if(event.key==='Enter')G.aiRun()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <button class="tb gold" onclick="G.openChat()" style="margin-left:6px" title="Open Orbit AI Chat (Ctrl+/)">💬 Chat</button>
+  <button class="tb" onclick="G.runAnomalies()" title="Detect anomalies & outliers">🔍 Anomalies</button>
   <span id="aist"></span>
   <button id="airun" onclick="G.aiRun()">Run ⚡</button>
 </div>
@@ -700,7 +771,7 @@ const G={
     b.style.cssText=`display:block;left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
   },
 
-  renderFH(){
+  renderFH(){this._updPill&&this._updPill();
     const fh=document.getElementById('fhandle');
     const c2=Math.max(this.sel.c1,this.sel.c2),r2=Math.max(this.sel.r1,this.sel.r2);
     fh.style.cssText=`display:block;left:${this.colX(c2)+(this.sh.cw[c2]||100)-5}px;top:${this.rowY(r2)+(this.sh.rh[r2]||24)-5}px`;
@@ -1217,6 +1288,7 @@ const G={
           case'a':e.preventDefault();this.selAll();break;
           case's':e.preventDefault();this.saveXL();break;
           case'f':e.preventDefault();document.getElementById('aiin').focus();break;
+          case'/':e.preventDefault();G.openChat();break;
         }
         return;
       }
@@ -1470,6 +1542,157 @@ const G={
   aiFormula(){const d=prompt('Describe what you want to calculate:');if(d){document.getElementById('aiin').value=`Write the best formula for: ${d} — put it in cell ${this.ref(this.row,this.col)}`;this.aiRun()}},
   aiSuggest(){document.getElementById('aiin').value='Look at this data and suggest 3 specific formulas or improvements I should add';this.aiRun()},
 
+  // ── v4: Mobile cell-ref pill ────────────────────────────────
+  _updPill(){
+    const el=document.getElementById('mpRef');if(!el)return;
+    el.textContent=this.ref(this.row,this.col);
+    const v=this.cellVal(this.ref(this.row,this.col));
+    document.getElementById('mpVal').textContent=v?('= '+v.slice(0,24)):'';
+  },
+
+  // ── v4: AI CHAT (multi-turn) ────────────────────────────────
+  _chat:{open:false,history:[],busy:false},
+
+  openChat(){
+    this._chat.open=true;
+    document.getElementById('chatPanel').classList.add('open');
+    document.getElementById('chatBackdrop').classList.add('open');
+    if(this._chat.history.length===0)this._chatGreet();
+    setTimeout(()=>document.getElementById('chatTxt')?.focus(),300);
+  },
+  closeChat(){
+    this._chat.open=false;
+    document.getElementById('chatPanel').classList.remove('open');
+    document.getElementById('chatBackdrop').classList.remove('open');
+  },
+  _chatGreet(){
+    this._chatPush('bot',"👋 Hi! I'm Orbit AI. I can analyse your sheet, write formulas, fix errors, and edit cells for you. What would you like to do?");
+    this._chatSugg(['Summarise this sheet','Find outliers in my data','Add totals at the bottom','Fix all formula errors']);
+  },
+  _chatPush(role,text,opsCount){
+    const body=document.getElementById('chatBody');
+    const d=document.createElement('div');
+    d.className='cmsg '+role;
+    d.textContent=text;
+    if(opsCount>0){
+      const tag=document.createElement('div');
+      tag.className='ops-tag';
+      tag.textContent='✓ Applied '+opsCount+' change'+(opsCount!==1?'s':'')+' to your sheet';
+      d.appendChild(document.createElement('br'));
+      d.appendChild(tag);
+    }
+    body.appendChild(d);
+    body.scrollTop=body.scrollHeight;
+    return d;
+  },
+  _chatSugg(arr){
+    const w=document.getElementById('chatSugg');w.innerHTML='';
+    (arr||[]).slice(0,4).forEach(s=>{
+      const b=document.createElement('button');b.className='csugg';b.textContent=s;
+      b.onclick=()=>{document.getElementById('chatTxt').value=s;this.chatSend()};
+      w.appendChild(b);
+    });
+  },
+  async chatSend(){
+    if(this._chat.busy)return;
+    const ta=document.getElementById('chatTxt');
+    const text=(ta.value||'').trim();if(!text)return;
+    ta.value='';ta.style.height='auto';
+    this._chatPush('user',text);
+    this._chat.history.push({role:'user',content:text});
+    this._chatSugg([]);
+    const thinking=this._chatPush('bot','Thinking…');thinking.classList.add('thinking');
+    this._chat.busy=true;document.getElementById('chatSend').disabled=true;
+
+    // Build sheet payload (cap size for speed)
+    const compactSheets=this.sheets.map(s=>{
+      const cells={};let n=0;
+      for(const[k,v]of Object.entries(s.cells)){
+        if(n++>500)break;
+        cells[k]={value:v.value,computed:v.computed};
+      }
+      return{name:s.name,cells};
+    });
+
+    try{
+      const r=await fetch(`${API}/api/ai/chat`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          messages:this._chat.history.slice(-12),
+          sheets:compactSheets,
+          active_sheet:this.si,
+          active_cell:this.ref(this.row,this.col),
+          selection:`${this.ref(this.sel.r1,this.sel.c1)}:${this.ref(this.sel.r2,this.sel.c2)}`,
+        }),
+      });
+      const d=await r.json();
+      thinking.remove();
+      const reply=d.reply||"I couldn't form a reply.";
+      const ops=d.operations||[];
+      if(ops.length){this.pushUndo();this.execOps(ops);this.recalc();this.render();}
+      this._chatPush('bot',reply,ops.length);
+      this._chat.history.push({role:'assistant',content:reply});
+      this._chatSugg(d.suggestions||[]);
+    }catch(err){
+      thinking.remove();
+      this._chatPush('bot','⚠ '+(err.message||'Network error. Please try again.'));
+    }finally{
+      this._chat.busy=false;document.getElementById('chatSend').disabled=false;
+    }
+  },
+
+  // ── v4: ANOMALIES ───────────────────────────────────────────
+  async runAnomalies(){
+    this.openAno();
+    document.getElementById('anoSub').textContent='scanning…';
+    document.getElementById('anoBody').innerHTML='<div class="ano-empty">Analysing your data…</div>';
+    try{
+      const compactSheets=this.sheets.map(s=>{
+        const cells={};let n=0;
+        for(const[k,v]of Object.entries(s.cells)){if(n++>3000)break;cells[k]={value:v.value,computed:v.computed};}
+        return{name:s.name,cells};
+      });
+      const r=await fetch(`${API}/api/ai/anomalies`,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({sheets:compactSheets,active_sheet:this.si})});
+      const d=await r.json();
+      this._renderAno(d);
+    }catch(err){
+      document.getElementById('anoBody').innerHTML=
+        '<div class="ano-empty">⚠ '+(err.message||'Could not scan')+'</div>';
+    }
+  },
+  openAno(){document.getElementById('anoDrawer').classList.add('open')},
+  closeAno(){document.getElementById('anoDrawer').classList.remove('open')},
+  _renderAno(d){
+    const list=d.anomalies||[];
+    document.getElementById('anoSub').textContent=`· ${list.length} found · ${d.rows_analysed||0} rows scanned`;
+    const body=document.getElementById('anoBody');
+    if(!list.length){
+      body.innerHTML='<div class="ano-empty"><span class="ok">✓</span>Your data looks clean — no anomalies detected.</div>';
+      return;
+    }
+    body.innerHTML=list.map((a,i)=>{
+      const cells=(a.cells||[]).slice(0,12).map(c=>`<span class="ano-cell" data-jump="${c}">${c}</span>`).join('');
+      const icon=a.type==='outlier'?'📈':a.type==='blank'?'⬜':a.type==='duplicate'?'🔁':a.type==='error'?'⚠':a.type==='sign'?'➖':'•';
+      return `<div class="ano-card" data-idx="${i}">
+        <div class="ano-pip ${a.severity||'low'}"></div>
+        <div class="ano-body">
+          <div class="ano-ttl">${icon} ${a.header||a.column} · ${a.type}</div>
+          <div class="ano-msg">${a.message||''}</div>
+          ${cells?`<div class="ano-cells">${cells}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    body.querySelectorAll('[data-jump]').forEach(el=>{
+      el.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        const ref=el.dataset.jump;const p=this.pRef(ref);
+        if(p){this.moveTo(p.r,p.c);this.scrollIntoView(p.r,p.c);
+          if(window.innerWidth<640)this.closeAno();}
+      });
+    });
+  },
+
   // ── CONNECTIVITY ──────────────────────────────────────────────
   async checkConn(){
     try{
@@ -1630,5 +1853,36 @@ async function doEx(fmt){
 /* ─── INIT ────────────────────────────────────────────────────── */
 window.addEventListener('load',()=>G.init());
 </script>
+
+<!-- v4: AI Chat panel -->
+<div id="chatBackdrop" onclick="G.closeChat()"></div>
+<aside id="chatPanel" aria-label="Orbit AI Chat">
+  <header id="chatHdr">
+    <div class="gem">✨</div>
+    <h3>Orbit AI Chat<small>Ask anything · I can also edit your sheet</small></h3>
+    <button id="chatClose" onclick="G.closeChat()" aria-label="Close chat">✕</button>
+  </header>
+  <div id="chatBody"></div>
+  <div id="chatSugg"></div>
+  <form id="chatInput" onsubmit="event.preventDefault();G.chatSend()">
+    <textarea id="chatTxt" rows="1" placeholder="Ask about your data, request changes…"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();G.chatSend()}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+    <button id="chatSend" type="submit" aria-label="Send">➤</button>
+  </form>
+</aside>
+
+<!-- v4: Anomaly drawer -->
+<div id="anoDrawer" aria-label="Anomalies">
+  <div id="anoHdr">
+    <h3>🔍 Anomalies <small id="anoSub">scanning…</small></h3>
+    <button id="anoClose" onclick="G.closeAno()" aria-label="Close">✕</button>
+  </div>
+  <div id="anoBody"></div>
+</div>
+
+<!-- v4: Mobile cell-ref pill -->
+<div id="mobilePill"><span id="mpRef">A1</span><span class="v" id="mpVal"></span></div>
+
 </body>
 </html>
