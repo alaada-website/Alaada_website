@@ -2,11 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Alaada Sheets — v4</title>
+<meta name="theme-color" content="#0d0e14">
+<title>Alaada Sheets — Excel-grade spreadsheets with AI, formulas & analytics</title>
+<meta name="description" content="Alaada Sheets is a fast, mobile-friendly spreadsheet with full Excel formula support (SUM, VLOOKUP, IF), AI chat that edits cells, anomaly detection, image-to-sheet OCR, and .xlsx export.">
+<meta name="keywords" content="spreadsheet, excel, formulas, SUM, VLOOKUP, AI spreadsheet, anomaly detection, OCR, xlsx, csv, mobile spreadsheet, online excel">
+<meta name="author" content="Alaada">
+<link rel="canonical" href="/Spreadsheets.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Alaada Sheets — AI-powered spreadsheets">
+<meta property="og:description" content="Excel-grade formulas, AI chat that edits cells, anomaly detection, image-to-sheet OCR, mobile-ready.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Alaada Sheets">
+<meta name="twitter:description" content="Excel-grade spreadsheet with AI, formulas & analytics.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Alaada Sheets","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0"},"description":"Excel-grade spreadsheet with AI chat, anomaly detection, OCR import, and full formula support."}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -326,6 +340,7 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
   <div class="tdiv tdiv-sm"></div>
   <button class="tb tb-hide-sm" onclick="G.newFile()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>New</button>
   <button class="tb tb-hide-sm" onclick="G.openFile()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Open</button>
+  <button class="tb tb-hide-sm" onclick="G.scanImage()" title="Import from image (camera or file)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Scan</button>
   <div class="tdiv tdiv-sm"></div>
   <button class="tb gold tb-hide-sm" onclick="G.saveXL()" title="Ctrl+S"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save .xlsx</button>
   <button class="tb tb-hide-sm" onclick="showEx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
@@ -401,6 +416,11 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
       <button class="rb" onclick="G.fmt('border',true)">Border</button>
       <button class="rb" onclick="G.fmt('border',false)">No Border</button>
     </div><div class="rl">Borders</div></div></div>
+    <div class="rg" data-t="insert" style="display:none"><div class="rs"><div class="ri">
+      <button class="rb" onclick="G.scanImage()" title="Scan a photo or screenshot of a table">📷 From Image</button>
+      <button class="rb" onclick="G.openFile()">📁 From File</button>
+      <button class="rb" onclick="G.loadDemo()">🎲 Sample Data</button>
+    </div><div class="rl">Import</div></div></div>
 
     <!-- DATA -->
     <div class="rg" data-t="data" style="display:none"><div class="rs"><div class="ri">
@@ -536,7 +556,8 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
 </div>
 
 <div id="toast"></div>
-<input type="file" id="filein" accept=".xlsx,.csv" onchange="G.loadFile(event)">
+<input type="file" id="filein" accept=".xlsx,.csv,.xls,.tsv,.json" onchange="G.loadFile(event)">
+<input type="file" id="imgin" accept="image/*" capture="environment" style="display:none" onchange="G.loadImage(event)">
 
 <script>
 'use strict';
@@ -577,14 +598,13 @@ const G={
   init(){
     const cw=Array(COLS).fill(100),rh=Array(ROWS).fill(24);
     this.sheets=[{name:'Sheet1',cells:{},cw:[...cw],rh:[...rh]}];
-    this.loadDemo();
+    // Blank startup — no demo data. Use Insert › Sample Data to load demo.
     this.render();
     this.renderTabs();
     this.bindEvents();
     this.moveTo(0,0);
     this.checkConn();
     setInterval(()=>this.checkConn(),12000);
-    // visualViewport for mobile keyboard
     if(window.visualViewport){
       window.visualViewport.addEventListener('resize',()=>{if(this.editing){this.posEditor();this.scrollIntoView(this.eRow,this.eCol)}});
     }
@@ -862,70 +882,101 @@ const G={
   setCell(r,c,val){
     this.pushUndo();
     const ref=this.ref(r,c);
-    if(val===''&&!this.cells[ref]?.format){delete this.cells[ref];return}
+    if(val===''&&!this.cells[ref]?.format){delete this.cells[ref];this.recalc();return}
     if(!this.cells[ref])this.cells[ref]={};
     this.cells[ref].value=val;
     if(val&&val.startsWith('=')){
-      const result=this.evalFormula(val);
-      this.cells[ref].computed=result;
+      this.cells[ref].computed=this.evalFormula(val);
       this.evalBackend(ref,val);
     } else {
       delete this.cells[ref].computed;
     }
+    // Recalc dependents (any other formulas that may reference this cell)
+    this.recalc();
   },
 
   // ── FORMULA ENGINE (local) ────────────────────────────────────
-  evalFormula(f){
-    if(!f||!f.startsWith('='))return f;
-    try{
-      const flat={};
-      for(const[k,v]of Object.entries(this.cells))flat[k]=(typeof v==='object'?v?.value??'':String(v));
-      return this._expr(f.slice(1),flat,0);
-    }catch(e){return'#ERROR!'}
+  // Resolve a single cell ref to its evaluated value (recurses through formulas)
+  _resolveCell(ref,seen){
+    ref=ref.toUpperCase();
+    if(seen.has(ref))return'#CIRCULAR!';
+    const cell=this.cells[ref];
+    if(!cell)return'';
+    const raw=(typeof cell==='object'?(cell.value??''):String(cell));
+    if(typeof raw==='string'&&raw.startsWith('=')){
+      seen.add(ref);
+      const r=this._evalExpr(raw.slice(1),seen);
+      seen.delete(ref);
+      return r;
+    }
+    return raw;
   },
 
-  _rng(rng,fl){
+  evalFormula(f){
+    if(!f||!f.startsWith('='))return f;
+    try{return this._evalExpr(f.slice(1),new Set())}
+    catch(e){return'#ERROR!'}
+  },
+
+  _evalExpr(e,seen){return this._expr(e,seen,0)},
+
+  _rng(rng,seen){
     const[a,b]=rng.split(':');if(!b)return[];
     const p1=this.pRef(a),p2=this.pRef(b);if(!p1||!p2)return[];
     const n=[];
     for(let r=Math.min(p1.r,p2.r);r<=Math.max(p1.r,p2.r);r++)
       for(let c=Math.min(p1.c,p2.c);c<=Math.max(p1.c,p2.c);c++){
-        const v=fl[this.ref(r,c)]??'';const f=parseFloat(v);if(!isNaN(f))n.push(f);
+        const v=this._resolveCell(this.ref(r,c),seen);
+        const f=parseFloat(v);if(!isNaN(f)&&isFinite(f))n.push(f);
       }
     return n;
   },
 
-  _expr(e,fl,d){
-    if(d>6)return'#REF!';
+  _expr(e,seen,d){
+    if(d>32)return'#REF!';
+    seen=seen||new Set();
+    const self=this;
     const fn=(nm,as)=>{
-      const sp=s=>{const p=[],x=[0];let c='';for(const ch of s){if(ch==='(')x[0]++;else if(ch===')')x[0]--;if(ch===','&&x[0]===0){p.push(c.trim());c=''}else c+=ch}if(c.trim())p.push(c.trim());return p};
+      const sp=s=>{const p=[],x=[0];let c='',inq=false;for(const ch of s){if(ch==='"')inq=!inq;if(!inq){if(ch==='(')x[0]++;else if(ch===')')x[0]--;if(ch===','&&x[0]===0){p.push(c.trim());c='';continue}}c+=ch}if(c.trim())p.push(c.trim());return p};
       const a=sp(as);
-      const nums=()=>a.flatMap(x=>x.includes(':')?this._rng(x,fl):[parseFloat(this._expr(x,fl,d+1))]).filter(n=>!isNaN(n));
-      const ev=x=>this._expr(x,fl,d+1);
-      const str=x=>String(ev(x)).replace(/^"|"$/g,'');
+      const nums=()=>a.flatMap(x=>x.includes(':')?self._rng(x,seen):[parseFloat(self._expr(x,seen,d+1))]).filter(n=>!isNaN(n)&&isFinite(n));
+      const ev=x=>self._expr(x,seen,d+1);
+      const str=x=>{const v=ev(x);if(v==null)return '';let s=String(v);if(s.length>=2&&s[0]==='"'&&s[s.length-1]==='"')s=s.slice(1,-1);return s.replace(/\\"/g,'"')};
+      const rngVals=rng=>{
+        const[ra,rb]=rng.split(':');if(!rb)return[String(self._resolveCell(ra,seen))];
+        const p1=self.pRef(ra),p2=self.pRef(rb);if(!p1||!p2)return[];
+        const vals=[];
+        for(let r=Math.min(p1.r,p2.r);r<=Math.max(p1.r,p2.r);r++)
+          for(let c=Math.min(p1.c,p2.c);c<=Math.max(p1.c,p2.c);c++)
+            vals.push(String(self._resolveCell(self.ref(r,c),seen)));
+        return vals;
+      };
       const N=nm.toUpperCase();
       if(N==='SUM')return String(nums().reduce((a,b)=>a+b,0));
-      if(N==='AVERAGE'||N==='AVG'){const n=nums();return n.length?String(n.reduce((a,b)=>a+b,0)/n.length):'0'}
+      if(N==='AVERAGE'||N==='AVG'||N==='MEAN'){const n=nums();return n.length?String(n.reduce((a,b)=>a+b,0)/n.length):'0'}
       if(N==='COUNT')return String(nums().length);
+      if(N==='COUNTA'){let cnt=0;for(const x of a){if(x.includes(':')){for(const v of rngVals(x))if(String(v).trim()!=='')cnt++}else if(String(ev(x)).trim()!=='')cnt++}return String(cnt)}
+      if(N==='COUNTBLANK'){let cnt=0;for(const x of a){if(x.includes(':')){for(const v of rngVals(x))if(String(v).trim()==='')cnt++}else if(String(ev(x)).trim()==='')cnt++}return String(cnt)}
       if(N==='MAX'){const n=nums();return n.length?String(Math.max(...n)):'0'}
       if(N==='MIN'){const n=nums();return n.length?String(Math.min(...n)):'0'}
-      if(N==='ROUND'){const n=nums();const dp=parseInt(ev(a[1]??'0'))||0;return n.length?String(Math.round(n[0]*10**dp)/10**dp):'0'}
-      if(N==='ROUNDUP'){const n=nums();const dp=parseInt(ev(a[1]??'0'))||0;if(n.length){const f=10**dp;return String(Math.ceil(n[0]*f)/f)}return'0'}
-      if(N==='ROUNDDOWN'){const n=nums();const dp=parseInt(ev(a[1]??'0'))||0;if(n.length){const f=10**dp;return String(Math.floor(n[0]*f)/f)}return'0'}
-      if(N==='ABS'){const n=nums();return n.length?String(Math.abs(n[0])):'0'}
-      if(N==='SQRT'){const n=nums();return n.length?String(Math.sqrt(Math.max(0,n[0]))):'0'}
-      if(N==='POWER'){const n=nums();return n.length>=2?String(Math.pow(n[0],n[1])):'#VALUE!'}
-      if(N==='MOD'){const n=nums();return n.length>=2&&n[1]!==0?String(n[0]%n[1]):'#DIV/0!'}
-      if(N==='INT'){const n=nums();return n.length?String(Math.floor(n[0])):'0'}
+      if(N==='ROUND'){const v=parseFloat(ev(a[0]));const dp=parseInt(ev(a[1]??'0'))||0;return isNaN(v)?'0':String(Math.round(v*10**dp)/10**dp)}
+      if(N==='ROUNDUP'){const v=parseFloat(ev(a[0]));const dp=parseInt(ev(a[1]??'0'))||0;if(isNaN(v))return'0';const f=10**dp;return String(Math.ceil(v*f)/f)}
+      if(N==='ROUNDDOWN'){const v=parseFloat(ev(a[0]));const dp=parseInt(ev(a[1]??'0'))||0;if(isNaN(v))return'0';const f=10**dp;return String(Math.floor(v*f)/f)}
+      if(N==='ABS'){const v=parseFloat(ev(a[0]));return isNaN(v)?'0':String(Math.abs(v))}
+      if(N==='SQRT'){const v=parseFloat(ev(a[0]));return isNaN(v)?'0':String(Math.sqrt(Math.max(0,v)))}
+      if(N==='POWER'){const x=parseFloat(ev(a[0])),y=parseFloat(ev(a[1]));return(isNaN(x)||isNaN(y))?'#VALUE!':String(Math.pow(x,y))}
+      if(N==='MOD'){const x=parseFloat(ev(a[0])),y=parseFloat(ev(a[1]));if(isNaN(x)||isNaN(y))return'#VALUE!';return y===0?'#DIV/0!':String(x%y)}
+      if(N==='INT'){const v=parseFloat(ev(a[0]));return isNaN(v)?'0':String(Math.floor(v))}
       if(N==='PI')return String(Math.PI);
-      if(N==='IF'){const cv=ev(a[0]);const t=!!cv&&cv!=='0'&&cv!=='false'&&cv!=='FALSE';return ev(t?a[1]:(a[2]??''))}
+      if(N==='IF'){const cv=ev(a[0]);const t=!!cv&&cv!=='0'&&cv!=='false'&&cv!=='FALSE';return ev(t?a[1]:(a[2]??'""'))}
       if(N==='IFS'){for(let i=0;i<a.length-1;i+=2){const c=ev(a[i]);if(c&&c!=='0'&&c!=='false'&&c!=='FALSE')return ev(a[i+1])}return'#N/A'}
       if(N==='AND'){return a.every(x=>{const v=ev(x);return!!v&&v!=='0'&&v!=='false'&&v!=='FALSE'})?'TRUE':'FALSE'}
       if(N==='OR'){return a.some(x=>{const v=ev(x);return!!v&&v!=='0'&&v!=='false'&&v!=='FALSE'})?'TRUE':'FALSE'}
       if(N==='NOT'){const cv=ev(a[0]);return(!cv||cv==='0'||cv==='false'||cv==='FALSE')?'TRUE':'FALSE'}
-      if(N==='IFERROR'){try{const v=ev(a[0]);return String(v).startsWith('#')?str(a[1]??''):v}catch{return str(a[1]??'')}}
-      if(N==='IFNA'){try{const v=ev(a[0]);return String(v)==='#N/A'?str(a[1]??''):v}catch{return str(a[1]??'')}}
+      if(N==='IFERROR'){try{const v=ev(a[0]);return String(v).startsWith('#')?str(a[1]??'""'):v}catch{return str(a[1]??'""')}}
+      if(N==='IFNA'){try{const v=ev(a[0]);return String(v)==='#N/A'?str(a[1]??'""'):v}catch{return str(a[1]??'""')}}
       if(N==='CONCAT'||N==='CONCATENATE')return a.map(x=>str(x)).join('');
+      if(N==='TEXTJOIN'){const sep=str(a[0]);const parts=[];for(let i=2;i<a.length;i++){if(a[i].includes(':'))parts.push(...rngVals(a[i]).filter(v=>v!==''));else parts.push(str(a[i]))}return parts.join(sep)}
       if(N==='LEN')return String(str(a[0]).length);
       if(N==='UPPER')return str(a[0]).toUpperCase();
       if(N==='LOWER')return str(a[0]).toLowerCase();
@@ -944,11 +995,11 @@ const G={
       if(N==='DAY'){try{return String(new Date(str(a[0])).getDate())}catch{return'#VALUE!'}}
       if(N==='VLOOKUP'){
         const lv=str(a[0]),tbl=a[1],ci=+ev(a[2]);
-        if(tbl.includes(':')){const[ra,rb]=tbl.split(':');const p1=this.pRef(ra),p2=this.pRef(rb);if(p1&&p2){for(let r=p1.r;r<=p2.r;r++){const kv=fl[this.ref(r,p1.c)]??'';if(kv===lv)return fl[this.ref(r,p1.c+ci-1)]??''}}}
+        if(tbl.includes(':')){const[ra,rb]=tbl.split(':');const p1=self.pRef(ra),p2=self.pRef(rb);if(p1&&p2){for(let r=p1.r;r<=p2.r;r++){const kv=String(self._resolveCell(self.ref(r,p1.c),seen));if(kv===lv)return String(self._resolveCell(self.ref(r,p1.c+ci-1),seen))}}}
         return'#N/A';
       }
       if(N==='COUNTIF'){
-        const vals=a[0].includes(':')?this._rngAll(a[0],fl):[str(a[0])];
+        const vals=rngVals(a[0]);
         const crit=str(a[1]);
         const op=crit.match(/^(>=|<=|<>|>|<|=)(.+)$/);
         let cnt=0;
@@ -957,16 +1008,25 @@ const G={
       }
       if(N==='SUMIF'){
         const crng=a[0],crit=str(a[1]),srng=a[2]??a[0];
-        const cv=crng.includes(':')?this._rngAll(crng,fl):[str(a[0])];
-        const sv=srng.includes(':')?this._rng(srng,fl):[];
-        let tot=0;cv.forEach((v,i)=>{if(v===crit)tot+=sv[i]??0});return String(tot);
+        const cv=rngVals(crng);
+        const sv=self._rng(srng,seen);
+        const op=crit.match(/^(>=|<=|<>|>|<|=)(.+)$/);
+        let tot=0;
+        cv.forEach((v,i)=>{
+          const n=parseFloat(v);
+          let m=false;
+          if(op){const cn=parseFloat(op[2]);if(!isNaN(n)&&!isNaN(cn)){if(op[1]==='>')m=n>cn;else if(op[1]==='<')m=n<cn;else if(op[1]==='>=')m=n>=cn;else if(op[1]==='<=')m=n<=cn;else if(op[1]==='<>')m=n!==cn;else m=n===cn}}
+          else m=(v===crit);
+          if(m)tot+=sv[i]??0;
+        });
+        return String(tot);
       }
       if(N==='LARGE'){const n=nums();const k=+ev(a[1]??'1');return n.length>=k?String(n.sort((a,b)=>b-a)[k-1]):'#NUM!'}
       if(N==='SMALL'){const n=nums();const k=+ev(a[1]??'1');return n.length>=k?String(n.sort((a,b)=>a-b)[k-1]):'#NUM!'}
       if(N==='MEDIAN'){const n=nums().sort((a,b)=>a-b);const m=Math.floor(n.length/2);return n.length?String(n.length%2?n[m]:(n[m-1]+n[m])/2):'0'}
       if(N==='STDEV'){const n=nums();if(n.length<2)return'0';const m=n.reduce((a,b)=>a+b,0)/n.length;return String(Math.sqrt(n.reduce((a,v)=>a+(v-m)**2,0)/(n.length-1)))}
       if(N==='PRODUCT'){return String(nums().reduce((a,b)=>a*b,1))}
-      if(N==='ISNUMBER'){try{return isNaN(parseFloat(str(a[0])))?'FALSE':'TRUE'}catch{return'FALSE'}}
+      if(N==='ISNUMBER'){const v=str(a[0]);return(v!==''&&!isNaN(parseFloat(v))&&isFinite(parseFloat(v)))?'TRUE':'FALSE'}
       if(N==='ISBLANK')return str(a[0]).trim()===''?'TRUE':'FALSE';
       if(N==='ISTEXT'){const v=str(a[0]);return isNaN(parseFloat(v))&&v!==''?'TRUE':'FALSE'}
       if(N==='ISERROR')return String(ev(a[0])).startsWith('#')?'TRUE':'FALSE';
@@ -977,19 +1037,59 @@ const G={
       return'#NAME?';
     };
 
-    for(let i=0;i<6;i++){let ch=false;e=e.replace(/([A-Z][A-Z0-9]*)\(([^()]*)\)/gi,(m,nm,as)=>{ch=true;const r=fn(nm,as);if(typeof r==='string'&&isNaN(parseFloat(r))&&r!=='TRUE'&&r!=='FALSE'&&!r.startsWith('#')&&!r.startsWith('"'))return`"${r}"`;return String(r)});if(!ch)break}
-    e=e.replace(/\$?([A-Z]+)\$?(\d+)/gi,(m,col,row)=>{const v=fl[`${col.toUpperCase()}${row}`]??'';const f=parseFloat(v);return isNaN(f)?`"${v}"`:String(f)});
-    try{return Function('"use strict";return('+e+')')()}
+    // 1. Resolve cell refs FIRST so inner expressions like ROUND((D2-B2)/B2,1) work.
+    //    But skip refs that appear inside function args containing ranges (A1:B2) — these
+    //    are handled by range-aware functions. The regex below skips refs adjacent to ":".
+    e=e.replace(/(?<![:!A-Z0-9_."])\$?([A-Z]+)\$?(\d+)(?![:A-Z0-9_(])/gi,(m,col,row)=>{
+      const ref=`${col.toUpperCase()}${row}`;
+      const v=self._resolveCell(ref,seen);
+      if(typeof v==='string'&&v.startsWith('#'))return`"${v}"`;
+      const sv=String(v);
+      // Empty cell → treat as 0 in numeric context (prevents "" * 2 = NaN errors)
+      if(sv.trim()==='')return '0';
+      const f=parseFloat(sv);
+      if(!isNaN(f)&&isFinite(f)&&/^-?[\d.,eE+\-]+$/.test(sv.trim()))return String(f);
+      // Boolean coercion
+      if(sv==='TRUE')return '1';
+      if(sv==='FALSE')return '0';
+      return `"${sv.replace(/"/g,'\\"')}"`;
+    });
+    // 2. Resolve all function calls AND plain parenthesized math expressions
+    //    (innermost first via repeated passes). Plain parens become their numeric value
+    //    so outer functions can match.
+    for(let i=0;i<14;i++){
+      let ch=false;
+      // 2a. Resolve named function calls with no nested parens left in args
+      e=e.replace(/([A-Z][A-Z0-9_]*)\(([^()]*)\)/gi,(m,nm,as)=>{ch=true;const r=fn(nm,as);if(typeof r==='string'&&r.startsWith('#'))return`"${r}"`;if(typeof r==='string'&&isNaN(parseFloat(r))&&r!=='TRUE'&&r!=='FALSE'&&!/^".*"$/.test(r))return`"${r.replace(/"/g,'\\"')}"`;return String(r)});
+      // 2b. Reduce plain (math expression) groups — only when not preceded by a name letter
+      e=e.replace(/(^|[^A-Z0-9_])\(([^()]+)\)/gi,(m,pre,inner)=>{
+        // Skip if inner contains range, string, or already-quoted error
+        if(/[A-Z]/i.test(inner)&&!/^[\s\d+\-*/%.,e]+$/i.test(inner))return m;
+        try{const v=Function('"use strict";return('+inner+')')();if(typeof v==='number'&&isFinite(v)){ch=true;return pre+String(v)}}catch{}
+        return m;
+      });
+      if(!ch)break;
+    }
+    // 3. Bubble propagated errors
+    const em=e.match(/"(#[A-Z\/]+!?)"/);if(em)return em[1];
+    const trimmed=e.trim();
+    if(trimmed===''||trimmed==='""')return '';
+    const qm=trimmed.match(/^"((?:[^"\\]|\\.)*)"$/);
+    if(qm)return qm[1].replace(/\\"/g,'"');
+    try{const r=Function('"use strict";return('+e+')')();
+      if(typeof r==='number'){if(isNaN(r))return '#DIV/0!';if(!isFinite(r))return '#NUM!';return r}
+      return r;
+    }
     catch{return'#ERROR!'}
   },
 
   _rngAll(rng,fl){
-    const[a,b]=rng.split(':');if(!b)return[String(fl[a.toUpperCase()]??'')];
+    const[a,b]=rng.split(':');if(!b)return[String(this._resolveCell(a,new Set()))];
     const p1=this.pRef(a),p2=this.pRef(b);if(!p1||!p2)return[];
-    const vals=[];
+    const vals=[];const seen=new Set();
     for(let r=Math.min(p1.r,p2.r);r<=Math.max(p1.r,p2.r);r++)
       for(let c=Math.min(p1.c,p2.c);c<=Math.max(p1.c,p2.c);c++)
-        vals.push(String(fl[this.ref(r,c)]??''));
+        vals.push(String(this._resolveCell(this.ref(r,c),seen)));
     return vals;
   },
 
@@ -1003,8 +1103,18 @@ const G={
   },
 
   recalc(){
-    for(const[,cell]of Object.entries(this.cells))
-      if(cell?.value?.startsWith?.('='))cell.computed=this.evalFormula(cell.value);
+    // Multi-pass recalc to settle dependencies
+    for(let pass=0;pass<8;pass++){
+      let changed=false;
+      for(const[,cell]of Object.entries(this.cells)){
+        if(cell?.value?.startsWith?.('=')){
+          const prev=cell.computed;
+          cell.computed=this.evalFormula(cell.value);
+          if(prev!==cell.computed)changed=true;
+        }
+      }
+      if(!changed)break;
+    }
   },
 
   // ── FORMAT ────────────────────────────────────────────────────
@@ -1117,12 +1227,83 @@ const G={
 
   fillSeries(){
     const{r1,c1,r2,c2}=this.sel;
-    const sv=parseFloat(this.cells[this.ref(Math.min(r1,r2),Math.min(c1,c2))]?.value??'1')||1;
-    this.pushUndo();let i=0;
-    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){
-      const ref=this.ref(r,c);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=String(sv+i++);
+    const R1=Math.min(r1,r2),R2=Math.max(r1,r2),C1=Math.min(c1,c2),C2=Math.max(c1,c2);
+    const rows=R2-R1+1, cols=C2-C1+1;
+    const horizontal=(rows===1&&cols>1);
+    this.pushUndo();
+    const monthsF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const monthsS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const daysF=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const daysS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const matchList=(s,L)=>{const i=L.findIndex(x=>x.toLowerCase()===String(s).toLowerCase());return i<0?-1:i};
+
+    const fillLine=(getRef,len)=>{
+      // Read existing values along the line
+      const existing=[];let firstNonEmpty=-1;
+      for(let i=0;i<len;i++){const v=this.cells[getRef(i)]?.value;existing.push(v==null?'':String(v));if(firstNonEmpty<0&&existing[i].trim()!=='')firstNonEmpty=i}
+      if(firstNonEmpty<0){
+        // All empty — fill 1..len
+        for(let i=0;i<len;i++){const ref=getRef(i);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=String(i+1)}
+        return;
+      }
+      // Determine seed values (consecutive non-empty starting at firstNonEmpty)
+      const seeds=[];let i=firstNonEmpty;
+      while(i<len&&existing[i].trim()!==''){seeds.push(existing[i]);i++}
+      const fillStart=i; // first empty after seeds
+      if(fillStart>=len)return; // nothing to fill
+
+      // Try numeric arithmetic series
+      const nseeds=seeds.map(s=>parseFloat(s));
+      const allNum=nseeds.every(n=>!isNaN(n)&&isFinite(n));
+      if(allNum){
+        let step=1;
+        if(nseeds.length>=2){step=nseeds[nseeds.length-1]-nseeds[nseeds.length-2]}
+        let last=nseeds[nseeds.length-1];
+        for(let k=fillStart;k<len;k++){last+=step;const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=String(+last.toFixed(10))}
+        return;
+      }
+      // Try date series (YYYY-MM-DD)
+      const dseeds=seeds.map(s=>{const d=new Date(s);return isNaN(d.getTime())?null:d});
+      if(dseeds.every(d=>d!==null)){
+        let stepDays=1;
+        if(dseeds.length>=2)stepDays=Math.round((dseeds[dseeds.length-1]-dseeds[dseeds.length-2])/86400000)||1;
+        let last=new Date(dseeds[dseeds.length-1]);
+        for(let k=fillStart;k<len;k++){last=new Date(last.getTime()+stepDays*86400000);const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=last.toISOString().slice(0,10)}
+        return;
+      }
+      // Try month/day name list
+      for(const L of [monthsF,monthsS,daysF,daysS]){
+        const idxs=seeds.map(s=>matchList(s,L));
+        if(idxs.every(i=>i>=0)){
+          let step=idxs.length>=2?(idxs[idxs.length-1]-idxs[idxs.length-2]+L.length)%L.length||1:1;
+          let last=idxs[idxs.length-1];
+          for(let k=fillStart;k<len;k++){last=(last+step)%L.length;const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=L[last]}
+          return;
+        }
+      }
+      // Try "Text N" pattern (e.g. "Item 1", "Q1")
+      const m=seeds[seeds.length-1].match(/^(.*?)(-?\d+)(\D*)$/);
+      if(m){
+        const prefix=m[1],suffix=m[3];
+        let step=1;
+        if(seeds.length>=2){const m2=seeds[seeds.length-2].match(/^(.*?)(-?\d+)(\D*)$/);if(m2&&m2[1]===prefix&&m2[3]===suffix)step=parseInt(m[2])-parseInt(m2[2])||1}
+        let last=parseInt(m[2]);
+        for(let k=fillStart;k<len;k++){last+=step;const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=`${prefix}${last}${suffix}`}
+        return;
+      }
+      // Fallback: repeat seed pattern
+      for(let k=fillStart;k<len;k++){const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=seeds[(k-firstNonEmpty)%seeds.length]}
+    };
+
+    if(horizontal){
+      fillLine(i=>this.ref(R1,C1+i),cols);
+    }else if(cols===1){
+      fillLine(i=>this.ref(R1+i,C1),rows);
+    }else{
+      // 2D selection: fill each column independently as a vertical series
+      for(let c=C1;c<=C2;c++)fillLine(i=>this.ref(R1+i,c),rows);
     }
-    this.render();this.toast('Series filled','ok');
+    this.recalc();this.render();this.toast('Series filled','ok');
   },
 
   // ── VIEW ──────────────────────────────────────────────────────
@@ -1376,6 +1557,32 @@ const G={
   // ── FILE OPS ─────────────────────────────────────────────────
   newFile(){if(!confirm('New spreadsheet? Unsaved changes will be lost.'))return;this.sheets=[{name:'Sheet1',cells:{},cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24)}];this.si=0;this.undoStack=[];this.redoStack=[];document.getElementById('docname').textContent='Untitled';this.moveTo(0,0);this.renderTabs();this.toast('New spreadsheet','ok')},
   openFile(){document.getElementById('filein').click()},
+  scanImage(){
+    // Mobile shows camera+gallery, desktop shows file picker
+    document.getElementById('imgin').click();
+  },
+  async loadImage(e){
+    const file=e.target.files[0];if(!file)return;
+    e.target.value='';
+    if(file.size>10*1024*1024){this.toast('Image too large (max 10MB)','err');return}
+    this.toast('Reading image…','ok');
+    const rd=new FileReader();
+    rd.onload=async ev=>{
+      try{
+        const r=await fetch(`${API}/api/ocr/image`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:ev.target.result})});
+        if(!r.ok){this.toast('OCR failed (backend offline?)','err');return}
+        const d=await r.json();
+        if(!d.success||!Array.isArray(d.rows)){this.toast(d.error||'No table detected','err');return}
+        this.pushUndo();
+        const cells={};
+        d.rows.forEach((row,r)=>row.forEach((v,c)=>{if(String(v).trim()!=='')cells[this.ref(r,c)]={value:String(v)}}));
+        this.sheets[this.si].cells=cells;
+        this.recalc();this.render();
+        this.toast(`Imported ${d.rows.length}×${(d.rows[0]||[]).length} from image ✓`,'ok');
+      }catch(err){this.toast('Image import failed: '+err.message,'err')}
+    };
+    rd.readAsDataURL(file);
+  },
   renDoc(){const n=prompt('Name:',document.getElementById('docname').textContent);if(n)document.getElementById('docname').textContent=n},
 
   saveXL(){
@@ -1731,7 +1938,7 @@ const G={
     const T={bold:true,background:'#f0a500',color:'#1a0f00',fontFamily:'Plus Jakarta Sans'};
     set('A8','TOTAL',T);set('B8','=SUM(B2:B7)',T);set('C8','=SUM(C2:C7)',T);set('D8','=SUM(D2:D7)',T);set('E8','=SUM(E2:E7)',T);set('F8','=ROUND(AVERAGE(F2:F7),1)',T);
     this.sh.cw[0]=150;this.sh.cw[1]=90;this.sh.cw[2]=90;this.sh.cw[3]=90;this.sh.cw[4]=110;this.sh.cw[5]=90;
-    this.recalc();
+    this.recalc();this.render();this.toast('Sample data loaded','ok');
   }
 };
 
@@ -1777,6 +1984,8 @@ const BSHEET_CONFIGS={
     {icon:'↩',label:'Undo',action:'G.undo();hideBSheet()'},
     {icon:'↪',label:'Redo',action:'G.redo();hideBSheet()'},
     {icon:'📂',label:'Open',action:'G.openFile();hideBSheet()'},
+    {icon:'📷',label:'Scan Image',action:'G.scanImage();hideBSheet()'},
+    {icon:'🎲',label:'Sample',action:'G.loadDemo();hideBSheet()'},
     {icon:'＋',label:'New Sheet',action:'G.addSheet();hideBSheet()'},
   ],
   more:[
