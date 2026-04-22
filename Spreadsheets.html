@@ -2030,7 +2030,7 @@ const EXFMTS=[
   {f:'docx',ic:'📝',n:'Word (.docx)', d:'Formatted Word document'},
   {f:'json',ic:'{ }',n:'JSON (.json)',d:'Array of typed objects'},
   {f:'xml', ic:'🔖',n:'XML (.xml)',   d:'Structured records'},
-  {f:'tally',ic:'🧾',n:'Tally XML',  d:'Tally ERP import'},
+  {f:'tally',ic:'🧾',n:'Tally Prime XML',d:'Smart import — masters & vouchers'},
   {f:'md',  ic:'📋',n:'Markdown',    d:'GitHub pipe table'},
 ];
 
@@ -2042,17 +2042,78 @@ function showEx(){
 
 function hideEx(){document.getElementById('exov').style.display='none'}
 
+/* ─── TALLY CONFIG MODAL ──────────────────────────────────────── */
+const TALLY_MODES=[
+  {v:'auto',     ic:'✨',n:'Auto-detect',     d:'Inspect headers and pick the best Tally schema'},
+  {v:'sales',    ic:'🧾',n:'Sales Voucher',   d:'Invoice with party + stock items + GST'},
+  {v:'purchase', ic:'📦',n:'Purchase Voucher',d:'Supplier bills with stock + Input GST'},
+  {v:'payment',  ic:'💸',n:'Payment Voucher', d:'Cash / bank payments to a party'},
+  {v:'receipt',  ic:'💰',n:'Receipt Voucher', d:'Money received from a party'},
+  {v:'contra',   ic:'🔄',n:'Contra Voucher',  d:'Cash ↔ Bank transfers'},
+  {v:'journal',  ic:'📒',n:'Journal Voucher', d:'Generic Dr / Cr adjustments'},
+  {v:'daybook',  ic:'📔',n:'Day Book (mixed)',d:'Use the "Voucher Type" column per row'},
+  {v:'ledger',   ic:'👥',n:'Ledger Masters',  d:'Parties / accounts with GSTIN, opening bal'},
+  {v:'stockitem',ic:'📚',n:'Stock Item Masters',d:'Inventory items with HSN, units, rates'},
+  {v:'group',    ic:'🗂️',n:'Group Masters',  d:'Account / inventory groups'},
+];
+
+function showTallyCfg(){
+  hideEx();
+  let html=`<div class="excard" style="max-width:760px;background:#fff;border-radius:14px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:90vh;overflow:auto"><header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><h3 style="margin:0;font-size:18px">🧾 Tally Prime Export</h3><button onclick="hideTallyCfg()" aria-label="Close" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b">✕</button></header>
+  <p style="margin:0 0 14px;color:#64748b;font-size:13px;line-height:1.5">Generates a Tally Prime / ERP 9 compatible XML — import via <b>Gateway of Tally → Import → Masters / Vouchers</b>. Headers are matched fuzzily: <i>Date, Voucher No, Party / Ledger, Amount, Debit, Credit, Stock Item, Qty, Rate, GSTIN, CGST, SGST, IGST, HSN, Group, Bank Name, IFSC</i> and more.</p>
+  <div id="tlyGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:14px">`;
+  html+=TALLY_MODES.map(m=>`<button class="ecrd" onclick="doTallyExport('${m.v}')" style="text-align:left;display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#3b82f6';this.style.background='#f8fafc'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'"><span style="font-size:22px;line-height:1">${m.ic}</span><div><div style="font-weight:600;font-size:13px;color:#0f172a">${m.n}</div><div style="font-size:11px;color:#64748b;margin-top:2px;line-height:1.35">${m.d}</div></div></button>`).join('');
+  html+=`</div>
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px;color:#475569;border-top:1px solid #e2e8f0;padding-top:12px">
+    <label>Date format:
+      <select id="tlyDateFmt" style="margin-left:6px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px">
+        <option value="auto">Auto-detect</option>
+        <option value="dmy">DD/MM/YYYY (Indian)</option>
+        <option value="mdy">MM/DD/YYYY (US)</option>
+        <option value="ymd">YYYY-MM-DD (ISO)</option>
+      </select>
+    </label>
+    <span style="margin-left:auto;font-size:11px;color:#94a3b8">Tip: amounts in (parentheses) are treated as negatives.</span>
+  </div></div>`;
+  let ov=document.getElementById('tlyOv');
+  if(!ov){ov=document.createElement('div');ov.id='tlyOv';ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px';ov.onclick=e=>{if(e.target===ov)hideTallyCfg()};document.body.appendChild(ov)}
+  ov.innerHTML=html;ov.style.display='flex';
+}
+function hideTallyCfg(){const ov=document.getElementById('tlyOv');if(ov)ov.style.display='none'}
+
+async function doTallyExport(mode){
+  const dfmt=document.getElementById('tlyDateFmt')?.value||'auto';
+  hideTallyCfg();
+  G.toast('Building Tally XML ('+mode+')…','inf');
+  const payload={
+    sheets:G.sheets.map(s=>({name:s.name,cells:s.cells,cw:s.cw,rh:s.rh})),
+    active_sheet:G.si, format:'tally',
+    tally_mode:mode, tally_date_format:dfmt,
+  };
+  try{
+    const r=await fetch(`${API}/api/export`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok){const t=await r.text();throw new Error('Export failed '+r.status+': '+t.slice(0,200))}
+    const blob=await r.blob();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    const docname=(document.getElementById('docname').textContent||'export').replace(/\.[^.]+$/,'');
+    a.download=`${docname}_tally_${mode}.xml`;
+    a.click();
+    G.toast('Tally XML ready — import in Tally Prime ✓','ok');
+  }catch(e){G.toast('Error: '+e.message,'err')}
+}
+
 async function doEx(fmt){
   hideEx();
   if(fmt==='xlsx'){G.saveXL();return}
   if(fmt==='csv'){G.exportCSV();return}
+  if(fmt==='tally'){showTallyCfg();return}
   G.toast('Preparing export…','inf');
   const payload={sheets:G.sheets.map(s=>({name:s.name,cells:s.cells,cw:s.cw,rh:s.rh})),active_sheet:G.si,format:fmt};
   try{
     const r=await fetch(`${API}/api/export`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!r.ok)throw new Error('Export failed '+r.status);
     const blob=await r.blob();
-    const exts={sql:'sql',html:'html',docx:'docx',xml:'xml',json:'json',tally:'xml',md:'md'};
+    const exts={sql:'sql',html:'html',docx:'docx',xml:'xml',json:'json',md:'md'};
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);
     a.download=(document.getElementById('docname').textContent||'export')+'.'+exts[fmt];
     a.click();G.toast('Exported .'+exts[fmt]+' ✓','ok');
