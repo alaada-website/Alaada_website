@@ -1197,7 +1197,6 @@ body {
 
 <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2e5783d5c76f4c71a1e6bf7761b05d08"}'></script>
 
-<!-- ALL ORIGINAL JS PRESERVED BELOW — ZERO CHANGES -->
 <script>
 const BACKEND = "https://orbit-38iw.onrender.com";
 const WS_URL  = "wss://orbit-38iw.onrender.com/ws";
@@ -1237,6 +1236,49 @@ let imageGallery = (JSON.parse(localStorage.getItem("orbit_images") || "[]")).ma
 let userMemory = JSON.parse(localStorage.getItem("orbit_memory") || "{}");
 let activeId = null, ws, fileId = null, fileIsImage = false, filePreview = null;
 let recorder = null, chunks = [], busy = false;
+
+/* ═══════════════════════════════════
+   MATH-SAFE MARKDOWN RENDERER
+   Extracts all math blocks BEFORE
+   marked.js can mangle _ ^ * inside
+   them, then restores after parsing.
+═══════════════════════════════════ */
+function parseMathMarkdown(text) {
+  if (!text || text === "__TYPING__") return text;
+  const blocks = [];
+
+  // 1. Display math: \[...\]  (highest priority — do before $$)
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, (_, m) => {
+    blocks.push(`<div style="overflow-x:auto;padding:4px 0">\\[${m}\\]</div>`);
+    return `\x02MATH${blocks.length - 1}\x03`;
+  });
+
+  // 2. Display math: $$...$$
+  text = text.replace(/\$\$([\s\S]*?)\$\$/gs, (_, m) => {
+    blocks.push(`<div style="overflow-x:auto;padding:4px 0">\\[${m}\\]</div>`);
+    return `\x02MATH${blocks.length - 1}\x03`;
+  });
+
+  // 3. Inline math: \(...\)
+  text = text.replace(/\\\(([\s\S]*?)\\\)/g, (_, m) => {
+    blocks.push(`\\(${m}\\)`);
+    return `\x02MATH${blocks.length - 1}\x03`;
+  });
+
+  // 4. Inline math: $...$  (single dollar, not double)
+  text = text.replace(/(?<!\$)\$([^$\n]+?)\$(?!\$)/g, (_, m) => {
+    blocks.push(`\\(${m}\\)`);
+    return `\x02MATH${blocks.length - 1}\x03`;
+  });
+
+  // 5. Now safe to parse markdown — underscores/asterisks inside math are gone
+  let html = marked.parse(text);
+
+  // 6. Restore all math blocks
+  html = html.replace(/\x02MATH(\d+)\x03/g, (_, i) => blocks[+i]);
+
+  return html;
+}
 
 window.addEventListener("load", () => {
   autoResizeTA();
@@ -1522,7 +1564,11 @@ function streamToken(tok) {
   const chat=document.getElementById("chat");
   const wraps=chat.querySelectorAll(".message-wrap.assistant");const wrap=wraps[wraps.length-1];if(!wrap)return;
   const node=wrap.querySelector(".message.assistant");
-  if(node){node.innerHTML=marked.parse(last.text);applyDownloadLinks(node);if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([node]).catch(()=>{});}
+  if(node){
+    node.innerHTML=parseMathMarkdown(last.text);
+    applyDownloadLinks(node);
+    if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([node]).catch(()=>{});
+  }
   ensureActionsBar(wrap,last);
   chat.scrollTop=chat.scrollHeight;
 }
@@ -1619,8 +1665,13 @@ function renderChat() {
 function makeBubble(msg) {
   const wrap=document.createElement("div");wrap.className="message-wrap "+msg.role;
   const div=document.createElement("div");div.className="message "+msg.role;
-  if(msg.text==="__TYPING__"){div.innerHTML="<div class='typing'><span></span><span></span><span></span></div>";}
-  else if(msg.text){div.innerHTML=marked.parse(msg.text);applyDownloadLinks(div);if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([div]).catch(()=>{});}
+  if(msg.text==="__TYPING__"){
+    div.innerHTML="<div class='typing'><span></span><span></span><span></span></div>";
+  } else if(msg.text){
+    div.innerHTML=parseMathMarkdown(msg.text);
+    applyDownloadLinks(div);
+    if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([div]).catch(()=>{});
+  }
   if(msg.images?.length){const g=document.createElement("div");g.className="gallery";msg.images.forEach(src=>{if(!src)return;const img=document.createElement("img");img.src=src;img.loading="lazy";img.alt="Generated image";img.onclick=()=>window.open(src,"_blank");g.appendChild(img);});div.appendChild(g);}
   wrap.appendChild(div);
   if(msg.text!=="__TYPING__")wrap.appendChild(buildActionsBar(msg));
