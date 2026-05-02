@@ -1,231 +1,781 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Nilay Das</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
-      --bg: #1a1a1d;
-      --accent1: #ff0080;
-      --accent2: #00e5ff;
-      --text-light: #f8f8f8;
-      --card-bg: rgba(255,255,255,0.9);
-      --text-dark: #1a1a1d;
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --surface2: #1c1c1c;
+      --border: rgba(212, 175, 88, 0.18);
+      --gold: #d4af58;
+      --gold-dim: rgba(212, 175, 88, 0.6);
+      --text: #f0ece4;
+      --muted: #8a8278;
+      --accent: #c8a84b;
+      --card-bg: #161616;
     }
     [data-theme="light"] {
-      --bg: #f8f9fa;
-      --accent1: #ff0080;
-      --accent2: #00e5ff;
-      --text-light: #1a1a1d;
-      --card-bg: rgba(255,255,255,0.9);
-      --text-dark: #1a1a1d;
+      --bg: #f5f0e8;
+      --surface: #ffffff;
+      --surface2: #f0ece4;
+      --border: rgba(140, 100, 30, 0.2);
+      --gold: #8c641e;
+      --gold-dim: rgba(140, 100, 30, 0.5);
+      --text: #1a1612;
+      --muted: #6b6259;
+      --accent: #a07820;
+      --card-bg: #ffffff;
     }
-    [data-theme="dark"] {
-      --bg: #1a1a1d;
-      --accent1: #ff0080;
-      --accent2: #00e5ff;
-      --text-light: #f8f8f8;
-      --card-bg: rgba(0,0,0,0.9);
-      --text-dark: #f8f8f8;
-    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       background: var(--bg);
-      color: var(--text-light);
-      font-family: 'Roboto', sans-serif;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      min-height: 100vh;
       overflow-x: hidden;
     }
+
+    /* Cinematic grain overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* Top ambient glow */
     body::before {
       content: '';
       position: fixed;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: radial-gradient(circle at center, var(--accent1), var(--accent2));
-      opacity: 0.3;
-      animation: rotateBG 20s linear infinite;
-      z-index: -1;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(212,175,88,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
     }
-    @keyframes rotateBG { to { transform: rotate(360deg); } }
-    nav { position: fixed; top: 20px; right: 20px; z-index: 10; display: flex; gap: 10px; }
-    nav button {
-      background: var(--card-bg);
-      border: 2px solid var(--accent1);
-      padding: 10px;
-      border-radius: 50%;
+
+    /* NAV BAR */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    [data-theme="light"] nav {
+      background: rgba(245,240,232,0.88);
+    }
+    .nav-brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+    .nav-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 14px;
+      border-radius: 3px;
       cursor: pointer;
-      transition: transform 0.3s, background 0.3s;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+      white-space: nowrap;
     }
-    nav button:hover {
-      transform: scale(1.3);
-      background: var(--accent1);
-      color: #fff;
+    .nav-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(212,175,88,0.06);
     }
+    .nav-btn svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 520px) {
+      .nav-btn span { display: none; }
+      .nav-btn { padding: 8px 10px; }
+      .nav-brand { font-size: 0.85rem; }
+    }
+
+    /* MAIN LAYOUT */
     #resume {
-      max-width: 800px;
-      margin: 80px auto;
-      padding: 20px;
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 120px 24px 80px;
     }
-    header { text-align: center; margin-bottom: 50px; }
+
+    /* HEADER */
+    header {
+      text-align: center;
+      padding-bottom: 56px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 56px;
+      position: relative;
+    }
+    .header-eyebrow {
+      font-size: 0.68rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
+      font-weight: 400;
+    }
     header h1 {
-      font-size: 3rem;
-      color: var(--text-light);
-      text-shadow: 0 0 8px rgba(0,0,0,0.5);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 10vw, 5.5rem);
+      font-weight: 300;
+      line-height: 1;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      margin-bottom: 18px;
     }
-    header p {
-      margin-top: 10px;
-      font-size: 1.2rem;
-      color: var(--text-light);
-      text-shadow: 0 0 6px rgba(0,0,0,0.4);
+    header h1 em {
+      font-style: italic;
+      color: var(--gold);
     }
-    section { margin-bottom: 40px; }
-    section h2 {
-      font-size: 2rem;
-      margin-bottom: 15px;
-      color: var(--text-dark);
+    header .subtitle {
+      font-size: clamp(0.8rem, 2.5vw, 0.92rem);
+      color: var(--muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 400;
     }
-    section h2::after {
-      content: '';
-      display: block;
-      width: 80px; height: 4px;
-      background: var(--accent1);
-      margin-top: 6px;
-      border-radius: 2px;
+    .header-line {
+      width: 48px;
+      height: 1px;
+      background: var(--gold);
+      margin: 24px auto 0;
+      opacity: 0.6;
     }
+
+    /* SECTION */
+    section {
+      margin-bottom: 52px;
+    }
+    .section-label {
+      font-size: 0.64rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      font-weight: 300;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* CARD */
     .card {
       background: var(--card-bg);
-      color: var(--text-dark);
-      padding: 25px;
-      border-radius: 14px;
-      margin-bottom: 25px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      transition: transform 0.3s, box-shadow 0.3s;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 28px 32px;
+      margin-bottom: 16px;
+      transition: border-color 0.3s ease, transform 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--gold);
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
     .card:hover {
-      transform: scale(1.02);
-      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+      border-color: rgba(212,175,88,0.35);
+      transform: translateY(-2px);
     }
-    .card + .card { margin-top: 20px; }
-    .card ul { list-style: disc inside; margin-top: 10px; }
-    a { color: var(--accent2); text-decoration: none; }
+    .card:hover::before {
+      opacity: 1;
+    }
+    @media (max-width: 520px) {
+      .card { padding: 20px 18px; }
+    }
+
+    /* PROFILE */
+    .profile-text {
+      font-size: 1rem;
+      line-height: 1.85;
+      color: var(--text);
+      font-weight: 300;
+    }
+
+    /* EXPERIENCE */
+    .exp-block {
+      margin-bottom: 28px;
+    }
+    .exp-block:last-child { margin-bottom: 0; }
+    .exp-role {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 500;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .exp-role::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .exp-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 6px 20px;
+    }
+    .exp-list li {
+      font-size: 0.9rem;
+      color: var(--text);
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(212,175,88,0.07);
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      line-height: 1.4;
+    }
+    .exp-list li::before {
+      content: '—';
+      color: var(--gold-dim);
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+    .exp-separator {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 24px 0;
+    }
+    @media (max-width: 520px) {
+      .exp-list {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+
+    /* EDUCATION */
+    .edu-row {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .edu-year {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      color: var(--gold);
+      font-weight: 300;
+      line-height: 1;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .edu-detail {
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .edu-detail strong { font-weight: 500; }
+
+    /* ACHIEVEMENTS */
+    .achievement-item {
+      display: flex;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+    .achievement-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .ach-icon {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--gold-dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .ach-icon svg { width: 12px; height: 12px; color: var(--gold); }
+    .ach-text { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+    .ach-text strong { color: var(--gold); font-weight: 500; display: block; margin-bottom: 2px; font-size: 0.8rem; letter-spacing: 0.05em; }
+
+    /* CONTACT */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .contact-icon {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--gold);
+    }
+    .contact-icon svg { width: 14px; height: 14px; }
+    .contact-text {
+      font-size: 0.85rem;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .contact-text .label {
+      display: block;
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    a { color: var(--gold); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .footer {
-      text-align: center; margin: 60px 0;
-      color: var(--accent2);
+    @media (max-width: 520px) {
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 40px 0 20px;
+      border-top: 1px solid var(--border);
+      margin-top: 60px;
+    }
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+    .alaada-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 2px;
+      transition: all 0.25s ease;
+    }
+    .alaada-link:hover {
+      color: var(--gold);
+      border-color: var(--gold-dim);
+      background: rgba(212,175,88,0.05);
+      text-decoration: none;
+    }
+    .alaada-link svg { width: 11px; height: 11px; }
+
+    /* PRINT STYLES */
+    @media print {
+      nav { display: none; }
+      body::after, body::before { display: none; }
+      #resume { padding-top: 20px; }
+      .card:hover { transform: none; }
+    }
+
+    /* Scroll animation */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
   </style>
 </head>
 <body>
+  <!-- NAV -->
   <nav>
-    <button id="theme-toggle" aria-label="Toggle Dark/Light Mode">🌓</button>
-    <button id="download-pdf" aria-label="Download PDF">📄</button>
-    <button id="download-doc" aria-label="Download Word Document">📃</button>
+    <span class="nav-brand">Nilay Das</span>
+    <div class="nav-actions">
+      <button class="nav-btn" id="theme-toggle" aria-label="Toggle theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <span>Theme</span>
+      </button>
+      <button class="nav-btn" id="download-pdf" aria-label="Download PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+        <span>PDF</span>
+      </button>
+      <button class="nav-btn" id="download-doc" aria-label="Download Word">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Word</span>
+      </button>
+    </div>
   </nav>
+
+  <!-- MAIN RESUME (used for PDF export) -->
   <div id="resume">
-    <header>
-      <h1>Nilay Das</h1>
-      <p>Assistant Director & Director – Bengali Film & Television</p>
+    <header class="fade-in">
+      <p class="header-eyebrow">Curriculum Vitae</p>
+      <h1><em>Nilay</em> Das</h1>
+      <p class="subtitle">Assistant Director &amp; Director — Bengali Film &amp; Television</p>
+      <div class="header-line"></div>
     </header>
-    <section>
+
+    <!-- PROFILE -->
+    <section class="fade-in">
+      <p class="section-label">01 — About</p>
+      <h2 class="section-title">Profile</h2>
       <div class="card">
+        <p class="profile-text">Visionary filmmaker and creative leader with over twenty years of experience in Bengali television and cinema. Proven track record of directing high-TRP shows, managing production teams, and delivering compelling narratives under pressure. Adept at collaborating across departments, mentoring talent, and pioneering content that resonates with diverse audiences.</p>
+      </div>
+    </section>
+
+    <!-- EXPERIENCE -->
+    <section class="fade-in">
+      <p class="section-label">02 — Career</p>
+      <h2 class="section-title">Work Experience</h2>
+      <div class="card">
+
+        <div class="exp-block">
+          <p class="exp-role">As Director &nbsp;(2009 – Present)</p>
+          <ul class="exp-list">
+            <li>Raat Bhor Bristi (Zee Bangla)</li>
+            <li>Lal Trikon (Star Jalsha)</li>
+            <li>Ei Ghar Ei Sangshar (Zee Bangla)</li>
+            <li>Agni Pariksha (Zee Bangla)</li>
+            <li>Tomer Jonyo (Star Jalsha)</li>
+            <li>Premer Phande (Zee Bangla)</li>
+            <li>Dhonni Meye (Star Jalsha)</li>
+            <li>Rashi (Zee Bangla)</li>
+            <li>Amader Choto Nodi (Channel 8)</li>
+            <li>Taranath Tantrik (Colors Bangla)</li>
+            <li>Radha (Zee Bangla)</li>
+            <li>Jamai Raja (Zee Bangla)</li>
+            <li>Agnisikha (Sun Bangla)</li>
+            <li>Police Files (Channel 8 &amp; Akash Bangla)</li>
+            <li>12+ Acclaimed Short Films</li>
+          </ul>
+        </div>
+
+        <hr class="exp-separator">
+
+        <div class="exp-block">
+          <p class="exp-role">As Associate Director &nbsp;(2022)</p>
+          <ul class="exp-list">
+            <li>Nalanikanta 2 (Web series: Klikk)</li>
+          </ul>
+        </div>
+
+        <hr class="exp-separator">
+
+        <div class="exp-block">
+          <p class="exp-role">As Producer &nbsp;(2018 – Present)</p>
+          <ul class="exp-list">
+            <li>Jahanara (Colors Bangla)</li>
+          </ul>
+        </div>
+
+        <hr class="exp-separator">
+
+        <div class="exp-block">
+          <p class="exp-role">As Assistant Director &nbsp;(2002 – 2009)</p>
+          <ul class="exp-list">
+            <li>Postmortem</li>
+            <li>KT</li>
+            <li>Sahityer Sera Samay (12 stories approx.)</li>
+            <li>Four Plus (10 stories approx.)</li>
+            <li>Som Thaka Shani</li>
+            <li>Tatka Masha Ataka Golpo</li>
+            <li>Sudhu Tomari Jonyo</li>
+            <li>Shasibabur Sangsar</li>
+            <li>18+ Acclaimed Telefilms</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- EDUCATION -->
+    <section class="fade-in">
+      <p class="section-label">03 — Academic</p>
+      <h2 class="section-title">Education</h2>
+      <div class="card">
+        <div class="edu-row">
+          <span class="edu-year">1991</span>
+          <p class="edu-detail">
+            <strong>B.Sc</strong><br>
+            Gurudas College, University of Calcutta<br>
+            Emphasis in Visual Communication
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACHIEVEMENTS -->
+    <section class="fade-in">
+      <p class="section-label">04 — Recognition</p>
+      <h2 class="section-title">Achievements</h2>
+      <div class="card">
+        <div class="achievement-item">
+          <div class="ach-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <p class="ach-text"><strong>Ei Ghar Ei Sangshar</strong>Top two in TRP for over one year</p>
+        </div>
+        <div class="achievement-item">
+          <div class="ach-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <p class="ach-text"><strong>Rashi</strong>Number one TRP on Zee Bangla for two years &bull; Special Award: Sonar Sansar 2014</p>
+        </div>
+        <div class="achievement-item">
+          <div class="ach-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <p class="ach-text"><strong>Radha</strong>Zee Bangla Sonar Sansar Award</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="fade-in">
+      <p class="section-label">05 — Connect</p>
+      <h2 class="section-title">Contact</h2>
+      <div class="card">
+        <div class="contact-grid">
+          <div class="contact-item">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div class="contact-text">
+              <span class="label">Address</span>
+              131/8 NSC Road, Ground Floor,<br>Kolkata – 700040
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 9a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.61 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div class="contact-text">
+              <span class="label">Phone</span>
+              +91 98303 30363
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div class="contact-text">
+              <span class="label">Email</span>
+              <a href="mailto:das.nilay1@gmail.com">das.nilay1@gmail.com</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="contact-text">
+              <span class="label">Date of Birth</span>
+              29th August, 1970
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="fade-in">
+      <p class="footer-copy">&copy; 2026 Nilay Das. All rights reserved.</p>
+      <a href="https://alaada.com" target="_blank" rel="noopener noreferrer" class="alaada-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Made with Alaada
+      </a>
+    </footer>
+  </div>
+
+  <script>
+    // ── Theme Toggle ──────────────────────────────────────────────
+    const html = document.documentElement;
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    });
+
+    // ── PDF Download ──────────────────────────────────────────────
+    document.getElementById('download-pdf').addEventListener('click', () => {
+      const btn = document.getElementById('download-pdf');
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Generating…</span>';
+      btn.disabled = true;
+
+      const element = document.getElementById('resume');
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: 'Nilay_Das_CV.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: html.dataset.theme === 'dark' ? '#0d0d0d' : '#f5f0e8'
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(element).save().then(() => {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+      }).catch(() => {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+        alert('PDF generation failed. Please try again.');
+      });
+    });
+
+    // ── Word (.doc) Download ──────────────────────────────────────
+    document.getElementById('download-doc').addEventListener('click', () => {
+      // Build a clean plain-HTML Word document
+      const styles = `
+        body { font-family: Calibri, sans-serif; font-size: 11pt; color: #1a1612; margin: 2cm; }
+        h1 { font-size: 28pt; font-weight: 300; margin-bottom: 4pt; }
+        h2 { font-size: 14pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; margin-top: 16pt; }
+        p, li { font-size: 10.5pt; line-height: 1.6; }
+        ul { padding-left: 20pt; }
+        a { color: #8c641e; }
+      `;
+
+      const bodyContent = `
+        <h1>Nilay Das</h1>
+        <p><strong>Assistant Director &amp; Director — Bengali Film &amp; Television</strong></p>
         <h2>Profile</h2>
         <p>Visionary filmmaker and creative leader with over twenty years of experience in Bengali television and cinema. Proven track record of directing high-TRP shows, managing production teams, and delivering compelling narratives under pressure. Adept at collaborating across departments, mentoring talent, and pioneering content that resonates with diverse audiences.</p>
-      </div>
-      <div class="card">
         <h2>Work Experience</h2>
+        <p><strong>As Director (2009 – Present):</strong></p>
         <ul>
-          <br>
-          <strong>As Director (2009 - present):</strong>
-          <li>Raat Bhor Bristi (Zee Bangla)</li>
-          <li>Lal Trikon (Star Jalsha)</li>
-          <li>Ei Ghar Ei Sangshar (Zee Bangla)</li>
-          <li>Agni Pariksha (Zee Bangla)</li>
-          <li>Tomer Jonyo (Star Jalsha)</li>
-          <li>Premer Phande (Zee Bangla)</li>
-          <li>Dhonni Meye (Star Jalsha)</li>
-          <li>Rashi (Zee Bangla)</li>
-          <li>Amader Choto Nodi (Channel 8)</li>
-          <li>Taranath Tantrik (Colors Bangla)</li>
-          <li>Radha (Zee Bangla)</li>
-          <li>Jamai Raja (Zee Bangla)</li>
-          <li>Agnisikha (Sun Bangla)</li>
-		  <li>Police Files (Channel 8 and Akash Bangla)</li>
-		  <li>12+ Acclaimed Short Film</li>
-          <br>
-          <strong>As Associate Director (2022):</strong>
-          <li>Nalanikanta 2 (Web series: Klikk)</li>
-          <br>
-		  <strong>As Producer (2018 - present):</strong>
-          <li>Jahanara (Colors Bangla)</li>
-		  <br>
-		  <strong>As Assistant Director (2002 - 2009):</strong>
-          <li>Postmortem</li>
-          <li>KT</li>
-          <li>Sahityer Sera Samay (12 stories approximately)</li>
-          <li>Four Plus (10 stories approximately)</li>
-		  <li>Som Thaka Shani</li>
-		  <li>Tatka Masha Ataka Golpo</li>
-          <li>Sudhu Tomari Jonyo</li>
-		  <li>Shasibabur Sangsar</li>
-          <li>18+ Acclaimed Telefilms</li>
+          <li>Raat Bhor Bristi (Zee Bangla)</li><li>Lal Trikon (Star Jalsha)</li><li>Ei Ghar Ei Sangshar (Zee Bangla)</li>
+          <li>Agni Pariksha (Zee Bangla)</li><li>Tomer Jonyo (Star Jalsha)</li><li>Premer Phande (Zee Bangla)</li>
+          <li>Dhonni Meye (Star Jalsha)</li><li>Rashi (Zee Bangla)</li><li>Amader Choto Nodi (Channel 8)</li>
+          <li>Taranath Tantrik (Colors Bangla)</li><li>Radha (Zee Bangla)</li><li>Jamai Raja (Zee Bangla)</li>
+          <li>Agnisikha (Sun Bangla)</li><li>Police Files (Channel 8 and Akash Bangla)</li><li>12+ Acclaimed Short Films</li>
         </ul>
-      </div>
-
-      <div class="card">
+        <p><strong>As Associate Director (2022):</strong></p>
+        <ul><li>Nalanikanta 2 (Web series: Klikk)</li></ul>
+        <p><strong>As Producer (2018 – Present):</strong></p>
+        <ul><li>Jahanara (Colors Bangla)</li></ul>
+        <p><strong>As Assistant Director (2002 – 2009):</strong></p>
+        <ul>
+          <li>Postmortem</li><li>KT</li><li>Sahityer Sera Samay (12 stories approximately)</li>
+          <li>Four Plus (10 stories approximately)</li><li>Som Thaka Shani</li><li>Tatka Masha Ataka Golpo</li>
+          <li>Sudhu Tomari Jonyo</li><li>Shasibabur Sangsar</li><li>18+ Acclaimed Telefilms</li>
+        </ul>
         <h2>Education</h2>
         <p><strong>1991</strong> – B.Sc, Gurudas College, University of Calcutta – Emphasis in Visual Communication</p>
-      </div>
-      <div class="card">
         <h2>Achievements</h2>
         <ul>
-          <strong>As a Director</strong>
-          <li>Ei Ghar Ei Sangshar: Top two in TRP for over one year</li>
-          <li>Rashi: number one TRP on Zee Bangla for two years; Special award: Sonar Sansar 2014</li>
-          <li>Radha: Zee Bangla Sonar Sansar Award</li>
+          <li><strong>Ei Ghar Ei Sangshar:</strong> Top two in TRP for over one year</li>
+          <li><strong>Rashi:</strong> Number one TRP on Zee Bangla for two years; Special award: Sonar Sansar 2014</li>
+          <li><strong>Radha:</strong> Zee Bangla Sonar Sansar Award</li>
         </ul>
-      </div>
-      <div class="card">
         <h2>Contact</h2>
         <ul>
           <li>Address: 131/8 NSC Road, Ground Floor, Kolkata – 700040</li>
           <li>Phone: +91 98303 30363</li>
-          <li>Email: <a href="mailto:das.nilay1@gmail.com">das.nilay1@gmail.com</a></li>
+          <li>Email: das.nilay1@gmail.com</li>
           <li>DOB: 29th August, 1970</li>
-		  <strong><a href="#">Made with Alaada (Alaada.com)</strong>
         </ul>
-      </div>
-    </section>
-    <div class="footer">&copy; 2026 Nilay Das</div>
-  </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script>
-    // Dark mode toggle
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const html = document.documentElement;
-      html.dataset.theme = html.dataset.theme === 'light' ? 'dark' : 'light';
-    });
+        <p style="margin-top:24pt;font-size:9pt;color:#888;">Made with Alaada — alaada.com</p>
+      `;
 
-    // PDF download with fallback
-    document.getElementById('download-pdf').addEventListener('click', () => {
-      if (window.html2pdf) {
-        html2pdf().from(document.getElementById('resume')).save('Nilay_Das_CV.pdf');
-      } else {
-        alert("PDF download is not supported in this browser. Please try a modern browser like Chrome or Edge.");
-      }
-    });
+      const fullDoc = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office"
+              xmlns:w="urn:schemas-microsoft-com:office:word"
+              xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="UTF-8">
+          <style>${styles}</style>
+        </head>
+        <body>${bodyContent}</body>
+        </html>
+      `;
 
-    // Word download
-    document.getElementById('download-doc').addEventListener('click', () => {
-      const content = document.getElementById('resume').innerHTML;
-      const blob = new Blob([content], { type: 'application/msword' });
+      const blob = new Blob(['\ufeff', fullDoc], {
+        type: 'application/msword;charset=utf-8'
+      });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
+      link.href = url;
       link.download = 'Nilay_Das_CV.doc';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
+
+    // ── Scroll Fade-In ────────────────────────────────────────────
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
   </script>
 </body>
 </html>
