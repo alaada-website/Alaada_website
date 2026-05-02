@@ -88,11 +88,11 @@
     }
     .nav-brand {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 1rem;
+      font-size: 1.15rem;       /* ↑ was 1rem */
       letter-spacing: 0.15em;
       color: var(--gold);
       text-transform: uppercase;
-      font-weight: 400;
+      font-weight: 700;         /* ↑ bold gold */
     }
     .nav-actions {
       display: flex;
@@ -109,7 +109,7 @@
       border-radius: 3px;
       cursor: pointer;
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.72rem;
+      font-size: 0.82rem;       /* ↑ was 0.72rem */
       font-weight: 400;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -129,7 +129,7 @@
     @media (max-width: 520px) {
       .nav-btn span { display: none; }
       .nav-btn { padding: 8px 10px; }
-      .nav-brand { font-size: 0.85rem; }
+      .nav-brand { font-size: 0.95rem; }
     }
 
     /* MAIN LAYOUT */
@@ -150,16 +150,16 @@
       position: relative;
     }
     .header-eyebrow {
-      font-size: 0.68rem;
+      font-size: 0.8rem;        /* ↑ was 0.68rem */
       letter-spacing: 0.3em;
       text-transform: uppercase;
       color: var(--gold);
       margin-bottom: 20px;
-      font-weight: 400;
+      font-weight: 700;         /* ↑ bold gold */
     }
     header h1 {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3rem, 10vw, 5.5rem);
+      font-size: clamp(3.5rem, 10vw, 6rem);  /* ↑ was clamp(3rem, 10vw, 5.5rem) */
       font-weight: 300;
       line-height: 1;
       color: var(--text);
@@ -169,9 +169,10 @@
     header h1 em {
       font-style: italic;
       color: var(--gold);
+      font-weight: 700;         /* ↑ bold gold */
     }
     header .subtitle {
-      font-size: clamp(0.8rem, 2.5vw, 0.92rem);
+      font-size: clamp(0.95rem, 2.5vw, 1.1rem);  /* ↑ was clamp(0.8rem, 2.5vw, 0.92rem) */
       color: var(--muted);
       letter-spacing: 0.18em;
       text-transform: uppercase;
@@ -190,16 +191,16 @@
       margin-bottom: 52px;
     }
     .section-label {
-      font-size: 0.64rem;
+      font-size: 0.76rem;       /* ↑ was 0.64rem */
       letter-spacing: 0.35em;
       text-transform: uppercase;
       color: var(--gold);
-      font-weight: 500;
+      font-weight: 700;         /* ↑ bold gold */
       margin-bottom: 6px;
     }
     .section-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      font-size: clamp(1.9rem, 5vw, 2.6rem);  /* ↑ was clamp(1.6rem, 5vw, 2.2rem) */
       font-weight: 300;
       color: var(--text);
       line-height: 1.15;
@@ -241,7 +242,7 @@
 
     /* PROFILE */
     .profile-text {
-      font-size: 1rem;
+      font-size: 1.08rem;       /* ↑ was 1rem */
       line-height: 1.85;
       color: var(--text);
       font-weight: 300;
@@ -253,11 +254,11 @@
     }
     .exp-block:last-child { margin-bottom: 0; }
     .exp-role {
-      font-size: 0.7rem;
+      font-size: 0.82rem;       /* ↑ was 0.7rem */
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--gold);
-      font-weight: 500;
+      font-weight: 700;         /* ↑ bold gold */
       margin-bottom: 12px;
       display: flex;
       align-items: center;
@@ -276,7 +277,7 @@
       gap: 6px 20px;
     }
     .exp-list li {
-      font-size: 0.9rem;
+      font-size: 1rem;          /* ↑ was 0.9rem */
       color: var(--text);
       padding: 5px 0;
       border-bottom: 1px solid rgba(212,175,88,0.07);
@@ -288,7 +289,7 @@
     .exp-list li::before {
       content: '—';
       color: var(--gold-dim);
-      font-size: 0.7rem;
+      font-size: 0.78rem;
       flex-shrink: 0;
     }
     .exp-separator {
@@ -311,15 +312,15 @@
     }
     .edu-year {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem;
+      font-size: 1.9rem;        /* ↑ was 1.6rem */
       color: var(--gold);
-      font-weight: 300;
+      font-weight: 700;         /* ↑ bold gold */
       line-height: 1;
       flex-shrink: 0;
       padding-top: 2px;
     }
     .edu-detail {
-      font-size: 0.95rem;
+      font-size: 1.05rem;       /* ↑ was 0.95rem */
       color: var(--text);
       line-height: 1.6;
     }
@@ -346,8 +347,15 @@
       margin-top: 2px;
     }
     .ach-icon svg { width: 12px; height: 12px; color: var(--gold); }
-    .ach-text { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
-    .ach-text strong { color: var(--gold); font-weight: 500; display: block; margin-bottom: 2px; font-size: 0.8rem; letter-spacing: 0.05em; }
+    .ach-text { font-size: 1rem; color: var(--text); line-height: 1.55; }  /* ↑ was 0.9rem */
+    .ach-text strong {
+      color: var(--gold);
+      font-weight: 700;         /* ↑ bold gold */
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.92rem;       /* ↑ was 0.8rem */
+      letter-spacing: 0.05em;
+    }
 
     /* CONTACT */
     .contact-grid {
@@ -373,19 +381,19 @@
     }
     .contact-icon svg { width: 14px; height: 14px; }
     .contact-text {
-      font-size: 0.85rem;
+      font-size: 0.95rem;       /* ↑ was 0.85rem */
       color: var(--text);
       line-height: 1.5;
     }
     .contact-text .label {
       display: block;
-      font-size: 0.62rem;
+      font-size: 0.72rem;       /* ↑ was 0.62rem */
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--muted);
       margin-bottom: 2px;
     }
-    a { color: var(--gold); text-decoration: none; }
+    a { color: var(--gold); font-weight: 700; text-decoration: none; }  /* ↑ bold gold links */
     a:hover { text-decoration: underline; }
     @media (max-width: 520px) {
       .contact-grid { grid-template-columns: 1fr; }
@@ -399,7 +407,7 @@
       margin-top: 60px;
     }
     .footer-copy {
-      font-size: 0.75rem;
+      font-size: 0.85rem;       /* ↑ was 0.75rem */
       color: var(--muted);
       letter-spacing: 0.1em;
     }
@@ -408,7 +416,7 @@
       align-items: center;
       gap: 6px;
       margin-top: 12px;
-      font-size: 0.7rem;
+      font-size: 0.8rem;        /* ↑ was 0.7rem */
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--muted);
@@ -417,6 +425,7 @@
       padding: 6px 14px;
       border-radius: 2px;
       transition: all 0.25s ease;
+      font-weight: 300;         /* override the bold-a rule for this link */
     }
     .alaada-link:hover {
       color: var(--gold);
@@ -471,7 +480,7 @@
     <header class="fade-in">
       <p class="header-eyebrow">Curriculum Vitae</p>
       <h1><em>Nilay</em> Das</h1>
-      <p class="subtitle">Assistant Director &amp; Director — Bengali Film &amp; Television</p>
+      <p class="subtitle">Director — Bengali Film &amp; Television</p>
       <div class="header-line"></div>
     </header>
 
@@ -688,7 +697,6 @@
 
     // ── Word (.doc) Download ──────────────────────────────────────
     document.getElementById('download-doc').addEventListener('click', () => {
-      // Build a clean plain-HTML Word document
       const styles = `
         body { font-family: Calibri, sans-serif; font-size: 11pt; color: #1a1612; margin: 2cm; }
         h1 { font-size: 28pt; font-weight: 300; margin-bottom: 4pt; }
