@@ -661,7 +661,7 @@ if(ademo){
   "use strict";
   const EP="https://sfo.cloud.appwrite.io/v1",PID="6972444700208a437da1";
   const OAUTH=`${EP}/account/sessions/oauth2/google?project=${PID}&success=${encodeURIComponent("https://www.alaada.com")}&failure=${encodeURIComponent("https://www.alaada.com")}`;
-  const CK="alaada_auth",IK="alaada_identity",CD=7;
+  const CK="alaada_auth",IK="alaada_identity",PK="alaada_oauth_pending",CD=7;
   const DEST={orbit:"/Orbit.html",sheets:"/Spreadsheets.html"};
   const cGet=n=>document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(n+'='))?.split('=')[1]||null;
   const cSet=(n,v,d)=>{const e=new Date(Date.now()+d*864e5).toUTCString();document.cookie=`${n}=${v};path=/;expires=${e};SameSite=Lax;Secure`;};
@@ -675,23 +675,114 @@ if(ademo){
   const hideSpin=()=>ov.classList.remove('show');
   const showBadge=id=>{if(!id)return;document.getElementById('badge-initial').textContent=(id.name||id.email||'?')[0].toUpperCase();document.getElementById('badge-name').textContent=id.name||id.email;document.getElementById('user-badge').classList.add('visible');};
   const verify=async()=>{const u=await fetchAcc();cSet(CK,'1',CD);iSave(u);return u;};
-  const launch=async(dest,m)=>{showSpin(m||'Verifying…');try{if(cGet(CK)){const c=iLoad();if(c)showBadge(c);}await verify();hideSpin();window.location.href=dest;}catch(_){cDel(CK);iClear();msg.textContent='Redirecting to Google sign-in…';try{sessionStorage.setItem('alaada_dest',dest);}catch(_){}setTimeout(()=>window.location.replace(OAUTH),600);}};
-  window.logout=async()=>{showSpin('Signing out…');try{await fetch(`${EP}/account/sessions/current`,{method:'DELETE',credentials:'include',headers:{'X-Appwrite-Project':PID}});}catch(_){}cDel(CK);iClear();hideSpin();location.replace(window.location.origin);};
-  const handleReturn=async()=>{try{await verify();const dest=sessionStorage.getItem('alaada_dest');sessionStorage.removeItem('alaada_dest');showBadge(iLoad());if(dest){showSpin('Signing you in…');setTimeout(()=>window.location.href=dest,400);}}catch(_){}};
-  const silentCheck=async()=>{if(!cGet(CK))return;const c=iLoad();if(c)showBadge(c);try{await verify();showBadge(iLoad());}catch(_){cDel(CK);iClear();document.getElementById('user-badge').classList.remove('visible');}};
-  window.addEventListener('load',async()=>{
-    await handleReturn(); silentCheck();
-  /* SHEETS FORMULA ANIMATION */
-const formulas = ['=SUM(B2:B5)', '=AVERAGE(C2:C5)', '=IF(D2>70,"Good","Low")', '=VLOOKUP("Orbit",A2:D5,2,0)', '=SUM(B2:B5)'];
-let fi = 0;
-setInterval(() => {
-  fi = (fi + 1) % formulas.length;
-  const el = document.getElementById('sv-formula-text');
-  if (el) { el.style.opacity = '0'; setTimeout(() => { el.textContent = formulas[fi]; el.style.opacity = '1'; el.style.transition = 'opacity .3s'; }, 200); }
-}, 2200);
 
-/* SHEETS LAUNCH */
-  document.querySelectorAll('.launch-orbit-btn').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();launch(DEST.orbit,'Launching Orbit…');}));
+  /*
+   * launch() — called when user clicks "Try Orbit" / "Open Sheets"
+   *
+   * Loop-safe rule: we only ever send the user to OAuth if:
+   *   (a) verify() failed  AND
+   *   (b) the alaada_oauth_pending cookie does NOT already exist
+   *
+   * The pending cookie is set right before the OAuth redirect and cleared
+   * the moment the user lands back on this page (in handleReturn).
+   * If it somehow survived (e.g. OAuth failed / user hit back), we stop
+   * and show an error instead of bouncing them to Google again.
+   */
+  const launch=async(dest,m)=>{
+    showSpin(m||'Verifying…');
+    try{
+      const c=iLoad();if(c)showBadge(c);
+      await verify();
+      hideSpin();
+      window.location.href=dest;
+    }catch(_){
+      cDel(CK);iClear();
+      if(cGet(PK)){
+        // Already tried OAuth and came back — don't loop.
+        hideSpin();
+        msg.textContent='Sign-in could not be completed. Please try again.';
+        ov.classList.add('show');
+        setTimeout(hideSpin,3000);
+        return;
+      }
+      // First attempt — set pending cookie, then redirect to OAuth.
+      cSet(PK,dest,1); // expires in 1 day; holds the destination path
+      msg.textContent='Redirecting to Google sign-in…';
+      ov.classList.add('show');
+      setTimeout(()=>window.location.replace(OAUTH),600);
+    }
+  };
+
+  window.logout=async()=>{
+    showSpin('Signing out…');
+    try{await fetch(`${EP}/account/sessions/current`,{method:'DELETE',credentials:'include',headers:{'X-Appwrite-Project':PID}});}catch(_){}
+    cDel(CK);cDel(PK);iClear();
+    hideSpin();
+    location.replace(window.location.origin);
+  };
+
+  /*
+   * handleReturn() — runs once on every page load.
+   *
+   * If alaada_oauth_pending exists the user has just returned from OAuth
+   * (or the redirect failed). Either way we clear the cookie immediately
+   * so it can never cause another redirect, then try to verify once.
+   *
+   * Returns true  → session confirmed, silentCheck can be skipped.
+   * Returns false → not returning from OAuth (or verify failed after OAuth).
+   */
+  const handleReturn=async()=>{
+    const pendingDest=cGet(PK);
+    if(!pendingDest) return false; // not an OAuth return — nothing to do here
+
+    cDel(PK); // clear NOW — prevents any future loop regardless of what follows
+
+    try{
+      await verify();
+      showBadge(iLoad());
+      showSpin('Signing you in…');
+      setTimeout(()=>window.location.href=pendingDest,400);
+      return true;
+    }catch(_){
+      // OAuth completed but Appwrite session still not ready — don't retry automatically.
+      cDel(CK);iClear();
+      return false;
+    }
+  };
+
+  /*
+   * silentCheck() — only runs when handleReturn returned false.
+   * Refreshes the badge if the user already has a valid session cookie
+   * from a previous visit. Makes exactly one /account call.
+   */
+  const silentCheck=async()=>{
+    if(!cGet(CK))return;
+    const c=iLoad();if(c)showBadge(c); // show cached identity instantly
+    try{
+      await verify();
+      showBadge(iLoad());
+    }catch(_){
+      cDel(CK);iClear();
+      document.getElementById('user-badge').classList.remove('visible');
+    }
+  };
+
+  window.addEventListener('load',async()=>{
+    // At most one /account request on load: handleReturn OR silentCheck, never both.
+    const alreadyVerified=await handleReturn();
+    if(!alreadyVerified) silentCheck();
+
+    /* SHEETS FORMULA ANIMATION */
+    const formulas=['=SUM(B2:B5)','=AVERAGE(C2:C5)','=IF(D2>70,"Good","Low")','=VLOOKUP("Orbit",A2:D5,2,0)','=SUM(B2:B5)'];
+    let fi=0;
+    setInterval(()=>{
+      fi=(fi+1)%formulas.length;
+      const el=document.getElementById('sv-formula-text');
+      if(el){el.style.opacity='0';setTimeout(()=>{el.textContent=formulas[fi];el.style.opacity='1';el.style.transition='opacity .3s';},200);}
+    },2200);
+
+    /* BUTTON LISTENERS */
+    document.querySelectorAll('.launch-orbit-btn').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();launch(DEST.orbit,'Launching Orbit…');}));
     const sheetsBtn=document.getElementById('launch-sheets');
     if(sheetsBtn)sheetsBtn.addEventListener('click',e=>{e.preventDefault();launch(DEST.sheets,'Launching Alaada Sheets…');});
   });
