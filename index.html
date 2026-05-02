@@ -661,32 +661,61 @@ if(ademo){
   "use strict";
   const EP="https://sfo.cloud.appwrite.io/v1",PID="6972444700208a437da1";
   const OAUTH=`${EP}/account/sessions/oauth2/google?project=${PID}&success=${encodeURIComponent("https://www.alaada.com")}&failure=${encodeURIComponent("https://www.alaada.com")}`;
-  const CK="alaada_auth",IK="alaada_identity",PK="alaada_oauth_pending",CD=7;
+  const CK="alaada_auth",IK="alaada_identity",PK="alaada_oauth_pending",AK="alaada_authed",CD=7;
   const DEST={orbit:"/Orbit.html",sheets:"/Spreadsheets.html"};
+
+  /* ── Cookie helpers ── */
   const cGet=n=>document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(n+'='))?.split('=')[1]||null;
   const cSet=(n,v,d)=>{const e=new Date(Date.now()+d*864e5).toUTCString();document.cookie=`${n}=${v};path=/;expires=${e};SameSite=Lax;Secure`;};
   const cDel=n=>{document.cookie=`${n}=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT;SameSite=Lax;Secure`;};
+
+  /* ── sessionStorage helpers (survive cookie deletion within the same tab session) ── */
+  const ssGet=k=>{try{return sessionStorage.getItem(k);}catch{return null;}};
+  const ssSet=(k,v)=>{try{sessionStorage.setItem(k,v);}catch(_){}};
+  const ssDel=k=>{try{sessionStorage.removeItem(k);}catch(_){}};
+
+  /* ── localStorage helpers ── */
   const iSave=u=>{try{localStorage.setItem(IK,JSON.stringify({id:u.$id,name:u.name||(u.email||'').split('@')[0],email:u.email,ts:Date.now()}));}catch(_){}};
   const iLoad=()=>{try{return JSON.parse(localStorage.getItem(IK));}catch{return null;}};
   const iClear=()=>{try{localStorage.removeItem(IK);}catch(_){}};
+  // localStorage flag mirrors the auth cookie — survives cookie-only deletion
+  const lsAuthGet=()=>{try{return localStorage.getItem(AK);}catch{return null;}};
+  const lsAuthSet=()=>{try{localStorage.setItem(AK,'1');}catch(_){}};
+  const lsAuthDel=()=>{try{localStorage.removeItem(AK);}catch(_){}};
+
+  /* ── Pending-state helpers
+   *    Written to BOTH cookie and sessionStorage before the OAuth redirect.
+   *    Either one surviving is enough to detect the return.
+   *    Both are cleared together the moment we detect the return. ── */
+  const pendingGet=()=>cGet(PK)||ssGet(PK);
+  const pendingSet=dest=>{cSet(PK,dest,1);ssSet(PK,dest);};
+  const pendingClear=()=>{cDel(PK);ssDel(PK);};
+
+  /* ── Auth hint: cookie OR localStorage flag.
+   *    If the user only deleted cookies, the localStorage flag keeps us from
+   *    skipping silentCheck on a still-valid Appwrite session. ── */
+  const hasAuthHint=()=>!!(cGet(CK)||lsAuthGet());
+
   const fetchAcc=async()=>{const r=await fetch(`${EP}/account`,{credentials:'include',headers:{'X-Appwrite-Project':PID}});if(!r.ok)throw new Error();return r.json();};
   const ov=document.getElementById('auth-overlay'),msg=document.getElementById('auth-msg');
   const showSpin=m=>{msg.textContent=m||'Checking…';ov.classList.add('show');};
   const hideSpin=()=>ov.classList.remove('show');
   const showBadge=id=>{if(!id)return;document.getElementById('badge-initial').textContent=(id.name||id.email||'?')[0].toUpperCase();document.getElementById('badge-name').textContent=id.name||id.email;document.getElementById('user-badge').classList.add('visible');};
-  const verify=async()=>{const u=await fetchAcc();cSet(CK,'1',CD);iSave(u);return u;};
+
+  const verify=async()=>{
+    const u=await fetchAcc();
+    cSet(CK,'1',CD); // cookie
+    lsAuthSet();     // localStorage mirror
+    iSave(u);
+    return u;
+  };
 
   /*
    * launch() — called when user clicks "Try Orbit" / "Open Sheets"
    *
-   * Loop-safe rule: we only ever send the user to OAuth if:
-   *   (a) verify() failed  AND
-   *   (b) the alaada_oauth_pending cookie does NOT already exist
-   *
-   * The pending cookie is set right before the OAuth redirect and cleared
-   * the moment the user lands back on this page (in handleReturn).
-   * If it somehow survived (e.g. OAuth failed / user hit back), we stop
-   * and show an error instead of bouncing them to Google again.
+   * Loop-safe rule: only redirect to OAuth if NEITHER the cookie NOR
+   * the sessionStorage pending flag exist. Both are cleared on return,
+   * so if either survived it means we already attempted OAuth once.
    */
   const launch=async(dest,m)=>{
     showSpin(m||'Verifying…');
@@ -696,17 +725,17 @@ if(ademo){
       hideSpin();
       window.location.href=dest;
     }catch(_){
-      cDel(CK);iClear();
-      if(cGet(PK)){
-        // Already tried OAuth and came back — don't loop.
-        hideSpin();
+      cDel(CK);lsAuthDel();iClear();
+      if(pendingGet()){
+        // We already tried OAuth — don't loop. Show error instead.
+        pendingClear();
         msg.textContent='Sign-in could not be completed. Please try again.';
         ov.classList.add('show');
         setTimeout(hideSpin,3000);
         return;
       }
-      // First attempt — set pending cookie, then redirect to OAuth.
-      cSet(PK,dest,1); // expires in 1 day; holds the destination path
+      // First attempt — mark pending in cookie + sessionStorage, then go to OAuth.
+      pendingSet(dest);
       msg.textContent='Redirecting to Google sign-in…';
       ov.classList.add('show');
       setTimeout(()=>window.location.replace(OAUTH),600);
@@ -716,7 +745,7 @@ if(ademo){
   window.logout=async()=>{
     showSpin('Signing out…');
     try{await fetch(`${EP}/account/sessions/current`,{method:'DELETE',credentials:'include',headers:{'X-Appwrite-Project':PID}});}catch(_){}
-    cDel(CK);cDel(PK);iClear();
+    cDel(CK);lsAuthDel();pendingClear();iClear();
     hideSpin();
     location.replace(window.location.origin);
   };
@@ -724,18 +753,17 @@ if(ademo){
   /*
    * handleReturn() — runs once on every page load.
    *
-   * If alaada_oauth_pending exists the user has just returned from OAuth
-   * (or the redirect failed). Either way we clear the cookie immediately
-   * so it can never cause another redirect, then try to verify once.
+   * Detects an OAuth return via cookie OR sessionStorage (whichever survived).
+   * Clears both immediately — loop prevention holds even if cookies were wiped.
    *
    * Returns true  → session confirmed, silentCheck can be skipped.
-   * Returns false → not returning from OAuth (or verify failed after OAuth).
+   * Returns false → not an OAuth return, or verify failed post-OAuth.
    */
   const handleReturn=async()=>{
-    const pendingDest=cGet(PK);
-    if(!pendingDest) return false; // not an OAuth return — nothing to do here
+    const pendingDest=pendingGet();
+    if(!pendingDest) return false;
 
-    cDel(PK); // clear NOW — prevents any future loop regardless of what follows
+    pendingClear(); // wipe both storages NOW — no loop is possible after this line
 
     try{
       await verify();
@@ -744,25 +772,26 @@ if(ademo){
       setTimeout(()=>window.location.href=pendingDest,400);
       return true;
     }catch(_){
-      // OAuth completed but Appwrite session still not ready — don't retry automatically.
-      cDel(CK);iClear();
+      cDel(CK);lsAuthDel();iClear();
       return false;
     }
   };
 
   /*
    * silentCheck() — only runs when handleReturn returned false.
-   * Refreshes the badge if the user already has a valid session cookie
-   * from a previous visit. Makes exactly one /account call.
+   *
+   * Guards with hasAuthHint() instead of cGet(CK) alone, so a user who
+   * deleted just their cookies but has a live Appwrite session still gets
+   * their badge restored (the localStorage flag survives cookie wipes).
    */
   const silentCheck=async()=>{
-    if(!cGet(CK))return;
-    const c=iLoad();if(c)showBadge(c); // show cached identity instantly
+    if(!hasAuthHint())return;
+    const c=iLoad();if(c)showBadge(c);
     try{
       await verify();
       showBadge(iLoad());
     }catch(_){
-      cDel(CK);iClear();
+      cDel(CK);lsAuthDel();iClear();
       document.getElementById('user-badge').classList.remove('visible');
     }
   };
