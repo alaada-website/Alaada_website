@@ -204,6 +204,57 @@
   .sv-cell.formula{color:var(--gold);font-weight:600;}
   .sv-cell.highlight{background:var(--gold2);}
 
+  /* REVIEWS SECTION */
+  .reviews-inner{max-width:1060px;margin:0 auto;}
+  .reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:48px;}
+  @media(max-width:820px){.reviews-grid{grid-template-columns:1fr;}}
+  .review-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:12px;transition:transform .2s,box-shadow .2s;}
+  .review-card:hover{transform:translateY(-3px);box-shadow:var(--sh-md);}
+  .review-stars{color:var(--gold);font-size:1rem;letter-spacing:1px;}
+  .review-text{font-size:.875rem;color:var(--ink2);line-height:1.75;flex:1;}
+  .reviewer-row{display:flex;align-items:center;gap:10px;margin-top:4px;padding-top:14px;border-top:1px solid var(--border);}
+  .reviewer-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .reviewer-name{font-size:.82rem;font-weight:600;color:var(--ink);}
+  .reviewer-role{font-size:.72rem;color:var(--ink3);}
+  .review-form-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);box-shadow:var(--sh-lg);border-top:3px solid var(--blue);display:grid;grid-template-columns:240px 1fr;overflow:hidden;}
+  @media(max-width:720px){.review-form-card{grid-template-columns:1fr;}.rfcard-left{border-right:none!important;border-bottom:1px solid var(--border);}}
+  .rfcard-left{padding:40px 32px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;}
+  .rfcard-title{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--ink);letter-spacing:-.5px;margin-bottom:8px;line-height:1.2;}
+  .rfcard-sub{font-size:.85rem;color:var(--ink3);line-height:1.7;margin-bottom:20px;}
+  .rf-trust-pills{display:flex;flex-direction:column;gap:7px;}
+  .rf-pill{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:500;color:var(--ink2);}
+  .rf-pill::before{content:'✓';width:16px;height:16px;border-radius:50%;background:var(--blue2);color:var(--blue);font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .rfcard-right{padding:36px 40px;position:relative;}
+  @media(max-width:720px){.rfcard-right{padding:28px 22px;}}
+  .rf-field{margin-bottom:18px;position:relative;}
+  .rf-label{display:block;font-size:.75rem;font-weight:600;color:var(--ink2);margin-bottom:6px;letter-spacing:.2px;}
+  .rf-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 13px;font-family:'Figtree',sans-serif;font-size:.88rem;color:var(--ink);outline:none;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none;}
+  .rf-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue3);background:var(--white);}
+  .rf-input::placeholder{color:var(--ink3);}
+  select.rf-input{cursor:pointer;}
+  .rf-textarea{resize:vertical;min-height:96px;}
+  .rf-char-count{position:absolute;bottom:-18px;right:0;font-size:.68rem;color:var(--ink3);}
+  .star-picker{display:flex;gap:4px;cursor:pointer;margin-bottom:4px;}
+  .star{font-size:1.6rem;color:var(--bg2);transition:color .12s,transform .12s;user-select:none;line-height:1;outline:none;}
+  .star:focus-visible{outline:2px solid var(--blue);border-radius:2px;}
+  .star.active{color:var(--gold);}
+  .star.hover{color:var(--gold);transform:scale(1.15);}
+  .rf-rating-label{font-size:.72rem;color:var(--ink3);font-weight:500;transition:color .15s;}
+  .rf-submit{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--blue);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;padding:13px 28px;border-radius:var(--r-sm);border:none;cursor:pointer;box-shadow:0 3px 14px rgba(26,95,255,.32);transition:transform .18s,box-shadow .18s,background .18s;margin-top:6px;width:100%;}
+  .rf-submit:hover{transform:translateY(-2px);box-shadow:0 6px 26px rgba(26,95,255,.42);background:#1450d6;}
+  .rf-submit:active{transform:translateY(0);}
+  .rf-submit:disabled{opacity:.65;cursor:not-allowed;transform:none;}
+  .rf-success{text-align:center;padding:32px 16px;}
+  .rf-success-icon{width:52px;height:52px;border-radius:50%;background:#dcfce7;color:#16a34a;font-size:1.4rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275) forwards;}
+  @keyframes popIn{from{transform:scale(.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .rf-success-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--ink);margin-bottom:6px;}
+  .rf-success-sub{font-size:.85rem;color:var(--ink3);margin-bottom:22px;}
+  .rf-another{background:none;border:1.5px solid var(--borderM);color:var(--ink2);font-family:'Figtree',sans-serif;font-size:.82rem;font-weight:500;padding:8px 20px;border-radius:var(--r-sm);cursor:pointer;transition:border-color .18s,color .18s;}
+  .rf-another:hover{border-color:var(--blue);color:var(--blue);}
+  .rf-error-msg{background:#fef2f2;border:1px solid #fecaca;border-radius:var(--r-sm);padding:12px 16px;font-size:.82rem;color:#dc2626;margin-top:10px;}
+  .rf-error-msg a{color:#dc2626;}
+  .rf-input.invalid{border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.1);}
+
   /* WHY */
   #why-section{background:var(--ink);padding:80px 32px;}
   .why-inner{max-width:1060px;margin:0 auto;}
@@ -382,7 +433,6 @@
         <p style="margin-top:14px;font-size:.78rem;color:var(--ink3);">Free · No sign-in required · Results in seconds.</p>
       </div>
 
-      <!-- ANIMATED DEMO PANEL -->
       <div class="analyser-demo" id="analyser-demo">
         <div class="demo-url-bar">
           <span class="url-icon">🌐</span>
@@ -442,7 +492,6 @@
         <p style="margin-top:14px;font-size:.78rem;color:var(--ink3);">Sign in once — your session is remembered.</p>
       </div>
 
-      <!-- Animated spreadsheet mockup -->
       <div class="sheets-vis">
         <div class="sv-mock">
           <div class="sv-toolbar">
@@ -455,43 +504,36 @@
             <span class="sv-formula-text" id="sv-formula-text">=SUM(B2:B6)</span>
           </div>
           <div class="sv-grid">
-            <!-- Header row -->
             <div class="sv-cell header"></div>
             <div class="sv-cell header">A</div>
             <div class="sv-cell header">B</div>
             <div class="sv-cell header">C</div>
             <div class="sv-cell header">D</div>
-            <!-- Row 1 -->
             <div class="sv-cell rownum">1</div>
             <div class="sv-cell header">Product</div>
             <div class="sv-cell header">Revenue</div>
             <div class="sv-cell header">Units</div>
             <div class="sv-cell header">Margin</div>
-            <!-- Row 2 -->
             <div class="sv-cell rownum">2</div>
             <div class="sv-cell">Orbit Pro</div>
             <div class="sv-cell active" id="sv-b2">₹42,000</div>
             <div class="sv-cell">210</div>
             <div class="sv-cell highlight">68%</div>
-            <!-- Row 3 -->
             <div class="sv-cell rownum">3</div>
             <div class="sv-cell">Sheets Basic</div>
             <div class="sv-cell">₹28,500</div>
             <div class="sv-cell">190</div>
             <div class="sv-cell">72%</div>
-            <!-- Row 4 -->
             <div class="sv-cell rownum">4</div>
             <div class="sv-cell">Analyser</div>
             <div class="sv-cell">₹19,200</div>
             <div class="sv-cell">96</div>
             <div class="sv-cell">81%</div>
-            <!-- Row 5 -->
             <div class="sv-cell rownum">5</div>
             <div class="sv-cell">Enterprise</div>
             <div class="sv-cell">₹64,000</div>
             <div class="sv-cell">32</div>
             <div class="sv-cell highlight">74%</div>
-            <!-- Row 6 — TOTAL -->
             <div class="sv-cell rownum">6</div>
             <div class="sv-cell header" style="font-weight:700;color:var(--ink);">Total</div>
             <div class="sv-cell formula" id="sv-total">₹1,53,700</div>
@@ -501,6 +543,82 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- REVIEWS SECTION -->
+<section id="reviews-section" style="padding:80px 32px;">
+  <div class="reviews-inner">
+
+    
+
+    <div class="review-form-wrap reveal rd2">
+      <div class="review-form-card">
+        <div class="rfcard-left">
+          <span style="font-size:1.8rem;display:block;margin-bottom:12px;">✦</span>
+          <h3 class="rfcard-title">Leave your review</h3>
+          <p class="rfcard-sub">Loved a product? Tell us — and tell the world.</p>
+          <div class="rf-trust-pills">
+            <span class="rf-pill">Takes 30 seconds</span>
+            <span class="rf-pill">No account needed</span>
+          </div>
+        </div>
+        <div class="rfcard-right">
+          <form id="review-form" action="https://formspree.io/f/xeenpzpj" method="POST" novalidate>
+            <input type="hidden" name="_subject" value="⭐ New Alaada Review"/>
+            <input type="text" name="_gotcha" style="display:none"/>
+            <div class="rf-field">
+              <label class="rf-label" for="rf-name">Your name</label>
+              <input class="rf-input" id="rf-name" name="name" type="text" placeholder="Arzo Das" required autocomplete="name"/>
+            </div>
+            <div class="rf-field">
+              <label class="rf-label" for="rf-product">Which product?</label>
+              <select class="rf-input" id="rf-product" name="product" required>
+                <option value="" disabled selected>Select a product…</option>
+                <option value="Orbit AI">Orbit AI</option>
+                <option value="Web Analyser">Web Analyser</option>
+                <option value="Alaada Sheets">Alaada Sheets</option>
+                <option value="All of Alaada">All of Alaada ✦</option>
+              </select>
+            </div>
+            <div class="rf-field">
+              <label class="rf-label">Rating</label>
+              <div class="star-picker" id="star-picker" role="radiogroup" aria-label="Rating">
+                <span class="star" data-v="1" tabindex="0" role="radio" aria-label="1 star">★</span>
+                <span class="star" data-v="2" tabindex="0" role="radio" aria-label="2 stars">★</span>
+                <span class="star" data-v="3" tabindex="0" role="radio" aria-label="3 stars">★</span>
+                <span class="star" data-v="4" tabindex="0" role="radio" aria-label="4 stars">★</span>
+                <span class="star" data-v="5" tabindex="0" role="radio" aria-label="5 stars">★</span>
+              </div>
+              <input type="hidden" name="rating" id="rf-rating" required/>
+              <span class="rf-rating-label" id="rf-rating-label">Click to rate</span>
+            </div>
+            <div class="rf-field">
+              <label class="rf-label" for="rf-review">Your review</label>
+              <textarea class="rf-input rf-textarea" id="rf-review" name="review" placeholder="What did you love? What helped you most?" required rows="4" maxlength="500"></textarea>
+              <span class="rf-char-count" id="rf-char">0 / 500</span>
+            </div>
+            <button type="submit" class="rf-submit" id="rf-submit-btn">
+              <span id="rf-btn-text">Send my review →</span>
+              <span id="rf-btn-spinner" style="display:none;" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur=".75s" repeatCount="indefinite"/></path></svg>
+                Sending…
+              </span>
+            </button>
+          </form>
+          <div class="rf-success" id="rf-success" style="display:none;" aria-live="polite">
+            <div class="rf-success-icon">✓</div>
+            <p class="rf-success-title">Thank you for the review!</p>
+            <p class="rf-success-sub">It means a lot to us — the whole team (of one 😄) appreciates it.</p>
+            <button class="rf-another" id="rf-another-btn">Leave another</button>
+          </div>
+          <div class="rf-error-msg" id="rf-error" style="display:none;" aria-live="assertive">
+            ⚠ Something went wrong. Please try again or email us at <a href="mailto:arzodas2024@gmail.com">alaada@alaada.com</a>.
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -552,7 +670,7 @@
         Alaada
       </div>
       <p class="footer-sub">Where Perfection meets Possibility.</p>
-      <div class="footer-email"><a href="mailto:alaada@alaada.com">alaada@alaada.com</a></div>
+      <div class="footer-email"><a href="mailto:arzodas2024@gmail.com">alaada@alaada.com</a></div>
     </div>
     <div class="footer-nav">
       <div class="footer-socials">
@@ -621,16 +739,13 @@ function animRing(id,score){
 
 function runAnalyser(){
   if(analyserDone)return; analyserDone=true;
-  // Type URL
   const urlEl=document.getElementById('demo-url');
   const url='alaada.com'; urlEl.textContent=''; let ui=0;
   const urlT=setInterval(()=>{ urlEl.textContent+=url[ui]||''; ui++; if(ui>=url.length)clearInterval(urlT); },100);
-  // Status cycle
   const statusEl=document.getElementById('status-text');
   const statuses=['Scanning page…','Checking SEO tags…','Measuring load speed…','Auditing accessibility…','Report ready ✓'];
   let si=0;
   const stT=setInterval(()=>{ si++; if(si<statuses.length)statusEl.textContent=statuses[si]; else clearInterval(stT); },700);
-  // Scores
   setTimeout(()=>{
     document.getElementById('score-circles').style.opacity='1';
     animRing('ring-perf',scores.perf); animRing('ring-seo',scores.seo);
@@ -638,7 +753,6 @@ function runAnalyser(){
     animCount('num-perf',scores.perf,1300); animCount('num-seo',scores.seo,1300);
     animCount('num-access',scores.access,1300); animCount('num-speed',scores.speed,1300);
   },1600);
-  // Bars
   setTimeout(()=>{
     document.getElementById('metric-bars').style.opacity='1';
     ['bar1','bar2','bar3','bar4'].forEach((id,i)=>{
@@ -656,6 +770,113 @@ if(ademo){
   ao.observe(ademo);
 }
 
+/* REVIEW FORM */
+(function(){
+  const stars    = document.querySelectorAll('#star-picker .star');
+  const ratingIn = document.getElementById('rf-rating');
+  const ratingLb = document.getElementById('rf-rating-label');
+  const labels   = ['','Terrible','Poor','Okay','Good','Excellent ✦'];
+  let chosen = 0;
+
+  function setStars(n, type) {
+    stars.forEach((s, i) => {
+      s.classList.remove('active', 'hover');
+      if (type === 'hover') { if (i < n) s.classList.add('hover'); }
+      else                  { if (i < chosen) s.classList.add('active'); }
+    });
+  }
+
+  stars.forEach(s => {
+    const v = +s.dataset.v;
+    s.addEventListener('mouseenter', () => setStars(v, 'hover'));
+    s.addEventListener('mouseleave', () => setStars(0, 'set'));
+    s.addEventListener('click', () => {
+      chosen = v; ratingIn.value = v;
+      ratingLb.textContent = labels[v];
+      ratingLb.style.color = 'var(--gold)';
+      setStars(v, 'set');
+      stars.forEach((st, i) => { if (i < v) st.classList.add('active'); });
+    });
+    s.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); s.click(); }
+    });
+  });
+
+  const textarea = document.getElementById('rf-review');
+  const charEl   = document.getElementById('rf-char');
+  if (textarea && charEl) {
+    textarea.addEventListener('input', () => {
+      const n = textarea.value.length;
+      charEl.textContent = n + ' / 500';
+      charEl.style.color = n > 450 ? 'var(--gold)' : 'var(--ink3)';
+    });
+  }
+
+  const form    = document.getElementById('review-form');
+  const btnText = document.getElementById('rf-btn-text');
+  const btnSpin = document.getElementById('rf-btn-spinner');
+  const btn     = document.getElementById('rf-submit-btn');
+  const success = document.getElementById('rf-success');
+  const errDiv  = document.getElementById('rf-error');
+  const another = document.getElementById('rf-another-btn');
+
+  if (!form) return;
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    errDiv.style.display = 'none';
+    let valid = true;
+    ['rf-name','rf-product','rf-review'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el.value.trim()) { el.classList.add('invalid'); valid = false; }
+      else el.classList.remove('invalid');
+    });
+    if (!ratingIn.value) {
+      ratingLb.textContent = '← Please choose a rating';
+      ratingLb.style.color = '#ef4444';
+      valid = false;
+    }
+    if (!valid) return;
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    btnSpin.style.display = 'inline-flex';
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        form.style.display    = 'none';
+        success.style.display = 'block';
+      } else { throw new Error(); }
+    } catch (_) {
+      errDiv.style.display  = 'block';
+      btn.disabled          = false;
+      btnText.style.display = 'inline';
+      btnSpin.style.display = 'none';
+    }
+  });
+
+  if (another) {
+    another.addEventListener('click', () => {
+      form.reset(); chosen = 0; ratingIn.value = '';
+      ratingLb.textContent = 'Click to rate'; ratingLb.style.color = '';
+      stars.forEach(s => s.classList.remove('active', 'hover'));
+      charEl.textContent = '0 / 500';
+      form.style.display    = 'block';
+      success.style.display = 'none';
+      btn.disabled = false;
+      btnText.style.display = 'inline';
+      btnSpin.style.display = 'none';
+    });
+  }
+
+  document.querySelectorAll('.rf-input').forEach(el => {
+    el.addEventListener('input', () => el.classList.remove('invalid'));
+  });
+})();
+
 /* AUTH */
 (()=>{
   "use strict";
@@ -663,145 +884,57 @@ if(ademo){
   const OAUTH=`${EP}/account/sessions/oauth2/google?project=${PID}&success=${encodeURIComponent("https://www.alaada.com")}&failure=${encodeURIComponent("https://www.alaada.com")}`;
   const CK="alaada_auth",IK="alaada_identity",PK="alaada_oauth_pending",AK="alaada_authed",CD=7;
   const DEST={orbit:"/Orbit.html",sheets:"/Spreadsheets.html"};
-
-  /* ── Cookie helpers ── */
   const cGet=n=>document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(n+'='))?.split('=')[1]||null;
   const cSet=(n,v,d)=>{const e=new Date(Date.now()+d*864e5).toUTCString();document.cookie=`${n}=${v};path=/;expires=${e};SameSite=Lax;Secure`;};
   const cDel=n=>{document.cookie=`${n}=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT;SameSite=Lax;Secure`;};
-
-  /* ── sessionStorage helpers (survive cookie deletion within the same tab session) ── */
   const ssGet=k=>{try{return sessionStorage.getItem(k);}catch{return null;}};
   const ssSet=(k,v)=>{try{sessionStorage.setItem(k,v);}catch(_){}};
   const ssDel=k=>{try{sessionStorage.removeItem(k);}catch(_){}};
-
-  /* ── localStorage helpers ── */
   const iSave=u=>{try{localStorage.setItem(IK,JSON.stringify({id:u.$id,name:u.name||(u.email||'').split('@')[0],email:u.email,ts:Date.now()}));}catch(_){}};
   const iLoad=()=>{try{return JSON.parse(localStorage.getItem(IK));}catch{return null;}};
   const iClear=()=>{try{localStorage.removeItem(IK);}catch(_){}};
-  // localStorage flag mirrors the auth cookie — survives cookie-only deletion
   const lsAuthGet=()=>{try{return localStorage.getItem(AK);}catch{return null;}};
   const lsAuthSet=()=>{try{localStorage.setItem(AK,'1');}catch(_){}};
   const lsAuthDel=()=>{try{localStorage.removeItem(AK);}catch(_){}};
-
-  /* ── Pending-state helpers
-   *    Written to BOTH cookie and sessionStorage before the OAuth redirect.
-   *    Either one surviving is enough to detect the return.
-   *    Both are cleared together the moment we detect the return. ── */
   const pendingGet=()=>cGet(PK)||ssGet(PK);
   const pendingSet=dest=>{cSet(PK,dest,1);ssSet(PK,dest);};
   const pendingClear=()=>{cDel(PK);ssDel(PK);};
-
-  /* ── Auth hint: cookie OR localStorage flag.
-   *    If the user only deleted cookies, the localStorage flag keeps us from
-   *    skipping silentCheck on a still-valid Appwrite session. ── */
   const hasAuthHint=()=>!!(cGet(CK)||lsAuthGet());
-
   const fetchAcc=async()=>{const r=await fetch(`${EP}/account`,{credentials:'include',headers:{'X-Appwrite-Project':PID}});if(!r.ok)throw new Error();return r.json();};
   const ov=document.getElementById('auth-overlay'),msg=document.getElementById('auth-msg');
   const showSpin=m=>{msg.textContent=m||'Checking…';ov.classList.add('show');};
   const hideSpin=()=>ov.classList.remove('show');
   const showBadge=id=>{if(!id)return;document.getElementById('badge-initial').textContent=(id.name||id.email||'?')[0].toUpperCase();document.getElementById('badge-name').textContent=id.name||id.email;document.getElementById('user-badge').classList.add('visible');};
-
-  const verify=async()=>{
-    const u=await fetchAcc();
-    cSet(CK,'1',CD); // cookie
-    lsAuthSet();     // localStorage mirror
-    iSave(u);
-    return u;
-  };
-
-  /*
-   * launch() — called when user clicks "Try Orbit" / "Open Sheets"
-   *
-   * Loop-safe rule: only redirect to OAuth if NEITHER the cookie NOR
-   * the sessionStorage pending flag exist. Both are cleared on return,
-   * so if either survived it means we already attempted OAuth once.
-   */
+  const verify=async()=>{const u=await fetchAcc();cSet(CK,'1',CD);lsAuthSet();iSave(u);return u;};
   const launch=async(dest,m)=>{
     showSpin(m||'Verifying…');
-    try{
-      const c=iLoad();if(c)showBadge(c);
-      await verify();
-      hideSpin();
-      window.location.href=dest;
-    }catch(_){
+    try{const c=iLoad();if(c)showBadge(c);await verify();hideSpin();window.location.href=dest;}
+    catch(_){
       cDel(CK);lsAuthDel();iClear();
-      if(pendingGet()){
-        // We already tried OAuth — don't loop. Show error instead.
-        pendingClear();
-        msg.textContent='Sign-in could not be completed. Please try again.';
-        ov.classList.add('show');
-        setTimeout(hideSpin,3000);
-        return;
-      }
-      // First attempt — mark pending in cookie + sessionStorage, then go to OAuth.
-      pendingSet(dest);
-      msg.textContent='Redirecting to Google sign-in…';
-      ov.classList.add('show');
+      if(pendingGet()){pendingClear();msg.textContent='Sign-in could not be completed. Please try again.';ov.classList.add('show');setTimeout(hideSpin,3000);return;}
+      pendingSet(dest);msg.textContent='Redirecting to Google sign-in…';ov.classList.add('show');
       setTimeout(()=>window.location.replace(OAUTH),600);
     }
   };
-
   window.logout=async()=>{
     showSpin('Signing out…');
     try{await fetch(`${EP}/account/sessions/current`,{method:'DELETE',credentials:'include',headers:{'X-Appwrite-Project':PID}});}catch(_){}
-    cDel(CK);lsAuthDel();pendingClear();iClear();
-    hideSpin();
-    location.replace(window.location.origin);
+    cDel(CK);lsAuthDel();pendingClear();iClear();hideSpin();location.replace(window.location.origin);
   };
-
-  /*
-   * handleReturn() — runs once on every page load.
-   *
-   * Detects an OAuth return via cookie OR sessionStorage (whichever survived).
-   * Clears both immediately — loop prevention holds even if cookies were wiped.
-   *
-   * Returns true  → session confirmed, silentCheck can be skipped.
-   * Returns false → not an OAuth return, or verify failed post-OAuth.
-   */
   const handleReturn=async()=>{
-    const pendingDest=pendingGet();
-    if(!pendingDest) return false;
-
-    pendingClear(); // wipe both storages NOW — no loop is possible after this line
-
-    try{
-      await verify();
-      showBadge(iLoad());
-      showSpin('Signing you in…');
-      setTimeout(()=>window.location.href=pendingDest,400);
-      return true;
-    }catch(_){
-      cDel(CK);lsAuthDel();iClear();
-      return false;
-    }
+    const pendingDest=pendingGet();if(!pendingDest)return false;
+    pendingClear();
+    try{await verify();showBadge(iLoad());showSpin('Signing you in…');setTimeout(()=>window.location.href=pendingDest,400);return true;}
+    catch(_){cDel(CK);lsAuthDel();iClear();return false;}
   };
-
-  /*
-   * silentCheck() — only runs when handleReturn returned false.
-   *
-   * Guards with hasAuthHint() instead of cGet(CK) alone, so a user who
-   * deleted just their cookies but has a live Appwrite session still gets
-   * their badge restored (the localStorage flag survives cookie wipes).
-   */
   const silentCheck=async()=>{
-    if(!hasAuthHint())return;
-    const c=iLoad();if(c)showBadge(c);
-    try{
-      await verify();
-      showBadge(iLoad());
-    }catch(_){
-      cDel(CK);lsAuthDel();iClear();
-      document.getElementById('user-badge').classList.remove('visible');
-    }
+    if(!hasAuthHint())return;const c=iLoad();if(c)showBadge(c);
+    try{await verify();showBadge(iLoad());}
+    catch(_){cDel(CK);lsAuthDel();iClear();document.getElementById('user-badge').classList.remove('visible');}
   };
-
   window.addEventListener('load',async()=>{
-    // At most one /account request on load: handleReturn OR silentCheck, never both.
     const alreadyVerified=await handleReturn();
     if(!alreadyVerified) silentCheck();
-
-    /* SHEETS FORMULA ANIMATION */
     const formulas=['=SUM(B2:B5)','=AVERAGE(C2:C5)','=IF(D2>70,"Good","Low")','=VLOOKUP("Orbit",A2:D5,2,0)','=SUM(B2:B5)'];
     let fi=0;
     setInterval(()=>{
@@ -809,8 +942,6 @@ if(ademo){
       const el=document.getElementById('sv-formula-text');
       if(el){el.style.opacity='0';setTimeout(()=>{el.textContent=formulas[fi];el.style.opacity='1';el.style.transition='opacity .3s';},200);}
     },2200);
-
-    /* BUTTON LISTENERS */
     document.querySelectorAll('.launch-orbit-btn').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();launch(DEST.orbit,'Launching Orbit…');}));
     const sheetsBtn=document.getElementById('launch-sheets');
     if(sheetsBtn)sheetsBtn.addEventListener('click',e=>{e.preventDefault();launch(DEST.sheets,'Launching Alaada Sheets…');});
