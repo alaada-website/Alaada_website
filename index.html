@@ -3,9 +3,91 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Alaada — Where Perfection meets Possibility</title>
-  <meta name="description" content="Orbit AI for deep thinking. Web Analyser for real insights. Built in India."/>
+  <title>Alaada — Orbit AI · Web Analyser · Spreadsheets | Built in India</title>
+
+  <!-- ── PRIMARY SEO ── -->
+  <meta name="description" content="Three focused AI tools, zero noise. Orbit AI for deep reasoning, Web Analyser for real site insights, and Alaada Sheets for smart spreadsheets. Free, browser-based, built in India."/>
+  <meta name="keywords" content="Alaada, Orbit AI, web analyser, alaada sheets, AI tools India, site performance, SEO audit, spreadsheet AI, browser tools"/>
+  <meta name="robots" content="index, follow"/>
+  <meta name="author" content="Arzo Das, Alaada"/>
+  <link rel="canonical" href="https://www.alaada.com/"/>
+
+  <!-- ── OPEN GRAPH ── -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="Alaada"/>
+  <meta property="og:url" content="https://www.alaada.com/"/>
+  <meta property="og:title" content="Alaada — AI that thinks. Tools that deliver."/>
+  <meta property="og:description" content="Three focused AI tools: Orbit AI for deep reasoning, Web Analyser for real site insights, Alaada Sheets for smart spreadsheets. Built in India."/>
+  <meta property="og:image" content="https://www.alaada.com/images/alaada-og.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:locale" content="en_IN"/>
+
+  <!-- ── TWITTER CARD ── -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Alaada — AI that thinks. Tools that deliver."/>
+  <meta name="twitter:description" content="Three focused AI tools: Orbit AI, Web Analyser, Alaada Sheets. Built in India, works in your browser."/>
+  <meta name="twitter:image" content="https://www.alaada.com/images/alaada-og.png"/>
+
+  <!-- ── STRUCTURED DATA ── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "Alaada",
+        "url": "https://www.alaada.com",
+        "logo": "https://www.alaada.com/images/alaada-icon.png",
+        "description": "AI tools built in India. Where Perfection meets Possibility.",
+        "founder": { "@type": "Person", "name": "Arzo Das" },
+        "contactPoint": { "@type": "ContactPoint", "email": "alaada@alaada.com", "contactType": "customer support" },
+        "sameAs": [
+          "https://discord.gg/r4G7dynh",
+          "https://www.linkedin.com/in/arzo-das-782539391/",
+          "https://www.facebook.com/profile.php?id=61583515497634"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "name": "Alaada",
+        "url": "https://www.alaada.com",
+        "description": "Where Perfection meets Possibility. Three focused AI tools built in India.",
+        "potentialAction": { "@type": "SearchAction", "target": "https://www.alaada.com/?q={search_term_string}", "query-input": "required name=search_term_string" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Orbit AI",
+        "applicationCategory": "Artificial Intelligence",
+        "operatingSystem": "Web Browser",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+        "description": "Deep reasoning AI assistant. Thinks before it answers.",
+        "url": "https://www.alaada.com/Orbit.html"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Alaada Web Analyser",
+        "applicationCategory": "WebApplication",
+        "operatingSystem": "Web Browser",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+        "description": "Paste any URL and get a full performance, SEO and accessibility audit in seconds.",
+        "url": "https://www.alaada.com/website-analyzer.html"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Alaada Sheets",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web Browser",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+        "description": "Full-featured browser spreadsheet with 50+ formulas and AI NLP commands.",
+        "url": "https://www.alaada.com/Spreadsheets.html"
+      }
+    ]
+  }
+  </script>
+
   <link rel="icon" href="images/alaada-icon.png" type="image/png"/>
+  <link rel="apple-touch-icon" href="images/alaada-icon.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
 
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-BJGLCGLMK5"></script>
@@ -102,6 +184,157 @@
   /* TRUST BAR */
   .trust-bar{background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:center;gap:36px;flex-wrap:wrap;}
   .trust-item{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:500;color:var(--ink3);}
+
+  /* ════════════════════════════════════
+     PRODUCT OVERVIEW STRIP  (new)
+  ════════════════════════════════════ */
+  #products-overview{
+    padding:72px 32px 80px;
+    background:var(--bg);
+  }
+  .po-inner{
+    max-width:1060px;
+    margin:0 auto;
+  }
+  .po-head{
+    text-align:center;
+    margin-bottom:48px;
+  }
+  .po-eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:.68rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+    color:var(--ink3);margin-bottom:14px;
+  }
+  .po-eyebrow::before,.po-eyebrow::after{
+    content:'';display:block;width:28px;height:1.5px;background:var(--borderM);
+  }
+  .po-title{
+    font-family:'Syne',sans-serif;
+    font-size:clamp(1.6rem,3vw,2.3rem);
+    font-weight:800;letter-spacing:-1.2px;line-height:1.1;
+    color:var(--ink);
+  }
+  .po-sub{
+    font-size:.95rem;color:var(--ink3);margin-top:10px;
+    font-weight:400;
+  }
+
+  /* three cards */
+  .po-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+  }
+  @media(max-width:860px){
+    .po-grid{grid-template-columns:1fr;}
+    #products-overview{padding:52px 20px 60px;}
+  }
+  .po-card{
+    background:var(--white);
+    border:1px solid var(--borderM);
+    border-radius:var(--r-xl);
+    padding:30px 26px 26px;
+    display:flex;flex-direction:column;gap:18px;
+    position:relative;overflow:hidden;
+    box-shadow:var(--sh-sm);
+    transition:transform .22s ease, box-shadow .22s ease;
+    text-decoration:none;color:inherit;
+  }
+  .po-card:hover{
+    transform:translateY(-6px);
+    box-shadow:var(--sh-lg);
+  }
+  .po-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  }
+  .po-card-blue::before  {background:var(--blue);}
+  .po-card-teal::before  {background:var(--teal);}
+  .po-card-gold::before  {background:var(--gold);}
+
+  /* corner glow */
+  .po-card::after{
+    content:'';position:absolute;top:-70px;right:-70px;
+    width:200px;height:200px;border-radius:50%;pointer-events:none;
+    opacity:0;transition:opacity .3s;
+  }
+  .po-card-blue::after  {background:radial-gradient(circle,var(--blue3),transparent 70%);}
+  .po-card-teal::after  {background:radial-gradient(circle,var(--teal3),transparent 70%);}
+  .po-card-gold::after  {background:radial-gradient(circle,var(--gold3),transparent 70%);}
+  .po-card:hover::after{opacity:1;}
+
+  .po-card-inner{position:relative;z-index:1;display:flex;flex-direction:column;gap:18px;flex:1;}
+
+  .po-icon{
+    width:52px;height:52px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.5rem;flex-shrink:0;
+  }
+  .po-icon-blue{background:var(--blue2);}
+  .po-icon-teal{background:var(--teal2);}
+  .po-icon-gold{background:var(--gold2);}
+
+  .po-label{
+    font-size:.63rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+    margin-bottom:3px;
+  }
+  .po-label-blue{color:var(--blue);}
+  .po-label-teal{color:var(--teal);}
+  .po-label-gold{color:var(--gold);}
+
+  .po-name{
+    font-family:'Syne',sans-serif;
+    font-size:1.3rem;font-weight:800;
+    letter-spacing:-.5px;color:var(--ink);line-height:1.1;
+    margin-bottom:2px;
+  }
+  .po-desc{
+    font-size:.86rem;color:var(--ink2);line-height:1.7;flex:1;
+  }
+
+  .po-divider{height:1px;background:var(--border);}
+
+  /* feature rows */
+  .po-features{display:flex;flex-direction:column;gap:7px;}
+  .po-feat{
+    display:flex;align-items:flex-start;gap:9px;
+    font-size:.8rem;color:var(--ink2);line-height:1.5;
+  }
+  .po-check{
+    width:16px;height:16px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.52rem;font-weight:900;flex-shrink:0;margin-top:1px;
+  }
+  .po-check-blue{background:var(--blue2);color:var(--blue);}
+  .po-check-teal{background:var(--teal2);color:var(--teal);}
+  .po-check-gold{background:var(--gold2);color:var(--gold);}
+
+  /* pills */
+  .po-pills{display:flex;flex-wrap:wrap;gap:6px;}
+  .po-pill{
+    font-size:.67rem;font-weight:600;padding:3px 10px;
+    border-radius:100px;letter-spacing:.2px;
+  }
+  .po-pill-blue{background:var(--blue2);color:var(--blue);}
+  .po-pill-teal{background:var(--teal2);color:var(--teal);}
+  .po-pill-gold{background:var(--gold2);color:var(--gold);}
+
+  /* CTA inside card */
+  .po-cta{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:'Syne',sans-serif;font-weight:700;font-size:.86rem;
+    padding:11px 18px;border-radius:var(--r-sm);
+    text-decoration:none;border:none;cursor:pointer;
+    transition:transform .18s,box-shadow .18s,background .18s;
+    width:100%;letter-spacing:.1px;
+  }
+  .po-cta:hover{transform:translateY(-2px);}
+  .po-cta-blue{background:var(--blue);color:#fff;box-shadow:0 3px 14px rgba(26,95,255,.28);}
+  .po-cta-blue:hover{background:#1450d6;box-shadow:0 6px 24px rgba(26,95,255,.40);}
+  .po-cta-teal{background:var(--teal);color:#fff;box-shadow:0 3px 14px rgba(0,149,122,.26);}
+  .po-cta-teal:hover{background:#007a65;box-shadow:0 6px 24px rgba(0,149,122,.38);}
+  .po-cta-gold{background:var(--gold);color:#fff;box-shadow:0 3px 14px rgba(212,147,10,.26);}
+  .po-cta-gold:hover{background:#b87d08;box-shadow:0 6px 24px rgba(212,147,10,.38);}
+  /* ════════════════════════════════════ */
 
   /* ORBIT SECTION */
   #orbit-section{padding:100px 32px;}
@@ -326,7 +559,7 @@
     <li><a href="#orbit-section">Orbit AI</a></li>
     <li><a href="#analyser-section">Web Analyser</a></li>
     <li><a href="#sheets-section">Sheets</a></li>
-	<li><a href="#reviews-section">Share your Review</a></li>
+    <li><a href="#reviews-section">Share your Review</a></li>
     <li><a href="#about-section">About</a></li>
     <li><a href="#" class="nav-cta launch-orbit-btn">Try Orbit →</a></li>
   </ul>
@@ -351,7 +584,7 @@
     <div class="hero-btns">
       <a href="#" class="btn-primary launch-orbit-btn">Try Orbit AI →</a>
       <a href="#analyser-section" class="btn-ghost">See Web Analyser</a>
-	  <a href="#sheets-section" class="btn-ghost">Check out Spreadsheets</a>
+      <a href="#sheets-section" class="btn-ghost">Check out Spreadsheets</a>
     </div>
   </div>
 
@@ -383,6 +616,97 @@
   <div class="trust-item">🌐 Works in your browser</div>
   <div class="trust-item">✦ Always improving</div>
 </div>
+
+<!-- ════════════════════════════════════════════════════
+     PRODUCTS OVERVIEW  —  new section
+════════════════════════════════════════════════════ -->
+<section id="products-overview" aria-label="All Alaada products at a glance">
+  <div class="po-inner">
+
+    <div class="po-head reveal">
+      <p class="po-eyebrow">Everything we make</p>
+      <h2 class="po-title">Three tools. One mission.</h2>
+      <p class="po-sub">Pick one. Use all three. Each does exactly one thing — perfectly.</p>
+    </div>
+
+    <div class="po-grid">
+
+      <!-- ORBIT AI -->
+      <a href="#" class="po-card po-card-blue reveal rd1 launch-orbit-btn" aria-label="Launch Orbit AI">
+        <div class="po-card-inner">
+          <div class="po-icon po-icon-blue" aria-hidden="true">🧠</div>
+          <div>
+            <p class="po-label po-label-blue">AI Assistant</p>
+            <h3 class="po-name">Orbit AI</h3>
+            <p class="po-desc">Deep-reasoning AI that thinks before it answers. Break down complex decisions, analyse data, search the web — all in one chat.</p>
+          </div>
+          <div class="po-divider"></div>
+          <ul class="po-features" aria-label="Key features">
+            <li class="po-feat"><span class="po-check po-check-blue" aria-hidden="true">✓</span>Reasons through complexity step by step</li>
+            <li class="po-feat"><span class="po-check po-check-blue" aria-hidden="true">✓</span>Live web search &amp; file analysis</li>
+            <li class="po-feat"><span class="po-check po-check-blue" aria-hidden="true">✓</span>Voice output · no install needed</li>
+          </ul>
+          <div class="po-pills">
+            <span class="po-pill po-pill-blue">Deep Reasoning</span>
+            <span class="po-pill po-pill-blue">Web Search</span>
+            <span class="po-pill po-pill-blue">Voice</span>
+          </div>
+          <span class="po-cta po-cta-blue">Launch Orbit →</span>
+        </div>
+      </a>
+
+      <!-- WEB ANALYSER -->
+      <a href="https://www.alaada.com/website-analyzer.html" class="po-card po-card-teal reveal rd2" aria-label="Open Web Analyser">
+        <div class="po-card-inner">
+          <div class="po-icon po-icon-teal" aria-hidden="true">🌐</div>
+          <div>
+            <p class="po-label po-label-teal">Web Intelligence</p>
+            <h3 class="po-name">Web Analyser</h3>
+            <p class="po-desc">Paste any URL. Get a full audit — performance, SEO, accessibility, speed bottlenecks — in seconds. No guesswork, just evidence.</p>
+          </div>
+          <div class="po-divider"></div>
+          <ul class="po-features" aria-label="Key features">
+            <li class="po-feat"><span class="po-check po-check-teal" aria-hidden="true">✓</span>Performance, SEO &amp; accessibility scores</li>
+            <li class="po-feat"><span class="po-check po-check-teal" aria-hidden="true">✓</span>Prioritised fix list — what to do first</li>
+            <li class="po-feat"><span class="po-check po-check-teal" aria-hidden="true">✓</span>Free · no sign-in · results in seconds</li>
+          </ul>
+          <div class="po-pills">
+            <span class="po-pill po-pill-teal">Performance</span>
+            <span class="po-pill po-pill-teal">SEO Audit</span>
+            <span class="po-pill po-pill-teal">Accessibility</span>
+          </div>
+          <span class="po-cta po-cta-teal">Analyse a Site →</span>
+        </div>
+      </a>
+
+      <!-- ALAADA SHEETS -->
+      <a href="#" class="po-card po-card-gold reveal rd3" id="po-sheets-btn" aria-label="Open Alaada Sheets">
+        <div class="po-card-inner">
+          <div class="po-icon po-icon-gold" aria-hidden="true">📊</div>
+          <div>
+            <p class="po-label po-label-gold">Spreadsheet Tool</p>
+            <h3 class="po-name">Alaada Sheets</h3>
+            <p class="po-desc">Full-featured browser spreadsheet with AI built right in. Write formulas — or just ask in plain English. No installs, no subscriptions.</p>
+          </div>
+          <div class="po-divider"></div>
+          <ul class="po-features" aria-label="Key features">
+            <li class="po-feat"><span class="po-check po-check-gold" aria-hidden="true">✓</span>50+ formulas, multi-sheet support</li>
+            <li class="po-feat"><span class="po-check po-check-gold" aria-hidden="true">✓</span>AI NLP commands in plain English</li>
+            <li class="po-feat"><span class="po-check po-check-gold" aria-hidden="true">✓</span>Export Excel · SQL · JSON · Tally XML</li>
+          </ul>
+          <div class="po-pills">
+            <span class="po-pill po-pill-gold">AI Commands</span>
+            <span class="po-pill po-pill-gold">50+ Formulas</span>
+            <span class="po-pill po-pill-gold">Export All</span>
+          </div>
+          <span class="po-cta po-cta-gold">Open Sheets →</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+<!-- ════════════════════════════════════════════════════ -->
 
 <!-- ORBIT SECTION -->
 <section id="orbit-section">
@@ -551,8 +875,6 @@
 <!-- REVIEWS SECTION -->
 <section id="reviews-section" style="padding:80px 32px;">
   <div class="reviews-inner">
-
-    
 
     <div class="review-form-wrap reveal rd2">
       <div class="review-form-card">
@@ -937,6 +1259,8 @@ if(ademo){
   window.addEventListener('load',async()=>{
     const alreadyVerified=await handleReturn();
     if(!alreadyVerified) silentCheck();
+
+    /* Spreadsheet formula cycler */
     const formulas=['=SUM(B2:B5)','=AVERAGE(C2:C5)','=IF(D2>70,"Good","Low")','=VLOOKUP("Orbit",A2:D5,2,0)','=SUM(B2:B5)'];
     let fi=0;
     setInterval(()=>{
@@ -944,9 +1268,17 @@ if(ademo){
       const el=document.getElementById('sv-formula-text');
       if(el){el.style.opacity='0';setTimeout(()=>{el.textContent=formulas[fi];el.style.opacity='1';el.style.transition='opacity .3s';},200);}
     },2200);
+
+    /* Orbit launch buttons (nav + hero + overview card + orbit section) */
     document.querySelectorAll('.launch-orbit-btn').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();launch(DEST.orbit,'Launching Orbit…');}));
+
+    /* Sheets launch buttons (sheets section + overview card) */
     const sheetsBtn=document.getElementById('launch-sheets');
     if(sheetsBtn)sheetsBtn.addEventListener('click',e=>{e.preventDefault();launch(DEST.sheets,'Launching Alaada Sheets…');});
+
+    /* Overview card — sheets */
+    const poSheets=document.getElementById('po-sheets-btn');
+    if(poSheets)poSheets.addEventListener('click',e=>{e.preventDefault();launch(DEST.sheets,'Launching Alaada Sheets…');});
   });
 })();
 </script>
