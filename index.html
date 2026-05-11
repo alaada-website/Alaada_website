@@ -10,6 +10,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="preconnect" href="https://www.googletagmanager.com"/>
 
+  <!-- ══════════════════════════════════════════
+       FAVICON — uses alaada-logo.jpg (confirmed present)
+       Google needs: accessible, square, ≥ 48 × 48 px
+  ═══════════════════════════════════════════ -->
+  <link rel="icon"             type="image/jpeg" href="images/alaada-logo.jpg"/>
+  <link rel="icon"             type="image/jpeg" sizes="32x32"   href="images/alaada-logo.jpg"/>
+  <link rel="icon"             type="image/jpeg" sizes="48x48"   href="images/alaada-logo.jpg"/>
+  <link rel="icon"             type="image/jpeg" sizes="96x96"   href="images/alaada-logo.jpg"/>
+  <link rel="icon"             type="image/jpeg" sizes="192x192" href="images/alaada-logo.jpg"/>
+  <link rel="apple-touch-icon" sizes="180x180"   href="images/alaada-logo.jpg"/>
+  <link rel="shortcut icon"                      href="images/alaada-logo.jpg"/>
+  <!-- Web-app manifest (tells Google the preferred icon) -->
+  <link rel="manifest" href="manifest.json"/>
+
   <!-- ── PRIMARY SEO ── -->
   <meta name="description" content="Alaada builds focused AI tools from India. Orbit AI for deep reasoning, Web Analyser for real site audits, and Alaada Sheets for smart browser-based spreadsheets. Free, no install, works in your browser."/>
   <meta name="keywords" content="Alaada, Orbit AI, web analyser, alaada sheets, AI tools India, site performance audit, SEO audit tool, spreadsheet AI, browser AI tools, free AI India, Kolkata startup"/>
@@ -18,6 +32,7 @@
   <meta name="application-name" content="Alaada"/>
   <meta name="theme-color" content="#1a5fff"/>
   <meta name="color-scheme" content="light"/>
+  <meta name="format-detection" content="telephone=no"/>
   <meta name="geo.region" content="IN-WB"/>
   <meta name="geo.placename" content="Kolkata, West Bengal, India"/>
   <meta name="geo.position" content="22.5726;88.3639"/>
@@ -177,8 +192,6 @@
   }
   </script>
 
-  <link rel="icon" href="images/alaada-icon.png" type="image/png"/>
-  <link rel="apple-touch-icon" href="images/alaada-icon.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
 
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-BJGLCGLMK5"></script>
@@ -224,8 +237,19 @@
   #auth-msg{font-family:'Syne',sans-serif;font-size:.92rem;font-weight:600;color:var(--ink2);}
   @keyframes spin{to{transform:rotate(360deg);}}
 
-  /* HERO */
-  #hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:60px;padding:120px 80px 80px;position:relative;overflow:hidden;}
+  /* ══════════════════════════════════════════
+     HERO — side-by-side on ALL screen sizes
+  ═══════════════════════════════════════════ */
+  #hero{
+    min-height:100vh;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    align-items:center;
+    gap:60px;
+    padding:120px 80px 80px;
+    position:relative;
+    overflow:hidden;
+  }
   .hero-blob{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;}
   .blob-blue{width:560px;height:560px;background:radial-gradient(circle,rgba(26,95,255,.09),transparent 70%);top:-100px;left:-120px;animation:blobF 8s ease-in-out infinite;}
   .blob-teal{width:420px;height:420px;background:radial-gradient(circle,rgba(0,149,122,.07),transparent 70%);bottom:0;right:-80px;animation:blobF 10s ease-in-out infinite reverse;}
@@ -267,26 +291,64 @@
   .mock-send{width:30px;height:30px;border-radius:8px;background:var(--blue);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
   .mock-send:hover{background:#1450d6;}
 
-  /* ── MOBILE: hero stacks but BOTH panels visible ── */
+  /* ── TABLET (768–900 px): keep columns, slightly tighter ── */
   @media(max-width:900px){
     #hero{
-      grid-template-columns:1fr;
-      padding:100px 24px 60px;
-      gap:36px;
+      padding:90px 28px 60px;
+      gap:24px;
       min-height:auto;
     }
-    .hero-right{
-      /* was display:none — now visible, scaled for mobile */
-      display:block;
+    h1.hero-title{font-size:clamp(1.8rem,5.5vw,2.8rem);letter-spacing:-1px;}
+    .hero-sub{font-size:.9rem;margin-bottom:28px;}
+    .btn-ghost{display:none;}
+  }
+
+  /* ── MOBILE (≤ 600 px): still side-by-side, scaled right down ── */
+  @media(max-width:600px){
+    #hero{
+      grid-template-columns:1fr 1fr;   /* ← side-by-side on phone */
+      padding:76px 12px 40px;
+      gap:10px;
+      min-height:auto;
+      align-items:start;
     }
+    /* Left column */
+    .hero-badge{
+      font-size:.55rem;letter-spacing:.8px;
+      padding:4px 9px;margin-bottom:12px;
+    }
+    h1.hero-title{
+      font-size:clamp(.95rem,4.2vw,1.5rem);
+      letter-spacing:-.3px;
+      margin-bottom:10px;
+    }
+    .hero-sub{
+      font-size:.68rem;line-height:1.5;
+      max-width:100%;margin-bottom:14px;
+    }
+    .hero-btns{gap:5px;}
+    .btn-primary{
+      font-size:.68rem;padding:8px 11px;gap:4px;
+      border-radius:6px;
+    }
+    /* Right column — shrink the mockup */
     .orbit-mock{
-      /* prevent overflow on small screens */
-      max-width:100%;
+      padding:10px;
+      border-radius:14px;
     }
-    h1.hero-title{font-size:clamp(2rem,8vw,3rem);letter-spacing:-1.2px;}
-    .hero-sub{font-size:.95rem;}
-    .hero-btns{gap:8px;}
-    .btn-ghost{display:none;} /* hide secondary buttons on mobile to save space */
+    .mock-header{gap:6px;margin-bottom:8px;padding-bottom:8px;}
+    .mock-logo-ring{width:22px;height:22px;}
+    .mock-name{font-size:.68rem;}
+    .mock-status{font-size:.58rem;}
+    .mock-msgs{min-height:70px;gap:5px;}
+    .mock-msg{font-size:.6rem;padding:5px 7px;border-radius:8px;}
+    .mock-msg.user{border-radius:8px 8px 2px 8px;}
+    .mock-msg.ai{border-radius:2px 8px 8px 8px;}
+    .typing-dots span{width:4px;height:4px;}
+    .mock-input-row{gap:5px;margin-top:8px;padding-top:8px;}
+    .mock-input{font-size:.6rem;padding:4px 7px;}
+    .mock-send{width:22px;height:22px;}
+    .mock-send svg{width:9px;height:9px;}
   }
 
   @keyframes riseUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
@@ -586,7 +648,7 @@
     </div>
   </div>
 
-  <div class="hero-right" aria-hidden="true">
+  <div class="hero-right">
     <div class="orbit-mock">
       <div class="mock-header">
         <div class="mock-logo-ring">
