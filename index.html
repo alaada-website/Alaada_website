@@ -3,13 +3,25 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Alaada — Orbit AI · Web Analyser · Spreadsheets | Built in India</title>
+  <title>Alaada — Orbit AI · Web Analyser · Spreadsheets | AI Tools Built in India</title>
+
+  <!-- ── PRECONNECT ── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="preconnect" href="https://www.googletagmanager.com"/>
 
   <!-- ── PRIMARY SEO ── -->
-  <meta name="description" content="Three focused AI tools, zero noise. Orbit AI for deep reasoning, Web Analyser for real site insights, and Alaada Sheets for smart spreadsheets. Free, browser-based, built in India."/>
-  <meta name="keywords" content="Alaada, Orbit AI, web analyser, alaada sheets, AI tools India, site performance, SEO audit, spreadsheet AI, browser tools"/>
-  <meta name="robots" content="index, follow"/>
+  <meta name="description" content="Alaada builds focused AI tools from India. Orbit AI for deep reasoning, Web Analyser for real site audits, and Alaada Sheets for smart browser-based spreadsheets. Free, no install, works in your browser."/>
+  <meta name="keywords" content="Alaada, Orbit AI, web analyser, alaada sheets, AI tools India, site performance audit, SEO audit tool, spreadsheet AI, browser AI tools, free AI India, Kolkata startup"/>
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
   <meta name="author" content="Arzo Das, Alaada"/>
+  <meta name="application-name" content="Alaada"/>
+  <meta name="theme-color" content="#1a5fff"/>
+  <meta name="color-scheme" content="light"/>
+  <meta name="geo.region" content="IN-WB"/>
+  <meta name="geo.placename" content="Kolkata, West Bengal, India"/>
+  <meta name="geo.position" content="22.5726;88.3639"/>
+  <meta name="ICBM" content="22.5726, 88.3639"/>
   <link rel="canonical" href="https://www.alaada.com/"/>
 
   <!-- ── OPEN GRAPH ── -->
@@ -17,17 +29,20 @@
   <meta property="og:site_name" content="Alaada"/>
   <meta property="og:url" content="https://www.alaada.com/"/>
   <meta property="og:title" content="Alaada — AI that thinks. Tools that deliver."/>
-  <meta property="og:description" content="Three focused AI tools: Orbit AI for deep reasoning, Web Analyser for real site insights, Alaada Sheets for smart spreadsheets. Built in India."/>
+  <meta property="og:description" content="Three focused AI tools built in India: Orbit AI for deep reasoning, Web Analyser for real site insights, Alaada Sheets for smart spreadsheets. Free, browser-based, no install."/>
   <meta property="og:image" content="https://www.alaada.com/images/alaada-og.png"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
+  <meta property="og:image:alt" content="Alaada — AI tools built in India. Orbit AI, Web Analyser, Alaada Sheets."/>
   <meta property="og:locale" content="en_IN"/>
 
   <!-- ── TWITTER CARD ── -->
   <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:site" content="@alaada_ai"/>
   <meta name="twitter:title" content="Alaada — AI that thinks. Tools that deliver."/>
-  <meta name="twitter:description" content="Three focused AI tools: Orbit AI, Web Analyser, Alaada Sheets. Built in India, works in your browser."/>
+  <meta name="twitter:description" content="Three focused AI tools: Orbit AI, Web Analyser, Alaada Sheets. Built in India, works in your browser. Free, no install."/>
   <meta name="twitter:image" content="https://www.alaada.com/images/alaada-og.png"/>
+  <meta name="twitter:image:alt" content="Alaada AI tools — built in India"/>
 
   <!-- ── STRUCTURED DATA ── -->
   <script type="application/ld+json">
@@ -36,12 +51,33 @@
     "@graph": [
       {
         "@type": "Organization",
+        "@id": "https://www.alaada.com/#organization",
         "name": "Alaada",
         "url": "https://www.alaada.com",
-        "logo": "https://www.alaada.com/images/alaada-icon.png",
-        "description": "AI tools built in India. Where Perfection meets Possibility.",
-        "founder": { "@type": "Person", "name": "Arzo Das" },
-        "contactPoint": { "@type": "ContactPoint", "email": "arzodas2024@gmail.com", "contactType": "customer support" },
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.alaada.com/images/alaada-logo.jpg",
+          "width": 200,
+          "height": 200
+        },
+        "description": "AI tools built in India. Where Perfection meets Possibility. Three focused AI products: Orbit AI, Web Analyser, Alaada Sheets.",
+        "foundingDate": "2024",
+        "foundingLocation": {
+          "@type": "Place",
+          "name": "Kolkata, West Bengal, India"
+        },
+        "founder": {
+          "@type": "Person",
+          "name": "Arzo Das",
+          "url": "https://www.linkedin.com/in/arzo-das-782539391/"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "alaada@alaada.com",
+          "contactType": "customer support",
+          "areaServed": "Worldwide",
+          "availableLanguage": "English"
+        },
         "sameAs": [
           "https://discord.gg/r4G7dynh",
           "https://www.linkedin.com/in/arzo-das-782539391/",
@@ -50,37 +86,92 @@
       },
       {
         "@type": "WebSite",
+        "@id": "https://www.alaada.com/#website",
         "name": "Alaada",
         "url": "https://www.alaada.com",
+        "publisher": { "@id": "https://www.alaada.com/#organization" },
         "description": "Where Perfection meets Possibility. Three focused AI tools built in India.",
-        "potentialAction": { "@type": "SearchAction", "target": "https://www.alaada.com/?q={search_term_string}", "query-input": "required name=search_term_string" }
+        "inLanguage": "en-IN",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": { "@type": "EntryPoint", "urlTemplate": "https://www.alaada.com/?q={search_term_string}" },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://www.alaada.com/#webpage",
+        "url": "https://www.alaada.com/",
+        "name": "Alaada — Orbit AI · Web Analyser · Spreadsheets | AI Tools Built in India",
+        "isPartOf": { "@id": "https://www.alaada.com/#website" },
+        "about": { "@id": "https://www.alaada.com/#organization" },
+        "description": "Three focused AI tools built in India. Orbit AI for deep reasoning, Web Analyser for site audits, Alaada Sheets for smart spreadsheets.",
+        "breadcrumb": {
+          "@type": "BreadcrumbList",
+          "itemListElement": [{ "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.alaada.com/" }]
+        }
       },
       {
         "@type": "SoftwareApplication",
+        "@id": "https://www.alaada.com/Orbit.html#app",
         "name": "Orbit AI",
         "applicationCategory": "Artificial Intelligence",
         "operatingSystem": "Web Browser",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-        "description": "Deep reasoning AI assistant. Thinks before it answers.",
-        "url": "https://www.alaada.com/Orbit.html"
+        "description": "Deep reasoning AI assistant. Thinks step-by-step before answering. Includes live web search, file analysis, and voice output.",
+        "url": "https://www.alaada.com/Orbit.html",
+        "screenshot": "https://www.alaada.com/images/alaada-og.png",
+        "featureList": ["Deep reasoning", "Live web search", "File analysis", "Voice output"],
+        "publisher": { "@id": "https://www.alaada.com/#organization" }
       },
       {
         "@type": "SoftwareApplication",
+        "@id": "https://www.alaada.com/website-analyzer.html#app",
         "name": "Alaada Web Analyser",
         "applicationCategory": "WebApplication",
         "operatingSystem": "Web Browser",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-        "description": "Paste any URL and get a full performance, SEO and accessibility audit in seconds.",
-        "url": "https://www.alaada.com/website-analyzer.html"
+        "description": "Paste any URL and get a full performance, SEO and accessibility audit in seconds. No sign-in required.",
+        "url": "https://www.alaada.com/website-analyzer.html",
+        "featureList": ["Performance score", "SEO audit", "Accessibility check", "Speed analysis"],
+        "publisher": { "@id": "https://www.alaada.com/#organization" }
       },
       {
         "@type": "SoftwareApplication",
+        "@id": "https://www.alaada.com/Spreadsheets.html#app",
         "name": "Alaada Sheets",
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web Browser",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-        "description": "Full-featured browser spreadsheet with 50+ formulas and AI NLP commands.",
-        "url": "https://www.alaada.com/Spreadsheets.html"
+        "description": "Full-featured browser spreadsheet with 50+ formulas and AI NLP commands. Export to Excel, SQL, JSON, Tally XML.",
+        "url": "https://www.alaada.com/Spreadsheets.html",
+        "featureList": ["50+ formulas", "AI NLP commands", "Multi-sheet support", "Export Excel/SQL/JSON/Tally XML"],
+        "publisher": { "@id": "https://www.alaada.com/#organization" }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is Alaada?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Alaada is an Indian AI tools platform offering three focused products: Orbit AI (a deep-reasoning AI assistant), Web Analyser (a website audit tool), and Alaada Sheets (a browser-based spreadsheet with AI). All tools are free and require no installation." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is Alaada free to use?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. All three Alaada tools — Orbit AI, Web Analyser, and Alaada Sheets — are free to use directly in your browser. No download or subscription required." }
+          },
+          {
+            "@type": "Question",
+            "name": "What does Orbit AI do?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Orbit AI is a deep-reasoning AI assistant that thinks step-by-step before answering. It supports live web search, file analysis, decision breakdowns, and voice output — all in one chat interface." }
+          },
+          {
+            "@type": "Question",
+            "name": "What does the Alaada Web Analyser check?",
+            "acceptedAnswer": { "@type": "Answer", "text": "The Web Analyser audits any website URL for performance score, SEO health, accessibility compliance, and speed metrics like LCP and First Paint. It shows prioritised fixes so you know what to improve first." }
+          }
+        ]
       }
     ]
   }
@@ -113,6 +204,7 @@
   /* NAV */
   nav{position:fixed;top:0;left:0;right:0;z-index:300;height:60px;background:rgba(245,244,239,0.9);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px;}
   .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:'Syne',sans-serif;font-weight:800;font-size:1.18rem;color:var(--ink);letter-spacing:-0.4px;}
+  .nav-logo img{width:28px;height:28px;border-radius:7px;object-fit:cover;flex-shrink:0;}
   .nav-links{display:flex;align-items:center;gap:4px;list-style:none;}
   .nav-links a{font-size:.875rem;font-weight:500;color:var(--ink2);text-decoration:none;padding:6px 13px;border-radius:var(--r-sm);transition:background .15s,color .15s;}
   .nav-links a:hover{background:var(--bg2);color:var(--ink);}
@@ -158,7 +250,8 @@
   .orbit-mock{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:22px;box-shadow:var(--sh-lg);animation:floatCard 6s ease-in-out infinite 1.4s;}
   @keyframes floatCard{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
   .mock-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);}
-  .mock-logo-ring{width:32px;height:32px;border-radius:50%;background:var(--blue3);border:1.5px solid rgba(26,95,255,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .mock-logo-ring{width:32px;height:32px;border-radius:50%;background:var(--blue3);border:1.5px solid rgba(26,95,255,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+  .mock-logo-ring img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
   .mock-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;color:var(--ink);}
   .mock-status{font-size:.72rem;color:#22c55e;font-weight:500;}
   .mock-msgs{display:flex;flex-direction:column;gap:8px;min-height:120px;}
@@ -173,7 +266,29 @@
   .mock-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.78rem;color:var(--ink3);font-family:'Figtree',sans-serif;}
   .mock-send{width:30px;height:30px;border-radius:8px;background:var(--blue);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
   .mock-send:hover{background:#1450d6;}
-  @media(max-width:900px){#hero{grid-template-columns:1fr;padding:110px 24px 60px;gap:40px;}.hero-right{display:none;}}
+
+  /* ── MOBILE: hero stacks but BOTH panels visible ── */
+  @media(max-width:900px){
+    #hero{
+      grid-template-columns:1fr;
+      padding:100px 24px 60px;
+      gap:36px;
+      min-height:auto;
+    }
+    .hero-right{
+      /* was display:none — now visible, scaled for mobile */
+      display:block;
+    }
+    .orbit-mock{
+      /* prevent overflow on small screens */
+      max-width:100%;
+    }
+    h1.hero-title{font-size:clamp(2rem,8vw,3rem);letter-spacing:-1.2px;}
+    .hero-sub{font-size:.95rem;}
+    .hero-btns{gap:8px;}
+    .btn-ghost{display:none;} /* hide secondary buttons on mobile to save space */
+  }
+
   @keyframes riseUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 
   /* REVEAL */
@@ -185,148 +300,51 @@
   .trust-bar{background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:center;gap:36px;flex-wrap:wrap;}
   .trust-item{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:500;color:var(--ink3);}
 
-  /* ════════════════════════════════════
-     PRODUCT OVERVIEW STRIP  (new)
-  ════════════════════════════════════ */
-  #products-overview{
-    padding:72px 32px 80px;
-    background:var(--bg);
-  }
-  .po-inner{
-    max-width:1060px;
-    margin:0 auto;
-  }
-  .po-head{
-    text-align:center;
-    margin-bottom:48px;
-  }
-  .po-eyebrow{
-    display:inline-flex;align-items:center;gap:8px;
-    font-size:.68rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
-    color:var(--ink3);margin-bottom:14px;
-  }
-  .po-eyebrow::before,.po-eyebrow::after{
-    content:'';display:block;width:28px;height:1.5px;background:var(--borderM);
-  }
-  .po-title{
-    font-family:'Syne',sans-serif;
-    font-size:clamp(1.6rem,3vw,2.3rem);
-    font-weight:800;letter-spacing:-1.2px;line-height:1.1;
-    color:var(--ink);
-  }
-  .po-sub{
-    font-size:.95rem;color:var(--ink3);margin-top:10px;
-    font-weight:400;
-  }
-
-  /* three cards */
-  .po-grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:20px;
-  }
-  @media(max-width:860px){
-    .po-grid{grid-template-columns:1fr;}
-    #products-overview{padding:52px 20px 60px;}
-  }
-  .po-card{
-    background:var(--white);
-    border:1px solid var(--borderM);
-    border-radius:var(--r-xl);
-    padding:30px 26px 26px;
-    display:flex;flex-direction:column;gap:18px;
-    position:relative;overflow:hidden;
-    box-shadow:var(--sh-sm);
-    transition:transform .22s ease, box-shadow .22s ease;
-    text-decoration:none;color:inherit;
-  }
-  .po-card:hover{
-    transform:translateY(-6px);
-    box-shadow:var(--sh-lg);
-  }
-  .po-card::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  }
-  .po-card-blue::before  {background:var(--blue);}
-  .po-card-teal::before  {background:var(--teal);}
-  .po-card-gold::before  {background:var(--gold);}
-
-  /* corner glow */
-  .po-card::after{
-    content:'';position:absolute;top:-70px;right:-70px;
-    width:200px;height:200px;border-radius:50%;pointer-events:none;
-    opacity:0;transition:opacity .3s;
-  }
-  .po-card-blue::after  {background:radial-gradient(circle,var(--blue3),transparent 70%);}
-  .po-card-teal::after  {background:radial-gradient(circle,var(--teal3),transparent 70%);}
-  .po-card-gold::after  {background:radial-gradient(circle,var(--gold3),transparent 70%);}
+  /* PRODUCT OVERVIEW STRIP */
+  #products-overview{padding:72px 32px 80px;background:var(--bg);}
+  .po-inner{max-width:1060px;margin:0 auto;}
+  .po-head{text-align:center;margin-bottom:48px;}
+  .po-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.68rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink3);margin-bottom:14px;}
+  .po-eyebrow::before,.po-eyebrow::after{content:'';display:block;width:28px;height:1.5px;background:var(--borderM);}
+  .po-title{font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3vw,2.3rem);font-weight:800;letter-spacing:-1.2px;line-height:1.1;color:var(--ink);}
+  .po-sub{font-size:.95rem;color:var(--ink3);margin-top:10px;font-weight:400;}
+  .po-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media(max-width:860px){.po-grid{grid-template-columns:1fr;}#products-overview{padding:52px 20px 60px;}}
+  .po-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:30px 26px 26px;display:flex;flex-direction:column;gap:18px;position:relative;overflow:hidden;box-shadow:var(--sh-sm);transition:transform .22s ease,box-shadow .22s ease;text-decoration:none;color:inherit;}
+  .po-card:hover{transform:translateY(-6px);box-shadow:var(--sh-lg);}
+  .po-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+  .po-card-blue::before{background:var(--blue);}
+  .po-card-teal::before{background:var(--teal);}
+  .po-card-gold::before{background:var(--gold);}
+  .po-card::after{content:'';position:absolute;top:-70px;right:-70px;width:200px;height:200px;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .3s;}
+  .po-card-blue::after{background:radial-gradient(circle,var(--blue3),transparent 70%);}
+  .po-card-teal::after{background:radial-gradient(circle,var(--teal3),transparent 70%);}
+  .po-card-gold::after{background:radial-gradient(circle,var(--gold3),transparent 70%);}
   .po-card:hover::after{opacity:1;}
-
   .po-card-inner{position:relative;z-index:1;display:flex;flex-direction:column;gap:18px;flex:1;}
-
-  .po-icon{
-    width:52px;height:52px;border-radius:14px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:1.5rem;flex-shrink:0;
-  }
+  .po-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;}
   .po-icon-blue{background:var(--blue2);}
   .po-icon-teal{background:var(--teal2);}
   .po-icon-gold{background:var(--gold2);}
-
-  .po-label{
-    font-size:.63rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-    margin-bottom:3px;
-  }
+  .po-label{font-size:.63rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;}
   .po-label-blue{color:var(--blue);}
   .po-label-teal{color:var(--teal);}
   .po-label-gold{color:var(--gold);}
-
-  .po-name{
-    font-family:'Syne',sans-serif;
-    font-size:1.3rem;font-weight:800;
-    letter-spacing:-.5px;color:var(--ink);line-height:1.1;
-    margin-bottom:2px;
-  }
-  .po-desc{
-    font-size:.86rem;color:var(--ink2);line-height:1.7;flex:1;
-  }
-
+  .po-name{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;letter-spacing:-.5px;color:var(--ink);line-height:1.1;margin-bottom:2px;}
+  .po-desc{font-size:.86rem;color:var(--ink2);line-height:1.7;flex:1;}
   .po-divider{height:1px;background:var(--border);}
-
-  /* feature rows */
   .po-features{display:flex;flex-direction:column;gap:7px;}
-  .po-feat{
-    display:flex;align-items:flex-start;gap:9px;
-    font-size:.8rem;color:var(--ink2);line-height:1.5;
-  }
-  .po-check{
-    width:16px;height:16px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    font-size:.52rem;font-weight:900;flex-shrink:0;margin-top:1px;
-  }
+  .po-feat{display:flex;align-items:flex-start;gap:9px;font-size:.8rem;color:var(--ink2);line-height:1.5;}
+  .po-check{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:900;flex-shrink:0;margin-top:1px;}
   .po-check-blue{background:var(--blue2);color:var(--blue);}
   .po-check-teal{background:var(--teal2);color:var(--teal);}
   .po-check-gold{background:var(--gold2);color:var(--gold);}
-
-  /* pills */
   .po-pills{display:flex;flex-wrap:wrap;gap:6px;}
-  .po-pill{
-    font-size:.67rem;font-weight:600;padding:3px 10px;
-    border-radius:100px;letter-spacing:.2px;
-  }
+  .po-pill{font-size:.67rem;font-weight:600;padding:3px 10px;border-radius:100px;letter-spacing:.2px;}
   .po-pill-blue{background:var(--blue2);color:var(--blue);}
   .po-pill-teal{background:var(--teal2);color:var(--teal);}
   .po-pill-gold{background:var(--gold2);color:var(--gold);}
-
-  /* CTA inside card */
-  .po-cta{
-    display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    font-family:'Syne',sans-serif;font-weight:700;font-size:.86rem;
-    padding:11px 18px;border-radius:var(--r-sm);
-    text-decoration:none;border:none;cursor:pointer;
-    transition:transform .18s,box-shadow .18s,background .18s;
-    width:100%;letter-spacing:.1px;
-  }
+  .po-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.86rem;padding:11px 18px;border-radius:var(--r-sm);text-decoration:none;border:none;cursor:pointer;transition:transform .18s,box-shadow .18s,background .18s;width:100%;letter-spacing:.1px;}
   .po-cta:hover{transform:translateY(-2px);}
   .po-cta-blue{background:var(--blue);color:#fff;box-shadow:0 3px 14px rgba(26,95,255,.28);}
   .po-cta-blue:hover{background:#1450d6;box-shadow:0 6px 24px rgba(26,95,255,.40);}
@@ -334,7 +352,6 @@
   .po-cta-teal:hover{background:#007a65;box-shadow:0 6px 24px rgba(0,149,122,.38);}
   .po-cta-gold{background:var(--gold);color:#fff;box-shadow:0 3px 14px rgba(212,147,10,.26);}
   .po-cta-gold:hover{background:#b87d08;box-shadow:0 6px 24px rgba(212,147,10,.38);}
-  /* ════════════════════════════════════ */
 
   /* ORBIT SECTION */
   #orbit-section{padding:100px 32px;}
@@ -353,7 +370,8 @@
   /* Orbit demo card */
   .orbit-demo{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:28px;box-shadow:var(--sh-md);border-top:3px solid var(--blue);}
   .demo-top{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);}
-  .demo-top-icon{width:34px;height:34px;border-radius:10px;background:var(--blue2);display:flex;align-items:center;justify-content:center;font-size:1rem;}
+  .demo-top-icon{width:34px;height:34px;border-radius:10px;background:var(--blue2);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .demo-top-icon img{width:100%;height:100%;object-fit:cover;border-radius:10px;}
   .demo-top-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;color:var(--ink);}
   .demo-live{margin-left:auto;font-size:.68rem;font-weight:600;background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:100px;}
   .chat-area{min-height:180px;display:flex;flex-direction:column;gap:10px;}
@@ -380,8 +398,6 @@
   .demo-scanning{display:flex;align-items:center;gap:8px;font-size:.72rem;font-weight:600;color:var(--teal);margin-bottom:14px;}
   .scan-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:scanP 1s ease-in-out infinite;}
   @keyframes scanP{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
-
-  /* Score rings */
   .score-circles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
   .score-circle-wrap{text-align:center;}
   .score-ring{width:56px;height:56px;margin:0 auto 5px;position:relative;}
@@ -394,8 +410,6 @@
   .score-ring .fill.green{stroke:#22c55e;}
   .score-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:800;color:var(--ink);}
   .score-label{font-size:.62rem;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;}
-
-  /* Metric bars */
   .metric-bars{display:flex;flex-direction:column;gap:9px;}
   .metric-row{display:flex;align-items:center;gap:10px;font-size:.75rem;}
   .metric-name{width:82px;color:var(--ink2);font-weight:500;flex-shrink:0;}
@@ -419,8 +433,6 @@
   .sheets-eyebrow::before{content:'';width:20px;height:1.5px;background:var(--gold);flex-shrink:0;}
   .btn-gold{display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;padding:13px 26px;border-radius:var(--r-sm);text-decoration:none;border:none;cursor:pointer;box-shadow:0 3px 14px rgba(212,147,10,.32);transition:transform .18s,box-shadow .18s,background .18s;}
   .btn-gold:hover{transform:translateY(-2px);box-shadow:0 6px 26px rgba(212,147,10,.42);background:#b87d08;}
-
-  /* Spreadsheet visual */
   .sheets-vis{position:relative;z-index:1;}
   .sv-mock{background:var(--bg);border:1px solid var(--borderM);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm);}
   .sv-toolbar{background:var(--white);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:8px;}
@@ -439,16 +451,6 @@
 
   /* REVIEWS SECTION */
   .reviews-inner{max-width:1060px;margin:0 auto;}
-  .reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:48px;}
-  @media(max-width:820px){.reviews-grid{grid-template-columns:1fr;}}
-  .review-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:12px;transition:transform .2s,box-shadow .2s;}
-  .review-card:hover{transform:translateY(-3px);box-shadow:var(--sh-md);}
-  .review-stars{color:var(--gold);font-size:1rem;letter-spacing:1px;}
-  .review-text{font-size:.875rem;color:var(--ink2);line-height:1.75;flex:1;}
-  .reviewer-row{display:flex;align-items:center;gap:10px;margin-top:4px;padding-top:14px;border-top:1px solid var(--border);}
-  .reviewer-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .reviewer-name{font-size:.82rem;font-weight:600;color:var(--ink);}
-  .reviewer-role{font-size:.72rem;color:var(--ink3);}
   .review-form-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);box-shadow:var(--sh-lg);border-top:3px solid var(--blue);display:grid;grid-template-columns:240px 1fr;overflow:hidden;}
   @media(max-width:720px){.review-form-card{grid-template-columns:1fr;}.rfcard-left{border-right:none!important;border-bottom:1px solid var(--border);}}
   .rfcard-left{padding:40px 32px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;}
@@ -513,16 +515,18 @@
   .quote-card::before{content:'\275D';position:absolute;top:-10px;left:18px;font-size:5rem;color:var(--blue2);line-height:1;font-family:Georgia,serif;z-index:0;}
   .quote-text{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:var(--ink);line-height:1.5;letter-spacing:-.2px;position:relative;z-index:1;margin-bottom:22px;}
   .founder-row{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
-  .founder-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .founder-avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;flex-shrink:0;}
+  .founder-avatar img{width:100%;height:100%;object-fit:cover;}
+  .founder-avatar-fallback{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .founder-name{font-weight:600;font-size:.9rem;color:var(--ink);margin-bottom:2px;}
   .founder-role{font-size:.75rem;color:var(--ink3);}
-  
 
   /* FOOTER */
   footer{background:#0d0c0b;color:rgba(255,255,255,.6);padding:52px 40px 36px;}
   .footer-inner{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:48px;margin-bottom:36px;}
   @media(max-width:600px){.footer-inner{grid-template-columns:1fr;gap:24px;}footer{padding:40px 24px 28px;}}
   .footer-brand{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-.4px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .footer-brand img{width:22px;height:22px;border-radius:5px;object-fit:cover;opacity:.85;}
   .footer-sub{font-size:.82rem;color:rgba(255,255,255,.35);margin-bottom:10px;}
   .footer-email a{font-size:.82rem;color:rgba(255,255,255,.5);text-decoration:none;transition:color .15s;}
   .footer-email a:hover{color:#fff;}
@@ -534,8 +538,6 @@
   .footer-logout:hover{color:#ff6b6b;border-color:rgba(255,107,107,.25);}
   .footer-bottom{max-width:1060px;margin:0 auto;padding-top:22px;border-top:1px solid rgba(255,255,255,.07);font-size:.72rem;color:rgba(255,255,255,.2);}
   .divider{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);max-width:1060px;margin:0 auto;}
-
-   
   </style>
 </head>
 <body>
@@ -547,15 +549,8 @@
 
 <!-- NAV -->
 <nav>
-  <a href="#" class="nav-logo">
-    <svg width="26" height="26" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="14" cy="14" r="12.5" stroke="#1a5fff" stroke-width="1.4" fill="none" opacity=".2"/>
-      <circle cx="14" cy="14" r="7.5" stroke="#1a5fff" stroke-width="1.4" fill="none" opacity=".45"/>
-      <circle cx="14" cy="14" r="2.8" fill="#1a5fff"/>
-      <circle cx="22.5" cy="9" r="2" fill="#00957a">
-        <animateTransform attributeName="transform" type="rotate" from="0 14 14" to="360 14 14" dur="5s" repeatCount="indefinite"/>
-      </circle>
-    </svg>
+  <a href="#" class="nav-logo" aria-label="Alaada home">
+    <img src="images/alaada-logo.jpg" alt="Alaada logo" width="28" height="28" loading="eager"/>
     Alaada
   </a>
   <ul class="nav-links">
@@ -574,14 +569,14 @@
 </nav>
 
 <!-- HERO -->
-<section id="hero">
-  <div class="hero-blob blob-blue"></div>
-  <div class="hero-blob blob-teal"></div>
-  <div class="hero-blob blob-gold"></div>
-  <div class="hero-dots"></div>
+<section id="hero" aria-label="Alaada AI tools — hero">
+  <div class="hero-blob blob-blue" aria-hidden="true"></div>
+  <div class="hero-blob blob-teal" aria-hidden="true"></div>
+  <div class="hero-blob blob-gold" aria-hidden="true"></div>
+  <div class="hero-dots" aria-hidden="true"></div>
 
   <div class="hero-left">
-    <div class="hero-badge"><span class="badge-pulse"></span>Built in India · Live now</div>
+    <div class="hero-badge"><span class="badge-pulse" aria-hidden="true"></span>Built in India · Live now</div>
     <h1 class="hero-title">AI that thinks.<br>Tools that <span class="accent">deliver.</span></h1>
     <p class="hero-sub">Orbit AI for deep reasoning. Web Analyzer to understand your users. Smart Spreadsheets to simplify your numbers. Three focused tools — zero noise.</p>
     <div class="hero-btns">
@@ -591,11 +586,11 @@
     </div>
   </div>
 
-  <div class="hero-right">
+  <div class="hero-right" aria-hidden="true">
     <div class="orbit-mock">
       <div class="mock-header">
         <div class="mock-logo-ring">
-          <svg width="15" height="15" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="#1a5fff" stroke-width="2" fill="none" opacity=".3"/><circle cx="14" cy="14" r="2.8" fill="#1a5fff"/></svg>
+          <img src="images/alaada-logo.jpg" alt="Orbit AI" width="32" height="32"/>
         </div>
         <div><div class="mock-name">Orbit AI</div><div class="mock-status">● Online</div></div>
       </div>
@@ -605,27 +600,24 @@
       </div>
       <div class="mock-input-row">
         <div class="mock-input">Ask anything…</div>
-        <button class="mock-send"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        <button class="mock-send" aria-label="Send"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
     </div>
   </div>
 </section>
 
 <!-- TRUST BAR -->
-<div class="trust-bar">
-  <div class="trust-item">⚡ No install needed</div>
-  <div class="trust-item">🔒 Secure Google sign-in</div>
-  <div class="trust-item">🇮🇳 Made in India</div>
-  <div class="trust-item">🌐 Works in your browser</div>
-  <div class="trust-item">✦ Always improving</div>
+<div class="trust-bar" role="list" aria-label="Trust indicators">
+  <div class="trust-item" role="listitem">⚡ No install needed</div>
+  <div class="trust-item" role="listitem">🔒 Secure Google sign-in</div>
+  <div class="trust-item" role="listitem">🇮🇳 Made in India</div>
+  <div class="trust-item" role="listitem">🌐 Works in your browser</div>
+  <div class="trust-item" role="listitem">✦ Always improving</div>
 </div>
 
-<!-- ════════════════════════════════════════════════════
-     PRODUCTS OVERVIEW  —  new section
-════════════════════════════════════════════════════ -->
+<!-- PRODUCTS OVERVIEW -->
 <section id="products-overview" aria-label="All Alaada products at a glance">
   <div class="po-inner">
-
     <div class="po-head reveal">
       <p class="po-eyebrow">Everything we make</p>
       <h2 class="po-title">Three tools. One mission.</h2>
@@ -633,7 +625,6 @@
     </div>
 
     <div class="po-grid">
-
       <!-- ORBIT AI -->
       <a href="#" class="po-card po-card-blue reveal rd1 launch-orbit-btn" aria-label="Launch Orbit AI">
         <div class="po-card-inner">
@@ -661,7 +652,7 @@
       <!-- WEB ANALYSER -->
       <a href="https://www.alaada.com/website-analyzer.html" class="po-card po-card-teal reveal rd2" aria-label="Open Web Analyser">
         <div class="po-card-inner">
-          <div class="po-icon po-icon-teal" aria-hidden="true">🌐</div>
+          <div class="po-icon po-icon-teal" aria-hidden="true">🔍</div>
           <div>
             <p class="po-label po-label-teal">Web Intelligence</p>
             <h3 class="po-name">Web Analyser</h3>
@@ -705,14 +696,12 @@
           <span class="po-cta po-cta-gold">Open Sheets →</span>
         </div>
       </a>
-
     </div>
   </div>
 </section>
-<!-- ════════════════════════════════════════════════════ -->
 
 <!-- ORBIT SECTION -->
-<section id="orbit-section">
+<section id="orbit-section" aria-label="Orbit AI deep dive">
   <div class="orbit-layout">
     <div class="reveal">
       <div class="section-eyebrow">AI Assistant</div>
@@ -730,7 +719,9 @@
 
     <div class="orbit-demo reveal rd1" id="orbit-demo-card">
       <div class="demo-top">
-        <div class="demo-top-icon">🧠</div>
+        <div class="demo-top-icon">
+          <img src="images/alaada-logo.jpg" alt="Orbit AI" width="34" height="34"/>
+        </div>
         <div><div class="demo-top-name">Orbit AI</div></div>
         <div class="demo-live">● Live</div>
       </div>
@@ -745,7 +736,7 @@
 <div class="divider"></div>
 
 <!-- WEB ANALYSER SECTION -->
-<section id="analyser-section">
+<section id="analyser-section" aria-label="Web Analyser deep dive">
   <div class="analyser-container reveal">
     <div class="analyser-grid">
       <div>
@@ -764,7 +755,7 @@
 
       <div class="analyser-demo" id="analyser-demo">
         <div class="demo-url-bar">
-          <span class="url-icon">🌐</span>
+          <span class="url-icon">🔍</span>
           <span class="url-text" id="demo-url">yourwebsite.com</span>
           <span class="url-cursor" id="demo-cursor"></span>
         </div>
@@ -803,7 +794,7 @@
 </section>
 
 <!-- SHEETS SECTION -->
-<section id="sheets-section">
+<section id="sheets-section" aria-label="Alaada Sheets deep dive">
   <div class="sheets-container reveal">
     <div class="sheets-grid">
       <div>
@@ -876,13 +867,12 @@
 </section>
 
 <!-- REVIEWS SECTION -->
-<section id="reviews-section" style="padding:80px 32px;">
+<section id="reviews-section" style="padding:80px 32px;" aria-label="Leave a review">
   <div class="reviews-inner">
-
     <div class="review-form-wrap reveal rd2">
       <div class="review-form-card">
         <div class="rfcard-left">
-          <span style="font-size:1.8rem;display:block;margin-bottom:12px;">✦</span>
+          <span style="font-size:1.8rem;display:block;margin-bottom:12px;" aria-hidden="true">✦</span>
           <h3 class="rfcard-title">Leave your review</h3>
           <p class="rfcard-sub">Loved a product? Tell us — and tell the world.</p>
           <div class="rf-trust-pills">
@@ -940,33 +930,32 @@
             <button class="rf-another" id="rf-another-btn">Leave another</button>
           </div>
           <div class="rf-error-msg" id="rf-error" style="display:none;" aria-live="assertive">
-            ⚠ Something went wrong. Please try again or email us at <a href="mailto:arzodas2024@gmail.com">alaada@alaada.com</a>.
+            ⚠ Something went wrong. Please try again or email us at <a href="mailto:alaada@alaada.com">alaada@alaada.com</a>.
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </section>
 
 <!-- WHY -->
-<section id="why-section">
+<section id="why-section" aria-label="Why Alaada">
   <div class="why-inner">
     <div class="why-top reveal">
       <div class="section-eyebrow">Why Alaada</div>
       <h2 class="section-title">Focused tools. Real results.</h2>
     </div>
     <div class="pillars-grid">
-      <div class="pillar reveal rd1"><span class="pillar-icon">🎯</span><h3>One job, done right</h3><p>No feature overload. Each tool does exactly what it promises — clearly and fast.</p></div>
-      <div class="pillar reveal rd2"><span class="pillar-icon">⚡</span><h3>Open in seconds</h3><p>Browser-based. No installs. Sign in with Google once and you're ready.</p></div>
-      <div class="pillar reveal rd3"><span class="pillar-icon">🔍</span><h3>Evidence, not noise</h3><p>Orbit reasons before it answers. Analyser shows data before it advises.</p></div>
-      <div class="pillar reveal rd4"><span class="pillar-icon">🇮🇳</span><h3>Proudly Indian</h3><p>Built in India for the world — competitive pricing, fast support, local trust.</p></div>
+      <div class="pillar reveal rd1"><span class="pillar-icon" aria-hidden="true">🎯</span><h3>One job, done right</h3><p>No feature overload. Each tool does exactly what it promises — clearly and fast.</p></div>
+      <div class="pillar reveal rd2"><span class="pillar-icon" aria-hidden="true">⚡</span><h3>Open in seconds</h3><p>Browser-based. No installs. Sign in with Google once and you're ready.</p></div>
+      <div class="pillar reveal rd3"><span class="pillar-icon" aria-hidden="true">🔍</span><h3>Evidence, not noise</h3><p>Orbit reasons before it answers. Analyser shows data before it advises.</p></div>
+      <div class="pillar reveal rd4"><span class="pillar-icon" aria-hidden="true">🇮🇳</span><h3>Proudly Indian</h3><p>Built in India for the world — competitive pricing, fast support, local trust.</p></div>
     </div>
   </div>
 </section>
 
 <!-- ABOUT -->
-<section id="about-section">
+<section id="about-section" aria-label="About Alaada">
   <div class="about-inner">
     <div class="reveal">
       <div class="section-eyebrow">The Story</div>
@@ -981,7 +970,9 @@
     <div class="quote-card reveal rd1">
       <p class="quote-text">"Most AI tools answer fast. Orbit is designed to answer right — and the Analyser shows you what your numbers actually mean."</p>
       <div class="founder-row">
-        <div class="founder-avatar">A</div>
+        <div class="founder-avatar">
+          <img src="images/alaada-logo.jpg" alt="Arzo Das, Founder of Alaada" width="42" height="42" onerror="this.parentElement.innerHTML='<div class=\'founder-avatar-fallback\'>A</div>'"/>
+        </div>
         <div><div class="founder-name">Arzo Das</div><div class="founder-role">Founder, Alaada</div></div>
       </div>
     </div>
@@ -993,22 +984,22 @@
   <div class="footer-inner">
     <div>
       <div class="footer-brand">
-        <svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="#1a5fff" stroke-width="1.5" fill="none" opacity=".35"/><circle cx="14" cy="14" r="2.8" fill="#1a5fff"/></svg>
+        <img src="images/alaada-logo.jpg" alt="Alaada" width="22" height="22" loading="lazy"/>
         Alaada
       </div>
       <p class="footer-sub">Where Perfection meets Possibility.</p>
-      <div class="footer-email"><a href="mailto:arzodas2024@gmail.com">alaada@alaada.com</a></div>
+      <div class="footer-email"><a href="mailto:alaada@alaada.com">alaada@alaada.com</a></div>
     </div>
     <div class="footer-nav">
       <div class="footer-socials">
-        <a href="https://discord.gg/r4G7dynh" target="_blank">Discord</a>
-        <a href="https://www.linkedin.com/in/arzo-das-782539391/" target="_blank">LinkedIn</a>
-        <a href="https://www.facebook.com/profile.php?id=61583515497634" target="_blank">Facebook</a>
+        <a href="https://discord.gg/r4G7dynh" target="_blank" rel="noopener noreferrer">Discord</a>
+        <a href="https://www.linkedin.com/in/arzo-das-782539391/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a href="https://www.facebook.com/profile.php?id=61583515497634" target="_blank" rel="noopener noreferrer">Facebook</a>
       </div>
       <button class="footer-logout" onclick="logout()">Sign out</button>
     </div>
   </div>
-  <div class="footer-bottom">© 2026 Alaada. All rights reserved.</div>
+  <div class="footer-bottom">© 2026 Alaada. All rights reserved. · Built in Kolkata, India.</div>
 </footer>
 
 <script>
@@ -1272,14 +1263,11 @@ if(ademo){
       if(el){el.style.opacity='0';setTimeout(()=>{el.textContent=formulas[fi];el.style.opacity='1';el.style.transition='opacity .3s';},200);}
     },2200);
 
-    /* Orbit launch buttons (nav + hero + overview card + orbit section) */
     document.querySelectorAll('.launch-orbit-btn').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();launch(DEST.orbit,'Launching Orbit…');}));
 
-    /* Sheets launch buttons (sheets section + overview card) */
     const sheetsBtn=document.getElementById('launch-sheets');
     if(sheetsBtn)sheetsBtn.addEventListener('click',e=>{e.preventDefault();launch(DEST.sheets,'Launching Alaada Sheets…');});
 
-    /* Overview card — sheets */
     const poSheets=document.getElementById('po-sheets-btn');
     if(poSheets)poSheets.addEventListener('click',e=>{e.preventDefault();launch(DEST.sheets,'Launching Alaada Sheets…');});
   });
