@@ -600,6 +600,104 @@
   .footer-logout:hover{color:#ff6b6b;border-color:rgba(255,107,107,.25);}
   .footer-bottom{max-width:1060px;margin:0 auto;padding-top:22px;border-top:1px solid rgba(255,255,255,.07);font-size:.72rem;color:rgba(255,255,255,.2);}
   .divider{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);max-width:1060px;margin:0 auto;}
+  
+  /* USER REVIEWS SHOWCASE */
+.reviews-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:22px;
+}
+
+@media(max-width:720px){
+  .reviews-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+.review-card{
+  background:var(--white);
+  border:1px solid var(--borderM);
+  border-radius:var(--r-xl);
+  padding:30px 28px;
+  box-shadow:var(--sh-md);
+  transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
+  position:relative;
+  overflow:hidden;
+}
+
+.review-card::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at top right,var(--blue3),transparent 55%);
+  opacity:0;
+  transition:opacity .25s ease;
+  pointer-events:none;
+}
+
+.review-card:hover{
+  transform:translateY(-5px);
+  box-shadow:var(--sh-lg);
+  border-color:rgba(26,95,255,.18);
+}
+
+.review-card:hover::before{
+  opacity:1;
+}
+
+.review-stars{
+  font-size:1rem;
+  letter-spacing:2px;
+  color:var(--gold);
+  margin-bottom:16px;
+}
+
+.review-text{
+  font-size:.92rem;
+  line-height:1.8;
+  color:var(--ink2);
+  margin-bottom:26px;
+}
+
+.review-text em{
+  color:var(--blue);
+  font-style:normal;
+  font-weight:600;
+}
+
+.reviewer-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.reviewer-avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--teal));
+  color:#fff;
+  font-family:'Syne',sans-serif;
+  font-weight:800;
+  font-size:.95rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.reviewer-name{
+  font-size:.88rem;
+  font-weight:700;
+  color:var(--ink);
+  line-height:1.2;
+}
+
+.reviewer-role{
+  font-size:.76rem;
+  color:var(--ink3);
+  margin-top:2px;
+}
   </style>
 </head>
 <body>
@@ -996,6 +1094,66 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- USER REVIEWS DISPLAY -->
+<section id="user-reviews-showcase" style="padding:0 32px 90px;">
+  <div class="reviews-inner">
+
+    <div class="reviews-header reveal">
+      <div class="section-eyebrow" style="justify-content:center;">Customer Love</div>
+
+      <h2 class="section-title"
+          style="text-align:center;max-width:520px;margin:0 auto 12px;">
+        What people say about Alaada
+      </h2>
+
+      <p style="text-align:center;color:var(--ink3);font-size:.92rem;max-width:420px;margin:0 auto 50px;line-height:1.7;">
+        Real feedback from real users. Built in India, loved everywhere.
+      </p>
+    </div>
+
+    <div class="reviews-grid reveal rd1">
+
+      <!-- REVIEW 1 -->
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+
+        <p class="review-text">
+          "Simple and easy to use AI. Human voice. Excel work fine.
+          Perfect example of <em>Indian innovation</em>."
+        </p>
+
+        <div class="reviewer-row">
+          <div class="reviewer-avatar">S</div>
+
+          <div>
+            <div class="reviewer-name">Sourav Bhattacharya</div>
+            <div class="reviewer-role">Bank Manager · Hyderabad</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEW 2 -->
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+
+        <p class="review-text">
+          "The spreadsheet tool is excellent, helped me analyse and inspect my ML training data."
+        </p>
+
+        <div class="reviewer-row">
+          <div class="reviewer-avatar">P</div>
+
+          <div>
+            <div class="reviewer-name">Pratik Chakraborty</div>
+            <div class="reviewer-role">Backend Engineer · Kolkata</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
