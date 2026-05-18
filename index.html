@@ -895,64 +895,6 @@
 
 <div class="divider"></div>
 
-<!-- WEB ANALYSER SECTION -->
-<section id="analyser-section" aria-label="Web Analyser deep dive">
-  <div class="analyser-container reveal">
-    <div class="analyser-grid">
-      <div>
-        <div class="analyser-eyebrow">Web Intelligence</div>
-        <h2 class="section-title">See exactly what your site is doing wrong.</h2>
-        <p class="section-body">Paste any URL. Get a full breakdown — performance, SEO health, accessibility, speed bottlenecks, and what to fix <em>first</em>. No guesswork. Just evidence.</p>
-        <div class="pill-row">
-          <span class="pill teal">Performance Score</span>
-          <span class="pill teal">SEO Audit</span>
-          <span class="pill teal">Accessibility Check</span>
-          <span class="pill teal">Speed Analysis</span>
-        </div>
-        <a href="https://www.alaada.com/website-analyzer.html" class="btn-primary" style="background:var(--teal);box-shadow:0 3px 14px rgba(0,149,122,.32);">Analyse Your Site →</a>
-        <p style="margin-top:14px;font-size:.78rem;color:var(--ink3);">Free · No sign-in required · Results in seconds.</p>
-      </div>
-
-      <div class="analyser-demo" id="analyser-demo">
-        <div class="demo-url-bar">
-          <span class="url-icon">🔍</span>
-          <span class="url-text" id="demo-url">yourwebsite.com</span>
-          <span class="url-cursor" id="demo-cursor"></span>
-        </div>
-        <div class="demo-scanning">
-          <div class="scan-dot"></div>
-          <span id="status-text">Ready to scan…</span>
-        </div>
-        <div class="score-circles" id="score-circles" style="opacity:0;transition:opacity .5s;">
-          <div class="score-circle-wrap">
-            <div class="score-ring"><svg width="56" height="56" viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="22"/><circle class="fill blue" id="ring-perf" cx="28" cy="28" r="22"/></svg><div class="score-num" id="num-perf">0</div></div>
-            <div class="score-label">Perf.</div>
-          </div>
-          <div class="score-circle-wrap">
-            <div class="score-ring"><svg width="56" height="56" viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="22"/><circle class="fill teal" id="ring-seo" cx="28" cy="28" r="22"/></svg><div class="score-num" id="num-seo">0</div></div>
-            <div class="score-label">SEO</div>
-          </div>
-          <div class="score-circle-wrap">
-            <div class="score-ring"><svg width="56" height="56" viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="22"/><circle class="fill green" id="ring-access" cx="28" cy="28" r="22"/></svg><div class="score-num" id="num-access">0</div></div>
-            <div class="score-label">Access.</div>
-          </div>
-          <div class="score-circle-wrap">
-            <div class="score-ring"><svg width="56" height="56" viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="22"/><circle class="fill gold" id="ring-speed" cx="28" cy="28" r="22"/></svg><div class="score-num" id="num-speed">0</div></div>
-            <div class="score-label">Speed</div>
-          </div>
-        </div>
-        <div class="metric-bars" id="metric-bars" style="opacity:0;transition:opacity .5s .2s;">
-          <div class="metric-row"><span class="metric-name">First Paint</span><div class="metric-track"><div class="metric-fill teal" id="bar1" data-w="88%"></div></div><span class="metric-val" id="bv1">—</span></div>
-          <div class="metric-row"><span class="metric-name">LCP</span><div class="metric-track"><div class="metric-fill blue" id="bar2" data-w="72%"></div></div><span class="metric-val" id="bv2">—</span></div>
-          <div class="metric-row"><span class="metric-name">CLS</span><div class="metric-track"><div class="metric-fill green" id="bar3" data-w="95%"></div></div><span class="metric-val" id="bv3">—</span></div>
-          <div class="metric-row"><span class="metric-name">Bounce Rate</span><div class="metric-track"><div class="metric-fill gold" id="bar4" data-w="54%"></div></div><span class="metric-val" id="bv4">—</span></div>
-        </div>
-        <p class="demo-note">Demo preview — try your actual site with the button →</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- SHEETS SECTION -->
 <section id="sheets-section" aria-label="Alaada Sheets deep dive">
   <div class="sheets-container reveal">
@@ -1021,6 +963,64 @@
             <div class="sv-cell formula">74%</div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WEB ANALYSER SECTION -->
+<section id="analyser-section" aria-label="Web Analyser deep dive">
+  <div class="analyser-container reveal">
+    <div class="analyser-grid">
+      <div>
+        <div class="analyser-eyebrow">Web Intelligence</div>
+        <h2 class="section-title">See exactly what your site is doing wrong.</h2>
+        <p class="section-body">Paste any URL. Get a full breakdown — performance, SEO health, accessibility, speed bottlenecks, and what to fix <em>first</em>. No guesswork. Just evidence.</p>
+        <div class="pill-row">
+          <span class="pill teal">Performance Score</span>
+          <span class="pill teal">SEO Audit</span>
+          <span class="pill teal">Accessibility Check</span>
+          <span class="pill teal">Speed Analysis</span>
+        </div>
+        <a href="https://www.alaada.com/website-analyzer.html" class="btn-primary" style="background:var(--teal);box-shadow:0 3px 14px rgba(0,149,122,.32);">Analyse Your Site →</a>
+        <p style="margin-top:14px;font-size:.78rem;color:var(--ink3);">Free · No sign-in required · Results in seconds.</p>
+      </div>
+
+      <div class="analyser-demo" id="analyser-demo">
+        <div class="demo-url-bar">
+          <span class="url-icon">🔍</span>
+          <span class="url-text" id="demo-url">yourwebsite.com</span>
+          <span class="url-cursor" id="demo-cursor"></span>
+        </div>
+        <div class="demo-scanning">
+          <div class="scan-dot"></div>
+          <span id="status-text">Ready to scan…</span>
+        </div>
+        <div class="score-circles" id="score-circles" style="opacity:0;transition:opacity .5s;">
+          <div class="score-circle-wrap">
+            <div class="score-ring"><svg width="56" height="56" viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="22"/><circle class="fill blue" id="ring-perf" cx="28" cy="28" r="22"/></svg><div class="score-num" id="num-perf">0</div></div>
+            <div class="score-label">Perf.</div>
+          </div>
+          <div class="score-circle-wrap">
+            <div class="score-ring"><svg width="56" height="56" viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="22"/><circle class="fill teal" id="ring-seo" cx="28" cy="28" r="22"/></svg><div class="score-num" id="num-seo">0</div></div>
+            <div class="score-label">SEO</div>
+          </div>
+          <div class="score-circle-wrap">
+            <div class="score-ring"><svg width="56" height="56" viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="22"/><circle class="fill green" id="ring-access" cx="28" cy="28" r="22"/></svg><div class="score-num" id="num-access">0</div></div>
+            <div class="score-label">Access.</div>
+          </div>
+          <div class="score-circle-wrap">
+            <div class="score-ring"><svg width="56" height="56" viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="22"/><circle class="fill gold" id="ring-speed" cx="28" cy="28" r="22"/></svg><div class="score-num" id="num-speed">0</div></div>
+            <div class="score-label">Speed</div>
+          </div>
+        </div>
+        <div class="metric-bars" id="metric-bars" style="opacity:0;transition:opacity .5s .2s;">
+          <div class="metric-row"><span class="metric-name">First Paint</span><div class="metric-track"><div class="metric-fill teal" id="bar1" data-w="88%"></div></div><span class="metric-val" id="bv1">—</span></div>
+          <div class="metric-row"><span class="metric-name">LCP</span><div class="metric-track"><div class="metric-fill blue" id="bar2" data-w="72%"></div></div><span class="metric-val" id="bv2">—</span></div>
+          <div class="metric-row"><span class="metric-name">CLS</span><div class="metric-track"><div class="metric-fill green" id="bar3" data-w="95%"></div></div><span class="metric-val" id="bv3">—</span></div>
+          <div class="metric-row"><span class="metric-name">Bounce Rate</span><div class="metric-track"><div class="metric-fill gold" id="bar4" data-w="54%"></div></div><span class="metric-val" id="bv4">—</span></div>
+        </div>
+        <p class="demo-note">Demo preview — try your actual site with the button →</p>
       </div>
     </div>
   </div>
