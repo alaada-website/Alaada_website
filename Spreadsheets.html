@@ -105,6 +105,10 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
 #fbarinput{flex:1;height:100%;border:none;outline:none;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ctxt);background:transparent;padding:0 8px}
 #fbarinput:focus{background:rgba(61,143,255,.04)}
 
+/* ─── ROW / COL COUNTER BADGE ───────────────────────────────── */
+#gridstat{flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);border-left:1px solid var(--grid2);padding:0 8px;white-space:nowrap;display:flex;align-items:center;gap:4px}
+#gridstat .gs-val{color:var(--mist);font-weight:600}
+
 /* ─── LAYOUT ────────────────────────────────────────────────── */
 #app{display:flex;flex-direction:column;height:100%;height:100dvh;overflow:hidden}
 #gzone{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
@@ -288,6 +292,7 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
   #namebox{width:60px;font-size:11px}
   #fxlbl{padding:0 6px;font-size:11px}
   #fbarinput{font-size:12px}
+  #gridstat{display:none}
   #aibar{height:52px;padding:0 10px;gap:6px;padding-bottom:max(0px,var(--tb))}
   #airun{padding:0 12px;font-size:11px}
   #aist{display:none}
@@ -365,6 +370,20 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
   #mobilePill{display:block}
   .tb-hide-sm{display:none!important}
 }
+
+/* ─── GOTO ROW MODAL ─────────────────────────────────────────── */
+#gotoModal{position:fixed;inset:0;z-index:8300;display:none;align-items:center;justify-content:center;background:rgba(5,6,15,.75);backdrop-filter:blur(8px)}
+#gotoBox{background:var(--ink2);border:1px solid var(--wire2);border-radius:14px;width:340px;max-width:95vw;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:mdin .18s ease;overflow:hidden;padding:20px}
+#gotoBox h3{font-size:14px;font-weight:700;color:#e8eeff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+#gotoInp{width:100%;background:var(--ink3);border:1px solid var(--wire);border-radius:7px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--fog);outline:none;margin-bottom:10px;transition:border-color .15s}
+#gotoInp:focus{border-color:var(--blue)}
+.goto-btns{display:flex;gap:8px}
+.goto-btns button{flex:1;height:38px;border-radius:8px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+#gotoGo{background:linear-gradient(135deg,#1e40ff,#0d9488);color:#fff;box-shadow:0 2px 10px rgba(30,64,255,.3)}
+#gotoGo:hover{transform:translateY(-1px)}
+#gotoCancel{background:var(--ink3);color:var(--mist);border:1px solid var(--wire)}
+#gotoCancel:hover{color:var(--fog)}
+.goto-hint{font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -461,6 +480,14 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
       <button class="rb" onclick="G.openChartModal()" title="Insert chart from selected range" style="background:rgba(61,143,255,.08);border-color:rgba(61,143,255,.3);color:#aac4ff">📊 Insert Chart</button>
       <button class="rb" onclick="G.clearAllCharts()" title="Remove all charts from this sheet">🗑 Clear Charts</button>
     </div><div class="rl">Charts</div></div></div>
+    <!-- GO TO ROW in Insert tab (new) -->
+    <div class="rg" data-t="insert" style="display:none"><div class="rs"><div class="ri">
+      <button class="rb" onclick="G.openGoto()" title="Jump to any row or cell (Ctrl+G)" style="background:rgba(0,212,160,.08);border-color:rgba(0,212,160,.3);color:#5eead4">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6"/><line x1="8" y1="2" x2="8" y2="8"/><line x1="8" y1="8" x2="12" y2="8"/></svg>
+        Go To Row
+      </button>
+      <button class="rb" onclick="G.gotoLastRow()" title="Jump to last row with data">⤵ Last Row</button>
+    </div><div class="rl">Navigation</div></div></div>
     <div class="rg" data-t="insert" style="display:none"><div class="rs"><div class="ri">
       <button class="rb" onclick="G.scanImage()">📷 From Image</button>
       <button class="rb" onclick="G.openFile()">📁 From File</button>
@@ -502,6 +529,11 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
   <input id="namebox" type="text" value="A1" readonly onclick="this.removeAttribute('readonly');this.select()" onblur="this.setAttribute('readonly','')" onkeydown="nbKey(event)">
   <span id="fxlbl">ƒx</span>
   <input id="fbarinput" type="text" placeholder="Value or =formula…" onkeydown="G.fbKey(event)" oninput="G.fbSync()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <div id="gridstat">
+    <span>Rows</span><span class="gs-val" id="gsRows">1,000,000</span>
+    <span style="margin:0 4px;opacity:.3">·</span>
+    <span>Cols</span><span class="gs-val" id="gsCols">16,384</span>
+  </div>
 </div>
 
 <!-- GRID -->
@@ -518,7 +550,6 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
         <div id="selbox"></div>
         <div id="fhandle"></div>
         <div id="ced"><textarea id="cta" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea></div>
-        <!-- Chart panels rendered here by JS -->
         <div id="chartlayer"></div>
       </div>
     </div>
@@ -534,8 +565,7 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
 <div id="aibar">
   <div id="aiorb"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div>
   <input id="aiin" type="text" placeholder='Ask Orbit AI… "sum column B", "chart sales by quarter", "fix errors"' onkeydown="if(event.key==='Enter')G.aiRun()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-  <!-- MIC BUTTON -->
-  <button id="micbtn" onclick="G.toggleVoice()" title="Voice command (click to speak)">
+  <button id="micbtn" onclick="G.toggleVoice()" title="Voice command">
     <div class="mic-dot"></div>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
@@ -585,6 +615,7 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
   <div class="ci" onclick="G.insCol()">＋ Insert Column</div>
   <div class="csep"></div>
   <div class="ci" onclick="G.openChartModal()">📊 Insert Chart</div>
+  <div class="ci" onclick="G.openGoto()">🎯 Go To Row…</div>
   <div class="csep"></div>
   <div class="ci red" onclick="G.delRow()">− Delete Row</div>
   <div class="ci red" onclick="G.delCol()">− Delete Column</div>
@@ -649,6 +680,23 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
   </div>
 </div>
 
+<!-- GO TO ROW MODAL -->
+<div id="gotoModal" onclick="if(event.target===this)G.closeGoto()">
+  <div id="gotoBox">
+    <h3>🎯 Go To Row / Cell</h3>
+    <input id="gotoInp" class="cfg-inp" placeholder="Row number (e.g. 500000) or cell (e.g. B250000)"
+      onkeydown="if(event.key==='Enter')G.doGoto();if(event.key==='Escape')G.closeGoto()">
+    <div class="goto-btns">
+      <button id="gotoGo" onclick="G.doGoto()">Go ➤</button>
+      <button id="gotoCancel" onclick="G.closeGoto()">Cancel</button>
+    </div>
+    <div class="goto-hint">
+      This sheet has <b>1,000,000 rows</b> × <b>16,384 columns</b>.
+      Try: <code>500000</code> → row 500K, or <code>A999999</code> → cell A999999.
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 <input type="file" id="filein" accept=".xlsx,.csv,.xls,.tsv,.json" onchange="G.loadFile(event)">
 <input type="file" id="imgin" accept="image/*" style="display:none" onchange="G.loadImage(event)">
@@ -657,7 +705,15 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
 <script>
 'use strict';
 const API='https://spreadsheets-q70y.onrender.com';
-const ROWS=5000,COLS=52,HW=52,HH=26;
+
+// ── Grid dimensions: 1 million rows × 16,384 columns (Excel-equivalent) ──
+const ROWS = 1_000_000;
+const COLS = 16_384;
+const HW=52,HH=26;
+
+// Default cell dimensions
+const DEF_COL_W = 100;
+const DEF_ROW_H = 24;
 
 /* ═══════════════════════════════════════════════════════════════
    GRID ENGINE
@@ -675,9 +731,7 @@ const G={
   _tt:null, _ailog:[],
   _errDismissed:false,
   _touch:{startX:0,startY:0,startT:0,lastTap:0,lpTimer:null,moved:false,twoFinger:false},
-  // Voice state
   _voice:{active:false,rec:null,supported:false},
-  // Chart state
   _chart:{selectedType:'bar',nextId:1},
 
   get sh(){return this.sheets[this.si]},
@@ -688,15 +742,54 @@ const G={
   c2n(s){let n=0;for(const c of s.toUpperCase())n=n*26+(c.charCodeAt(0)-64);return n-1},
   ref(r,c){return`${this.n2c(c)}${r+1}`},
   pRef(s){const m=s?.match?.(/^([A-Z]+)(\d+)$/i);return m?{c:this.c2n(m[1]),r:+m[2]-1}:null},
-  colX(c){let x=0;for(let i=0;i<c;i++)x+=this.sh.cw[i]||100;return x},
-  rowY(r){let y=0;for(let i=0;i<r;i++)x+=this.sh.rh[i]||24;return x},
-  rowY(r){let y=0;for(let i=0;i<r;i++)y+=this.sh.rh[i]||24;return y},
+
+  // ── O(1) column X position (fast path: uniform 100px, sparse overrides) ──
+  colX(c){
+    const cw=this.sh.cw;
+    if(!cw || cw.length===0) return c * DEF_COL_W;
+    // Only iterate if custom widths exist
+    let x = 0;
+    for(let i=0;i<c;i++) x += (cw[i] ?? DEF_COL_W);
+    return x;
+  },
+
+  // ── O(1) row Y position (fast path: uniform 24px, sparse overrides) ──
+  rowY(r){
+    const rh=this.sh.rh;
+    if(!rh || rh.length===0) return r * DEF_ROW_H;
+    let y = 0;
+    for(let i=0;i<r;i++) y += (rh[i] ?? DEF_ROW_H);
+    return y;
+  },
+
+  // ── Total grid dimensions (O(1) using sparse adjustments) ──
+  totalW(){
+    let w = COLS * DEF_COL_W;
+    const cw = this.sh.cw;
+    if(cw && cw.length>0){
+      for(let i=0;i<cw.length;i++){
+        if(cw[i]!==undefined) w += (cw[i] - DEF_COL_W);
+      }
+    }
+    return w;
+  },
+  totalH(){
+    let h = ROWS * DEF_ROW_H;
+    const rh = this.sh.rh;
+    if(rh && rh.length>0){
+      for(let i=0;i<rh.length;i++){
+        if(rh[i]!==undefined) h += (rh[i] - DEF_ROW_H);
+      }
+    }
+    return h;
+  },
+
   cellVal(ref){const c=this.cells[ref];return c?String(c.computed??c.value??''):''},
 
   // ── INIT ────────────────────────────────────────────────────
   init(){
-    const cw=Array(COLS).fill(100),rh=Array(ROWS).fill(24);
-    this.sheets=[{name:'Sheet1',cells:{},cw:[...cw],rh:[...rh],charts:[]}];
+    // Sparse arrays: only store custom widths/heights, defaults are inferred
+    this.sheets=[{name:'Sheet1',cells:{},cw:[],rh:[],charts:[]}];
     this.render();
     this.renderTabs();
     this.bindEvents();
@@ -707,88 +800,69 @@ const G={
     if(window.visualViewport){
       window.visualViewport.addEventListener('resize',()=>{if(this.editing){this.posEditor();this.scrollIntoView(this.eRow,this.eCol)}});
     }
+    // Ctrl+G for Go To Row
+    document.addEventListener('keydown',e=>{
+      if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='g'){e.preventDefault();this.openGoto()}
+    });
   },
 
-  // ══════════════════════════════════════════════════════════════
-  //  VOICE INPUT
-  // ══════════════════════════════════════════════════════════════
-  _initVoice(){
-    const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SpeechRecognition){
-      document.getElementById('micbtn').style.opacity='.3';
-      document.getElementById('micbtn').title='Voice not supported in this browser';
+  // ── GO TO ROW / CELL ────────────────────────────────────────
+  openGoto(){
+    document.getElementById('gotoModal').style.display='flex';
+    const inp=document.getElementById('gotoInp');
+    inp.value=this.ref(this.row,this.col);
+    setTimeout(()=>{inp.focus();inp.select();},80);
+  },
+  closeGoto(){document.getElementById('gotoModal').style.display='none'},
+  doGoto(){
+    const raw=document.getElementById('gotoInp').value.trim();
+    if(!raw){this.closeGoto();return}
+    // Pure number → go to row
+    if(/^\d+$/.test(raw)){
+      const r=Math.max(0,Math.min(ROWS-1,parseInt(raw)-1));
+      this.closeGoto();this.moveTo(r,this.col);
+      this.toast(`Jumped to row ${r+1}`, 'ok');
       return;
     }
+    // Cell reference
+    const p=this.pRef(raw.toUpperCase());
+    if(p&&p.r>=0&&p.r<ROWS&&p.c>=0&&p.c<COLS){
+      this.closeGoto();this.moveTo(p.r,p.c);
+      this.toast(`Jumped to ${raw.toUpperCase()}`,'ok');
+      return;
+    }
+    this.toast('Invalid reference. Use a row number or cell like A500000','warn');
+  },
+  gotoLastRow(){
+    let maxR=0;
+    for(const ref of Object.keys(this.cells)){
+      const p=this.pRef(ref);if(p&&p.r>maxR)maxR=p.r;
+    }
+    this.moveTo(maxR,this.col);
+    this.toast(`Jumped to last data row: ${maxR+1}`,'ok');
+  },
+
+  // ── VOICE INPUT ────────────────────────────────────────────
+  _initVoice(){
+    const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SpeechRecognition){document.getElementById('micbtn').style.opacity='.3';return}
     this._voice.supported=true;
     const rec=new SpeechRecognition();
-    rec.continuous=false;
-    rec.interimResults=true;
-    rec.lang='en-IN'; // Indian English default — works for all
-
-    rec.onstart=()=>{
-      this._voice.active=true;
-      document.getElementById('micbtn').classList.add('listening');
-      document.getElementById('voicetip').classList.add('show');
-      document.getElementById('aiin').placeholder='Listening…';
-    };
-
-    rec.onresult=e=>{
-      let interim='', final='';
-      for(const res of e.results){
-        if(res.isFinal) final+=res[0].transcript;
-        else interim+=res[0].transcript;
-      }
-      const text=(final||interim).trim();
-      if(text) document.getElementById('aiin').value=text;
-    };
-
-    rec.onend=()=>{
-      this._voice.active=false;
-      document.getElementById('micbtn').classList.remove('listening');
-      document.getElementById('voicetip').classList.remove('show');
-      document.getElementById('aiin').placeholder='Ask Orbit AI… "sum column B", "chart sales by quarter", "fix errors"';
-      // Auto-run if final transcript exists
-      const val=document.getElementById('aiin').value.trim();
-      if(val) setTimeout(()=>this.aiRun(),200);
-    };
-
-    rec.onerror=e=>{
-      this._voice.active=false;
-      document.getElementById('micbtn').classList.remove('listening');
-      document.getElementById('voicetip').classList.remove('show');
-      const msgs={
-        'no-speech':'No speech detected. Try again.',
-        'not-allowed':'Microphone access denied.',
-        'network':'Voice recognition network error.',
-      };
-      this.toast(msgs[e.error]||'Voice error: '+e.error,'warn');
-    };
-
+    rec.continuous=false;rec.interimResults=true;rec.lang='en-IN';
+    rec.onstart=()=>{this._voice.active=true;document.getElementById('micbtn').classList.add('listening');document.getElementById('voicetip').classList.add('show');document.getElementById('aiin').placeholder='Listening…'};
+    rec.onresult=e=>{let interim='',final='';for(const res of e.results){if(res.isFinal)final+=res[0].transcript;else interim+=res[0].transcript}const text=(final||interim).trim();if(text)document.getElementById('aiin').value=text};
+    rec.onend=()=>{this._voice.active=false;document.getElementById('micbtn').classList.remove('listening');document.getElementById('voicetip').classList.remove('show');document.getElementById('aiin').placeholder='Ask Orbit AI… "sum column B", "chart sales by quarter", "fix errors"';const val=document.getElementById('aiin').value.trim();if(val)setTimeout(()=>this.aiRun(),200)};
+    rec.onerror=e=>{this._voice.active=false;document.getElementById('micbtn').classList.remove('listening');document.getElementById('voicetip').classList.remove('show');const msgs={'no-speech':'No speech detected.','not-allowed':'Microphone access denied.','network':'Voice recognition network error.'};this.toast(msgs[e.error]||'Voice error: '+e.error,'warn')};
     this._voice.rec=rec;
   },
-
   toggleVoice(){
     if(!this._voice.supported){this.toast('Voice not supported in this browser','warn');return}
-    if(this._voice.active){
-      this._voice.rec.stop();
-    } else {
-      try{this._voice.rec.start();}
-      catch(e){this.toast('Could not start voice: '+e.message,'err')}
-    }
+    if(this._voice.active){this._voice.rec.stop()}else{try{this._voice.rec.start()}catch(e){this.toast('Could not start voice: '+e.message,'err')}}
   },
 
-  // ══════════════════════════════════════════════════════════════
-  //  CHART ENGINE
-  // ══════════════════════════════════════════════════════════════
-  _CHART_COLORS:[
-    'rgba(61,143,255,.85)','rgba(0,212,160,.85)','rgba(240,165,0,.85)',
-    'rgba(255,77,106,.85)','rgba(124,92,255,.85)','rgba(245,158,11,.85)',
-    'rgba(16,185,129,.85)','rgba(239,68,68,.85)','rgba(59,130,246,.85)',
-    'rgba(168,85,247,.85)',
-  ],
-
+  // ── CHART ENGINE ───────────────────────────────────────────
+  _CHART_COLORS:['rgba(61,143,255,.85)','rgba(0,212,160,.85)','rgba(240,165,0,.85)','rgba(255,77,106,.85)','rgba(124,92,255,.85)','rgba(245,158,11,.85)','rgba(16,185,129,.85)','rgba(239,68,68,.85)','rgba(59,130,246,.85)','rgba(168,85,247,.85)'],
   openChartModal(){
-    // Pre-fill range from current selection
     const{r1,c1,r2,c2}=this.sel;
     const rangeStr=`${this.ref(Math.min(r1,r2),Math.min(c1,c2))}:${this.ref(Math.max(r1,r2),Math.max(c1,c2))}`;
     document.getElementById('chartRangeInp').value=rangeStr;
@@ -797,322 +871,142 @@ const G={
     document.getElementById('chartModal').style.display='flex';
     document.getElementById('chartTitleInp').focus();
   },
-
-  closeChartModal(){
-    document.getElementById('chartModal').style.display='none';
-  },
-
-  selectChartType(type,btn){
-    this._chart.selectedType=type;
-    document.querySelectorAll('.ctypebtn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-  },
-
+  closeChartModal(){document.getElementById('chartModal').style.display='none'},
+  selectChartType(type,btn){this._chart.selectedType=type;document.querySelectorAll('.ctypebtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active')},
   _updateRangePreview(rangeStr){
     const prev=document.getElementById('chartRangePreview');
     if(!rangeStr){prev.style.display='none';return}
-    // Count cells
-    const[a,b]=rangeStr.split(':');
-    const p1=this.pRef(a),p2=b?this.pRef(b):p1;
-    if(p1&&p2){
-      const rows=Math.abs(p2.r-p1.r)+1,cols=Math.abs(p2.c-p1.c)+1;
-      prev.textContent=`${rangeStr} · ${rows}×${cols}`;
-      prev.style.display='inline-block';
-    } else {
-      prev.style.display='none';
-    }
+    const[a,b]=rangeStr.split(':');const p1=this.pRef(a),p2=b?this.pRef(b):p1;
+    if(p1&&p2){const rows=Math.abs(p2.r-p1.r)+1,cols=Math.abs(p2.c-p1.c)+1;prev.textContent=`${rangeStr} · ${rows}×${cols}`;prev.style.display='inline-block'}
+    else prev.style.display='none';
   },
-
   _parseChartData(rangeStr,type){
-    const[a,b]=rangeStr.split(':');
-    const p1=this.pRef(a),p2=b?this.pRef(b):p1;
-    if(!p1||!p2) return null;
-    const R1=Math.min(p1.r,p2.r),R2=Math.max(p1.r,p2.r);
-    const C1=Math.min(p1.c,p2.c),C2=Math.max(p1.c,p2.c);
-
-    // Build 2D grid from range
+    const[a,b]=rangeStr.split(':');const p1=this.pRef(a),p2=b?this.pRef(b):p1;
+    if(!p1||!p2)return null;
+    const R1=Math.min(p1.r,p2.r),R2=Math.max(p1.r,p2.r),C1=Math.min(p1.c,p2.c),C2=Math.max(p1.c,p2.c);
     const grid=[];
-    for(let r=R1;r<=R2;r++){
-      const row=[];
-      for(let c=C1;c<=C2;c++) row.push(this.cellVal(this.ref(r,c)));
-      grid.push(row);
-    }
-    if(!grid.length) return null;
-
-    // First row = headers, first col = labels
-    const headers=grid[0].slice(1);     // series names (skip first cell)
-    const labels=grid.slice(1).map(r=>r[0]);  // row labels
-    const numCols=headers.length;
-    const colors=this._CHART_COLORS;
-
-    if(type==='scatter'){
-      // Treat first two numeric columns as X,Y
-      const datasets=[];
-      const xVals=grid.slice(1).map(r=>parseFloat(r[1])||0);
-      const yVals=grid.slice(1).map(r=>parseFloat(r[2])||0);
-      datasets.push({
-        label:headers[0]||'Series',
-        data:xVals.map((x,i)=>({x,y:yVals[i]})),
-        backgroundColor:colors[0],
-        pointRadius:5,
-      });
-      return{labels:null,datasets};
-    }
-
-    if(type==='pie'||type==='doughnut'||type==='polarArea'){
-      // Use first series only
-      const values=grid.slice(1).map(r=>parseFloat(r[1])||0);
-      return{
-        labels,
-        datasets:[{
-          data:values,
-          backgroundColor:colors.slice(0,values.length),
-          borderWidth:2,
-          borderColor:'#fff',
-        }]
-      };
-    }
-
-    // Bar / Line: multiple series
+    for(let r=R1;r<=R2;r++){const row=[];for(let c=C1;c<=C2;c++)row.push(this.cellVal(this.ref(r,c)));grid.push(row)}
+    if(!grid.length)return null;
+    const headers=grid[0].slice(1),labels=grid.slice(1).map(r=>r[0]),colors=this._CHART_COLORS;
+    if(type==='scatter'){const xV=grid.slice(1).map(r=>parseFloat(r[1])||0),yV=grid.slice(1).map(r=>parseFloat(r[2])||0);return{labels:null,datasets:[{label:headers[0]||'Series',data:xV.map((x,i)=>({x,y:yV[i]})),backgroundColor:colors[0],pointRadius:5}]}}
+    if(type==='pie'||type==='doughnut'||type==='polarArea'){const vals=grid.slice(1).map(r=>parseFloat(r[1])||0);return{labels,datasets:[{data:vals,backgroundColor:colors.slice(0,vals.length),borderWidth:2,borderColor:'#fff'}]}}
     const datasets=[];
-    for(let s=0;s<numCols;s++){
-      const data=grid.slice(1).map(r=>parseFloat(r[s+1])||0);
-      datasets.push({
-        label:headers[s]||`Series ${s+1}`,
-        data,
-        backgroundColor:type==='line'?'transparent':colors[s%colors.length],
-        borderColor:colors[s%colors.length],
-        borderWidth:type==='line'?2.5:1,
-        pointRadius:type==='line'?4:0,
-        fill:false,
-        tension:0.3,
-      });
-    }
+    for(let s=0;s<headers.length;s++){const data=grid.slice(1).map(r=>parseFloat(r[s+1])||0);datasets.push({label:headers[s]||`Series ${s+1}`,data,backgroundColor:type==='line'?'transparent':colors[s%colors.length],borderColor:colors[s%colors.length],borderWidth:type==='line'?2.5:1,pointRadius:type==='line'?4:0,fill:false,tension:0.3})}
     return{labels,datasets};
   },
-
   insertChart(){
     const rangeStr=document.getElementById('chartRangeInp').value.trim().toUpperCase();
     const title=document.getElementById('chartTitleInp').value.trim()||this.sh.name+' Chart';
     const type=this._chart.selectedType;
-
     if(!rangeStr){this.toast('Enter a data range','warn');return}
     const chartData=this._parseChartData(rangeStr,type);
     if(!chartData){this.toast('Could not parse range','err');return}
-
-    // Store chart config in sheet
-    if(!this.sh.charts) this.sh.charts=[];
+    if(!this.sh.charts)this.sh.charts=[];
     const id='chart_'+Date.now();
     const scr=document.getElementById('gscroll');
-    this.sh.charts.push({
-      id,type,title,rangeStr,
-      top: scr.scrollTop+60,
-      left: scr.scrollLeft+60,
-      width:520, height:340,
-    });
-    this.closeChartModal();
-    this.renderCharts();
-    this.toast('Chart inserted ✓','ok');
+    this.sh.charts.push({id,type,title,rangeStr,top:scr.scrollTop+60,left:scr.scrollLeft+60,width:520,height:340});
+    this.closeChartModal();this.renderCharts();this.toast('Chart inserted ✓','ok');
   },
-
   renderCharts(){
     const layer=document.getElementById('chartlayer');
-    // Destroy old Chart.js instances to prevent memory leaks
-    layer.querySelectorAll('canvas').forEach(c=>{
-      const inst=Chart.getChart(c);
-      if(inst) inst.destroy();
-    });
+    layer.querySelectorAll('canvas').forEach(c=>{const inst=Chart.getChart(c);if(inst)inst.destroy()});
     layer.innerHTML='';
-    const charts=this.sh.charts||[];
-    charts.forEach(cfg=>this._renderOneChart(cfg,layer));
+    (this.sh.charts||[]).forEach(cfg=>this._renderOneChart(cfg,layer));
   },
-
   _renderOneChart(cfg,layer){
     const panel=document.createElement('div');
-    panel.className='chart-panel';
-    panel.id='cp_'+cfg.id;
+    panel.className='chart-panel';panel.id='cp_'+cfg.id;
     panel.style.cssText=`left:${cfg.left}px;top:${cfg.top}px;width:${cfg.width}px;height:${cfg.height}px`;
-
-    panel.innerHTML=`
-      <div class="chart-hdr" data-chartid="${cfg.id}">
-        <div class="chart-title">${this._esc(cfg.title)}</div>
-        <span class="chart-type-badge">${cfg.type}</span>
-        <button class="chart-btn" onclick="G.refreshChart('${cfg.id}')" title="Refresh">↻</button>
-        <button class="chart-btn del" onclick="G.deleteChart('${cfg.id}')" title="Delete">✕</button>
-      </div>
-      <div class="chart-body" style="width:100%;height:${cfg.height-34}px;padding:10px">
-        <canvas id="canvas_${cfg.id}"></canvas>
-      </div>
-      <div class="chart-resize" data-resizeid="${cfg.id}"></div>
-    `;
+    panel.innerHTML=`<div class="chart-hdr" data-chartid="${cfg.id}"><div class="chart-title">${this._esc(cfg.title)}</div><span class="chart-type-badge">${cfg.type}</span><button class="chart-btn" onclick="G.refreshChart('${cfg.id}')">↻</button><button class="chart-btn del" onclick="G.deleteChart('${cfg.id}')">✕</button></div><div class="chart-body" style="width:100%;height:${cfg.height-34}px;padding:10px"><canvas id="canvas_${cfg.id}"></canvas></div><div class="chart-resize" data-resizeid="${cfg.id}"></div>`;
     layer.appendChild(panel);
-
-    // Render Chart.js
     const canvas=document.getElementById('canvas_'+cfg.id);
     const chartData=this._parseChartData(cfg.rangeStr,cfg.type);
-    if(!chartData||!canvas) return;
-
+    if(!chartData||!canvas)return;
     const isRound=(cfg.type==='pie'||cfg.type==='doughnut'||cfg.type==='polarArea');
-    new Chart(canvas,{
-      type:cfg.type,
-      data:chartData,
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        animation:{duration:400},
-        plugins:{
-          legend:{
-            display:true,
-            position:isRound?'right':'top',
-            labels:{font:{family:'Plus Jakarta Sans',size:11},color:'#5a6080',padding:12},
-          },
-          title:{
-            display:false,
-          },
-        },
-        scales:isRound?{}:{
-          x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{family:'IBM Plex Mono',size:10},color:'#8090b0'}},
-          y:{grid:{color:'rgba(0,0,0,.06)'},ticks:{font:{family:'IBM Plex Mono',size:10},color:'#8090b0'},beginAtZero:true},
-        },
-      },
-    });
-
-    // ── Drag to move ──
-    const hdr=panel.querySelector('.chart-hdr');
-    this._makeDraggable(panel,hdr,cfg);
-
-    // ── Resize handle ──
-    const rsz=panel.querySelector('.chart-resize');
-    this._makeResizable(panel,rsz,cfg);
+    new Chart(canvas,{type:cfg.type,data:chartData,options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},plugins:{legend:{display:true,position:isRound?'right':'top',labels:{font:{family:'Plus Jakarta Sans',size:11},color:'#5a6080',padding:12}}},scales:isRound?{}:{x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{family:'IBM Plex Mono',size:10},color:'#8090b0'}},y:{grid:{color:'rgba(0,0,0,.06)'},ticks:{font:{family:'IBM Plex Mono',size:10},color:'#8090b0'},beginAtZero:true}}}});
+    this._makeDraggable(panel,panel.querySelector('.chart-hdr'),cfg);
+    this._makeResizable(panel,panel.querySelector('.chart-resize'),cfg);
   },
-
   _makeDraggable(panel,handle,cfg){
     let sx,sy,ox,oy;
-    const onMove=e=>{
-      const dx=(e.clientX||e.touches?.[0]?.clientX||0)-sx;
-      const dy=(e.clientY||e.touches?.[0]?.clientY||0)-sy;
-      cfg.left=Math.max(0,ox+dx);
-      cfg.top=Math.max(0,oy+dy);
-      panel.style.left=cfg.left+'px';
-      panel.style.top=cfg.top+'px';
-    };
-    const onUp=()=>{
-      document.removeEventListener('pointermove',onMove);
-      document.removeEventListener('pointerup',onUp);
-    };
-    handle.addEventListener('pointerdown',e=>{
-      if(e.target.closest('.chart-btn')) return;
-      e.preventDefault();
-      sx=e.clientX; sy=e.clientY;
-      ox=cfg.left; oy=cfg.top;
-      document.addEventListener('pointermove',onMove);
-      document.addEventListener('pointerup',onUp);
-    });
+    const onMove=e=>{cfg.left=Math.max(0,ox+(e.clientX-sx));cfg.top=Math.max(0,oy+(e.clientY-sy));panel.style.left=cfg.left+'px';panel.style.top=cfg.top+'px'};
+    const onUp=()=>{document.removeEventListener('pointermove',onMove);document.removeEventListener('pointerup',onUp)};
+    handle.addEventListener('pointerdown',e=>{if(e.target.closest('.chart-btn'))return;e.preventDefault();sx=e.clientX;sy=e.clientY;ox=cfg.left;oy=cfg.top;document.addEventListener('pointermove',onMove);document.addEventListener('pointerup',onUp)});
   },
-
   _makeResizable(panel,handle,cfg){
     let sx,sy,ow,oh;
-    const onMove=e=>{
-      const dx=(e.clientX||0)-sx;
-      const dy=(e.clientY||0)-sy;
-      cfg.width=Math.max(260,ow+dx);
-      cfg.height=Math.max(180,oh+dy);
-      panel.style.width=cfg.width+'px';
-      panel.style.height=cfg.height+'px';
-      const body=panel.querySelector('.chart-body');
-      if(body) body.style.height=(cfg.height-34)+'px';
-      // Trigger Chart.js resize
-      const canvas=panel.querySelector('canvas');
-      if(canvas){const inst=Chart.getChart(canvas);if(inst)inst.resize();}
-    };
-    const onUp=()=>{
-      document.removeEventListener('pointermove',onMove);
-      document.removeEventListener('pointerup',onUp);
-    };
-    handle.addEventListener('pointerdown',e=>{
-      e.preventDefault();e.stopPropagation();
-      sx=e.clientX; sy=e.clientY;
-      ow=cfg.width; oh=cfg.height;
-      document.addEventListener('pointermove',onMove);
-      document.addEventListener('pointerup',onUp);
-    });
+    const onMove=e=>{cfg.width=Math.max(260,ow+(e.clientX-sx));cfg.height=Math.max(180,oh+(e.clientY-sy));panel.style.width=cfg.width+'px';panel.style.height=cfg.height+'px';const body=panel.querySelector('.chart-body');if(body)body.style.height=(cfg.height-34)+'px';const canvas=panel.querySelector('canvas');if(canvas){const inst=Chart.getChart(canvas);if(inst)inst.resize()}};
+    const onUp=()=>{document.removeEventListener('pointermove',onMove);document.removeEventListener('pointerup',onUp)};
+    handle.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();sx=e.clientX;sy=e.clientY;ow=cfg.width;oh=cfg.height;document.addEventListener('pointermove',onMove);document.addEventListener('pointerup',onUp)});
   },
-
-  refreshChart(id){
-    const cfg=this.sh.charts?.find(c=>c.id===id);
-    if(!cfg) return;
-    const canvas=document.getElementById('canvas_'+id);
-    if(canvas){const inst=Chart.getChart(canvas);if(inst)inst.destroy();}
-    const panel=document.getElementById('cp_'+id);
-    if(panel) panel.remove();
-    const layer=document.getElementById('chartlayer');
-    this._renderOneChart(cfg,layer);
-    this.toast('Chart refreshed','ok');
-  },
-
-  deleteChart(id){
-    if(!this.sh.charts) return;
-    this.sh.charts=this.sh.charts.filter(c=>c.id!==id);
-    const canvas=document.getElementById('canvas_'+id);
-    if(canvas){const inst=Chart.getChart(canvas);if(inst)inst.destroy();}
-    const panel=document.getElementById('cp_'+id);
-    if(panel) panel.remove();
-    this.toast('Chart removed','inf');
-  },
-
-  clearAllCharts(){
-    if(!this.sh.charts?.length){this.toast('No charts on this sheet','inf');return}
-    const layer=document.getElementById('chartlayer');
-    layer.querySelectorAll('canvas').forEach(c=>{const i=Chart.getChart(c);if(i)i.destroy()});
-    layer.innerHTML='';
-    this.sh.charts=[];
-    this.toast('All charts cleared','inf');
-  },
-
+  refreshChart(id){const cfg=this.sh.charts?.find(c=>c.id===id);if(!cfg)return;const canvas=document.getElementById('canvas_'+id);if(canvas){const inst=Chart.getChart(canvas);if(inst)inst.destroy()}const panel=document.getElementById('cp_'+id);if(panel)panel.remove();this._renderOneChart(cfg,document.getElementById('chartlayer'));this.toast('Chart refreshed','ok')},
+  deleteChart(id){if(!this.sh.charts)return;this.sh.charts=this.sh.charts.filter(c=>c.id!==id);const canvas=document.getElementById('canvas_'+id);if(canvas){const inst=Chart.getChart(canvas);if(inst)inst.destroy()}const panel=document.getElementById('cp_'+id);if(panel)panel.remove();this.toast('Chart removed','inf')},
+  clearAllCharts(){if(!this.sh.charts?.length){this.toast('No charts on this sheet','inf');return}const layer=document.getElementById('chartlayer');layer.querySelectorAll('canvas').forEach(c=>{const i=Chart.getChart(c);if(i)i.destroy()});layer.innerHTML='';this.sh.charts=[];this.toast('All charts cleared','inf')},
   _esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')},
 
   // ── RENDER ─────────────────────────────────────────────────
   render(){
     const scr=document.getElementById('gscroll');
     const sl=scr.scrollLeft,st=scr.scrollTop,sw=scr.clientWidth,sh=scr.clientHeight;
-    const B=6;
-    let cx=0,c0=0,c1=COLS-1;
-    for(let c=0;c<COLS;c++){const w=this.sh.cw[c]||100;if(cx+w<sl-B*100)c0=c;if(cx>sl+sw+B*100){c1=c;break}cx+=w}
-    let ry=0,r0=0,r1=ROWS-1;
-    for(let r=0;r<ROWS;r++){const h=this.sh.rh[r]||24;if(ry+h<st-B*24)r0=r;if(ry>st+sh+B*24){r1=r;break}ry+=h}
-    c0=Math.max(0,c0);r0=Math.max(0,r0);
+    const B=4; // buffer panels
 
-    let tw=0;for(let c=0;c<COLS;c++)tw+=this.sh.cw[c]||100;
-    let th=0;for(let r=0;r<ROWS;r++)th+=this.sh.rh[r]||24;
+    // ── Fast virtualization using uniform-size fast path ──────
+    // With sparse custom widths/heights, O(1) math for the default case
+    const cwArr=this.sh.cw;
+    const rhArr=this.sh.rh;
+    const hasCustomW=cwArr&&cwArr.length>0;
+    const hasCustomH=rhArr&&rhArr.length>0;
 
+    let c0,c1,r0,r1;
+    if(!hasCustomW){
+      c0=Math.max(0,Math.floor((sl-B*DEF_COL_W)/DEF_COL_W));
+      c1=Math.min(COLS-1,Math.ceil((sl+sw+B*DEF_COL_W)/DEF_COL_W));
+    } else {
+      let cx=0;c0=0;c1=COLS-1;
+      for(let c=0;c<COLS;c++){const w=cwArr[c]??DEF_COL_W;if(cx+w<sl-B*DEF_COL_W)c0=c;if(cx>sl+sw+B*DEF_COL_W){c1=c;break}cx+=w}
+      c0=Math.max(0,c0);
+    }
+    if(!hasCustomH){
+      r0=Math.max(0,Math.floor((st-B*DEF_ROW_H)/DEF_ROW_H));
+      r1=Math.min(ROWS-1,Math.ceil((st+sh+B*DEF_ROW_H)/DEF_ROW_H));
+    } else {
+      let ry=0;r0=0;r1=ROWS-1;
+      for(let r=0;r<ROWS;r++){const h=rhArr[r]??DEF_ROW_H;if(ry+h<st-B*DEF_ROW_H)r0=r;if(ry>st+sh+B*DEF_ROW_H){r1=r;break}ry+=h}
+      r0=Math.max(0,r0);
+    }
+
+    const tw=this.totalW();
+    const th=this.totalH();
+
+    // ── Column headers ─────────────────────────────────────
     const chEl=document.getElementById('colrow');
-    let chH=`<div style="width:${this.colX(c0)}px;flex-shrink:0"></div>`;
+    const spacerW=hasCustomW?this.colX(c0):c0*DEF_COL_W;
+    let chH=`<div style="width:${spacerW}px;flex-shrink:0"></div>`;
     for(let c=c0;c<=c1;c++){
-      const w=this.sh.cw[c]||100;
+      const w=cwArr[c]??DEF_COL_W;
       const sel=c>=Math.min(this.sel.c1,this.sel.c2)&&c<=Math.max(this.sel.c1,this.sel.c2);
       chH+=`<div class="ch${sel?' sc':''}" style="width:${w}px" data-hc="${c}">${this.n2c(c)}<div class="chr" data-rsz="${c}"></div></div>`;
     }
-    chEl.innerHTML=chH; chEl.style.width=tw+'px';
+    chEl.innerHTML=chH;chEl.style.width=tw+'px';
 
     document.getElementById('cellarea').style.cssText=`position:relative;width:${tw}px;height:${th}px`;
     document.getElementById('rhdrs').style.height=th+'px';
 
-    let rH='',gH='';
-    const ts=this.rowY(r0);
-    rH+=`<div style="height:${ts}px"></div>`;
-    gH+=`<div style="height:${ts}px"></div>`;
+    // ── Rows ───────────────────────────────────────────────
+    const spacerH=hasCustomH?this.rowY(r0):r0*DEF_ROW_H;
+    let rH=`<div style="height:${spacerH}px"></div>`;
+    let gH=`<div style="height:${spacerH}px"></div>`;
 
     let errCount=0;
     for(let r=r0;r<=r1;r++){
-      const rh=this.sh.rh[r]||24;
+      const rh=rhArr[r]??DEF_ROW_H;
       const rSel=r>=Math.min(this.sel.r1,this.sel.r2)&&r<=Math.max(this.sel.r1,this.sel.r2);
       rH+=`<div class="rh${rSel?' sr':''}" style="height:${rh}px" data-hr="${r}">${r+1}</div>`;
-      let row=`<div style="width:${this.colX(c0)}px;height:${rh}px;flex-shrink:0;display:inline-block"></div>`;
+      const rowSpacerW=hasCustomW?this.colX(c0):c0*DEF_COL_W;
+      let row=`<div style="width:${rowSpacerW}px;height:${rh}px;flex-shrink:0;display:inline-block"></div>`;
       for(let c=c0;c<=c1;c++){
-        const cw=this.sh.cw[c]||100;
-        const ref=this.ref(r,c);
-        const cell=this.cells[ref]||{};
-        const fmt=cell.format||{};
+        const cw=cwArr[c]??DEF_COL_W;
+        const ref=this.ref(r,c);const cell=this.cells[ref]||{};const fmt=cell.format||{};
         const inSel=r>=Math.min(this.sel.r1,this.sel.r2)&&r<=Math.max(this.sel.r1,this.sel.r2)&&c>=Math.min(this.sel.c1,this.sel.c2)&&c<=Math.max(this.sel.c1,this.sel.c2);
         const isAc=(r===this.row&&c===this.col);
         const raw=cell.computed??cell.value??'';
@@ -1129,39 +1023,28 @@ const G={
     }
     document.getElementById('rhdrs').innerHTML=rH;
     document.getElementById('grows').innerHTML=gH;
-    this.renderSel();
-    this.renderFH();
+    this.renderSel();this.renderFH();
     if(this.editing)this.posEditor();
     this._updateErrBanner(errCount);
-    // Don't re-render charts on every cell render — only on explicit calls
   },
 
   _errLabel(v){
-    if(v.startsWith('#DIV'))return'÷0';
-    if(v.startsWith('#REF'))return'⚠ REF';
-    if(v.startsWith('#NAME'))return'⚠ NAME';
-    if(v.startsWith('#VALUE'))return'⚠ VAL';
-    if(v.startsWith('#NUM'))return'⚠ NUM';
-    if(v.startsWith('#NA'))return'⚠ N/A';
-    if(v.startsWith('#ERROR'))return'⚠ ERR';
-    return v.replace(/^#/,'⚠ ');
+    if(v.startsWith('#DIV'))return'÷0';if(v.startsWith('#REF'))return'⚠ REF';
+    if(v.startsWith('#NAME'))return'⚠ NAME';if(v.startsWith('#VALUE'))return'⚠ VAL';
+    if(v.startsWith('#NUM'))return'⚠ NUM';if(v.startsWith('#NA'))return'⚠ N/A';
+    if(v.startsWith('#ERROR'))return'⚠ ERR';return v.replace(/^#/,'⚠ ');
   },
-
   _updateErrBanner(count){
-    if(this._errDismissed||count===0){
-      document.getElementById('errbanner').classList.remove('show');return;
-    }
+    if(this._errDismissed||count===0){document.getElementById('errbanner').classList.remove('show');return}
     document.getElementById('errmsg').textContent=`⚠ ${count} formula error${count!==1?'s':''} detected in this sheet`;
     document.getElementById('errbanner').classList.add('show');
   },
-
   dismissErrBanner(){this._errDismissed=true;document.getElementById('errbanner').classList.remove('show')},
 
   autoFixErrors(){
     this.pushUndo();let count=0;
     for(const[ref,cell]of Object.entries(this.cells)){
-      if(!cell?.value?.startsWith?.('='))continue;
-      if(cell.value.toUpperCase().includes('IFERROR'))continue;
+      if(!cell?.value?.startsWith?.('=')||cell.value.toUpperCase().includes('IFERROR'))continue;
       const computed=String(cell.computed??this.evalFormula(cell.value));
       if(computed.match(/^#(ERROR|REF|NAME|VALUE|DIV\/0|NUM|NA|COMPLEX)/)){
         const fixed=this._smartFix(cell.value,computed);
@@ -1173,42 +1056,31 @@ const G={
     else this.toast('No fixable errors found','inf');
     return count;
   },
-
   _smartFix(formula,errorType){
     const inner=formula.slice(1).trim();
     if(errorType.startsWith('#DIV'))return`=IFERROR(${inner},0)`;
-    if(errorType.startsWith('#N'))return`=IFERROR(${inner},"")`;
     return`=IFERROR(${inner},"")`;
   },
-
   autoFixCellError(){
-    const ref=this.ref(this.row,this.col);
-    const cell=this.cells[ref];
+    const ref=this.ref(this.row,this.col);const cell=this.cells[ref];
     if(!cell?.value?.startsWith?.('='))return this.toast('Not a formula cell','warn');
     const computed=String(cell.computed??this.evalFormula(cell.value));
     if(!computed.match(/^#/))return this.toast('No error in this cell','inf');
-    this.pushUndo();
-    const fixed=this._smartFix(cell.value,computed);
-    cell.value=fixed;cell.computed=this.evalFormula(fixed);
-    this.recalc();this.render();
+    this.pushUndo();const fixed=this._smartFix(cell.value,computed);
+    cell.value=fixed;cell.computed=this.evalFormula(fixed);this.recalc();this.render();
     this.toast('Formula fixed with IFERROR','ok');
   },
 
   cellCss(f,w,h){
     let s=`width:${w}px;min-width:${w}px;height:${h}px;`;
-    if(f.bold)s+='font-weight:700;';
-    if(f.italic)s+='font-style:italic;';
-    if(f.underline)s+='text-decoration:underline;';
-    if(f.fontSize)s+=`font-size:${f.fontSize};`;
-    if(f.fontFamily)s+=`font-family:'${f.fontFamily}',sans-serif;`;
-    if(f.color)s+=`color:${f.color};`;
-    if(f.background)s+=`background:${f.background};`;
+    if(f.bold)s+='font-weight:700;';if(f.italic)s+='font-style:italic;';if(f.underline)s+='text-decoration:underline;';
+    if(f.fontSize)s+=`font-size:${f.fontSize};`;if(f.fontFamily)s+=`font-family:'${f.fontFamily}',sans-serif;`;
+    if(f.color)s+=`color:${f.color};`;if(f.background)s+=`background:${f.background};`;
     if(f.textAlign){const jc=f.textAlign==='right'?'flex-end':f.textAlign==='center'?'center':'flex-start';s+=`justify-content:${jc};text-align:${f.textAlign};`}
     if(f.border)s+='box-shadow:inset 0 0 0 1px #888;';
     if(!this.showGrid)s+='border-right-color:transparent;border-bottom-color:transparent;';
     return s;
   },
-
   applyNumFmt(v,nf){
     const n=parseFloat(v);if(isNaN(n)||v==='')return v;
     if(nf==='currency')return'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1216,25 +1088,21 @@ const G={
     if(nf==='number')return n.toLocaleString();
     return v;
   },
-
   esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')},
 
   renderSel(){
-    const b=document.getElementById('selbox');
-    const{r1,c1,r2,c2}=this.sel;
+    const b=document.getElementById('selbox');const{r1,c1,r2,c2}=this.sel;
     if(r1===r2&&c1===c2){b.style.display='none';return}
     const x=this.colX(Math.min(c1,c2)),y=this.rowY(Math.min(r1,r2));
     let w=0,h=0;
-    for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++)w+=this.sh.cw[c]||100;
-    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)h+=this.sh.rh[r]||24;
+    for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++)w+=this.sh.cw[c]??DEF_COL_W;
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)h+=this.sh.rh[r]??DEF_ROW_H;
     b.style.cssText=`display:block;left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
   },
-
   renderFH(){
-    this._updPill&&this._updPill();
     const fh=document.getElementById('fhandle');
     const c2=Math.max(this.sel.c1,this.sel.c2),r2=Math.max(this.sel.r1,this.sel.r2);
-    fh.style.cssText=`display:block;left:${this.colX(c2)+(this.sh.cw[c2]||100)-5}px;top:${this.rowY(r2)+(this.sh.rh[r2]||24)-5}px`;
+    fh.style.cssText=`display:block;left:${this.colX(c2)+(this.sh.cw[c2]??DEF_COL_W)-5}px;top:${this.rowY(r2)+(this.sh.rh[r2]??DEF_ROW_H)-5}px`;
   },
 
   moveTo(r,c){
@@ -1242,29 +1110,25 @@ const G={
     this.row=r;this.col=c;this.sel={r1:r,c1:c,r2:r,c2:c};
     this.syncFbar();this.syncRibbon();this.scrollIntoView(r,c);this.render();
   },
-
   syncFbar(){
     const ref=this.ref(this.row,this.col);
     document.getElementById('namebox').value=ref;
     const cell=this.cells[ref]||{};
     document.getElementById('fbarinput').value=cell.value??'';
   },
-
   fbSync(){if(this.editing)document.getElementById('cta').value=document.getElementById('fbarinput').value},
   fbKey(e){
     if(e.key==='Enter'){e.preventDefault();const v=document.getElementById('fbarinput').value;this.setCell(this.row,this.col,v);this.recalc();this.moveTo(this.row+1,this.col);this.render();document.getElementById('gscroll').focus({preventScroll:true})}
     if(e.key==='Escape'){this.syncFbar();document.getElementById('gscroll').focus({preventScroll:true})}
   },
-
   scrollIntoView(r,c){
     const s=document.getElementById('gscroll');
-    const x=this.colX(c),y=this.rowY(r),cw=this.sh.cw[c]||100,rh=this.sh.rh[r]||24;
+    const x=this.colX(c),y=this.rowY(r),cw=this.sh.cw[c]??DEF_COL_W,rh=this.sh.rh[r]??DEF_ROW_H;
     if(x<s.scrollLeft)s.scrollLeft=Math.max(0,x-HW);
     else if(x+cw>s.scrollLeft+s.clientWidth)s.scrollLeft=x+cw-s.clientWidth+10;
     if(y<s.scrollTop)s.scrollTop=Math.max(0,y-4);
     else if(y+rh>s.scrollTop+s.clientHeight)s.scrollTop=y+rh-s.clientHeight+4;
   },
-
   selAll(){this.sel={r1:0,c1:0,r2:ROWS-1,c2:COLS-1};this.render()},
 
   openEditor(r,c,initChar){
@@ -1273,43 +1137,27 @@ const G={
     const ta=document.getElementById('cta');
     ta.value=initChar!==undefined?initChar:(cell.value??'');
     document.getElementById('fbarinput').value=ta.value;
-    this.posEditor();
-    document.getElementById('ced').style.display='block';
+    this.posEditor();document.getElementById('ced').style.display='block';
     setTimeout(()=>{ta.focus();if(initChar!==undefined)ta.setSelectionRange(ta.value.length,ta.value.length);else ta.select();},30);
   },
-
   posEditor(){
-    const r=this.eRow,c=this.eCol;
-    const ed=document.getElementById('ced');
-    const w=Math.max(this.sh.cw[c]||100,160);
-    const h=this.sh.rh[r]||24;
-    ed.style.left=this.colX(c)+'px';
-    ed.style.top=this.rowY(r)+'px';
-    ed.style.width=w+'px';
-    ed.style.height=Math.max(h,26)+'px';
+    const r=this.eRow,c=this.eCol,ed=document.getElementById('ced');
+    const w=Math.max(this.sh.cw[c]??DEF_COL_W,160),h=this.sh.rh[r]??DEF_ROW_H;
+    ed.style.left=this.colX(c)+'px';ed.style.top=this.rowY(r)+'px';ed.style.width=w+'px';ed.style.height=Math.max(h,26)+'px';
   },
-
   closeEditor(save){
-    if(!this.editing)return;
-    this.editing=false;
-    const r=this.eRow,c=this.eCol;
-    const val=document.getElementById('cta').value;
+    if(!this.editing)return;this.editing=false;
+    const r=this.eRow,c=this.eCol;const val=document.getElementById('cta').value;
     document.getElementById('ced').style.display='none';
     if(save){this.setCell(r,c,val);this.recalc()}
   },
-
   setCell(r,c,val){
-    this.pushUndo();
-    const ref=this.ref(r,c);
+    this.pushUndo();const ref=this.ref(r,c);
     if(val===''&&!this.cells[ref]?.format){delete this.cells[ref];this.recalc();return}
     if(!this.cells[ref])this.cells[ref]={};
     this.cells[ref].value=val;
-    if(val&&val.startsWith('=')){
-      this.cells[ref].computed=this.evalFormula(val);
-      this.evalBackend(ref,val);
-    } else {
-      delete this.cells[ref].computed;
-    }
+    if(val&&val.startsWith('=')){this.cells[ref].computed=this.evalFormula(val);this.evalBackend(ref,val)}
+    else delete this.cells[ref].computed;
     this.recalc();
   },
 
@@ -1318,31 +1166,21 @@ const G={
     ref=ref.toUpperCase();if(seen.has(ref))return'#CIRCULAR!';
     const cell=this.cells[ref];if(!cell)return'';
     const raw=(typeof cell==='object'?(cell.value??''):String(cell));
-    if(typeof raw==='string'&&raw.startsWith('=')){
-      seen.add(ref);const r=this._evalExpr(raw.slice(1),seen);seen.delete(ref);return r;
-    }
+    if(typeof raw==='string'&&raw.startsWith('=')){seen.add(ref);const r=this._evalExpr(raw.slice(1),seen);seen.delete(ref);return r}
     return raw;
   },
-
-  evalFormula(f){
-    if(!f||!f.startsWith('='))return f;
-    try{return this._evalExpr(f.slice(1),new Set())}catch(e){return'#ERROR!'}
-  },
-
+  evalFormula(f){if(!f||!f.startsWith('='))return f;try{return this._evalExpr(f.slice(1),new Set())}catch(e){return'#ERROR!'}},
   _evalExpr(e,seen){return this._expr(e,seen,0)},
-
   _rng(rng,seen){
     const[a,b]=rng.split(':');if(!b)return[];
     const p1=this.pRef(a),p2=this.pRef(b);if(!p1||!p2)return[];
     const n=[];
     for(let r=Math.min(p1.r,p2.r);r<=Math.max(p1.r,p2.r);r++)
       for(let c=Math.min(p1.c,p2.c);c<=Math.max(p1.c,p2.c);c++){
-        const v=this._resolveCell(this.ref(r,c),seen);
-        const f=parseFloat(v);if(!isNaN(f)&&isFinite(f))n.push(f);
+        const v=this._resolveCell(this.ref(r,c),seen);const f=parseFloat(v);if(!isNaN(f)&&isFinite(f))n.push(f);
       }
     return n;
   },
-
   _expr(e,seen,d){
     if(d>32)return'#REF!';seen=seen||new Set();
     const self=this;
@@ -1357,8 +1195,7 @@ const G={
         const p1=self.pRef(ra),p2=self.pRef(rb);if(!p1||!p2)return[];
         const vals=[];
         for(let r=Math.min(p1.r,p2.r);r<=Math.max(p1.r,p2.r);r++)
-          for(let c=Math.min(p1.c,p2.c);c<=Math.max(p1.c,p2.c);c++)
-            vals.push(String(self._resolveCell(self.ref(r,c),seen)));
+          for(let c=Math.min(p1.c,p2.c);c<=Math.max(p1.c,p2.c);c++)vals.push(String(self._resolveCell(self.ref(r,c),seen)));
         return vals;
       };
       const N=nm.toUpperCase();
@@ -1388,8 +1225,7 @@ const G={
       if(N==='CONCAT'||N==='CONCATENATE')return a.map(x=>str(x)).join('');
       if(N==='TEXTJOIN'){const sep=str(a[0]);const parts=[];for(let i=2;i<a.length;i++){if(a[i].includes(':')){const vs=rngVals(a[i]);parts.push(...vs.filter(v=>v!==''))}else parts.push(str(a[i]))}return parts.join(sep)}
       if(N==='LEN')return String(str(a[0]).length);
-      if(N==='UPPER')return str(a[0]).toUpperCase();
-      if(N==='LOWER')return str(a[0]).toLowerCase();
+      if(N==='UPPER')return str(a[0]).toUpperCase();if(N==='LOWER')return str(a[0]).toLowerCase();
       if(N==='PROPER')return str(a[0]).replace(/\b\w/g,c=>c.toUpperCase());
       if(N==='TRIM')return str(a[0]).trim();
       if(N==='LEFT'){const s=str(a[0]);return s.slice(0,+ev(a[1]??'1'))}
@@ -1409,19 +1245,15 @@ const G={
         return'#N/A';
       }
       if(N==='COUNTIF'){
-        const vals=rngVals(a[0]);const crit=str(a[1]);
-        const op=crit.match(/^(>=|<=|<>|>|<|=)(.+)$/);let cnt=0;
+        const vals=rngVals(a[0]);const crit=str(a[1]);const op=crit.match(/^(>=|<=|<>|>|<|=)(.+)$/);let cnt=0;
         for(const v of vals){const n=parseFloat(v);if(op){const cv=parseFloat(op[2]);if(!isNaN(n)&&!isNaN(cv)){if(op[1]==='>'&&n>cv)cnt++;else if(op[1]==='<'&&n<cv)cnt++;else if(op[1]==='>='&&n>=cv)cnt++;else if(op[1]==='<='&&n<=cv)cnt++;else if(op[1]==='<>'&&n!==cv)cnt++;else if(op[1]==='='&&n===cv)cnt++;}else{if(op[1]==='<>'&&v!==op[2])cnt++;else if(op[1]==='='&&v===op[2])cnt++;}}else if(v===crit)cnt++;}
         return String(cnt);
       }
       if(N==='SUMIF'){
-        const crng=a[0],crit=str(a[1]),srng=a[2]??a[0];
-        const cv=rngVals(crng);const sv=self._rng(srng,seen);
+        const crng=a[0],crit=str(a[1]),srng=a[2]??a[0];const cv2=rngVals(crng);const sv=self._rng(srng,seen);
         const op=crit.match(/^(>=|<=|<>|>|<|=)(.+)$/);let tot=0;
-        cv.forEach((v,i)=>{const n=parseFloat(v);let m=false;
-          if(op){const cn=parseFloat(op[2]);if(!isNaN(n)&&!isNaN(cn)){if(op[1]==='>')m=n>cn;else if(op[1]==='<')m=n<cn;else if(op[1]==='>=')m=n>=cn;else if(op[1]==='<=')m=n<=cn;else if(op[1]==='<>')m=n!==cn;else m=n===cn}}
-          else m=(v===crit);if(m)tot+=sv[i]??0;
-        });return String(tot);
+        cv2.forEach((v,i)=>{const n=parseFloat(v);let m=false;if(op){const cn=parseFloat(op[2]);if(!isNaN(n)&&!isNaN(cn)){if(op[1]==='>')m=n>cn;else if(op[1]==='<')m=n<cn;else if(op[1]==='>=')m=n>=cn;else if(op[1]==='<=')m=n<=cn;else if(op[1]==='<>')m=n!==cn;else m=n===cn}}else m=(v===crit);if(m)tot+=sv[i]??0});
+        return String(tot);
       }
       if(N==='LARGE'){const n=nums();const k=+ev(a[1]??'1');return n.length>=k?String(n.sort((a,b)=>b-a)[k-1]):'#NUM!'}
       if(N==='SMALL'){const n=nums();const k=+ev(a[1]??'1');return n.length>=k?String(n.sort((a,b)=>a-b)[k-1]):'#NUM!'}
@@ -1438,30 +1270,24 @@ const G={
       return'#NAME?';
     };
     e=e.replace(/(?<![:!A-Z0-9_."])\$?([A-Z]+)\$?(\d+)(?![:A-Z0-9_(])/gi,(m,col,row)=>{
-      const ref=`${col.toUpperCase()}${row}`;
-      const v=self._resolveCell(ref,seen);
+      const ref=`${col.toUpperCase()}${row}`;const v=self._resolveCell(ref,seen);
       if(typeof v==='string'&&v.startsWith('#'))return`"${v}"`;
       const sv=String(v);if(sv.trim()==='')return'0';
-      const f=parseFloat(sv);
-      if(!isNaN(f)&&isFinite(f)&&/^-?[\d.,eE+\-]+$/.test(sv.trim()))return String(f);
+      const f=parseFloat(sv);if(!isNaN(f)&&isFinite(f)&&/^-?[\d.,eE+\-]+$/.test(sv.trim()))return String(f);
       if(sv==='TRUE')return'1';if(sv==='FALSE')return'0';
       return`"${sv.replace(/"/g,'\\"')}"`;
     });
     for(let i=0;i<14;i++){
       let ch=false;
       e=e.replace(/([A-Z][A-Z0-9_]*)\(([^()]*)\)/gi,(m,nm,as)=>{ch=true;const r=fn(nm,as);if(typeof r==='string'&&r.startsWith('#'))return`"${r}"`;if(typeof r==='string'&&isNaN(parseFloat(r))&&r!=='TRUE'&&r!=='FALSE'&&!/^".*"$/.test(r))return`"${r.replace(/"/g,'\\"')}"`;return String(r)});
-      e=e.replace(/(^|[^A-Z0-9_])\(([^()]+)\)/gi,(m,pre,inner)=>{
-        if(/[A-Z]/i.test(inner)&&!/^[\s\d+\-*/%.,e]+$/i.test(inner))return m;
-        try{const v=Function('"use strict";return('+inner+')')();if(typeof v==='number'&&isFinite(v)){ch=true;return pre+String(v)}}catch{}return m;
-      });
+      e=e.replace(/(^|[^A-Z0-9_])\(([^()]+)\)/gi,(m,pre,inner)=>{if(/[A-Z]/i.test(inner)&&!/^[\s\d+\-*/%.,e]+$/i.test(inner))return m;try{const v=Function('"use strict";return('+inner+')')();if(typeof v==='number'&&isFinite(v)){ch=true;return pre+String(v)}}catch{}return m});
       if(!ch)break;
     }
     const em=e.match(/"(#[A-Z\/]+!?)"/);if(em)return em[1];
     const trimmed=e.trim();if(trimmed===''||trimmed==='""')return'';
     const qm=trimmed.match(/^"((?:[^"\\]|\\.)*)"$/);if(qm)return qm[1].replace(/\\"/g,'"');
-    try{const r=Function('"use strict";return('+e+')')();
-      if(typeof r==='number'){if(isNaN(r))return'#DIV/0!';if(!isFinite(r))return'#NUM!';return r}return r;
-    }catch{return'#ERROR!'}
+    try{const r=Function('"use strict";return('+e+')')();if(typeof r==='number'){if(isNaN(r))return'#DIV/0!';if(!isFinite(r))return'#NUM!';return r}return r}
+    catch{return'#ERROR!'}
   },
 
   async evalBackend(ref,formula){
@@ -1477,11 +1303,7 @@ const G={
     for(let pass=0;pass<8;pass++){
       let changed=false;
       for(const[,cell]of Object.entries(this.cells)){
-        if(cell?.value?.startsWith?.('=')){
-          const prev=cell.computed;
-          cell.computed=this.evalFormula(cell.value);
-          if(prev!==cell.computed)changed=true;
-        }
+        if(cell?.value?.startsWith?.('=')){const prev=cell.computed;cell.computed=this.evalFormula(cell.value);if(prev!==cell.computed)changed=true}
       }
       if(!changed)break;
     }
@@ -1492,10 +1314,7 @@ const G={
     this.pushUndo();const{r1,c1,r2,c2}=this.sel;
     for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)
       for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){
-        const ref=this.ref(r,c);
-        if(!this.cells[ref])this.cells[ref]={value:''};
-        if(!this.cells[ref].format)this.cells[ref].format={};
-        this.cells[ref].format[p]=v;
+        const ref=this.ref(r,c);if(!this.cells[ref])this.cells[ref]={value:''};if(!this.cells[ref].format)this.cells[ref].format={};this.cells[ref].format[p]=v;
       }
     this.render();this.syncRibbon();
   },
@@ -1503,24 +1322,18 @@ const G={
   setAlign(v){const ref=this.ref(this.row,this.col);const cur=this.cells[ref]?.format?.textAlign;this.fmt('textAlign',cur===v?'':v)},
   clrCell(){
     this.pushUndo();const{r1,c1,r2,c2}=this.sel;
-    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)
-      for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++)delete this.cells[this.ref(r,c)];
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++)delete this.cells[this.ref(r,c)];
     this.render();
   },
   clrFmt(){
     this.pushUndo();const{r1,c1,r2,c2}=this.sel;
-    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)
-      for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){const ref=this.ref(r,c);if(this.cells[ref])delete this.cells[ref].format}
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){const ref=this.ref(r,c);if(this.cells[ref])delete this.cells[ref].format}
     this.render();this.syncRibbon();
   },
   syncRibbon(){
     const ref=this.ref(this.row,this.col);const f=this.cells[ref]?.format||{};
-    document.getElementById('rbb')?.classList.toggle('on',!!f.bold);
-    document.getElementById('rbi')?.classList.toggle('on',!!f.italic);
-    document.getElementById('rbu')?.classList.toggle('on',!!f.underline);
-    document.getElementById('ral')?.classList.toggle('on',f.textAlign==='left');
-    document.getElementById('rac')?.classList.toggle('on',f.textAlign==='center');
-    document.getElementById('rar')?.classList.toggle('on',f.textAlign==='right');
+    document.getElementById('rbb')?.classList.toggle('on',!!f.bold);document.getElementById('rbi')?.classList.toggle('on',!!f.italic);document.getElementById('rbu')?.classList.toggle('on',!!f.underline);
+    document.getElementById('ral')?.classList.toggle('on',f.textAlign==='left');document.getElementById('rac')?.classList.toggle('on',f.textAlign==='center');document.getElementById('rar')?.classList.toggle('on',f.textAlign==='right');
     const fs=document.getElementById('rfont');if(fs&&f.fontFamily)fs.value=f.fontFamily;
     const si=document.getElementById('rsize');if(si)si.value=f.fontSize?parseInt(f.fontSize):12;
     const co=document.getElementById('rcolor');if(co)co.value=f.color||'#1a1d2e';
@@ -1530,28 +1343,15 @@ const G={
 
   // ── CLIPBOARD ──────────────────────────────────────────────
   copy(cut=false){
-    this.cb={sel:{...this.sel},data:{},cut};
-    const{r1,c1,r2,c2}=this.sel;
-    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)
-      for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){
-        const ref=this.ref(r,c);
-        if(this.cells[ref])this.cb.data[this.ref(r-Math.min(r1,r2),c-Math.min(c1,c2))]=JSON.parse(JSON.stringify(this.cells[ref]));
-      }
+    this.cb={sel:{...this.sel},data:{},cut};const{r1,c1,r2,c2}=this.sel;
+    for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++){const ref=this.ref(r,c);if(this.cells[ref])this.cb.data[this.ref(r-Math.min(r1,r2),c-Math.min(c1,c2))]=JSON.parse(JSON.stringify(this.cells[ref]))}
     this.toast('Copied','ok');
   },
   cut(){this.copy(true);this.toast('Cut','inf')},
   paste(){
     if(!this.cb)return;this.pushUndo();
-    for(const[rr,cell]of Object.entries(this.cb.data)){
-      const p=this.pRef(rr);if(!p)continue;
-      this.cells[this.ref(this.row+p.r,this.col+p.c)]=JSON.parse(JSON.stringify(cell));
-    }
-    if(this.cb.cut){
-      const{r1,c1,r2,c2}=this.cb.sel;
-      for(let rr=Math.min(r1,r2);rr<=Math.max(r1,r2);rr++)
-        for(let cc=Math.min(c1,c2);cc<=Math.max(c1,c2);cc++)delete this.cells[this.ref(rr,cc)];
-      this.cb=null;
-    }
+    for(const[rr,cell]of Object.entries(this.cb.data)){const p=this.pRef(rr);if(!p)continue;this.cells[this.ref(this.row+p.r,this.col+p.c)]=JSON.parse(JSON.stringify(cell))}
+    if(this.cb.cut){const{r1,c1,r2,c2}=this.cb.sel;for(let rr=Math.min(r1,r2);rr<=Math.max(r1,r2);rr++)for(let cc=Math.min(c1,c2);cc<=Math.max(c1,c2);cc++)delete this.cells[this.ref(rr,cc)];this.cb=null}
     this.recalc();this.render();this.toast('Pasted','ok');
   },
 
@@ -1569,10 +1369,9 @@ const G={
   delCol(){this.pushUndo();this._shiftC(this.col,-1);this.render();this.toast('Column deleted','inf')},
 
   sort(dir){
-    this.pushUndo();const c=this.col;
-    let mr=0;for(const ref of Object.keys(this.cells)){const p=this.pRef(ref);if(p)mr=Math.max(mr,p.r)}
-    const rows=[];
-    for(let r=0;r<=mr;r++){const d={};for(let cc=0;cc<COLS;cc++){const ref=this.ref(r,cc);if(this.cells[ref])d[cc]=this.cells[ref]}rows.push({d,k:this.cells[this.ref(r,c)]?.value??''})}
+    this.pushUndo();const c=this.col;let mr=0;
+    for(const ref of Object.keys(this.cells)){const p=this.pRef(ref);if(p)mr=Math.max(mr,p.r)}
+    const rows=[];for(let r=0;r<=mr;r++){const d={};for(let cc=0;cc<COLS;cc++){const ref=this.ref(r,cc);if(this.cells[ref])d[cc]=this.cells[ref]}rows.push({d,k:this.cells[this.ref(r,c)]?.value??''})}
     rows.sort((a,b)=>{const na=parseFloat(a.k),nb=parseFloat(b.k);if(!isNaN(na)&&!isNaN(nb))return dir==='asc'?na-nb:nb-na;return dir==='asc'?a.k.localeCompare(b.k):b.k.localeCompare(a.k)});
     const nc={};rows.forEach((row,nr)=>{for(const[cc,cell]of Object.entries(row.d))nc[this.ref(nr,+cc)]=cell});
     this.sh.cells=nc;this.render();this.toast('Sorted','ok');
@@ -1589,8 +1388,7 @@ const G={
   fillSeries(){
     const{r1,c1,r2,c2}=this.sel;
     const R1=Math.min(r1,r2),R2=Math.max(r1,r2),C1=Math.min(c1,c2),C2=Math.max(c1,c2);
-    const rows=R2-R1+1,cols=C2-C1+1;
-    const horizontal=(rows===1&&cols>1);
+    const rows=R2-R1+1,cols=C2-C1+1;const horizontal=(rows===1&&cols>1);
     this.pushUndo();
     const monthsF=['January','February','March','April','May','June','July','August','September','October','November','December'];
     const monthsS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1601,23 +1399,18 @@ const G={
       const existing=[];let firstNonEmpty=-1;
       for(let i=0;i<len;i++){const v=this.cells[getRef(i)]?.value;existing.push(v==null?'':String(v));if(firstNonEmpty<0&&existing[i].trim()!=='')firstNonEmpty=i}
       if(firstNonEmpty<0){for(let i=0;i<len;i++){const ref=getRef(i);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=String(i+1)}return}
-      const seeds=[];let i=firstNonEmpty;
-      while(i<len&&existing[i].trim()!==''){seeds.push(existing[i]);i++}
+      const seeds=[];let i=firstNonEmpty;while(i<len&&existing[i].trim()!==''){seeds.push(existing[i]);i++}
       const fillStart=i;if(fillStart>=len)return;
-      const nseeds=seeds.map(s=>parseFloat(s));
-      const allNum=nseeds.every(n=>!isNaN(n)&&isFinite(n));
+      const nseeds=seeds.map(s=>parseFloat(s));const allNum=nseeds.every(n=>!isNaN(n)&&isFinite(n));
       if(allNum){let step=1;if(nseeds.length>=2)step=nseeds[nseeds.length-1]-nseeds[nseeds.length-2];let last=nseeds[nseeds.length-1];for(let k=fillStart;k<len;k++){last+=step;const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=String(+last.toFixed(10))}return}
-      for(const L of[monthsF,monthsS,daysF,daysS]){
-        const idxs=seeds.map(s=>matchList(s,L));
-        if(idxs.every(i=>i>=0)){let step=idxs.length>=2?(idxs[idxs.length-1]-idxs[idxs.length-2]+L.length)%L.length||1:1;let last=idxs[idxs.length-1];for(let k=fillStart;k<len;k++){last=(last+step)%L.length;const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=L[last]}return}
-      }
+      for(const L of[monthsF,monthsS,daysF,daysS]){const idxs=seeds.map(s=>matchList(s,L));if(idxs.every(i=>i>=0)){let step=idxs.length>=2?(idxs[idxs.length-1]-idxs[idxs.length-2]+L.length)%L.length||1:1;let last=idxs[idxs.length-1];for(let k=fillStart;k<len;k++){last=(last+step)%L.length;const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=L[last]}return}}
       const m=seeds[seeds.length-1].match(/^(.*?)(-?\d+)(\D*)$/);
       if(m){const prefix=m[1],suffix=m[3];let step=1;if(seeds.length>=2){const m2=seeds[seeds.length-2].match(/^(.*?)(-?\d+)(\D*)$/);if(m2&&m2[1]===prefix&&m2[3]===suffix)step=parseInt(m[2])-parseInt(m2[2])||1}let last=parseInt(m[2]);for(let k=fillStart;k<len;k++){last+=step;const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=`${prefix}${last}${suffix}`}return}
       for(let k=fillStart;k<len;k++){const ref=getRef(k);if(!this.cells[ref])this.cells[ref]={};this.cells[ref].value=seeds[(k-firstNonEmpty)%seeds.length]}
     };
-    if(horizontal){fillLine(i=>this.ref(R1,C1+i),cols)}
-    else if(cols===1){fillLine(i=>this.ref(R1+i,C1),rows)}
-    else{for(let c=C1;c<=C2;c++)fillLine(i=>this.ref(R1+i,c),rows)}
+    if(horizontal)fillLine(i=>this.ref(R1,C1+i),cols);
+    else if(cols===1)fillLine(i=>this.ref(R1+i,C1),rows);
+    else for(let c=C1;c<=C2;c++)fillLine(i=>this.ref(R1+i,c),rows);
     this.recalc();this.render();this.toast('Series filled','ok');
   },
 
@@ -1637,42 +1430,30 @@ const G={
     const T=this._touch;
 
     ca.addEventListener('pointerdown',e=>{
-      if(e.pointerType==='touch')return;
-      if(e.button!==0||this.editing)return;
+      if(e.pointerType==='touch')return;if(e.button!==0||this.editing)return;
       const el=e.target.closest('.cell');if(!el)return;
       const startR=+el.dataset.r,startC=+el.dataset.c;
-      if(!e.shiftKey){this.moveTo(startR,startC);}
-      else{this.sel.r2=startR;this.sel.c2=startC;this.render();}
+      if(!e.shiftKey)this.moveTo(startR,startC);else{this.sel.r2=startR;this.sel.c2=startC;this.render()}
       const mv=ev=>{const t=ev.target.closest('.cell');if(t){const nr=+t.dataset.r,nc=+t.dataset.c;if(nr!==this.sel.r2||nc!==this.sel.c2){this.sel.r2=nr;this.sel.c2=nc;this.render()}}};
       const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up)};
       document.addEventListener('pointermove',mv,{passive:true});document.addEventListener('pointerup',up);
     });
 
     ca.addEventListener('click',e=>{
-      if(e.pointerType==='touch')return;
-      const el=e.target.closest('.cell');if(!el)return;
+      if(e.pointerType==='touch')return;const el=e.target.closest('.cell');if(!el)return;
       if(this.editing&&(this.eRow!==+el.dataset.r||this.eCol!==+el.dataset.c)){this.closeEditor(true);this.moveTo(+el.dataset.r,+el.dataset.c);this.render();return}
       if(!this.editing)scr.focus({preventScroll:true});
     });
 
-    ca.addEventListener('dblclick',e=>{
-      const el=e.target.closest('.cell');if(!el)return;
-      this.openEditor(+el.dataset.r,+el.dataset.c,undefined);
-    });
+    ca.addEventListener('dblclick',e=>{const el=e.target.closest('.cell');if(!el)return;this.openEditor(+el.dataset.r,+el.dataset.c,undefined)});
 
     ca.addEventListener('touchstart',e=>{
       if(e.touches.length===1){
         T.startX=e.touches[0].clientX;T.startY=e.touches[0].clientY;T.startT=Date.now();T.moved=false;T.twoFinger=false;
-        T.lpTimer=setTimeout(()=>{
-          if(!T.moved){const el=document.elementFromPoint(T.startX,T.startY)?.closest('.cell');if(el)this.moveTo(+el.dataset.r,+el.dataset.c);if(isMob())showBSheet('cell');else this._showCtxAt(T.startX,T.startY);navigator.vibrate?.(40)}
-        },600);
+        T.lpTimer=setTimeout(()=>{if(!T.moved){const el=document.elementFromPoint(T.startX,T.startY)?.closest('.cell');if(el)this.moveTo(+el.dataset.r,+el.dataset.c);if(isMob())showBSheet('cell');else this._showCtxAt(T.startX,T.startY);navigator.vibrate?.(40)}},600);
       }else if(e.touches.length===2){T.twoFinger=true;clearTimeout(T.lpTimer)}
     },{passive:true});
-
-    ca.addEventListener('touchmove',e=>{
-      if(e.touches.length===1){const dx=Math.abs(e.touches[0].clientX-T.startX);const dy=Math.abs(e.touches[0].clientY-T.startY);if(dx>8||dy>8){T.moved=true;clearTimeout(T.lpTimer)}}
-    },{passive:true});
-
+    ca.addEventListener('touchmove',e=>{if(e.touches.length===1){const dx=Math.abs(e.touches[0].clientX-T.startX);const dy=Math.abs(e.touches[0].clientY-T.startY);if(dx>8||dy>8){T.moved=true;clearTimeout(T.lpTimer)}}},{passive:true});
     ca.addEventListener('touchend',e=>{
       clearTimeout(T.lpTimer);if(T.twoFinger||T.moved)return;
       const el=document.elementFromPoint(T.startX,T.startY)?.closest('.cell');if(!el)return;
@@ -1682,8 +1463,7 @@ const G={
     },{passive:true});
 
     ca.addEventListener('contextmenu',e=>{
-      e.preventDefault();
-      const el=e.target.closest('.cell');if(el&&!this.editing)this.moveTo(+el.dataset.r,+el.dataset.c);
+      e.preventDefault();const el=e.target.closest('.cell');if(el&&!this.editing)this.moveTo(+el.dataset.r,+el.dataset.c);
       if(isMob())showBSheet('cell');else this._showCtxAt(e.clientX,e.clientY);
     });
 
@@ -1706,14 +1486,10 @@ const G={
       if(e.key==='Escape')scr.focus({preventScroll:true});
     });
 
-    // Chart range preview live update
-    document.getElementById('chartRangeInp').addEventListener('input',e=>{
-      this._updateRangePreview(e.target.value.trim().toUpperCase());
-    });
+    document.getElementById('chartRangeInp').addEventListener('input',e=>{this._updateRangePreview(e.target.value.trim().toUpperCase())});
 
     scr.addEventListener('keydown',e=>{
-      const C=e.ctrlKey||e.metaKey;
-      if(this.editing)return;
+      const C=e.ctrlKey||e.metaKey;if(this.editing)return;
       if(C){
         switch(e.key.toLowerCase()){
           case'z':e.preventDefault();this.undo();break;case'y':e.preventDefault();this.redo();break;
@@ -1723,6 +1499,7 @@ const G={
           case'a':e.preventDefault();this.selAll();break;case's':e.preventDefault();this.saveXL();break;
           case'f':e.preventDefault();document.getElementById('aiin').focus();break;
           case'/':e.preventDefault();G.openChat();break;
+          case'g':e.preventDefault();this.openGoto();break;
         }return;
       }
       switch(e.key){
@@ -1734,37 +1511,27 @@ const G={
         case'Enter':e.preventDefault();this.openEditor(this.row,this.col,undefined);break;
         case'F2':e.preventDefault();this.openEditor(this.row,this.col,undefined);break;
         case'Delete':case'Backspace':e.preventDefault();this.clrCell();break;
-        case'PageDown':e.preventDefault();this.moveTo(this.row+25,this.col);break;
-        case'PageUp':e.preventDefault();this.moveTo(this.row-25,this.col);break;
+        case'PageDown':e.preventDefault();this.moveTo(this.row+50,this.col);break;
+        case'PageUp':e.preventDefault();this.moveTo(this.row-50,this.col);break;
         case'Home':e.preventDefault();this.moveTo(this.row,0);break;
         case'End':e.preventDefault();{let lc=0;for(let c=0;c<COLS;c++)if(this.cells[this.ref(this.row,c)])lc=c;this.moveTo(this.row,lc);}break;
         default:if(e.key.length===1&&!C&&!e.altKey){e.preventDefault();this.openEditor(this.row,this.col,e.key)}
       }
     });
 
-    document.getElementById('colrow').addEventListener('click',e=>{
-      const hc=e.target.closest('[data-hc]');
-      if(hc){const c=+hc.dataset.hc;this.sel={r1:0,c1:c,r2:ROWS-1,c2:c};this.col=c;this.render()}
-    });
+    document.getElementById('colrow').addEventListener('click',e=>{const hc=e.target.closest('[data-hc]');if(hc){const c=+hc.dataset.hc;this.sel={r1:0,c1:c,r2:ROWS-1,c2:c};this.col=c;this.render()}});
     document.getElementById('colrow').addEventListener('pointerdown',e=>{
-      const rsz=e.target.closest('[data-rsz]');if(!rsz)return;
-      e.preventDefault();
-      const c=+rsz.dataset.rsz,sx=e.clientX,sw=this.sh.cw[c]||100;
+      const rsz=e.target.closest('[data-rsz]');if(!rsz)return;e.preventDefault();
+      const c=+rsz.dataset.rsz,sx=e.clientX,sw=this.sh.cw[c]??DEF_COL_W;
       const mv=ev=>{this.sh.cw[c]=Math.max(30,sw+(ev.clientX-sx));this.render()};
       const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up)};
       document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
     });
-    document.getElementById('rhdrs').addEventListener('click',e=>{
-      const hr=e.target.closest('[data-hr]');
-      if(hr){const r=+hr.dataset.hr;this.sel={r1:r,c1:0,r2:r,c2:COLS-1};this.row=r;this.render()}
-    });
+    document.getElementById('rhdrs').addEventListener('click',e=>{const hr=e.target.closest('[data-hr]');if(hr){const r=+hr.dataset.hr;this.sel={r1:r,c1:0,r2:r,c2:COLS-1};this.row=r;this.render()}});
     document.getElementById('fhandle').addEventListener('pointerdown',e=>{
-      e.preventDefault();
-      const{r1,c1}=this.sel;const sv=this.cells[this.ref(r1,c1)]?.value;if(sv===undefined)return;
+      e.preventDefault();const{r1,c1}=this.sel;const sv=this.cells[this.ref(r1,c1)]?.value;if(sv===undefined)return;
       const sY=e.clientY;
-      const mv=ev=>{const dy=ev.clientY-sY;const er=Math.max(r1,r1+Math.round(dy/24));
-        for(let r=r1+1;r<=er;r++){if(!this.cells[this.ref(r,c1)])this.cells[this.ref(r,c1)]={};const n=parseFloat(sv);this.cells[this.ref(r,c1)].value=isNaN(n)?sv:String(n+(r-r1))}
-        this.sel.r2=er;this.render()};
+      const mv=ev=>{const dy=ev.clientY-sY;const er=Math.max(r1,r1+Math.round(dy/DEF_ROW_H));for(let r=r1+1;r<=er;r++){if(!this.cells[this.ref(r,c1)])this.cells[this.ref(r,c1)]={};const n=parseFloat(sv);this.cells[this.ref(r,c1)].value=isNaN(n)?sv:String(n+(r-r1))}this.sel.r2=er;this.render()};
       const up=()=>{this.recalc();this.render();document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up)};
       document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
     });
@@ -1773,7 +1540,7 @@ const G={
     scr.addEventListener('scroll',()=>{
       if(!stk){stk=true;requestAnimationFrame(()=>{
         const s=document.getElementById('gscroll');
-        if(Math.abs(s.scrollLeft-this.sL)>20||Math.abs(s.scrollTop-this.sT)>20){this.sL=s.scrollLeft;this.sT=s.scrollTop;this.render()}
+        if(Math.abs(s.scrollLeft-this.sL)>10||Math.abs(s.scrollTop-this.sT)>10){this.sL=s.scrollLeft;this.sT=s.scrollTop;this.render()}
         stk=false;
       })}
     },{passive:true});
@@ -1781,32 +1548,21 @@ const G={
 
   _showCtxAt(x,y){
     const m=document.getElementById('cmenu');
-    m.style.cssText=`display:block;left:${Math.min(x,window.innerWidth-190)}px;top:${Math.min(y,window.innerHeight-260)}px`;
+    m.style.cssText=`display:block;left:${Math.min(x,window.innerWidth-190)}px;top:${Math.min(y,window.innerHeight-280)}px`;
     const close=ev=>{if(!m.contains(ev.target)){m.style.display='none';document.removeEventListener('pointerdown',close)}};
     setTimeout(()=>document.addEventListener('pointerdown',close),20);
   },
 
   // ── SHEET TABS ─────────────────────────────────────────────
-  renderTabs(){
-    document.getElementById('stablist').innerHTML=this.sheets.map((s,i)=>
-      `<div class="stab${i===this.si?' active':''}" onclick="G.goSheet(${i})" ondblclick="G.rnSheet(${i})">${s.name}</div>`
-    ).join('');
-  },
-  goSheet(i){
-    if(this.editing)this.closeEditor(true);
-    this._errDismissed=false;this.si=i;this.moveTo(0,0);this.render();this.renderTabs();this.renderCharts();
-  },
-  addSheet(){this.sheets.push({name:'Sheet'+(this.sheets.length+1),cells:{},cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24),charts:[]});this.goSheet(this.sheets.length-1)},
+  renderTabs(){document.getElementById('stablist').innerHTML=this.sheets.map((s,i)=>`<div class="stab${i===this.si?' active':''}" onclick="G.goSheet(${i})" ondblclick="G.rnSheet(${i})">${s.name}</div>`).join('')},
+  goSheet(i){if(this.editing)this.closeEditor(true);this._errDismissed=false;this.si=i;this.moveTo(0,0);this.render();this.renderTabs();this.renderCharts()},
+  addSheet(){this.sheets.push({name:'Sheet'+(this.sheets.length+1),cells:{},cw:[],rh:[],charts:[]});this.goSheet(this.sheets.length-1)},
   rnSheet(i){const n=prompt('Sheet name:',this.sheets[i].name);if(n){this.sheets[i].name=n;this.renderTabs()}},
 
   // ── FILE OPS ───────────────────────────────────────────────
-  newFile(){if(!confirm('New spreadsheet? Unsaved changes will be lost.'))return;this.sheets=[{name:'Sheet1',cells:{},cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24),charts:[]}];this.si=0;this.undoStack=[];this.redoStack=[];document.getElementById('docname').textContent='Untitled';this.moveTo(0,0);this.renderTabs();this.renderCharts();this.toast('New spreadsheet','ok')},
+  newFile(){if(!confirm('New spreadsheet? Unsaved changes will be lost.'))return;this.sheets=[{name:'Sheet1',cells:{},cw:[],rh:[],charts:[]}];this.si=0;this.undoStack=[];this.redoStack=[];document.getElementById('docname').textContent='Untitled';this.moveTo(0,0);this.renderTabs();this.renderCharts();this.toast('New spreadsheet','ok')},
   openFile(){document.getElementById('filein').click()},
-  scanImage(){
-    const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    if(isMobile){const choice=confirm('OK = Camera\nCancel = Gallery');document.getElementById(choice?'imgcam':'imgin').click()}
-    else document.getElementById('imgin').click();
-  },
+  scanImage(){const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);if(isMobile){const choice=confirm('OK = Camera\nCancel = Gallery');document.getElementById(choice?'imgcam':'imgin').click()}else document.getElementById('imgin').click()},
   async loadImage(e){
     const file=e.target.files&&e.target.files[0];if(!file){return}e.target.value='';
     if(!/^image\//.test(file.type)){this.toast('Not an image file','err');return}
@@ -1817,12 +1573,9 @@ const G={
       try{
         const r=await fetch(`${API}/api/ocr/image`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:ev.target.result})});
         if(!r.ok){this.toast(`OCR failed (${r.status}). Backend offline?`,'err');return}
-        const d=await r.json();
-        if(!d.success||!Array.isArray(d.rows)||!d.rows.length){this.toast(d.error||'No table detected in image','err');return}
-        this.pushUndo();const cells={};
-        d.rows.forEach((row,r)=>row.forEach((v,c)=>{const s=String(v??'').trim();if(s!=='')cells[this.ref(r,c)]={value:s}}));
-        this.sheets[this.si].cells=cells;this.recalc();this.render();
-        this.toast(`Imported ${d.rows.length}×${(d.rows[0]||[]).length} from image ✓`,'ok');
+        const d=await r.json();if(!d.success||!Array.isArray(d.rows)||!d.rows.length){this.toast(d.error||'No table detected in image','err');return}
+        this.pushUndo();const cells={};d.rows.forEach((row,r)=>row.forEach((v,c)=>{const s=String(v??'').trim();if(s!=='')cells[this.ref(r,c)]={value:s}}));
+        this.sheets[this.si].cells=cells;this.recalc();this.render();this.toast(`Imported ${d.rows.length}×${(d.rows[0]||[]).length} from image ✓`,'ok');
       }catch(err){this.toast('Image import failed: '+(err.message||err),'err')}
     };rd.readAsDataURL(file);
   },
@@ -1831,18 +1584,16 @@ const G={
   saveXL(){
     const wb=XLSX.utils.book_new();
     for(const sh of this.sheets){
-      const ws={};let mr=0,mc=0;
-      try{this.recalc&&this.recalc()}catch(_){}
+      const ws={};let mr=0,mc=0;try{this.recalc&&this.recalc()}catch(_){}
       for(const ref of Object.keys(sh.cells)){const m=ref.match(/^([A-Z]+)(\d+)$/);if(m){mr=Math.max(mr,+m[2]);mc=Math.max(mc,this.c2n(m[1])+1)}}
       for(const[ref,cell]of Object.entries(sh.cells)){
-        if(!cell||typeof cell!=='object')continue;
-        const raw=cell.value==null?'':String(cell.value);
+        if(!cell||typeof cell!=='object')continue;const raw=cell.value==null?'':String(cell.value);
         if(raw.startsWith('=')){const cached=cell.computed!==undefined?cell.computed:'';const cn=parseFloat(cached);const isNum=cached!==''&&cached!==null&&!isNaN(cn)&&isFinite(cn);ws[ref]={f:raw.slice(1),t:isNum?'n':'s',v:isNum?cn:String(cached)};continue}
         const n=parseFloat(raw);const isNum=raw!==''&&!isNaN(n)&&isFinite(n)&&/^-?\d*\.?\d+(e[-+]?\d+)?$/i.test(raw.trim());
         ws[ref]={v:isNum?n:raw,t:isNum?'n':'s'};
       }
       ws['!ref']=mr>0?`A1:${this.n2c(Math.max(0,mc-1))}${mr}`:'A1';
-      ws['!cols']=(sh.cw||[]).slice(0,mc).map(w=>({wch:Math.max(8,(w||100)/7)}));
+      ws['!cols']=(sh.cw||[]).slice(0,mc).map(w=>({wch:Math.max(8,(w||DEF_COL_W)/7)}));
       XLSX.utils.book_append_sheet(wb,ws,(sh.name||'Sheet').slice(0,31));
     }
     XLSX.writeFile(wb,(document.getElementById('docname').textContent||'Spreadsheet')+'.xlsx',{bookType:'xlsx',cellStyles:true});
@@ -1862,7 +1613,7 @@ const G={
             const addr=XLSX.utils.encode_cell({r,c});const xc=ws[addr];if(!xc)continue;
             cells[this.ref(r,c)]={value:xc.f?'='+xc.f:String(xc.v??'')};
           }
-          return{name,cells,cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24),charts:[]};
+          return{name,cells,cw:[],rh:[],charts:[]};
         });
         this.si=0;document.getElementById('docname').textContent=file.name.replace(/\.xlsx$/i,'');
         this.moveTo(0,0);this.renderTabs();this.recalc();this.render();this.renderCharts();this.toast('Opened','ok');
@@ -1874,7 +1625,7 @@ const G={
           for(const ch of line){if(ch==='"'){inQ=!inQ}else if(ch===','&&!inQ){cols.push(cur.trim());cur=''}else cur+=ch}
           cols.push(cur.trim());cols.forEach((v,c)=>{if(v)cells[this.ref(r,c)]={value:v}});
         });
-        this.sheets=[{name:file.name,cells,cw:Array(COLS).fill(100),rh:Array(ROWS).fill(24),charts:[]}];
+        this.sheets=[{name:file.name,cells,cw:[],rh:[],charts:[]}];
         this.si=0;document.getElementById('docname').textContent=file.name;
         this.moveTo(0,0);this.renderTabs();this.recalc();this.render();this.renderCharts();this.toast('Imported CSV','ok');
       };rd.readAsText(file);
@@ -1888,34 +1639,25 @@ const G={
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=(document.getElementById('docname').textContent||'export')+'.csv';a.click();this.toast('CSV exported','ok');
   },
 
-  // ── AI ────────────────────────────────────────────────────
+  // ── AI ─────────────────────────────────────────────────────
   async aiRun(){
     const cmd=document.getElementById('aiin').value.trim();if(!cmd)return;
-    const btn=document.getElementById('airun'),st=document.getElementById('aist');
-    const orb=document.getElementById('aiorb');
+    const btn=document.getElementById('airun'),st=document.getElementById('aist'),orb=document.getElementById('aiorb');
     btn.disabled=true;st.textContent='Thinking…';orb.classList.add('spin');
     const sample={};let errCells=[];
-    for(const[k,v]of Object.entries(this.cells)){
-      sample[k]=v?.value??v;
-      if(String(v?.computed??v?.value??'').startsWith('#'))errCells.push(k);
-    }
+    for(const[k,v]of Object.entries(this.cells)){sample[k]=v?.value??v;if(String(v?.computed??v?.value??'').startsWith('#'))errCells.push(k)}
     const ctx={command:cmd,sheet_data:sample,active_cell:this.ref(this.row,this.col),active_sheet_name:this.sh.name,selection:`${this.ref(this.sel.r1,this.sel.c1)}:${this.ref(this.sel.r2,this.sel.c2)}`,error_cells:errCells.slice(0,10),total_sheets:this.sheets.length};
     try{
       const r=await fetch(`${API}/api/ai/command`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ctx)});
       if(!r.ok)throw new Error('API '+r.status);
       const d=await r.json();
-      if(d.success){
-        this.execOps(d.operations||[]);this._ailog.unshift({cmd,msg:d.message,ts:new Date().toLocaleTimeString()});
-        if(this._ailog.length>20)this._ailog.pop();
-        this.recalc();this.render();this.toast(d.message||'Done ✓','ok');
-        document.getElementById('aiin').value='';st.textContent='✓';
-      }else{this.toast(d.message||'AI could not complete that','warn');st.textContent='✗'}
+      if(d.success){this.execOps(d.operations||[]);this._ailog.unshift({cmd,msg:d.message,ts:new Date().toLocaleTimeString()});if(this._ailog.length>20)this._ailog.pop();this.recalc();this.render();this.toast(d.message||'Done ✓','ok');document.getElementById('aiin').value='';st.textContent='✓'}
+      else{this.toast(d.message||'AI could not complete that','warn');st.textContent='✗'}
     }catch(err){this.toast('Orbit AI: '+err.message,'err');st.textContent='✗'}
     btn.disabled=false;orb.classList.remove('spin');setTimeout(()=>st.textContent='',3000);
   },
 
   execOps(ops){for(const op of ops){try{this._op(op)}catch(e){console.warn('Op failed:',op.type,e)}}},
-
   _op(op){
     switch(op.type){
       case'set_cell':{const p=this.pRef(op.ref||op.cell||'A1');if(p){if(!this.cells[this.ref(p.r,p.c)])this.cells[this.ref(p.r,p.c)]={};this.cells[this.ref(p.r,p.c)].value=String(op.value??'');}}break;
@@ -1938,16 +1680,7 @@ const G={
       case'find_replace':{for(const[,cell]of Object.entries(this.cells))if(cell?.value?.includes?.(op.find||''))cell.value=cell.value.replaceAll(op.find,'replace' in op?op.replace:'')}break;
       case'remove_duplicates':{this.col=this.c2n((op.col||'A').toUpperCase());this.dedupe();}break;
       case'auto_fix_errors':{this.autoFixErrors();}break;
-      // NEW: insert chart op from AI
-      case'insert_chart':{
-        const rangeStr=(op.range||'A1:D7').toUpperCase();
-        const title=op.title||'Chart';
-        const type=op.chart_type||'bar';
-        if(!this.sh.charts)this.sh.charts=[];
-        const scr=document.getElementById('gscroll');
-        this.sh.charts.push({id:'chart_'+Date.now(),type,title,rangeStr,top:scr.scrollTop+80,left:scr.scrollLeft+80,width:520,height:340});
-        this.renderCharts();
-      }break;
+      case'insert_chart':{const rangeStr=(op.range||'A1:D7').toUpperCase();const title=op.title||'Chart';const type=op.chart_type||'bar';if(!this.sh.charts)this.sh.charts=[];const scr=document.getElementById('gscroll');this.sh.charts.push({id:'chart_'+Date.now(),type,title,rangeStr,top:scr.scrollTop+80,left:scr.scrollLeft+80,width:520,height:340});this.renderCharts();}break;
     }
   },
 
@@ -1955,51 +1688,23 @@ const G={
   aiFormula(){const d=prompt('Describe what you want to calculate:');if(d){document.getElementById('aiin').value=`Write the best formula for: ${d} — put it in cell ${this.ref(this.row,this.col)}`;this.aiRun()}},
   aiSuggest(){document.getElementById('aiin').value='Look at this data and suggest 3 specific formulas or improvements I should add';this.aiRun()},
 
-  // ── MOBILE PILL ────────────────────────────────────────────
-  _updPill(){
-    const el=document.getElementById('mpRef');if(!el)return;
-    el.textContent=this.ref(this.row,this.col);
-    const v=this.cellVal(this.ref(this.row,this.col));
-    document.getElementById('mpVal').textContent=v?('= '+v.slice(0,24)):'';
-  },
-
   // ── AI CHAT ────────────────────────────────────────────────
   _chat:{open:false,history:[],busy:false},
-  openChat(){
-    this._chat.open=true;
-    document.getElementById('chatPanel').classList.add('open');
-    document.getElementById('chatBackdrop').classList.add('open');
-    if(this._chat.history.length===0)this._chatGreet();
-    setTimeout(()=>document.getElementById('chatTxt')?.focus(),300);
-  },
+  openChat(){this._chat.open=true;document.getElementById('chatPanel').classList.add('open');document.getElementById('chatBackdrop').classList.add('open');if(this._chat.history.length===0)this._chatGreet();setTimeout(()=>document.getElementById('chatTxt')?.focus(),300)},
   closeChat(){this._chat.open=false;document.getElementById('chatPanel').classList.remove('open');document.getElementById('chatBackdrop').classList.remove('open')},
-  _chatGreet(){
-    this._chatPush('bot',"👋 Hi! I'm Orbit AI. I can analyse your sheet, write formulas, fix errors, insert charts, and edit cells for you. What would you like to do?");
-    this._chatSugg(['Summarise this sheet','Insert a bar chart','Find outliers in my data','Fix all formula errors']);
-  },
-  _chatPush(role,text,opsCount){
-    const body=document.getElementById('chatBody');
-    const d=document.createElement('div');d.className='cmsg '+role;d.textContent=text;
-    if(opsCount>0){const tag=document.createElement('div');tag.className='ops-tag';tag.textContent='✓ Applied '+opsCount+' change'+(opsCount!==1?'s':'')+' to your sheet';d.appendChild(document.createElement('br'));d.appendChild(tag)}
-    body.appendChild(d);body.scrollTop=body.scrollHeight;return d;
-  },
-  _chatSugg(arr){
-    const w=document.getElementById('chatSugg');w.innerHTML='';
-    (arr||[]).slice(0,4).forEach(s=>{const b=document.createElement('button');b.className='csugg';b.textContent=s;b.onclick=()=>{document.getElementById('chatTxt').value=s;this.chatSend()};w.appendChild(b)});
-  },
+  _chatGreet(){this._chatPush('bot',"👋 Hi! I'm Orbit AI. I can analyse your sheet, write formulas, fix errors, insert charts, and edit cells for you. What would you like to do?");this._chatSugg(['Summarise this sheet','Insert a bar chart','Find outliers in my data','Fix all formula errors'])},
+  _chatPush(role,text,opsCount){const body=document.getElementById('chatBody');const d=document.createElement('div');d.className='cmsg '+role;d.textContent=text;if(opsCount>0){const tag=document.createElement('div');tag.className='ops-tag';tag.textContent='✓ Applied '+opsCount+' change'+(opsCount!==1?'s':'')+' to your sheet';d.appendChild(document.createElement('br'));d.appendChild(tag)}body.appendChild(d);body.scrollTop=body.scrollHeight;return d},
+  _chatSugg(arr){const w=document.getElementById('chatSugg');w.innerHTML='';(arr||[]).slice(0,4).forEach(s=>{const b=document.createElement('button');b.className='csugg';b.textContent=s;b.onclick=()=>{document.getElementById('chatTxt').value=s;this.chatSend()};w.appendChild(b)})},
   async chatSend(){
-    if(this._chat.busy)return;
-    const ta=document.getElementById('chatTxt');const text=(ta.value||'').trim();if(!text)return;
-    ta.value='';ta.style.height='auto';
-    this._chatPush('user',text);this._chat.history.push({role:'user',content:text});this._chatSugg([]);
+    if(this._chat.busy)return;const ta=document.getElementById('chatTxt');const text=(ta.value||'').trim();if(!text)return;
+    ta.value='';ta.style.height='auto';this._chatPush('user',text);this._chat.history.push({role:'user',content:text});this._chatSugg([]);
     const thinking=this._chatPush('bot','Thinking…');thinking.classList.add('thinking');
     this._chat.busy=true;document.getElementById('chatSend').disabled=true;
     const compactSheets=this.sheets.map(s=>{const cells={};let n=0;for(const[k,v]of Object.entries(s.cells)){if(n++>500)break;cells[k]={value:v.value,computed:v.computed}}return{name:s.name,cells}});
     try{
       const r=await fetch(`${API}/api/ai/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:this._chat.history.slice(-12),sheets:compactSheets,active_sheet:this.si,active_cell:this.ref(this.row,this.col),selection:`${this.ref(this.sel.r1,this.sel.c1)}:${this.ref(this.sel.r2,this.sel.c2)}`})});
-      const d=await r.json();thinking.remove();
-      const reply=d.reply||"I couldn't form a reply.";const ops=d.operations||[];
-      if(ops.length){this.pushUndo();this.execOps(ops);this.recalc();this.render();}
+      const d=await r.json();thinking.remove();const reply=d.reply||"I couldn't form a reply.";const ops=d.operations||[];
+      if(ops.length){this.pushUndo();this.execOps(ops);this.recalc();this.render()}
       this._chatPush('bot',reply,ops.length);this._chat.history.push({role:'assistant',content:reply});this._chatSugg(d.suggestions||[]);
     }catch(err){thinking.remove();this._chatPush('bot','⚠ '+(err.message||'Network error. Please try again.'))}
     finally{this._chat.busy=false;document.getElementById('chatSend').disabled=false}
@@ -2017,18 +1722,11 @@ const G={
   openAno(){document.getElementById('anoDrawer').classList.add('open')},
   closeAno(){document.getElementById('anoDrawer').classList.remove('open')},
   _renderAno(d){
-    const list=d.anomalies||[];
-    document.getElementById('anoSub').textContent=`· ${list.length} found · ${d.rows_analysed||0} rows scanned`;
+    const list=d.anomalies||[];document.getElementById('anoSub').textContent=`· ${list.length} found · ${d.rows_analysed||0} rows scanned`;
     const body=document.getElementById('anoBody');
     if(!list.length){body.innerHTML='<div class="ano-empty"><span class="ok">✓</span>Your data looks clean — no anomalies detected.</div>';return}
-    body.innerHTML=list.map((a,i)=>{
-      const cells=(a.cells||[]).slice(0,12).map(c=>`<span class="ano-cell" data-jump="${c}">${c}</span>`).join('');
-      const icon=a.type==='outlier'?'📈':a.type==='blank'?'⬜':a.type==='duplicate'?'🔁':a.type==='error'?'⚠':a.type==='sign'?'➖':'•';
-      return`<div class="ano-card" data-idx="${i}"><div class="ano-pip ${a.severity||'low'}"></div><div class="ano-body"><div class="ano-ttl">${icon} ${a.header||a.column} · ${a.type}</div><div class="ano-msg">${a.message||''}</div>${cells?`<div class="ano-cells">${cells}</div>`:''}</div></div>`;
-    }).join('');
-    body.querySelectorAll('[data-jump]').forEach(el=>{
-      el.addEventListener('click',e=>{e.stopPropagation();const ref=el.dataset.jump;const p=this.pRef(ref);if(p){this.moveTo(p.r,p.c);this.scrollIntoView(p.r,p.c);if(window.innerWidth<640)this.closeAno()}});
-    });
+    body.innerHTML=list.map((a,i)=>{const cells=(a.cells||[]).slice(0,12).map(c=>`<span class="ano-cell" data-jump="${c}">${c}</span>`).join('');const icon=a.type==='outlier'?'📈':a.type==='blank'?'⬜':a.type==='duplicate'?'🔁':a.type==='error'?'⚠':a.type==='sign'?'➖':'•';return`<div class="ano-card" data-idx="${i}"><div class="ano-pip ${a.severity||'low'}"></div><div class="ano-body"><div class="ano-ttl">${icon} ${a.header||a.column} · ${a.type}</div><div class="ano-msg">${a.message||''}</div>${cells?`<div class="ano-cells">${cells}</div>`:''}</div></div>`}).join('');
+    body.querySelectorAll('[data-jump]').forEach(el=>{el.addEventListener('click',e=>{e.stopPropagation();const ref=el.dataset.jump;const p=this.pRef(ref);if(p){this.moveTo(p.r,p.c);this.scrollIntoView(p.r,p.c);if(window.innerWidth<640)this.closeAno()}})});
   },
 
   // ── CONNECTIVITY ───────────────────────────────────────────
@@ -2038,10 +1736,7 @@ const G={
   },
 
   // ── TOAST ──────────────────────────────────────────────────
-  toast(msg,type='ok'){
-    const t=document.getElementById('toast');t.textContent=msg;t.className='show '+type;
-    clearTimeout(this._tt);this._tt=setTimeout(()=>t.className='',2800);
-  },
+  toast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='show '+type;clearTimeout(this._tt);this._tt=setTimeout(()=>t.className='',2800)},
 
   // ── DEMO DATA ──────────────────────────────────────────────
   loadDemo(){
@@ -2049,9 +1744,7 @@ const G={
     const H={bold:true,background:'#0d0e14',color:'#f0a500',fontFamily:'Plus Jakarta Sans',fontSize:'12px'};
     set('A1','Product',H);set('B1','Q1',H);set('C1','Q2',H);set('D1','Q3',H);set('E1','Total',H);set('F1','Growth%',H);
     [['Orbit AI','48200','61500','74000'],['Web Analyser','32100','38900','45200'],['Alaada DB','15800','24300','33500'],['Sheets Pro','9200','18700','26400'],['Analytics API','22400','29800','36100']].forEach(([p,q1,q2,q3],i)=>{
-      const r=i+2;
-      set(`A${r}`,p,{fontFamily:'Plus Jakarta Sans'});set(`B${r}`,q1);set(`C${r}`,q2);set(`D${r}`,q3);
-      set(`E${r}`,`=B${r}+C${r}+D${r}`);set(`F${r}`,`=ROUND((D${r}-B${r})/B${r}*100,1)`);
+      const r=i+2;set(`A${r}`,p,{fontFamily:'Plus Jakarta Sans'});set(`B${r}`,q1);set(`C${r}`,q2);set(`D${r}`,q3);set(`E${r}`,`=B${r}+C${r}+D${r}`);set(`F${r}`,`=ROUND((D${r}-B${r})/B${r}*100,1)`);
     });
     const T={bold:true,background:'#f0a500',color:'#1a0f00',fontFamily:'Plus Jakarta Sans'};
     set('A8','TOTAL',T);set('B8','=SUM(B2:B7)',T);set('C8','=SUM(C2:C7)',T);set('D8','=SUM(D2:D7)',T);set('E8','=SUM(E2:E7)',T);set('F8','=ROUND(AVERAGE(F2:F7),1)',T);
@@ -2060,12 +1753,11 @@ const G={
   }
 };
 
-/* ─── RIBBON TAB ──────────────────────────────────────────────── */
+/* ─── RIBBON TAB ─────────────────────────────────────────────── */
 function rTab(t){
   document.querySelectorAll('.rtab').forEach(el=>el.classList.toggle('active',el.dataset.t===t));
   document.querySelectorAll('#rbody .rg').forEach(g=>g.style.display=g.dataset.t===t?'':'none');
 }
-
 function nbKey(e){
   if(e.key==='Enter'){const p=G.pRef(e.target.value.toUpperCase().trim());if(p)G.moveTo(p.r,p.c);document.getElementById('gscroll').focus({preventScroll:true})}
   if(e.key==='Escape')document.getElementById('gscroll').focus({preventScroll:true});
@@ -2078,6 +1770,7 @@ const BSHEET_CONFIGS={
     {icon:'⎘',label:'Copy',action:'G.copy();hideBSheet()'},
     {icon:'📋',label:'Paste',action:'G.paste();hideBSheet()'},
     {icon:'📊',label:'Chart',action:'G.openChartModal();hideBSheet()'},
+    {icon:'🎯',label:'Go To Row',action:'G.openGoto();hideBSheet()'},
     {icon:'＋',label:'Ins. Row',action:'G.insRow();hideBSheet()'},
     {icon:'＋',label:'Ins. Col',action:'G.insCol();hideBSheet()'},
     {icon:'🔧',label:'Fix Error',action:'G.autoFixCellError();hideBSheet()'},
@@ -2098,6 +1791,8 @@ const BSHEET_CONFIGS={
     {icon:'＋↓',label:'Insert Row',action:'G.insRow();hideBSheet()'},
     {icon:'＋→',label:'Insert Col',action:'G.insCol();hideBSheet()'},
     {icon:'📊',label:'Chart',action:'G.openChartModal();hideBSheet()'},
+    {icon:'🎯',label:'Go To Row',action:'G.openGoto();hideBSheet()'},
+    {icon:'⤵',label:'Last Row',action:'G.gotoLastRow();hideBSheet()'},
     {icon:'−↓',label:'Delete Row',action:'G.delRow();hideBSheet()',red:true},
     {icon:'−→',label:'Delete Col',action:'G.delCol();hideBSheet()',red:true},
     {icon:'↩',label:'Undo',action:'G.undo();hideBSheet()'},
@@ -2110,6 +1805,7 @@ const BSHEET_CONFIGS={
   more:[
     {icon:'🎤',label:'Voice',action:'G.toggleVoice();hideBSheet()'},
     {icon:'📊',label:'Chart',action:'G.openChartModal();hideBSheet()'},
+    {icon:'🎯',label:'Go To Row',action:'G.openGoto();hideBSheet()'},
     {icon:'📊',label:'Analyze',action:'G.aiAnalyze();hideBSheet()'},
     {icon:'🔮',label:'Formula',action:'G.aiFormula();hideBSheet()'},
     {icon:'💡',label:'Suggest',action:'G.aiSuggest();hideBSheet()'},
@@ -2120,18 +1816,10 @@ const BSHEET_CONFIGS={
     {icon:'🔄',label:'Fill Series',action:'G.fillSeries();hideBSheet()'},
   ],
 };
-
-function showMobSheet(type){
-  const bs=document.getElementById('bsheet');
-  const list=document.getElementById('bslist');
-  const items=BSHEET_CONFIGS[type]||BSHEET_CONFIGS.cell;
-  list.innerHTML=items.map(it=>`<button class="bsi${it.red?' red':''}" onclick="${it.action}"><span class="bsi-icon">${it.icon}</span>${it.label}</button>`).join('');
-  bs.style.display='flex';
-}
-
+function showMobSheet(type){const bs=document.getElementById('bsheet');const list=document.getElementById('bslist');const items=BSHEET_CONFIGS[type]||BSHEET_CONFIGS.cell;list.innerHTML=items.map(it=>`<button class="bsi${it.red?' red':''}" onclick="${it.action}"><span class="bsi-icon">${it.icon}</span>${it.label}</button>`).join('');bs.style.display='flex'}
 function hideBSheet(){document.getElementById('bsheet').style.display='none'}
 
-/* ─── EXPORT MODAL ────────────────────────────────────────────── */
+/* ─── EXPORT MODAL ───────────────────────────────────────────── */
 const EXFMTS=[
   {f:'xlsx',ic:'📊',n:'Excel (.xlsx)',d:'All sheets + formatting + formulas',xl:true},
   {f:'csv', ic:'📄',n:'CSV (.csv)',   d:'Active sheet, plain text'},
@@ -2143,28 +1831,17 @@ const EXFMTS=[
   {f:'tally',ic:'🧾',n:'Tally Prime XML',d:'Smart import — masters & vouchers'},
   {f:'md',  ic:'📋',n:'Markdown',     d:'GitHub pipe table'},
 ];
-
-function showEx(){
-  document.getElementById('exsn').textContent=G.sh.name;
-  document.getElementById('exgrid').innerHTML=EXFMTS.map(f=>`<button class="ecrd${f.xl?' xl':''}" onclick="doEx('${f.f}')"><span class="eic">${f.ic}</span><div><div class="en">${f.n}</div><div class="ed">${f.d}</div></div></button>`).join('');
-  document.getElementById('exov').style.display='flex';
-}
+function showEx(){document.getElementById('exsn').textContent=G.sh.name;document.getElementById('exgrid').innerHTML=EXFMTS.map(f=>`<button class="ecrd${f.xl?' xl':''}" onclick="doEx('${f.f}')"><span class="eic">${f.ic}</span><div><div class="en">${f.n}</div><div class="ed">${f.d}</div></div></button>`).join('');document.getElementById('exov').style.display='flex'}
 function hideEx(){document.getElementById('exov').style.display='none'}
-
 async function doEx(fmt){
-  hideEx();
-  if(fmt==='xlsx'){G.saveXL();return}
-  if(fmt==='csv'){G.exportCSV();return}
+  hideEx();if(fmt==='xlsx'){G.saveXL();return}if(fmt==='csv'){G.exportCSV();return}
   G.toast('Preparing export…','inf');
   const payload={sheets:G.sheets.map(s=>({name:s.name,cells:s.cells,cw:s.cw,rh:s.rh})),active_sheet:G.si,format:fmt};
   try{
     const r=await fetch(`${API}/api/export`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!r.ok)throw new Error('Export failed '+r.status);
-    const blob=await r.blob();
-    const exts={sql:'sql',html:'html',docx:'docx',xml:'xml',json:'json',md:'md',tally:'xml'};
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download=(document.getElementById('docname').textContent||'export')+'.'+exts[fmt];
-    a.click();G.toast('Exported .'+exts[fmt]+' ✓','ok');
+    const blob=await r.blob();const exts={sql:'sql',html:'html',docx:'docx',xml:'xml',json:'json',md:'md',tally:'xml'};
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(document.getElementById('docname').textContent||'export')+'.'+exts[fmt];a.click();G.toast('Exported .'+exts[fmt]+' ✓','ok');
   }catch(e){G.toast('Error: '+e.message,'err')}
 }
 
