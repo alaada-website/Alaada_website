@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blog — Alaada | AI Insights, Product Updates & More</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="icon" type="image/jpeg" href="images/alaada-logo.jpg"/>
+  <meta name="description" content="The Alaada blog — product updates, AI insights, how-to guides, and behind-the-scenes from building India's AI business ecosystem."/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+  <style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#f5f4ef;--bg2:#eceae3;--white:#ffffff;
+    --ink:#121110;--ink2:#46443f;--ink3:#97948d;
+    --border:rgba(0,0,0,0.07);--borderM:rgba(0,0,0,0.13);
+    --blue:#1a5fff;--blue2:#e6edff;--blue3:rgba(26,95,255,0.1);
+    --teal:#00957a;--teal2:#dcf5ef;--teal3:rgba(0,149,122,0.1);
+    --gold:#d4930a;--gold2:#fdf3d9;--gold3:rgba(212,147,10,0.1);
+    --r-sm:8px;--r-md:14px;--r-lg:20px;--r-xl:28px;
+    --sh-sm:0 1px 3px rgba(0,0,0,0.05),0 4px 14px rgba(0,0,0,0.06);
+    --sh-md:0 2px 6px rgba(0,0,0,0.05),0 10px 36px rgba(0,0,0,0.09);
+    --sh-lg:0 4px 12px rgba(0,0,0,0.05),0 24px 64px rgba(0,0,0,0.12);
+  }
+  html{scroll-behavior:smooth;}
+  body{font-family:'Figtree',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;line-height:1.65;-webkit-font-smoothing:antialiased;}
+
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:300;height:60px;background:rgba(245,244,239,0.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px;}
+  .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:'Syne',sans-serif;font-weight:800;font-size:1.18rem;color:var(--ink);letter-spacing:-0.4px;cursor:pointer;}
+  .nav-logo-icon{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.8rem;flex-shrink:0;}
+  .nav-logo img{width:28px;height:28px;border-radius:7px;object-fit:cover;flex-shrink:0;}
+  .nav-links{display:flex;align-items:center;gap:4px;list-style:none;}
+  .nav-links a,.nav-links button{font-size:.875rem;font-weight:500;color:var(--ink2);text-decoration:none;padding:6px 13px;border-radius:var(--r-sm);transition:background .15s,color .15s;cursor:pointer;background:none;border:none;font-family:'Figtree',sans-serif;}
+  .nav-links a:hover,.nav-links button:hover,.nav-links a.active{background:var(--bg2);color:var(--ink);}
+  .nav-cta{background:var(--blue)!important;color:#fff!important;font-weight:600!important;box-shadow:0 2px 10px rgba(26,95,255,.28)!important;}
+  .nav-cta:hover{background:#1450d6!important;}
+  @media(max-width:640px){nav{padding:0 18px;}.nav-links{display:none;}}
+
+  /* HERO */
+  .blog-hero{padding:120px 80px 64px;position:relative;overflow:hidden;max-width:1200px;margin:0 auto;}
+  .hero-dots{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(circle,rgba(0,0,0,.08) 1px,transparent 1px);background-size:30px 30px;mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,black 30%,transparent 80%);}
+  .hero-blob{position:absolute;width:500px;height:400px;background:radial-gradient(circle,rgba(26,95,255,.07),transparent 70%);top:-80px;right:-100px;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;}
+  .blog-hero-inner{position:relative;z-index:2;max-width:680px;}
+  .page-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink2);background:var(--white);border:1px solid var(--borderM);padding:5px 14px;border-radius:100px;margin-bottom:26px;box-shadow:var(--sh-sm);}
+  .page-eyebrow-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+  .blog-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.4rem,4vw,3.6rem);font-weight:800;line-height:1.06;letter-spacing:-2px;color:var(--ink);margin-bottom:16px;}
+  .accent{background:linear-gradient(110deg,var(--blue) 0%,#4d8bff 50%,var(--teal) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .blog-hero-sub{font-size:1rem;color:var(--ink2);line-height:1.8;max-width:520px;}
+  @media(max-width:760px){.blog-hero{padding:100px 24px 48px;}}
+
+  /* FILTER */
+  .filter-bar{padding:0 80px;max-width:1200px;margin:0 auto;}
+  .filter-inner{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0;border-bottom:1px solid var(--border);}
+  .filter-label{font-size:.72rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-right:6px;}
+  .filter-btn{font-size:.76rem;font-weight:600;padding:5px 13px;border-radius:100px;border:1.5px solid var(--borderM);background:var(--white);color:var(--ink2);cursor:pointer;transition:all .15s;font-family:'Figtree',sans-serif;}
+  .filter-btn:hover{border-color:rgba(0,0,0,.22);color:var(--ink);}
+  .filter-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+  @media(max-width:760px){.filter-bar{padding:0 24px;}}
+
+  /* BLOG LAYOUT */
+  .blog-layout{max-width:1200px;margin:0 auto;padding:52px 80px 80px;display:grid;grid-template-columns:1fr 300px;gap:48px;align-items:start;}
+  @media(max-width:960px){.blog-layout{grid-template-columns:1fr;padding:48px 24px 72px;}}
+
+  /* FEATURED */
+  .featured-post{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--sh-lg);margin-bottom:32px;cursor:pointer;display:block;transition:transform .22s,box-shadow .22s;}
+  .featured-post:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(0,0,0,.13);}
+  .featured-banner{height:200px;background:linear-gradient(135deg,var(--blue) 0%,#4d8bff 50%,var(--teal) 100%);position:relative;display:flex;align-items:flex-end;padding:24px 30px;}
+  .featured-banner-emoji{position:absolute;top:24px;right:28px;font-size:3rem;opacity:.35;}
+  .featured-badge{display:inline-flex;align-items:center;gap:6px;font-size:.62rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.18);padding:4px 11px;border-radius:100px;backdrop-filter:blur(6px);}
+  .featured-post-body{padding:28px 30px 30px;}
+  .post-meta{display:flex;align-items:center;gap:14px;margin-bottom:10px;flex-wrap:wrap;}
+  .post-tag{font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:100px;}
+  .tag-product{background:var(--blue2);color:var(--blue);}
+  .tag-insight{background:var(--teal2);color:var(--teal);}
+  .tag-guide{background:var(--gold2);color:var(--gold);}
+  .tag-story{background:var(--bg2);color:var(--ink3);}
+  .post-date,.post-read{font-size:.72rem;color:var(--ink3);}
+  .featured-title{font-family:'Syne',sans-serif;font-size:1.45rem;font-weight:800;letter-spacing:-.5px;color:var(--ink);line-height:1.25;margin-bottom:10px;}
+  .featured-excerpt{font-size:.9rem;color:var(--ink2);line-height:1.75;margin-bottom:20px;}
+  .post-footer{display:flex;align-items:center;justify-content:space-between;}
+  .post-author{display:flex;align-items:center;gap:9px;}
+  .author-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:.68rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .author-name{font-size:.78rem;font-weight:600;color:var(--ink2);}
+  .read-link{font-size:.78rem;font-weight:600;color:var(--blue);display:flex;align-items:center;gap:4px;}
+
+  /* POSTS GRID */
+  .posts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:32px;}
+  @media(max-width:600px){.posts-grid{grid-template-columns:1fr;}}
+  .post-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:24px;box-shadow:var(--sh-sm);cursor:pointer;display:flex;flex-direction:column;gap:12px;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;}
+  .post-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;}
+  .post-card.blue::before{background:var(--blue);}
+  .post-card.teal::before{background:var(--teal);}
+  .post-card.gold::before{background:var(--gold);}
+  .post-card.ink::before{background:var(--ink);}
+  .post-card:hover{transform:translateY(-4px);box-shadow:var(--sh-md);}
+  .post-card-emoji{font-size:1.4rem;}
+  .post-card-title{font-family:'Syne',sans-serif;font-size:.98rem;font-weight:800;letter-spacing:-.3px;color:var(--ink);line-height:1.35;flex:1;}
+  .post-card-excerpt{font-size:.8rem;color:var(--ink2);line-height:1.65;}
+  .post-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:4px;}
+
+  /* OLDER POSTS */
+  .older-posts-label{font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+  .older-posts-label span:last-child{flex:1;height:1px;background:var(--border);}
+  .older-posts-list{border:1px solid var(--borderM);border-radius:var(--r-lg);overflow:hidden;background:var(--white);}
+  .older-post-item{display:flex;align-items:center;gap:16px;padding:16px 20px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;}
+  .older-post-item:last-child{border-bottom:none;}
+  .older-post-item:hover{background:var(--bg);}
+  .older-post-emoji{font-size:1.1rem;flex-shrink:0;}
+  .older-post-title{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:2px;}
+  .older-post-meta{font-size:.74rem;color:var(--ink3);}
+
+  /* SIDEBAR */
+  .sidebar{display:flex;flex-direction:column;gap:20px;position:sticky;top:80px;}
+  .sidebar-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:24px;box-shadow:var(--sh-sm);}
+  .sidebar-title{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:800;color:var(--ink);margin-bottom:16px;letter-spacing:-.2px;}
+  .newsletter-form{display:flex;flex-direction:column;gap:10px;}
+  .newsletter-input{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;font-family:'Figtree',sans-serif;font-size:.84rem;color:var(--ink);outline:none;transition:border-color .18s;width:100%;}
+  .newsletter-input:focus{border-color:var(--blue);background:var(--white);}
+  .newsletter-input::placeholder{color:var(--ink3);}
+  .newsletter-btn{background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);padding:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;transition:background .15s;}
+  .newsletter-btn:hover{background:#1450d6;}
+  .newsletter-note{font-size:.68rem;color:var(--ink3);line-height:1.5;}
+  .popular-list{display:flex;flex-direction:column;gap:4px;}
+  .popular-item{display:flex;gap:12px;align-items:flex-start;padding:10px;border-radius:var(--r-md);transition:background .15s;cursor:pointer;}
+  .popular-item:hover{background:var(--bg);}
+  .popular-num{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--borderM);flex-shrink:0;line-height:1.2;}
+  .popular-title{font-size:.8rem;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:3px;}
+  .popular-meta{font-size:.68rem;color:var(--ink3);}
+  .tags-cloud{display:flex;flex-wrap:wrap;gap:7px;}
+  .tag-cloud-item{font-size:.69rem;font-weight:600;padding:4px 11px;border-radius:100px;background:var(--bg2);color:var(--ink3);cursor:pointer;transition:background .15s,color .15s;}
+  .tag-cloud-item:hover{background:var(--blue2);color:var(--blue);}
+  .about-sidebar-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+  .about-sidebar-name{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink);margin-top:10px;}
+  .about-sidebar-bio{font-size:.78rem;color:var(--ink2);line-height:1.65;margin-top:6px;}
+  .about-sidebar-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .as-link{font-size:.7rem;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--bg2);color:var(--ink3);text-decoration:none;transition:background .15s,color .15s;}
+  .as-link:hover{background:var(--blue2);color:var(--blue);}
+
+  /* POST VIEW */
+  .post-view{max-width:1200px;margin:0 auto;padding:90px 80px 80px;}
+  .post-view-inner{max-width:720px;margin:0 auto;}
+  .back-btn{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;color:var(--ink2);padding:7px 14px;border-radius:var(--r-sm);border:1.5px solid var(--borderM);background:var(--white);margin-bottom:32px;cursor:pointer;transition:all .15s;font-family:'Figtree',sans-serif;}
+  .back-btn:hover{border-color:rgba(0,0,0,.22);color:var(--ink);}
+  .post-view-banner{height:180px;background:linear-gradient(135deg,var(--blue) 0%,#4d8bff 50%,var(--teal) 100%);border-radius:var(--r-xl);margin-bottom:32px;display:flex;align-items:center;justify-content:center;font-size:4rem;}
+  .post-view-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,3vw,2.4rem);font-weight:800;letter-spacing:-1px;color:var(--ink);line-height:1.15;margin:16px 0 20px;}
+  .post-view-meta{display:flex;align-items:center;gap:14px;margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .post-view-content{font-size:1rem;color:var(--ink2);line-height:1.85;}
+  .post-view-content p{margin-bottom:1.4em;}
+  .post-view-content h2{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;color:var(--ink);margin:2em 0 .8em;letter-spacing:-.3px;}
+  .post-view-content h3{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:var(--ink);margin:1.5em 0 .6em;}
+  .related-section{margin-top:56px;padding-top:40px;border-top:1px solid var(--border);}
+  .related-label{font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;}
+  .related-card{display:flex;gap:14px;align-items:flex-start;padding:16px;background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-lg);cursor:pointer;transition:box-shadow .18s,transform .18s;margin-bottom:12px;}
+  .related-card:hover{box-shadow:var(--sh-md);transform:translateY(-2px);}
+  .related-card-emoji{font-size:1.5rem;flex-shrink:0;}
+  .related-card-title{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink);margin-bottom:4px;}
+  .related-card-meta{font-size:.76rem;color:var(--ink3);}
+  @media(max-width:760px){.post-view{padding:80px 24px 60px;}}
+
+  /* ADMIN LOGIN */
+  .admin-login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;}
+  .admin-login-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:40px;max-width:380px;width:100%;box-shadow:var(--sh-lg);}
+  .admin-login-title{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--ink);margin-bottom:6px;}
+  .admin-login-sub{font-size:.84rem;color:var(--ink3);margin-bottom:24px;line-height:1.6;}
+  .admin-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-family:'Figtree',sans-serif;font-size:.9rem;color:var(--ink);outline:none;transition:border-color .18s;margin-bottom:12px;}
+  .admin-input:focus{border-color:var(--blue);background:var(--white);}
+  .admin-btn-primary{width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);padding:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;transition:background .15s;}
+  .admin-btn-primary:hover{background:#1450d6;}
+  .error-msg{color:#dc2626;font-size:.8rem;margin-top:8px;}
+
+  /* ADMIN PANEL */
+  .admin-panel{max-width:1140px;margin:0 auto;padding:80px 40px 80px;}
+  .admin-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;gap:16px;}
+  .admin-title{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--ink);}
+  .admin-stats{font-size:.82rem;color:var(--ink3);margin-top:4px;}
+  .admin-logout{font-size:.8rem;font-weight:600;color:var(--ink3);padding:7px 14px;border-radius:var(--r-sm);border:1.5px solid var(--borderM);background:var(--white);cursor:pointer;transition:all .15s;font-family:'Figtree',sans-serif;white-space:nowrap;}
+  .admin-logout:hover{color:var(--ink);}
+  .admin-grid{display:grid;grid-template-columns:1fr 400px;gap:32px;align-items:start;}
+  @media(max-width:960px){.admin-grid{grid-template-columns:1fr;}.admin-panel{padding:80px 24px 60px;}}
+  .admin-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .admin-section-label{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--ink2);}
+  .btn-new{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;padding:7px 14px;border-radius:var(--r-sm);background:var(--blue);color:#fff;border:none;cursor:pointer;transition:background .15s;font-family:'Syne',sans-serif;}
+  .btn-new:hover{background:#1450d6;}
+  .admin-posts-list{display:flex;flex-direction:column;gap:10px;}
+  .admin-post-item{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-lg);padding:16px 18px;display:flex;align-items:flex-start;gap:12px;box-shadow:var(--sh-sm);}
+  .admin-post-item.is-featured{border-color:var(--blue);background:var(--blue3);}
+  .admin-post-emoji{font-size:1.3rem;flex-shrink:0;margin-top:2px;}
+  .admin-post-info{flex:1;min-width:0;}
+  .admin-post-title{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .admin-post-meta{font-size:.72rem;color:var(--ink3);margin-bottom:10px;}
+  .admin-post-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .action-btn{font-size:.7rem;font-weight:600;padding:4px 10px;border-radius:var(--r-sm);border:1.5px solid var(--borderM);background:var(--white);color:var(--ink2);cursor:pointer;transition:all .15s;font-family:'Figtree',sans-serif;}
+  .action-btn:hover{background:var(--bg2);color:var(--ink);}
+  .action-btn.danger{border-color:#fecaca;color:#dc2626;}
+  .action-btn.danger:hover{background:#fef2f2;}
+  .action-btn.accent{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .action-btn.accent:hover{background:#1450d6;}
+  .action-btn.star{border-color:var(--gold3);color:var(--gold);}
+  .action-btn.star:hover{background:var(--gold2);}
+  .featured-pill{display:inline-flex;align-items:center;gap:3px;font-size:.58rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;background:var(--blue2);color:var(--blue);padding:2px 7px;border-radius:100px;margin-left:5px;vertical-align:middle;}
+  .admin-form-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:28px;box-shadow:var(--sh-md);position:sticky;top:80px;}
+  .admin-form-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--ink);margin-bottom:20px;}
+  .form-field{margin-bottom:14px;}
+  .form-label{display:block;font-size:.74rem;font-weight:600;color:var(--ink2);margin-bottom:5px;}
+  .form-input,.form-textarea,.form-select{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;font-family:'Figtree',sans-serif;font-size:.86rem;color:var(--ink);outline:none;transition:border-color .18s;}
+  .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--blue);background:var(--white);}
+  .form-textarea{resize:vertical;min-height:120px;line-height:1.6;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .form-checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .form-checkbox{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;}
+  .form-checkbox-label{font-size:.82rem;font-weight:600;color:var(--ink2);cursor:pointer;}
+  .save-btn{width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);padding:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;transition:background .15s;margin-top:4px;}
+  .save-btn:hover{background:#1450d6;}
+  .cancel-btn{width:100%;background:var(--bg2);color:var(--ink2);border:1.5px solid var(--borderM);border-radius:var(--r-sm);padding:10px;font-family:'Syne',sans-serif;font-weight:600;font-size:.86rem;cursor:pointer;transition:all .15s;margin-top:8px;}
+  .cancel-btn:hover{color:var(--ink);}
+  .form-idle{text-align:center;padding:28px 16px;color:var(--ink3);}
+  .form-idle-icon{font-size:2rem;margin-bottom:10px;}
+  .form-idle-title{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2);margin-bottom:6px;}
+  .form-idle-text{font-size:.8rem;line-height:1.6;}
+  @media(max-width:600px){.form-row{grid-template-columns:1fr;}}
+
+  /* NEWSLETTER BAND */
+  .newsletter-band{background:var(--ink);padding:72px 80px;}
+  .newsletter-band-inner{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;}
+  @media(max-width:820px){.newsletter-band-inner{grid-template-columns:1fr;gap:24px;}.newsletter-band{padding:56px 24px;}}
+  .nb-eyebrow{font-size:.68rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:12px;}
+  .nb-title{font-family:'Syne',sans-serif;font-size:clamp(1.5rem,3vw,2rem);font-weight:800;letter-spacing:-1px;color:#fff;line-height:1.2;margin-bottom:10px;}
+  .nb-sub{font-size:.9rem;color:rgba(255,255,255,.5);line-height:1.7;}
+  .nb-form{display:flex;gap:10px;flex-wrap:wrap;}
+  .nb-input{flex:1;min-width:220px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);border-radius:var(--r-sm);padding:12px 16px;font-family:'Figtree',sans-serif;font-size:.88rem;color:#fff;outline:none;transition:border-color .18s;}
+  .nb-input:focus{border-color:rgba(255,255,255,.35);}
+  .nb-input::placeholder{color:rgba(255,255,255,.3);}
+  .nb-btn{background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);padding:12px 22px;font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;transition:background .15s,transform .15s;white-space:nowrap;}
+  .nb-btn:hover{background:#1450d6;transform:translateY(-1px);}
+  .nb-note{font-size:.7rem;color:rgba(255,255,255,.25);margin-top:8px;}
+
+  /* FOOTER */
+  footer{background:#0d0c0b;color:rgba(255,255,255,.6);padding:52px 40px 36px;}
+  .footer-inner{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:48px;margin-bottom:36px;}
+  @media(max-width:600px){.footer-inner{grid-template-columns:1fr;gap:24px;}footer{padding:40px 24px 28px;}}
+  .footer-brand{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-.4px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .footer-brand-icon{width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;color:#fff;font-size:.65rem;font-weight:800;}
+  .footer-sub{font-size:.82rem;color:rgba(255,255,255,.35);margin-bottom:10px;}
+  .footer-email a{font-size:.82rem;color:rgba(255,255,255,.5);text-decoration:none;transition:color .15s;}
+  .footer-email a:hover{color:#fff;}
+  .footer-nav{display:flex;flex-direction:column;gap:10px;align-items:flex-end;}
+  .footer-socials{display:flex;gap:18px;flex-wrap:wrap;justify-content:flex-end;}
+  .footer-socials a{font-size:.82rem;color:rgba(255,255,255,.45);text-decoration:none;font-weight:500;transition:color .15s;}
+  .footer-socials a:hover{color:#fff;}
+  .footer-bottom{max-width:1060px;margin:0 auto;padding-top:22px;border-top:1px solid rgba(255,255,255,.07);font-size:.72rem;color:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .admin-link{font-size:.7rem;color:rgba(255,255,255,.18);background:none;border:none;cursor:pointer;font-family:'Figtree',sans-serif;transition:color .2s;text-decoration:none;}
+  .admin-link:hover{color:rgba(255,255,255,.5);}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:11px 18px;border-radius:var(--r-md);font-size:.84rem;font-weight:500;box-shadow:var(--sh-lg);z-index:1000;opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none;}
+  .toast.show{opacity:1;transform:none;}
+
+  /* LOADING */
+  .loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+  .loading-dots{display:flex;gap:6px;}
+  .ld{width:8px;height:8px;border-radius:50%;background:var(--blue);animation:ldBounce .8s infinite alternate;}
+  .ld:nth-child(2){animation-delay:.15s;background:var(--teal);}
+  .ld:nth-child(3){animation-delay:.3s;background:var(--gold);}
+  @keyframes ldBounce{from{transform:translateY(0);}to{transform:translateY(-10px);}}
+
+  /* EMPTY STATE */
+  .empty-state{text-align:center;padding:60px 24px;color:var(--ink3);}
+  .empty-state h3{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--ink2);margin-bottom:8px;}
+  .empty-state p{font-size:.86rem;line-height:1.7;}
+
+  /* VIEWS HIDDEN BY DEFAULT */
+  #view-list,#view-post,#view-admin-login,#view-admin{display:none;}
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="loading-screen">
+    <div class="loading-dots"><span class="ld"></span><span class="ld"></span><span class="ld"></span></div>
+    <div style="font-family:'Syne',sans-serif;font-size:.82rem;font-weight:600;color:var(--ink3);">Loading Alaada Blog…</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     TEMPLATES (rendered by JS)
+     ============================================================ -->
+<script>
+/* ────────────────────────────────────────────────────────────────
+   CONSTANTS
+──────────────────────────────────────────────────────────────── */
+const ADMIN_PASSWORD = "alaada2026";
+
+const CAT = {
+  product: { label:'Product Update',    tag:'tag-product', col:'blue', readColor:'var(--blue)' },
+  insight: { label:'AI Insight',        tag:'tag-insight', col:'teal', readColor:'var(--teal)' },
+  guide:   { label:'How-to Guide',      tag:'tag-guide',   col:'gold', readColor:'var(--gold)' },
+  story:   { label:'Behind the Build',  tag:'tag-story',   col:'ink',  readColor:'var(--ink3)' }
+};
+
+const EMOJI_LIST = ['🚀','🧠','🔍','📊','🏗️','🔊','🇮🇳','🛠️','📁','🔗','💡','⚡','🎯','📈','🌟','✍️','🔐','📝','💬','🔧'];
+
+const DEFAULT_POSTS = [
+  {
+    id:'post-1', emoji:'🚀', title:'The Alaada Ecosystem: Merging Three Products Into One Platform',
+    excerpt:"Orbit AI, Web Analyser, and Alaada Sheets are growing up. Here's the roadmap for unifying them under a single dashboard, adding AI-powered accounting, and what the complete Indian AI business suite actually looks like.",
+    content:`Orbit AI, Web Analyser, and Alaada Sheets are growing up.
+
+When Alaada started, each product solved a specific problem: Orbit AI for intelligent business conversations, Web Analyser for SEO and performance audits, and Alaada Sheets for India-first spreadsheet workflows. But users kept asking the same question: "Can I use all of this in one place?"
+
+The answer is yes — and the unified Alaada dashboard is on the way.
+
+## What's Changing
+
+The new platform will bring all three tools under a single login, with shared context. Your Orbit AI assistant will be able to reference your Sheets data. Your Web Analyser reports will flow directly into your business documents. One dashboard. One account. One Alaada.
+
+## AI-Powered Accounting
+
+We're adding a fourth pillar: AI Accounting. Built for Indian GST workflows, Tally compatibility, and UPI reconciliation — accounting software that actually understands how Indian businesses operate. Not a western product retrofitted for India. Built India-first.
+
+## Timeline
+
+Q3 2026: Unified dashboard beta
+Q4 2026: AI Accounting launch
+Q1 2027: Full platform release
+
+Stay tuned. The best is yet to come.`,
+    category:'product', date:'May 2026', readTime:'6', featured:true, createdAt:'2026-05-01'
+  },
+  {
+    id:'post-2', emoji:'🧠', title:'Why "Deep Reasoning" Actually Matters — And What Most AI Tools Get Wrong',
+    excerpt:"Speed is not intelligence. Here's why Orbit's step-by-step reasoning approach consistently outperforms fast-answer models on complex decisions.",
+    content:`Speed is not intelligence.
+
+Most AI tools are optimised for one thing: giving you an answer fast. Type a question, get a response in under a second. It feels impressive. It also leads you astray.
+
+The problem: real business decisions are not simple lookups. They involve context, trade-offs, and consequence. A fast answer to a complex question is often a confidently wrong answer.
+
+## What Deep Reasoning Actually Is
+
+Deep reasoning means the AI doesn't just retrieve a probable answer — it works through the problem step by step. It considers what it knows, what it doesn't know, and what the implications of different answers are.
+
+Orbit AI does this by design. When you ask it a complex business question, it breaks the problem down before answering. You can see the reasoning. You can challenge it. You can build on it.
+
+## Why This Matters for Business
+
+For simple tasks — drafting an email, summarising a document — speed is fine. But for decisions that matter: pricing strategy, risk assessment, competitive analysis — you want an AI that thinks, not one that guesses quickly.
+
+## What We've Seen
+
+In our testing, Orbit's reasoning approach leads to measurably better outcomes on complex multi-step business problems. The answers are more complete, more actionable, and — critically — more honest about uncertainty.`,
+    category:'insight', date:'Apr 2026', readTime:'8', featured:false, createdAt:'2026-04-15'
+  },
+  {
+    id:'post-3', emoji:'🔍', title:'How to Run a Full SEO Audit in 60 Seconds with Web Analyser',
+    excerpt:"A step-by-step walkthrough of every metric the Web Analyser reports — what each score means, why it matters, and what to fix first.",
+    content:`Your website is your storefront. And if no one can find it, it doesn't matter how good it looks.
+
+That's what Web Analyser is built for: giving you a clear, honest picture of your site's SEO health in under a minute.
+
+## Step 1: Enter Your URL
+
+Navigate to the Web Analyser and paste your website URL. No account needed for a basic audit.
+
+## Step 2: Read the Performance Score
+
+The performance score (0–100) measures how fast your site loads for real users. Under 50? You're losing traffic. 50–70 is average. 70+ is where you want to be.
+
+## Step 3: Check the SEO Score
+
+This measures your meta tags, headings, keyword structure, and crawlability. Low scores here mean search engines can't understand your content — even if it's excellent.
+
+## Step 4: Accessibility & Best Practices
+
+These scores affect your Google ranking more than most people realise. Poor accessibility hurts both users and SEO.
+
+## What to Fix First
+
+Always fix performance first. A fast site with mediocre SEO beats a slow site with perfect meta tags. Then work on your title tags and meta descriptions — they're free, easy, and high impact.`,
+    category:'guide', date:'Apr 2026', readTime:'5', featured:false, createdAt:'2026-04-02'
+  },
+  {
+    id:'post-4', emoji:'📊', title:'Export to Tally XML from Alaada Sheets — A Complete Walkthrough',
+    excerpt:"Indian businesses run on Tally. Here's exactly how to format, map, and export your spreadsheet data into Tally-compatible XML — in one click.",
+    content:`Indian businesses run on Tally. If you've ever tried to get data out of a spreadsheet and into Tally, you know the pain: manual entry, format mismatches, hours of reconciliation. Alaada Sheets fixes this.
+
+## Step 1: Format Your Columns
+
+Your sheet needs these columns in this order: Date (DD-MM-YYYY format), Voucher Type (Sales, Purchase, Receipt, Payment), Party Name, Amount (positive for debit, negative for credit), Narration (optional).
+
+## Step 2: Map Your Ledgers
+
+Alaada Sheets includes a built-in ledger mapper. Match your column values to your Tally ledger names. You only need to do this once — it saves your mappings.
+
+## Step 3: Export
+
+Click File → Export → Tally XML. Choose your date range. Done.
+
+## Step 4: Import into Tally
+
+In Tally, go to Import → Vouchers and select your file. The data populates automatically.
+
+## Common Issues
+
+Date format errors are the most frequent problem. Make sure your dates are DD-MM-YYYY, not MM-DD-YYYY. Tally is strict about this. Questions? Drop them in our Discord.`,
+    category:'guide', date:'Mar 2026', readTime:'4', featured:false, createdAt:'2026-03-18'
+  },
+  {
+    id:'post-5', emoji:'🏗️', title:'Building a Browser-Based Spreadsheet Engine from Scratch — What I Learned',
+    excerpt:"Virtual scroll, formula parsing, multi-sheet state management — the honest story of building Alaada Sheets solo with no prior spreadsheet experience.",
+    content:`I had never built a spreadsheet before.
+
+That's not an exaggeration. When I started Alaada Sheets, my spreadsheet experience was "user of Google Sheets." I had no idea how virtual scroll worked, how formula parsing was implemented, or how multi-sheet state management was handled at scale.
+
+Twelve months later, Alaada Sheets handles thousands of cells, complex formulas, and Tally XML export. Here's what I learned.
+
+## Virtual Scroll Is Everything
+
+A spreadsheet with 10,000 rows cannot render 10,000 DOM elements. The browser will die. Virtual scroll means you only render the rows currently visible on screen — and replace them as the user scrolls. Getting this right took three complete rewrites.
+
+## Formula Parsing Is a Compiler Problem
+
+SUM, IF, VLOOKUP — these aren't simple string operations. They're a mini programming language. I ended up writing a recursive descent parser for formulas. It's about 400 lines of code and handles nested functions, cell ranges, and relative/absolute references.
+
+## Multi-Sheet State
+
+Each sheet needs its own data, formula dependencies, and selection state. But sheets also need to reference each other (Sheet2!A1). Managing this cleanly required building a proper dependency graph.
+
+## The Honest Part
+
+Building this solo was genuinely hard. There were weeks where I wasn't sure it was possible. But every hard technical problem has a solution — it just takes longer than you expect.`,
+    category:'story', date:'Mar 2026', readTime:'11', featured:false, createdAt:'2026-03-05'
+  },
+  {
+    id:'post-6', emoji:'🔊', title:'Orbit AI Now Has Streaming Voice — How We Built It with OpenAI TTS',
+    excerpt:"A deep dive into Orbit's voice output system: why we chose streaming over batch TTS, how we handle WebSocket audio delivery, and what's next.",
+    content:`Voice changes everything.
+
+Reading an AI response is one experience. Hearing it — immediately, naturally, without waiting — is a fundamentally different one. That's why we built streaming voice into Orbit AI.
+
+## Why Streaming?
+
+The naive approach to TTS: generate the full response, convert to audio, then play it. The problem: for a 500-word response, you're waiting 3–5 seconds before hearing anything. Streaming TTS works differently. The audio starts playing while the response is still being generated. The first sentence plays within milliseconds.
+
+## The Technical Stack
+
+We use OpenAI's TTS API with streaming enabled. On the backend (FastAPI), we open a WebSocket connection to the client and stream audio chunks as they arrive from OpenAI. On the frontend, we use the Web Audio API to decode and play the chunks in real time.
+
+## The Hard Part
+
+Gapless playback is genuinely difficult. If there's any gap between audio chunks, you hear a click. We solved this by pre-buffering one chunk ahead at all times.
+
+## What's Next
+
+We're exploring real-time voice input — so you can speak to Orbit and have it respond vocally. Full voice interface. Coming soon.`,
+    category:'product', date:'Feb 2026', readTime:'7', featured:false, createdAt:'2026-02-20'
+  },
+  {
+    id:'post-7', emoji:'🇮🇳', title:'Why India Needs Its Own AI Tools — Not Just Localised Global Products',
+    excerpt:"GST, Tally, UPI, WhatsApp-first workflows — Indian businesses have genuinely different software needs. Here's why that matters for AI.",
+    content:`When people say AI tools need to be "localised for India," they usually mean: add an Indian language, change the currency symbol. That's not localisation. That's translation. And it misses the point entirely.
+
+## The Indian Business Stack Is Different
+
+Indian businesses don't use QuickBooks. They use Tally. They don't process payments via Stripe. They use UPI and Razorpay. GST has 5 rates and complex input tax credit rules that don't exist in most western markets. An AI tool that doesn't understand these isn't just "not localised" — it's actively misleading.
+
+## WhatsApp-First Workflows
+
+A significant portion of Indian business communication happens on WhatsApp. Customer orders, supplier invoices, team coordination — all on a platform that global enterprise software largely ignores. Alaada is building for this reality.
+
+## The Opportunity
+
+India has 60+ million MSMEs. Most of them are underserved by software. The AI wave is an opportunity to build tools that actually fit how Indian businesses work — not tools designed for Silicon Valley that are then sold here.
+
+## What We're Building
+
+Alaada is an Indian AI company building for Indian businesses. Not as an afterthought. As the entire premise. Every feature we ship is designed with the Indian business context first.`,
+    category:'insight', date:'Feb 2026', readTime:'6', featured:false, createdAt:'2026-02-08'
+  },
+  {
+    id:'post-8', emoji:'🛠️', title:'Publishing the alaada-orbit SDK to PyPI — the Full Story',
+    excerpt:"From local package to published SDK: the process, the mistakes, the versioning lessons, and why we built our own Python client instead of using the generic API.",
+    content:`Publishing a Python package to PyPI for the first time is both easier and harder than you expect. Easier: the tooling is good. Harder: the decisions before you write a single line of code.
+
+## Why a Dedicated SDK?
+
+We could have told developers "just use requests and hit our API endpoints." That works. But it's not a good developer experience. A dedicated SDK means: automatic authentication, typed responses, retries built in, and clear documentation. It means the first API call takes 2 minutes instead of 20.
+
+## The Build
+
+We used Poetry for dependency management and packaging. The package structure is straightforward: a client class, method wrappers for each endpoint, and a models module with Pydantic types for responses.
+
+## The PyPI Process
+
+Register on PyPI, set up your pyproject.toml, run poetry publish. Simple in theory. In practice: we had a naming conflict, a metadata validation error on first publish, and a versioning mistake that required yanking 0.1.0 and re-publishing.
+
+## What We'd Do Differently
+
+Choose your package name before you write any code. Check PyPI availability early. And write your CHANGELOG from day one.
+
+The alaada-orbit SDK is available on PyPI now. pip install alaada-orbit.`,
+    category:'story', date:'Jan 2026', readTime:'9', featured:false, createdAt:'2026-01-22'
+  },
+  {
+    id:'post-9', emoji:'📁', title:'How to Analyse Excel and Word Files in Orbit AI',
+    excerpt:"Upload a file, ask a question, get an answer. Here's exactly how Orbit's file analysis works — and what it can and can't do.",
+    content:`Orbit AI can read your Excel files and Word documents. This sounds simple. The implementation is not.
+
+## Uploading Files
+
+In the Orbit interface, click the attachment icon (or drag and drop). Supported formats: .xlsx, .xls, .csv, .docx, .doc, .pdf, .txt. The file is processed immediately. For Excel files, Orbit reads all sheets. For Word documents, it reads the full text including tables.
+
+## What You Can Ask
+
+Once a file is uploaded, ask questions naturally:
+
+"What's the total revenue in column D?"
+"Summarise the key points of this contract."
+"Which rows have a value above 50,000?"
+"Is there anything unusual in this financial statement?"
+
+## What Orbit Does Well
+
+Numeric analysis, summarisation, and extraction. If you need to find a pattern, extract a key figure, or get a plain-English summary of a complex document, Orbit handles this well.
+
+## Limitations
+
+Orbit can't directly edit your files. It analyses and responds — it doesn't write back. For editing, use Alaada Sheets for spreadsheets. Files are processed in your session and not stored beyond your conversation. We don't train on your data.`,
+    category:'guide', date:'Dec 2025', readTime:'4', featured:false, createdAt:'2025-12-14'
+  },
+  {
+    id:'post-10', emoji:'🔗', title:"Alaada Builder: The WordPress for AI Tools — What We're Planning",
+    excerpt:"A no-code platform for building custom AI-powered tools. Here's the concept, the use cases, and what the early version will look like.",
+    content:`What if you could build a custom AI tool for your business without writing any code? That's Alaada Builder. It's our most ambitious product yet — and it's in planning.
+
+## The Core Idea
+
+Think of it like WordPress, but for AI tools. You pick your components (chat interface, file upload, form inputs, output display), connect them to AI capabilities, and publish. The result: a custom AI tool, branded for your business, that does exactly what you need.
+
+## Use Cases We're Designing For
+
+A CA firm wants an AI tool that takes a client's bank statement and generates a categorised expense report. With Builder, they configure this workflow once. Their clients use it without needing Orbit.
+
+A recruitment agency wants an AI that screens CVs against a job description and gives scores. They build this in Builder. No developer needed.
+
+## What the Early Version Looks Like
+
+Version 1 will have: drag-and-drop component layout, pre-built AI actions (analyse file, answer question, generate document), custom branding, and shareable link. No database. No complex configuration.
+
+## Timeline
+
+Closed beta in Q4 2026. Join the Discord for early access.`,
+    category:'product', date:'Nov 2025', readTime:'5', featured:false, createdAt:'2025-11-28'
+  }
+];
+
+/* ────────────────────────────────────────────────────────────────
+   STATE
+──────────────────────────────────────────────────────────────── */
+let posts = [];
+let reads = {};
+let view = 'list';        // list | post | admin-login | admin
+let filter = 'all';
+let postId = null;
+let adminErr = '';
+let formErr = '';
+let editId = null;        // null=idle, 'new'=new post, postId=editing
+
+/* ────────────────────────────────────────────────────────────────
+   STORAGE
+──────────────────────────────────────────────────────────────── */
+async function loadData() {
+  try {
+    const r = await window.storage.get('blog:posts');
+    posts = r ? JSON.parse(r.value) : JSON.parse(JSON.stringify(DEFAULT_POSTS));
+    if (!r) await window.storage.set('blog:posts', JSON.stringify(posts));
+  } catch(e) {
+    posts = JSON.parse(JSON.stringify(DEFAULT_POSTS));
+    try { await window.storage.set('blog:posts', JSON.stringify(posts)); } catch(_){}
+  }
+  try {
+    const r = await window.storage.get('blog:reads');
+    reads = r ? JSON.parse(r.value) : {};
+  } catch(e) { reads = {}; }
+}
+
+async function sp() { // savePosts
+  try { await window.storage.set('blog:posts', JSON.stringify(posts)); } catch(_){}
+}
+async function sr() { // saveReads
+  try { await window.storage.set('blog:reads', JSON.stringify(reads)); } catch(_){}
+}
+
+/* ────────────────────────────────────────────────────────────────
+   UTILS
+──────────────────────────────────────────────────────────────── */
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function renderContent(text) {
+  return (text||'').split(/\n\n+/).map(para => {
+    const t = para.trim();
+    if (!t) return '';
+    if (t.startsWith('## ')) return `<h2>${esc(t.slice(3))}</h2>`;
+    if (t.startsWith('# '))  return `<h2>${esc(t.slice(2))}</h2>`;
+    return `<p>${esc(t).replace(/\n/g,'<br>')}</p>`;
+  }).join('');
+}
+
+function cat(c) { return CAT[c] || CAT.story; }
+
+function topPosts(n=4) {
+  return [...posts].sort((a,b)=>(reads[b.id]||0)-(reads[a.id]||0)).slice(0,n);
+}
+
+function featured() { return posts.find(p=>p.featured)||null; }
+
+function getFiltered() {
+  if (filter === 'all') {
+    const f = featured();
+    const rest = posts.filter(p=>!p.featured).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    return { featuredPost: f, rest };
+  }
+  const all = posts.filter(p=>p.category===filter).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  return { featuredPost: null, rest: all };
+}
+
+function genId() { return 'post-'+Date.now()+'-'+Math.random().toString(36).slice(2,6); }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function nowMonthYear() {
+  return new Date().toLocaleString('en-US',{month:'long',year:'numeric'});
+}
+
+function scrollTop() { window.scrollTo({top:0,behavior:'instant'}); }
+
+/* ────────────────────────────────────────────────────────────────
+   NAVIGATION
+──────────────────────────────────────────────────────────────── */
+function nav(v, pid=null) {
+  view = v; postId = pid;
+  if (v !== 'admin') editId = null;
+  if (v !== 'admin-login') adminErr = '';
+  formErr = '';
+  render();
+  scrollTop();
+}
+
+function openPost(id) {
+  reads[id] = (reads[id]||0) + 1;
+  sr();
+  nav('post', id);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RENDER: NAV
+──────────────────────────────────────────────────────────────── */
+function renderNav() {
+  return `<nav>
+    <div class="nav-logo" onclick="nav('list')">
+      <div class="nav-logo-icon">A</div>
+      Alaada
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="blog.html" class="active">Blog</a></li>
+      <li><a href="developers.html">Developers</a></li>
+      <li><a href="index.html#orbit-section" class="nav-cta">Try Orbit →</a></li>
+    </ul>
+  </nav>`;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RENDER: COMPONENTS
+──────────────────────────────────────────────────────────────── */
+function renderFeatured(post) {
+  if (!post) return '';
+  const c = cat(post.category);
+  return `<div class="featured-post" onclick="openPost('${esc(post.id)}')">
+    <div class="featured-banner">
+      <div class="featured-banner-emoji">${esc(post.emoji)}</div>
+      <div class="featured-badge">✦ Featured Post</div>
+    </div>
+    <div class="featured-post-body">
+      <div class="post-meta">
+        <span class="post-tag ${c.tag}">${esc(c.label)}</span>
+        <span class="post-date">${esc(post.date)}</span>
+        <span class="post-read">· ${esc(post.readTime)} min read</span>
+        ${reads[post.id]>0?`<span class="post-read">· ${reads[post.id]} view${reads[post.id]>1?'s':''}</span>`:''}
+      </div>
+      <h2 class="featured-title">${esc(post.title)}</h2>
+      <p class="featured-excerpt">${esc(post.excerpt)}</p>
+      <div class="post-footer">
+        <div class="post-author">
+          <div class="author-avatar">A</div>
+          <div class="author-name">Arzo Das</div>
+        </div>
+        <span class="read-link">Read more →</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+const CARD_COLORS = ['blue','teal','gold','ink'];
+
+function renderPostCard(post, idx) {
+  const col = CARD_COLORS[idx % 4];
+  const c = cat(post.category);
+  return `<div class="post-card ${col}" onclick="openPost('${esc(post.id)}')">
+    <div class="post-card-emoji">${esc(post.emoji)}</div>
+    <div class="post-meta" style="margin-bottom:0;">
+      <span class="post-tag ${c.tag}">${esc(c.label)}</span>
+      <span class="post-date" style="margin-left:auto;">${esc(post.date)}</span>
+    </div>
+    <div class="post-card-title">${esc(post.title)}</div>
+    <div class="post-card-excerpt">${esc(post.excerpt)}</div>
+    <div class="post-card-footer">
+      <span class="post-read">${esc(post.readTime)} min read${reads[post.id]>0?` · ${reads[post.id]} view${reads[post.id]>1?'s':''}`:''}  </span>
+      <span class="read-link" style="color:${c.readColor};">Read →</span>
+    </div>
+  </div>`;
+}
+
+function renderOlderPosts(list) {
+  const arrowColors = ['var(--blue)','var(--teal)','var(--gold)','var(--ink3)'];
+  return list.map((post, i) => {
+    const c = cat(post.category);
+    return `<div class="older-post-item" onclick="openPost('${esc(post.id)}')">
+      <span class="older-post-emoji">${esc(post.emoji)}</span>
+      <div style="flex:1;min-width:0;">
+        <div class="older-post-title">${esc(post.title)}</div>
+        <div class="older-post-meta">${esc(c.label)} · ${esc(post.date)} · ${esc(post.readTime)} min read</div>
+      </div>
+      <span style="font-size:.78rem;font-weight:600;color:${arrowColors[i%4]};flex-shrink:0;">→</span>
+    </div>`;
+  }).join('');
+}
+
+function renderSidebar() {
+  const top = topPosts(4);
+  const allTags = ['Orbit AI','Web Analyser','Alaada Sheets','FastAPI','OpenAI','India','Tally','SEO','Solo Build','AI Accounting','Python SDK','Voice AI','Builder'];
+
+  const topHTML = top.length ? top.map((p,i)=>{
+    const c = cat(p.category);
+    const v = reads[p.id]||0;
+    return `<div class="popular-item" onclick="openPost('${esc(p.id)}')">
+      <span class="popular-num">0${i+1}</span>
+      <div>
+        <div class="popular-title">${esc(p.title)}</div>
+        <div class="popular-meta">${esc(c.label)} · ${esc(p.readTime)} min${v>0?` · ${v} views`:''}</div>
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:var(--ink3);font-size:.8rem;padding:8px 0;">Start reading to see popular posts.</div>';
+
+  return `<aside class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-title">Stay in the loop ✦</div>
+      <p style="font-size:.8rem;color:var(--ink3);margin-bottom:14px;line-height:1.6;">New posts land roughly once a week. No spam. Unsubscribe any time.</p>
+      <div id="sb-nl-wrap">
+        <div class="newsletter-form">
+          <input class="newsletter-input" type="email" id="sb-email" placeholder="you@example.com"/>
+          <button class="newsletter-btn" onclick="handleNL()">Subscribe →</button>
+          <p class="newsletter-note">Free, forever. Pinky promise.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-title">Most read</div>
+      <div class="popular-list">${topHTML}</div>
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-title">Browse by topic</div>
+      <div class="tags-cloud">${allTags.map(t=>`<span class="tag-cloud-item">${esc(t)}</span>`).join('')}</div>
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-title">Written by</div>
+      <div class="about-sidebar-avatar">A</div>
+      <div class="about-sidebar-name">Arzo Das</div>
+      <div class="about-sidebar-bio">Founder & builder at Alaada. Writing about AI products, solo development, and building software from Kolkata, India.</div>
+      <div class="about-sidebar-links">
+        <a href="https://www.linkedin.com/in/arzo-das-782539391/" class="as-link" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://discord.gg/r4G7dynh" class="as-link" target="_blank" rel="noopener">Discord</a>
+        <a href="about.html" class="as-link">About Alaada</a>
+      </div>
+    </div>
+  </aside>`;
+}
+
+function renderNewsletterBand() {
+  return `<div class="newsletter-band">
+    <div class="newsletter-band-inner">
+      <div>
+        <div class="nb-eyebrow">Newsletter</div>
+        <h2 class="nb-title">Get new posts in your inbox.</h2>
+        <p class="nb-sub">Product launches, AI insights, and honest behind-the-scenes updates from building Alaada. No fluff, no spam.</p>
+      </div>
+      <div id="main-nl-wrap">
+        <div class="nb-form">
+          <input class="nb-input" type="email" id="main-email" placeholder="your@email.com"/>
+          <button class="nb-btn" onclick="handleMainNL()">Subscribe →</button>
+        </div>
+        <p class="nb-note">Join other builders. Unsubscribe any time.</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderFooter() {
+  return `<footer>
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand"><div class="footer-brand-icon">A</div> Alaada</div>
+        <p class="footer-sub">Where Perfection meets Possibility.</p>
+        <div class="footer-email"><a href="mailto:alaada@alaada.com">alaada@alaada.com</a></div>
+      </div>
+      <div class="footer-nav">
+        <div class="footer-socials">
+          <a href="https://discord.gg/r4G7dynh" target="_blank" rel="noopener noreferrer">Discord</a>
+          <a href="https://www.linkedin.com/company/alaada/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a href="https://www.facebook.com/profile.php?id=61583515497634" target="_blank" rel="noopener noreferrer">Facebook</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Alaada. All rights reserved. · Built in Kolkata, India.</span>
+      <button class="admin-link" onclick="nav('admin-login')" title="Admin panel">⚙ Admin</button>
+    </div>
+  </footer>`;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RENDER: LIST VIEW
+──────────────────────────────────────────────────────────────── */
+function renderList() {
+  const { featuredPost, rest } = getFiltered();
+  const mainCards = rest.slice(0,6);
+  const older = rest.slice(6);
+
+  const filterBtns = [
+    ['all','All Posts'],['product','Product Updates'],
+    ['insight','AI Insights'],['guide','How-to Guides'],['story','Behind the Build']
+  ].map(([v,l])=>`<button class="filter-btn${filter===v?' active':''}" onclick="setFilter('${v}')">${esc(l)}</button>`).join('');
+
+  const gridHTML = mainCards.length
+    ? `<div class="posts-grid">${mainCards.map((p,i)=>renderPostCard(p,i)).join('')}</div>`
+    : `<div class="empty-state"><h3>No posts in this category yet.</h3><p>Try a different filter or check back soon.</p></div>`;
+
+  const olderHTML = older.length ? `
+    <div style="margin-bottom:32px;">
+      <div class="older-posts-label"><span>Earlier Posts</span><span></span></div>
+      <div class="older-posts-list">${renderOlderPosts(older)}</div>
+    </div>` : '';
+
+  return `
+    <div style="background:var(--bg);">
+      <div class="blog-hero">
+        <div class="hero-dots" aria-hidden="true"></div>
+        <div class="hero-blob" aria-hidden="true"></div>
+        <div class="blog-hero-inner">
+          <div class="page-eyebrow"><span class="page-eyebrow-dot"></span>The Alaada Blog</div>
+          <h1>Thoughts on<br><span class="accent">AI & building.</span></h1>
+          <p class="blog-hero-sub">Product updates, deep dives, how-to guides, and honest reflections on building an AI ecosystem from scratch — in India.</p>
+        </div>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-inner">
+        <span class="filter-label">Filter</span>
+        ${filterBtns}
+      </div>
+    </div>
+    <div class="blog-layout">
+      <main>
+        ${renderFeatured(featuredPost)}
+        ${gridHTML}
+        ${olderHTML}
+      </main>
+      ${renderSidebar()}
+    </div>
+    ${renderNewsletterBand()}
+    ${renderFooter()}
+  `;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RENDER: POST VIEW
+──────────────────────────────────────────────────────────────── */
+function renderPost() {
+  const post = posts.find(p=>p.id===postId);
+  if (!post) return `<div style="padding:120px 80px;text-align:center;">
+    <p style="color:var(--ink3);">Post not found. <button onclick="nav('list')" style="color:var(--blue);background:none;border:none;cursor:pointer;font-size:inherit;font-family:inherit;">← Back to blog</button></p>
+  </div>`;
+
+  const c = cat(post.category);
+  const v = reads[post.id]||0;
+
+  const related = posts.filter(p=>p.id!==post.id && p.category===post.category).slice(0,2);
+  const relatedHTML = related.length ? `
+    <div class="related-section">
+      <div class="related-label">More in ${esc(c.label)}</div>
+      ${related.map(r=>`<div class="related-card" onclick="openPost('${esc(r.id)}')">
+        <div class="related-card-emoji">${esc(r.emoji)}</div>
+        <div>
+          <div class="related-card-title">${esc(r.title)}</div>
+          <div class="related-card-meta">${esc(r.date)} · ${esc(r.readTime)} min read</div>
+        </div>
+      </div>`).join('')}
+    </div>` : '';
+
+  return `
+    <div class="post-view">
+      <div class="post-view-inner">
+        <button class="back-btn" onclick="nav('list')">← Back to blog</button>
+        <div class="post-view-banner">${esc(post.emoji)}</div>
+        <div class="post-meta">
+          <span class="post-tag ${c.tag}">${esc(c.label)}</span>
+          <span class="post-date">${esc(post.date)}</span>
+          <span class="post-read">· ${esc(post.readTime)} min read</span>
+          ${v>1?`<span class="post-read">· ${v} views</span>`:''}
+        </div>
+        <h1 class="post-view-title">${esc(post.title)}</h1>
+        <div class="post-view-meta">
+          <div class="post-author">
+            <div class="author-avatar">A</div>
+            <div>
+              <div class="author-name">Arzo Das</div>
+              <div style="font-size:.68rem;color:var(--ink3);">Founder, Alaada</div>
+            </div>
+          </div>
+        </div>
+        <div class="post-view-content">${renderContent(post.content)}</div>
+        ${relatedHTML}
+      </div>
+    </div>
+    ${renderNewsletterBand()}
+    ${renderFooter()}
+  `;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RENDER: ADMIN LOGIN
+──────────────────────────────────────────────────────────────── */
+function renderAdminLogin() {
+  return `
+    <div class="admin-login-wrap">
+      <div class="admin-login-card">
+        <div style="font-size:1.8rem;margin-bottom:14px;">🔐</div>
+        <div class="admin-login-title">Blog Admin</div>
+        <div class="admin-login-sub">Enter your password to manage posts, track reads, and publish new content.</div>
+        <input class="admin-input" type="password" id="admin-pw" placeholder="Password"
+          onkeydown="if(event.key==='Enter')tryLogin()"/>
+        <button class="admin-btn-primary" onclick="tryLogin()">Sign in →</button>
+        ${adminErr?`<div class="error-msg">⚠ ${esc(adminErr)}</div>`:''}
+        <div style="text-align:center;margin-top:18px;">
+          <button onclick="nav('list')" style="font-size:.76rem;color:var(--ink3);background:none;border:none;cursor:pointer;font-family:'Figtree',sans-serif;">← Back to blog</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RENDER: ADMIN PANEL
+──────────────────────────────────────────────────────────────── */
+function renderAdminPanel() {
+  const sorted = [...posts].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  const totalViews = Object.values(reads).reduce((a,b)=>a+b,0);
+
+  const editing = editId && editId !== 'new' ? posts.find(p=>p.id===editId) : null;
+  const fp = editing || { title:'', excerpt:'', content:'', category:'product', emoji:'🚀', date:nowMonthYear(), readTime:'5', featured:false };
+
+  const catOpts = Object.entries(CAT).map(([k,v])=>`<option value="${k}"${fp.category===k?' selected':''}>${esc(v.label)}</option>`).join('');
+  const emojiOpts = EMOJI_LIST.map(e=>`<option value="${esc(e)}"${fp.emoji===e?' selected':''}>${e}</option>`).join('');
+
+  const showForm = editId === 'new' || editing;
+
+  const postsHTML = sorted.length ? sorted.map(p=>{
+    const c = cat(p.category);
+    const v = reads[p.id]||0;
+    return `<div class="admin-post-item${p.featured?' is-featured':''}">
+      <div class="admin-post-emoji">${esc(p.emoji)}</div>
+      <div class="admin-post-info">
+        <div class="admin-post-title">${esc(p.title)}${p.featured?'<span class="featured-pill">★ Featured</span>':''}</div>
+        <div class="admin-post-meta">${esc(c.label)} · ${esc(p.date)} · ${esc(p.readTime)} min · ${v} view${v!==1?'s':''}</div>
+        <div class="admin-post-actions">
+          <button class="action-btn" onclick="startEdit('${esc(p.id)}')">Edit</button>
+          <button class="action-btn${p.featured?'':' star'}" onclick="toggleFeatured('${esc(p.id)}')">${p.featured?'Unfeature':'★ Feature'}</button>
+          <button class="action-btn accent" onclick="openPost('${esc(p.id)}')">Preview</button>
+          <button class="action-btn danger" onclick="deletePost('${esc(p.id)}')">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<div style="text-align:center;padding:40px;color:var(--ink3);font-size:.88rem;">No posts yet. Create your first one!</div>';
+
+  const formHTML = showForm ? `
+    <div class="admin-form-title">${editId==='new'?'New Post':'Edit Post'}</div>
+    <div class="form-field">
+      <label class="form-label">Title *</label>
+      <input class="form-input" id="f-title" value="${esc(fp.title)}" placeholder="Post title…"/>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Excerpt <span style="font-weight:400;color:var(--ink3);">(shown on cards)</span></label>
+      <textarea class="form-textarea" id="f-excerpt" style="min-height:72px;" placeholder="Short description…">${esc(fp.excerpt)}</textarea>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Full Content *</label>
+      <textarea class="form-textarea" id="f-content" style="min-height:180px;" placeholder="Write your post here…&#10;&#10;Separate paragraphs with a blank line.&#10;Use ## Heading for headings.">${esc(fp.content)}</textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="f-category">${catOpts}</select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Emoji</label>
+        <select class="form-select" id="f-emoji">${emojiOpts}</select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="f-date" value="${esc(fp.date)}" placeholder="May 2026"/>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Read time (mins)</label>
+        <input class="form-input" type="number" id="f-readtime" min="1" value="${esc(fp.readTime)}"/>
+      </div>
+    </div>
+    <div class="form-checkbox-row">
+      <input type="checkbox" class="form-checkbox" id="f-featured" ${fp.featured?'checked':''}/>
+      <label class="form-checkbox-label" for="f-featured">Set as Featured Post</label>
+    </div>
+    ${formErr?`<div class="error-msg" style="margin-bottom:10px;">⚠ ${esc(formErr)}</div>`:''}
+    <button class="save-btn" onclick="savePost()">${editId==='new'?'Publish Post ✓':'Save Changes ✓'}</button>
+    <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+  ` : `<div class="form-idle">
+    <div class="form-idle-icon">✍️</div>
+    <div class="form-idle-title">Ready to write?</div>
+    <div class="form-idle-text">Click <strong>+ New Post</strong> to write something new, or hit <strong>Edit</strong> on any existing post to update it.</div>
+  </div>`;
+
+  return `
+    <div class="admin-panel">
+      <div class="admin-header">
+        <div>
+          <div class="admin-title">Blog Admin</div>
+          <div class="admin-stats">${posts.length} post${posts.length!==1?'s':''} · ${totalViews} total view${totalViews!==1?'s':''}</div>
+        </div>
+        <button class="admin-logout" onclick="logout()">Sign out</button>
+      </div>
+      <div class="admin-grid">
+        <div>
+          <div class="admin-section-header">
+            <div class="admin-section-label">All Posts</div>
+            <button class="btn-new" onclick="startNew()">+ New Post</button>
+          </div>
+          <div class="admin-posts-list">${postsHTML}</div>
+        </div>
+        <div class="admin-form-card">${formHTML}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   MAIN RENDER
+──────────────────────────────────────────────────────────────── */
+function render() {
+  const app = document.getElementById('app');
+  let content = '';
+  switch(view) {
+    case 'list':        content = renderList(); break;
+    case 'post':        content = renderPost(); break;
+    case 'admin-login': content = renderAdminLogin(); break;
+    case 'admin':       content = renderAdminPanel(); break;
+    default:            content = renderList();
+  }
+  app.innerHTML = renderNav() + content;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   ACTIONS
+──────────────────────────────────────────────────────────────── */
+function setFilter(f) { filter = f; render(); }
+
+function tryLogin() {
+  const pw = document.getElementById('admin-pw');
+  if (!pw) return;
+  if (pw.value === ADMIN_PASSWORD) {
+    editId = null; adminErr = '';
+    view = 'admin'; render(); scrollTop();
+  } else {
+    adminErr = 'Incorrect password.';
+    render();
+    setTimeout(()=>document.getElementById('admin-pw')?.focus(), 50);
+  }
+}
+
+function logout() { nav('list'); }
+
+function startNew() {
+  editId = 'new'; formErr = '';
+  render();
+  setTimeout(()=>document.getElementById('f-title')?.focus(), 80);
+}
+
+function startEdit(id) {
+  editId = id; formErr = '';
+  render();
+  setTimeout(()=>document.getElementById('f-title')?.focus(), 80);
+}
+
+function cancelEdit() { editId = null; formErr = ''; render(); }
+
+async function savePost() {
+  const g = id => document.getElementById(id);
+  const title    = g('f-title')?.value?.trim() || '';
+  const excerpt  = g('f-excerpt')?.value?.trim() || '';
+  const content  = g('f-content')?.value?.trim() || '';
+  const category = g('f-category')?.value || 'product';
+  const emoji    = g('f-emoji')?.value || '🚀';
+  const date     = g('f-date')?.value?.trim() || nowMonthYear();
+  const readTime = g('f-readtime')?.value?.trim() || '5';
+  const isFeatured = g('f-featured')?.checked || false;
+
+  if (!title)   { formErr = 'Title is required.';   render(); return; }
+  if (!content) { formErr = 'Content is required.'; render(); return; }
+  formErr = '';
+
+  if (isFeatured) posts.forEach(p=>p.featured=false);
+
+  if (editId === 'new') {
+    posts.unshift({ id:genId(), title, excerpt, content, category, emoji, date, readTime, featured:isFeatured, createdAt:new Date().toISOString().slice(0,10) });
+    toast('Post published! ✓');
+  } else {
+    const idx = posts.findIndex(p=>p.id===editId);
+    if (idx !== -1) posts[idx] = { ...posts[idx], title, excerpt, content, category, emoji, date, readTime, featured:isFeatured };
+    toast('Post updated! ✓');
+  }
+
+  editId = null;
+  await sp();
+  render();
+}
+
+async function deletePost(id) {
+  const p = posts.find(pp=>pp.id===id);
+  if (!p) return;
+  if (!confirm(`Delete "${p.title}"?\n\nThis cannot be undone.`)) return;
+  posts = posts.filter(pp=>pp.id!==id);
+  delete reads[id];
+  if (editId === id) editId = null;
+  await sp(); await sr();
+  toast('Post deleted.');
+  render();
+}
+
+async function toggleFeatured(id) {
+  const isNowFeatured = !posts.find(p=>p.id===id)?.featured;
+  posts.forEach(p=>p.featured = p.id===id ? isNowFeatured : false);
+  await sp();
+  toast(isNowFeatured ? '★ Set as featured post!' : 'Removed from featured.');
+  render();
+}
+
+function handleNL() {
+  const el = document.getElementById('sb-email');
+  if (!el||!el.value.includes('@')) return;
+  const wrap = document.getElementById('sb-nl-wrap');
+  if (wrap) wrap.innerHTML = '<div style="text-align:center;padding:12px 0;"><div style="font-size:1.4rem;margin-bottom:6px;">✓</div><div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:.88rem;color:var(--ink);">You\'re subscribed!</div><div style="font-size:.76rem;color:var(--ink3);margin-top:4px;">New posts will land in your inbox.</div></div>';
+}
+
+function handleMainNL() {
+  const el = document.getElementById('main-email');
+  if (!el||!el.value.includes('@')) return;
+  const wrap = document.getElementById('main-nl-wrap');
+  if (wrap) wrap.innerHTML = '<div style="padding:14px 0;"><span style="color:#4ade80;font-weight:700;font-size:.9rem;">✓ Subscribed! New posts will land in your inbox.</span></div>';
+}
+
+/* ────────────────────────────────────────────────────────────────
+   INIT
+──────────────────────────────────────────────────────────────── */
+async function init() {
+  await loadData();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
