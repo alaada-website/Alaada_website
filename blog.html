@@ -219,7 +219,27 @@
   .form-idle-icon{font-size:2rem;margin-bottom:10px;}
   .form-idle-title{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2);margin-bottom:6px;}
   .form-idle-text{font-size:.8rem;line-height:1.6;}
-  @media(max-width:600px){.form-row{grid-template-columns:1fr;}}
+
+  /* Saving spinner overlay on admin form */
+  .saving-overlay{position:absolute;inset:0;background:rgba(255,255,255,.8);border-radius:var(--r-xl);display:flex;align-items:center;justify-content:center;z-index:10;backdrop-filter:blur(4px);}
+  .saving-overlay-inner{text-align:center;}
+  .saving-dots{display:flex;gap:6px;justify-content:center;margin-bottom:10px;}
+  .sd{width:7px;height:7px;border-radius:50%;background:var(--blue);animation:ldBounce .8s infinite alternate;}
+  .sd:nth-child(2){animation-delay:.15s;background:var(--teal);}
+  .sd:nth-child(3){animation-delay:.3s;background:var(--gold);}
+  .saving-label{font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;color:var(--ink2);}
+
+  /* Backend status badge */
+  .api-badge{display:inline-flex;align-items:center;gap:5px;font-size:.66rem;font-weight:600;padding:3px 10px;border-radius:100px;border:1.5px solid var(--border);background:var(--white);}
+  .api-badge-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .api-badge.ok .api-badge-dot{background:#22c55e;}
+  .api-badge.err .api-badge-dot{background:#ef4444;}
+  .api-badge.pending .api-badge-dot{background:var(--gold);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+  /* Commit result */
+  .commit-result{font-size:.72rem;color:var(--teal);font-weight:600;margin-top:8px;display:flex;align-items:center;gap:6px;}
+  .commit-result a{color:inherit;}
 
   /* NEWSLETTER BAND */
   .newsletter-band{background:var(--ink);padding:72px 80px;}
@@ -269,9 +289,6 @@
   .empty-state{text-align:center;padding:60px 24px;color:var(--ink3);}
   .empty-state h3{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--ink2);margin-bottom:8px;}
   .empty-state p{font-size:.86rem;line-height:1.7;}
-
-  /* VIEWS HIDDEN BY DEFAULT */
-  #view-list,#view-post,#view-admin-login,#view-admin{display:none;}
   </style>
 </head>
 <body>
@@ -284,15 +301,23 @@
 </div>
 <div class="toast" id="toast"></div>
 
-<!-- ============================================================
-     TEMPLATES (rendered by JS)
-     ============================================================ -->
 <script>
-/* ────────────────────────────────────────────────────────────────
-   CONSTANTS
-──────────────────────────────────────────────────────────────── */
-const ADMIN_PASSWORD = "alaada2026";
+/* ═══════════════════════════════════════════════════════════════
+   ┌─────────────────────────────────────────────────────────────┐
+   │  CONFIGURATION  — edit these two lines before deploying     │
+   └─────────────────────────────────────────────────────────────┘
+   API_BASE      → your Render backend URL (no trailing slash)
+   PUBLIC_POSTS  → raw.githubusercontent.com URL for posts.json
+                   Visitors load posts from here (no auth needed)
+                   Format: https://raw.githubusercontent.com/
+                           <owner>/<repo>/<branch>/posts.json
+═══════════════════════════════════════════════════════════════ */
+const API_BASE     = "https://blog-z0in.onrender.com";   // 
+const PUBLIC_POSTS = "https://raw.githubusercontent.com/your-org/your-repo/main/posts.json"; // ← change me
 
+/* ────────────────────────────────────────────────────────────────
+   CONSTANTS  (unchanged)
+──────────────────────────────────────────────────────────────── */
 const CAT = {
   product: { label:'Product Update',    tag:'tag-product', col:'blue', readColor:'var(--blue)' },
   insight: { label:'AI Insight',        tag:'tag-insight', col:'teal', readColor:'var(--teal)' },
@@ -556,52 +581,154 @@ Closed beta in Q4 2026. Join the Discord for early access.`,
   }
 ];
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    STATE
-──────────────────────────────────────────────────────────────── */
-let posts = [];
-let reads = {};
-let view = 'list';        // list | post | admin-login | admin
-let filter = 'all';
-let postId = null;
-let adminErr = '';
-let formErr = '';
-let editId = null;        // null=idle, 'new'=new post, postId=editing
+════════════════════════════════════════════════════════════════ */
+let posts      = [];
+let reads      = {};           // tracked locally in localStorage (backend has no reads endpoint)
+let view       = 'list';
+let filter     = 'all';
+let postId     = null;
+let adminErr   = '';
+let formErr    = '';
+let editId     = null;
+let isSaving   = false;        // true while PUT /posts is in-flight
+let lastCommit = null;         // { sha, url, message } from last successful save
+let sessionToken = null;       // in-memory Bearer token — cleared on page refresh (matches backend)
+let apiStatus  = 'pending';    // 'pending' | 'ok' | 'err'
 
-/* ────────────────────────────────────────────────────────────────
-   STORAGE
-──────────────────────────────────────────────────────────────── */
-async function loadData() {
-  try {
-    const r = await window.storage.get('blog:posts');
-    posts = r ? JSON.parse(r.value) : JSON.parse(JSON.stringify(DEFAULT_POSTS));
-    if (!r) await window.storage.set('blog:posts', JSON.stringify(posts));
-  } catch(e) {
-    posts = JSON.parse(JSON.stringify(DEFAULT_POSTS));
-    try { await window.storage.set('blog:posts', JSON.stringify(posts)); } catch(_){}
+/* ════════════════════════════════════════════════════════════════
+   LOCAL STORAGE  (reads only — posts come from the API)
+════════════════════════════════════════════════════════════════ */
+function loadReads() {
+  try { reads = JSON.parse(localStorage.getItem('alaada:reads') || '{}'); }
+  catch(e) { reads = {}; }
+}
+
+function saveReads() {
+  try { localStorage.setItem('alaada:reads', JSON.stringify(reads)); } catch(_) {}
+}
+
+/* ════════════════════════════════════════════════════════════════
+   API HELPERS
+════════════════════════════════════════════════════════════════ */
+
+/**
+ * Generic fetch wrapper.
+ * Automatically attaches Authorization header when sessionToken is set.
+ * Returns parsed JSON on success, throws on HTTP errors.
+ */
+async function apiFetch(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (sessionToken) headers['Authorization'] = `Bearer ${sessionToken}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+
+  // For DELETE /auth, 200 with JSON body
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try { const j = await res.json(); detail = j.detail || detail; } catch(_) {}
+    throw new Error(detail);
+  }
+  // Some endpoints return empty body
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+/**
+ * Fetch posts for PUBLIC visitors from raw.githubusercontent.com.
+ * Falls back to DEFAULT_POSTS if the URL is not configured or the fetch fails.
+ */
+async function fetchPublicPosts() {
+  if (!PUBLIC_POSTS || PUBLIC_POSTS.includes('your-org')) {
+    // URL not configured — use built-in defaults
+    return JSON.parse(JSON.stringify(DEFAULT_POSTS));
   }
   try {
-    const r = await window.storage.get('blog:reads');
-    reads = r ? JSON.parse(r.value) : {};
-  } catch(e) { reads = {}; }
+    const res = await fetch(PUBLIC_POSTS);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch(e) {
+    console.warn('Could not load public posts, falling back to defaults:', e.message);
+    return JSON.parse(JSON.stringify(DEFAULT_POSTS));
+  }
 }
 
-async function sp() { // savePosts
-  try { await window.storage.set('blog:posts', JSON.stringify(posts)); } catch(_){}
-}
-async function sr() { // saveReads
-  try { await window.storage.set('blog:reads', JSON.stringify(reads)); } catch(_){}
+/**
+ * Fetch posts for ADMIN — uses the authenticated GET /posts endpoint.
+ */
+async function fetchAdminPosts() {
+  return await apiFetch('/posts');
 }
 
-/* ────────────────────────────────────────────────────────────────
+/**
+ * Ping the backend root to verify connectivity.
+ */
+async function pingBackend() {
+  try {
+    await fetch(`${API_BASE}/`, { method:'GET' });
+    apiStatus = 'ok';
+  } catch(_) {
+    apiStatus = 'err';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DATA INIT
+════════════════════════════════════════════════════════════════ */
+async function loadData() {
+  loadReads();
+  pingBackend(); // fire-and-forget — used for status badge only
+  posts = await fetchPublicPosts();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   AUTH  —  /auth POST & DELETE
+════════════════════════════════════════════════════════════════ */
+
+/**
+ * POST /auth  — exchange password for a Bearer token.
+ * Returns { token } on success, throws on failure.
+ */
+async function apiLogin(password) {
+  const data = await apiFetch('/auth', {
+    method: 'POST',
+    body: JSON.stringify({ password })
+  });
+  return data; // { token: "..." }
+}
+
+/**
+ * DELETE /auth  — invalidate the current session on the server.
+ */
+async function apiLogout() {
+  if (!sessionToken) return;
+  try { await apiFetch('/auth', { method: 'DELETE' }); } catch(_) {}
+  sessionToken = null;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SAVE POSTS  —  PUT /posts
+════════════════════════════════════════════════════════════════ */
+async function savePosts() {
+  if (!sessionToken) throw new Error('Not authenticated.');
+  const result = await apiFetch('/posts', {
+    method: 'PUT',
+    body: JSON.stringify({ posts })
+  });
+  // result = { success, committed, commit_sha, commit_url, message }
+  return result;
+}
+
+/* ════════════════════════════════════════════════════════════════
    UTILS
-──────────────────────────────────────────────────────────────── */
+════════════════════════════════════════════════════════════════ */
 function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function renderContent(text) {
-  return (text||'').split(/\n\n+/).map(para => {
+  return (text || '').split(/\n\n+/).map(para => {
     const t = para.trim();
     if (!t) return '';
     if (t.startsWith('## ')) return `<h2>${esc(t.slice(3))}</h2>`;
@@ -612,42 +739,42 @@ function renderContent(text) {
 
 function cat(c) { return CAT[c] || CAT.story; }
 
-function topPosts(n=4) {
-  return [...posts].sort((a,b)=>(reads[b.id]||0)-(reads[a.id]||0)).slice(0,n);
+function topPosts(n = 4) {
+  return [...posts].sort((a,b) => (reads[b.id]||0) - (reads[a.id]||0)).slice(0, n);
 }
 
-function featured() { return posts.find(p=>p.featured)||null; }
+function featured() { return posts.find(p => p.featured) || null; }
 
 function getFiltered() {
   if (filter === 'all') {
-    const f = featured();
-    const rest = posts.filter(p=>!p.featured).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    const f    = featured();
+    const rest = posts.filter(p => !p.featured).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
     return { featuredPost: f, rest };
   }
-  const all = posts.filter(p=>p.category===filter).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  const all = posts.filter(p => p.category === filter).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
   return { featuredPost: null, rest: all };
 }
 
-function genId() { return 'post-'+Date.now()+'-'+Math.random().toString(36).slice(2,6); }
+function genId() { return 'post-' + Date.now() + '-' + Math.random().toString(36).slice(2,6); }
 
 function toast(msg) {
   const t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2800);
+  setTimeout(() => t.classList.remove('show'), 2800);
 }
 
 function nowMonthYear() {
-  return new Date().toLocaleString('en-US',{month:'long',year:'numeric'});
+  return new Date().toLocaleString('en-US', { month:'long', year:'numeric' });
 }
 
-function scrollTop() { window.scrollTo({top:0,behavior:'instant'}); }
+function scrollTop() { window.scrollTo({ top:0, behavior:'instant' }); }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    NAVIGATION
-──────────────────────────────────────────────────────────────── */
-function nav(v, pid=null) {
+════════════════════════════════════════════════════════════════ */
+function nav(v, pid = null) {
   view = v; postId = pid;
   if (v !== 'admin') editId = null;
   if (v !== 'admin-login') adminErr = '';
@@ -657,14 +784,14 @@ function nav(v, pid=null) {
 }
 
 function openPost(id) {
-  reads[id] = (reads[id]||0) + 1;
-  sr();
+  reads[id] = (reads[id] || 0) + 1;
+  saveReads();
   nav('post', id);
 }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    RENDER: NAV
-──────────────────────────────────────────────────────────────── */
+════════════════════════════════════════════════════════════════ */
 function renderNav() {
   return `<nav>
     <div class="nav-logo" onclick="nav('list')">
@@ -681,9 +808,9 @@ function renderNav() {
   </nav>`;
 }
 
-/* ────────────────────────────────────────────────────────────────
-   RENDER: COMPONENTS
-──────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════
+   RENDER: COMPONENTS  (unchanged from original)
+════════════════════════════════════════════════════════════════ */
 function renderFeatured(post) {
   if (!post) return '';
   const c = cat(post.category);
@@ -697,7 +824,7 @@ function renderFeatured(post) {
         <span class="post-tag ${c.tag}">${esc(c.label)}</span>
         <span class="post-date">${esc(post.date)}</span>
         <span class="post-read">· ${esc(post.readTime)} min read</span>
-        ${reads[post.id]>0?`<span class="post-read">· ${reads[post.id]} view${reads[post.id]>1?'s':''}</span>`:''}
+        ${reads[post.id] > 0 ? `<span class="post-read">· ${reads[post.id]} view${reads[post.id] > 1 ? 's' : ''}</span>` : ''}
       </div>
       <h2 class="featured-title">${esc(post.title)}</h2>
       <p class="featured-excerpt">${esc(post.excerpt)}</p>
@@ -716,7 +843,7 @@ const CARD_COLORS = ['blue','teal','gold','ink'];
 
 function renderPostCard(post, idx) {
   const col = CARD_COLORS[idx % 4];
-  const c = cat(post.category);
+  const c   = cat(post.category);
   return `<div class="post-card ${col}" onclick="openPost('${esc(post.id)}')">
     <div class="post-card-emoji">${esc(post.emoji)}</div>
     <div class="post-meta" style="margin-bottom:0;">
@@ -726,7 +853,7 @@ function renderPostCard(post, idx) {
     <div class="post-card-title">${esc(post.title)}</div>
     <div class="post-card-excerpt">${esc(post.excerpt)}</div>
     <div class="post-card-footer">
-      <span class="post-read">${esc(post.readTime)} min read${reads[post.id]>0?` · ${reads[post.id]} view${reads[post.id]>1?'s':''}`:''}  </span>
+      <span class="post-read">${esc(post.readTime)} min read${reads[post.id] > 0 ? ` · ${reads[post.id]} view${reads[post.id] > 1 ? 's' : ''}` : ''}  </span>
       <span class="read-link" style="color:${c.readColor};">Read →</span>
     </div>
   </div>`;
@@ -748,17 +875,17 @@ function renderOlderPosts(list) {
 }
 
 function renderSidebar() {
-  const top = topPosts(4);
+  const top  = topPosts(4);
   const allTags = ['Orbit AI','Web Analyser','Alaada Sheets','FastAPI','OpenAI','India','Tally','SEO','Solo Build','AI Accounting','Python SDK','Voice AI','Builder'];
 
-  const topHTML = top.length ? top.map((p,i)=>{
+  const topHTML = top.length ? top.map((p, i) => {
     const c = cat(p.category);
-    const v = reads[p.id]||0;
+    const v = reads[p.id] || 0;
     return `<div class="popular-item" onclick="openPost('${esc(p.id)}')">
       <span class="popular-num">0${i+1}</span>
       <div>
         <div class="popular-title">${esc(p.title)}</div>
-        <div class="popular-meta">${esc(c.label)} · ${esc(p.readTime)} min${v>0?` · ${v} views`:''}</div>
+        <div class="popular-meta">${esc(c.label)} · ${esc(p.readTime)} min${v > 0 ? ` · ${v} views` : ''}</div>
       </div>
     </div>`;
   }).join('') : '<div style="color:var(--ink3);font-size:.8rem;padding:8px 0;">Start reading to see popular posts.</div>';
@@ -781,7 +908,7 @@ function renderSidebar() {
     </div>
     <div class="sidebar-card">
       <div class="sidebar-title">Browse by topic</div>
-      <div class="tags-cloud">${allTags.map(t=>`<span class="tag-cloud-item">${esc(t)}</span>`).join('')}</div>
+      <div class="tags-cloud">${allTags.map(t => `<span class="tag-cloud-item">${esc(t)}</span>`).join('')}</div>
     </div>
     <div class="sidebar-card">
       <div class="sidebar-title">Written by</div>
@@ -839,21 +966,21 @@ function renderFooter() {
   </footer>`;
 }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    RENDER: LIST VIEW
-──────────────────────────────────────────────────────────────── */
+════════════════════════════════════════════════════════════════ */
 function renderList() {
   const { featuredPost, rest } = getFiltered();
-  const mainCards = rest.slice(0,6);
-  const older = rest.slice(6);
+  const mainCards = rest.slice(0, 6);
+  const older     = rest.slice(6);
 
   const filterBtns = [
     ['all','All Posts'],['product','Product Updates'],
     ['insight','AI Insights'],['guide','How-to Guides'],['story','Behind the Build']
-  ].map(([v,l])=>`<button class="filter-btn${filter===v?' active':''}" onclick="setFilter('${v}')">${esc(l)}</button>`).join('');
+  ].map(([v,l]) => `<button class="filter-btn${filter === v ? ' active' : ''}" onclick="setFilter('${v}')">${esc(l)}</button>`).join('');
 
   const gridHTML = mainCards.length
-    ? `<div class="posts-grid">${mainCards.map((p,i)=>renderPostCard(p,i)).join('')}</div>`
+    ? `<div class="posts-grid">${mainCards.map((p,i) => renderPostCard(p,i)).join('')}</div>`
     : `<div class="empty-state"><h3>No posts in this category yet.</h3><p>Try a different filter or check back soon.</p></div>`;
 
   const olderHTML = older.length ? `
@@ -893,23 +1020,23 @@ function renderList() {
   `;
 }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    RENDER: POST VIEW
-──────────────────────────────────────────────────────────────── */
+════════════════════════════════════════════════════════════════ */
 function renderPost() {
-  const post = posts.find(p=>p.id===postId);
+  const post = posts.find(p => p.id === postId);
   if (!post) return `<div style="padding:120px 80px;text-align:center;">
     <p style="color:var(--ink3);">Post not found. <button onclick="nav('list')" style="color:var(--blue);background:none;border:none;cursor:pointer;font-size:inherit;font-family:inherit;">← Back to blog</button></p>
   </div>`;
 
   const c = cat(post.category);
-  const v = reads[post.id]||0;
+  const v = reads[post.id] || 0;
 
-  const related = posts.filter(p=>p.id!==post.id && p.category===post.category).slice(0,2);
+  const related    = posts.filter(p => p.id !== post.id && p.category === post.category).slice(0, 2);
   const relatedHTML = related.length ? `
     <div class="related-section">
       <div class="related-label">More in ${esc(c.label)}</div>
-      ${related.map(r=>`<div class="related-card" onclick="openPost('${esc(r.id)}')">
+      ${related.map(r => `<div class="related-card" onclick="openPost('${esc(r.id)}')">
         <div class="related-card-emoji">${esc(r.emoji)}</div>
         <div>
           <div class="related-card-title">${esc(r.title)}</div>
@@ -927,7 +1054,7 @@ function renderPost() {
           <span class="post-tag ${c.tag}">${esc(c.label)}</span>
           <span class="post-date">${esc(post.date)}</span>
           <span class="post-read">· ${esc(post.readTime)} min read</span>
-          ${v>1?`<span class="post-read">· ${v} views</span>`:''}
+          ${v > 1 ? `<span class="post-read">· ${v} views</span>` : ''}
         </div>
         <h1 class="post-view-title">${esc(post.title)}</h1>
         <div class="post-view-meta">
@@ -948,9 +1075,10 @@ function renderPost() {
   `;
 }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    RENDER: ADMIN LOGIN
-──────────────────────────────────────────────────────────────── */
+   — now calls POST /auth instead of comparing a hardcoded string
+════════════════════════════════════════════════════════════════ */
 function renderAdminLogin() {
   return `
     <div class="admin-login-wrap">
@@ -960,8 +1088,8 @@ function renderAdminLogin() {
         <div class="admin-login-sub">Enter your password to manage posts, track reads, and publish new content.</div>
         <input class="admin-input" type="password" id="admin-pw" placeholder="Password"
           onkeydown="if(event.key==='Enter')tryLogin()"/>
-        <button class="admin-btn-primary" onclick="tryLogin()">Sign in →</button>
-        ${adminErr?`<div class="error-msg">⚠ ${esc(adminErr)}</div>`:''}
+        <button class="admin-btn-primary" id="login-btn" onclick="tryLogin()">Sign in →</button>
+        ${adminErr ? `<div class="error-msg">⚠ ${esc(adminErr)}</div>` : ''}
         <div style="text-align:center;margin-top:18px;">
           <button onclick="nav('list')" style="font-size:.76rem;color:var(--ink3);background:none;border:none;cursor:pointer;font-family:'Figtree',sans-serif;">← Back to blog</button>
         </div>
@@ -970,32 +1098,36 @@ function renderAdminLogin() {
   `;
 }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    RENDER: ADMIN PANEL
-──────────────────────────────────────────────────────────────── */
+   — adds API status badge, saving overlay, commit result row
+════════════════════════════════════════════════════════════════ */
 function renderAdminPanel() {
-  const sorted = [...posts].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-  const totalViews = Object.values(reads).reduce((a,b)=>a+b,0);
+  const sorted     = [...posts].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const totalViews = Object.values(reads).reduce((a,b) => a+b, 0);
 
-  const editing = editId && editId !== 'new' ? posts.find(p=>p.id===editId) : null;
-  const fp = editing || { title:'', excerpt:'', content:'', category:'product', emoji:'🚀', date:nowMonthYear(), readTime:'5', featured:false };
+  const editing = editId && editId !== 'new' ? posts.find(p => p.id === editId) : null;
+  const fp      = editing || { title:'', excerpt:'', content:'', category:'product', emoji:'🚀', date:nowMonthYear(), readTime:'5', featured:false };
 
-  const catOpts = Object.entries(CAT).map(([k,v])=>`<option value="${k}"${fp.category===k?' selected':''}>${esc(v.label)}</option>`).join('');
-  const emojiOpts = EMOJI_LIST.map(e=>`<option value="${esc(e)}"${fp.emoji===e?' selected':''}>${e}</option>`).join('');
+  const catOpts  = Object.entries(CAT).map(([k,v]) => `<option value="${k}"${fp.category === k ? ' selected' : ''}>${esc(v.label)}</option>`).join('');
+  const emojiOpts = EMOJI_LIST.map(e => `<option value="${esc(e)}"${fp.emoji === e ? ' selected' : ''}>${e}</option>`).join('');
+  const showForm  = editId === 'new' || !!editing;
 
-  const showForm = editId === 'new' || editing;
+  // ── API status badge
+  const badgeClass = { pending:'pending', ok:'ok', err:'err' }[apiStatus] || 'pending';
+  const badgeLabel = { pending:'Connecting…', ok:'Backend connected', err:'Backend unreachable' }[apiStatus] || '';
 
-  const postsHTML = sorted.length ? sorted.map(p=>{
+  const postsHTML = sorted.length ? sorted.map(p => {
     const c = cat(p.category);
-    const v = reads[p.id]||0;
-    return `<div class="admin-post-item${p.featured?' is-featured':''}">
+    const v = reads[p.id] || 0;
+    return `<div class="admin-post-item${p.featured ? ' is-featured' : ''}">
       <div class="admin-post-emoji">${esc(p.emoji)}</div>
       <div class="admin-post-info">
-        <div class="admin-post-title">${esc(p.title)}${p.featured?'<span class="featured-pill">★ Featured</span>':''}</div>
-        <div class="admin-post-meta">${esc(c.label)} · ${esc(p.date)} · ${esc(p.readTime)} min · ${v} view${v!==1?'s':''}</div>
+        <div class="admin-post-title">${esc(p.title)}${p.featured ? '<span class="featured-pill">★ Featured</span>' : ''}</div>
+        <div class="admin-post-meta">${esc(c.label)} · ${esc(p.date)} · ${esc(p.readTime)} min · ${v} view${v !== 1 ? 's' : ''}</div>
         <div class="admin-post-actions">
           <button class="action-btn" onclick="startEdit('${esc(p.id)}')">Edit</button>
-          <button class="action-btn${p.featured?'':' star'}" onclick="toggleFeatured('${esc(p.id)}')">${p.featured?'Unfeature':'★ Feature'}</button>
+          <button class="action-btn${p.featured ? '' : ' star'}" onclick="toggleFeatured('${esc(p.id)}')">${p.featured ? 'Unfeature' : '★ Feature'}</button>
           <button class="action-btn accent" onclick="openPost('${esc(p.id)}')">Preview</button>
           <button class="action-btn danger" onclick="deletePost('${esc(p.id)}')">Delete</button>
         </div>
@@ -1003,8 +1135,22 @@ function renderAdminPanel() {
     </div>`;
   }).join('') : '<div style="text-align:center;padding:40px;color:var(--ink3);font-size:.88rem;">No posts yet. Create your first one!</div>';
 
+  // ── Commit result row (shown after a successful save)
+  const commitHTML = lastCommit ? `<div class="commit-result">
+    ✓ Committed ${lastCommit.sha}
+    ${lastCommit.url ? `· <a href="${esc(lastCommit.url)}" target="_blank" rel="noopener">View on GitHub →</a>` : ''}
+  </div>` : '';
+
+  // ── Saving overlay (shown while PUT /posts is in-flight)
+  const savingOverlay = isSaving ? `<div class="saving-overlay">
+    <div class="saving-overlay-inner">
+      <div class="saving-dots"><span class="sd"></span><span class="sd"></span><span class="sd"></span></div>
+      <div class="saving-label">Committing to GitHub…</div>
+    </div>
+  </div>` : '';
+
   const formHTML = showForm ? `
-    <div class="admin-form-title">${editId==='new'?'New Post':'Edit Post'}</div>
+    <div class="admin-form-title">${editId === 'new' ? 'New Post' : 'Edit Post'}</div>
     <div class="form-field">
       <label class="form-label">Title *</label>
       <input class="form-input" id="f-title" value="${esc(fp.title)}" placeholder="Post title…"/>
@@ -1038,16 +1184,19 @@ function renderAdminPanel() {
       </div>
     </div>
     <div class="form-checkbox-row">
-      <input type="checkbox" class="form-checkbox" id="f-featured" ${fp.featured?'checked':''}/>
+      <input type="checkbox" class="form-checkbox" id="f-featured" ${fp.featured ? 'checked' : ''}/>
       <label class="form-checkbox-label" for="f-featured">Set as Featured Post</label>
     </div>
-    ${formErr?`<div class="error-msg" style="margin-bottom:10px;">⚠ ${esc(formErr)}</div>`:''}
-    <button class="save-btn" onclick="savePost()">${editId==='new'?'Publish Post ✓':'Save Changes ✓'}</button>
+    ${formErr ? `<div class="error-msg" style="margin-bottom:10px;">⚠ ${esc(formErr)}</div>` : ''}
+    ${commitHTML}
+    <button class="save-btn" onclick="savePost()">${editId === 'new' ? 'Publish Post ✓' : 'Save Changes ✓'}</button>
     <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+    ${savingOverlay}
   ` : `<div class="form-idle">
     <div class="form-idle-icon">✍️</div>
     <div class="form-idle-title">Ready to write?</div>
     <div class="form-idle-text">Click <strong>+ New Post</strong> to write something new, or hit <strong>Edit</strong> on any existing post to update it.</div>
+    ${commitHTML}
   </div>`;
 
   return `
@@ -1055,7 +1204,12 @@ function renderAdminPanel() {
       <div class="admin-header">
         <div>
           <div class="admin-title">Blog Admin</div>
-          <div class="admin-stats">${posts.length} post${posts.length!==1?'s':''} · ${totalViews} total view${totalViews!==1?'s':''}</div>
+          <div class="admin-stats" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;">
+            <span>${posts.length} post${posts.length !== 1 ? 's' : ''} · ${totalViews} total view${totalViews !== 1 ? 's' : ''}</span>
+            <span class="api-badge ${badgeClass}">
+              <span class="api-badge-dot"></span>${esc(badgeLabel)}
+            </span>
+          </div>
         </div>
         <button class="admin-logout" onclick="logout()">Sign out</button>
       </div>
@@ -1067,130 +1221,208 @@ function renderAdminPanel() {
           </div>
           <div class="admin-posts-list">${postsHTML}</div>
         </div>
-        <div class="admin-form-card">${formHTML}</div>
+        <div class="admin-form-card" style="position:relative;">${formHTML}</div>
       </div>
     </div>
   `;
 }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    MAIN RENDER
-──────────────────────────────────────────────────────────────── */
+════════════════════════════════════════════════════════════════ */
 function render() {
   const app = document.getElementById('app');
   let content = '';
   switch(view) {
-    case 'list':        content = renderList(); break;
-    case 'post':        content = renderPost(); break;
-    case 'admin-login': content = renderAdminLogin(); break;
-    case 'admin':       content = renderAdminPanel(); break;
+    case 'list':        content = renderList();        break;
+    case 'post':        content = renderPost();        break;
+    case 'admin-login': content = renderAdminLogin();  break;
+    case 'admin':       content = renderAdminPanel();  break;
     default:            content = renderList();
   }
   app.innerHTML = renderNav() + content;
 }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    ACTIONS
-──────────────────────────────────────────────────────────────── */
+════════════════════════════════════════════════════════════════ */
 function setFilter(f) { filter = f; render(); }
 
-function tryLogin() {
-  const pw = document.getElementById('admin-pw');
-  if (!pw) return;
-  if (pw.value === ADMIN_PASSWORD) {
-    editId = null; adminErr = '';
-    view = 'admin'; render(); scrollTop();
-  } else {
-    adminErr = 'Incorrect password.';
+/* ── Login: calls POST /auth ── */
+async function tryLogin() {
+  const pwEl = document.getElementById('admin-pw');
+  const btn  = document.getElementById('login-btn');
+  if (!pwEl) return;
+
+  const pw = pwEl.value;
+  if (!pw) { adminErr = 'Please enter your password.'; render(); return; }
+
+  // Disable button while waiting
+  if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+
+  try {
+    const data     = await apiLogin(pw);
+    sessionToken   = data.token;
+    adminErr       = '';
+    editId         = null;
+    lastCommit     = null;
+
+    // Reload posts from the authenticated /posts endpoint (bypasses GitHub CDN cache)
+    posts = await fetchAdminPosts();
+
+    view = 'admin';
     render();
-    setTimeout(()=>document.getElementById('admin-pw')?.focus(), 50);
+    scrollTop();
+  } catch(e) {
+    adminErr = e.message === 'Incorrect password.' ? 'Incorrect password.' : `Sign-in failed: ${e.message}`;
+    render();
+    setTimeout(() => document.getElementById('admin-pw')?.focus(), 50);
   }
 }
 
-function logout() { nav('list'); }
+/* ── Logout: calls DELETE /auth ── */
+async function logout() {
+  await apiLogout();
+  lastCommit = null;
+  // Reload public posts (visitor version)
+  posts = await fetchPublicPosts();
+  nav('list');
+}
 
 function startNew() {
-  editId = 'new'; formErr = '';
+  editId = 'new'; formErr = ''; lastCommit = null;
   render();
-  setTimeout(()=>document.getElementById('f-title')?.focus(), 80);
+  setTimeout(() => document.getElementById('f-title')?.focus(), 80);
 }
 
 function startEdit(id) {
-  editId = id; formErr = '';
+  editId = id; formErr = ''; lastCommit = null;
   render();
-  setTimeout(()=>document.getElementById('f-title')?.focus(), 80);
+  setTimeout(() => document.getElementById('f-title')?.focus(), 80);
 }
 
 function cancelEdit() { editId = null; formErr = ''; render(); }
 
+/* ── Save: mutates posts[] then calls PUT /posts ── */
 async function savePost() {
-  const g = id => document.getElementById(id);
-  const title    = g('f-title')?.value?.trim() || '';
-  const excerpt  = g('f-excerpt')?.value?.trim() || '';
-  const content  = g('f-content')?.value?.trim() || '';
-  const category = g('f-category')?.value || 'product';
-  const emoji    = g('f-emoji')?.value || '🚀';
-  const date     = g('f-date')?.value?.trim() || nowMonthYear();
-  const readTime = g('f-readtime')?.value?.trim() || '5';
-  const isFeatured = g('f-featured')?.checked || false;
+  if (isSaving) return;
+
+  const g        = id => document.getElementById(id);
+  const title    = g('f-title')?.value?.trim()    || '';
+  const excerpt  = g('f-excerpt')?.value?.trim()  || '';
+  const content  = g('f-content')?.value?.trim()  || '';
+  const category = g('f-category')?.value         || 'product';
+  const emoji    = g('f-emoji')?.value             || '🚀';
+  const date     = g('f-date')?.value?.trim()      || nowMonthYear();
+  const readTime = g('f-readtime')?.value?.trim()  || '5';
+  const isFeat   = g('f-featured')?.checked        || false;
 
   if (!title)   { formErr = 'Title is required.';   render(); return; }
   if (!content) { formErr = 'Content is required.'; render(); return; }
   formErr = '';
 
-  if (isFeatured) posts.forEach(p=>p.featured=false);
+  // Unfeature all others if this one is featured
+  if (isFeat) posts.forEach(p => p.featured = false);
 
   if (editId === 'new') {
-    posts.unshift({ id:genId(), title, excerpt, content, category, emoji, date, readTime, featured:isFeatured, createdAt:new Date().toISOString().slice(0,10) });
-    toast('Post published! ✓');
+    posts.unshift({
+      id: genId(), title, excerpt, content, category, emoji,
+      date, readTime, featured: isFeat,
+      createdAt: new Date().toISOString().slice(0, 10)
+    });
   } else {
-    const idx = posts.findIndex(p=>p.id===editId);
-    if (idx !== -1) posts[idx] = { ...posts[idx], title, excerpt, content, category, emoji, date, readTime, featured:isFeatured };
-    toast('Post updated! ✓');
+    const idx = posts.findIndex(p => p.id === editId);
+    if (idx !== -1) {
+      posts[idx] = { ...posts[idx], title, excerpt, content, category, emoji, date, readTime, featured: isFeat };
+    }
   }
 
-  editId = null;
-  await sp();
+  // Show saving overlay
+  isSaving = true;
   render();
+
+  try {
+    const result = await savePosts(); // PUT /posts → GitHub commit
+    lastCommit   = { sha: result.commit_sha, url: result.commit_url };
+    isSaving     = false;
+    editId       = null;
+    toast(editId === null ? 'Post published & committed to GitHub ✓' : 'Saved & committed to GitHub ✓');
+    render();
+  } catch(e) {
+    isSaving   = false;
+    formErr    = `GitHub commit failed: ${e.message}`;
+    render();
+  }
 }
 
+/* ── Delete: removes from posts[] then calls PUT /posts ── */
 async function deletePost(id) {
-  const p = posts.find(pp=>pp.id===id);
+  const p = posts.find(pp => pp.id === id);
   if (!p) return;
-  if (!confirm(`Delete "${p.title}"?\n\nThis cannot be undone.`)) return;
-  posts = posts.filter(pp=>pp.id!==id);
-  delete reads[id];
+  if (!confirm(`Delete "${p.title}"?\n\nThis will commit the deletion to GitHub.`)) return;
+
+  posts = posts.filter(pp => pp.id !== id);
   if (editId === id) editId = null;
-  await sp(); await sr();
-  toast('Post deleted.');
+
+  isSaving = true;
   render();
+
+  try {
+    const result = await savePosts();
+    lastCommit   = { sha: result.commit_sha, url: result.commit_url };
+    isSaving     = false;
+    toast('Post deleted & committed to GitHub.');
+    render();
+  } catch(e) {
+    isSaving = false;
+    toast(`Delete failed: ${e.message}`);
+    // Re-add the post on failure so state stays consistent
+    posts.push(p);
+    render();
+  }
 }
 
+/* ── Toggle Featured: updates posts[] then calls PUT /posts ── */
 async function toggleFeatured(id) {
-  const isNowFeatured = !posts.find(p=>p.id===id)?.featured;
-  posts.forEach(p=>p.featured = p.id===id ? isNowFeatured : false);
-  await sp();
-  toast(isNowFeatured ? '★ Set as featured post!' : 'Removed from featured.');
+  const isNowFeatured = !posts.find(p => p.id === id)?.featured;
+  posts.forEach(p => p.featured = p.id === id ? isNowFeatured : false);
+
+  isSaving = true;
   render();
+
+  try {
+    const result = await savePosts();
+    lastCommit   = { sha: result.commit_sha, url: result.commit_url };
+    isSaving     = false;
+    toast(isNowFeatured ? '★ Set as featured & committed.' : 'Removed from featured & committed.');
+    render();
+  } catch(e) {
+    isSaving = false;
+    toast(`Failed to commit: ${e.message}`);
+    // Revert the toggle on failure
+    posts.forEach(p => { if (p.id === id) p.featured = !isNowFeatured; });
+    render();
+  }
 }
 
+/* ── Newsletter handlers (unchanged) ── */
 function handleNL() {
   const el = document.getElementById('sb-email');
-  if (!el||!el.value.includes('@')) return;
+  if (!el || !el.value.includes('@')) return;
   const wrap = document.getElementById('sb-nl-wrap');
   if (wrap) wrap.innerHTML = '<div style="text-align:center;padding:12px 0;"><div style="font-size:1.4rem;margin-bottom:6px;">✓</div><div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:.88rem;color:var(--ink);">You\'re subscribed!</div><div style="font-size:.76rem;color:var(--ink3);margin-top:4px;">New posts will land in your inbox.</div></div>';
 }
 
 function handleMainNL() {
   const el = document.getElementById('main-email');
-  if (!el||!el.value.includes('@')) return;
+  if (!el || !el.value.includes('@')) return;
   const wrap = document.getElementById('main-nl-wrap');
   if (wrap) wrap.innerHTML = '<div style="padding:14px 0;"><span style="color:#4ade80;font-weight:700;font-size:.9rem;">✓ Subscribed! New posts will land in your inbox.</span></div>';
 }
 
-/* ────────────────────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════════════════
    INIT
-──────────────────────────────────────────────────────────────── */
+════════════════════════════════════════════════════════════════ */
 async function init() {
   await loadData();
   render();

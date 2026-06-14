@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Developer Internship — Alaada</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0A0E1A;
+      --navy2:  #111827;
+      --card:   #141B2D;
+      --border: #1E2A42;
+      --indigo: #6366F1;
+      --indigo-glow: rgba(99,102,241,0.18);
+      --green:  #22D3A5;
+      --white:  #F0F2FF;
+      --muted:  #94A3B8;
+      --error:  #F87171;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── GRID NOISE BACKGROUND ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* ── GLOW ORBS ── */
+    .orb {
+      position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0;
+    }
+    .orb-1 { width: 500px; height: 500px; background: rgba(99,102,241,0.12); top: -150px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: rgba(34,211,165,0.07); bottom: -100px; right: -80px; }
+
+    /* ── LAYOUT ── */
+    main {
+      position: relative; z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 24px 96px;
+    }
+
+    /* ── HEADER ── */
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 500;
+      letter-spacing: 0.12em;
+      color: var(--green);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .eyebrow::before { content: '//'; opacity: 0.5; }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 6vw, 3.25rem);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    h1 span.accent { color: var(--indigo); }
+
+    .terminal-line {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 32px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .cursor {
+      display: inline-block;
+      width: 2px; height: 1em;
+      background: var(--green);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── META CHIPS ── */
+    .meta-row {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-bottom: 48px;
+    }
+    .chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+    }
+    .chip.green { border-color: rgba(34,211,165,0.3); color: var(--green); }
+    .chip.indigo { border-color: rgba(99,102,241,0.35); color: #a5b4fc; }
+
+    /* ── FORM CARD ── */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-card::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, var(--indigo) 0%, var(--green) 100%);
+      border-radius: 3px 0 0 3px;
+    }
+
+    /* ── FORM ── */
+    .form-section {
+      margin-bottom: 36px;
+    }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1; height: 1px;
+      background: var(--border);
+    }
+
+    .field { margin-bottom: 20px; }
+
+    label {
+      display: block;
+      font-size: 13px; font-weight: 500;
+      color: var(--white);
+      margin-bottom: 7px;
+    }
+    label .req { color: var(--indigo); margin-left: 2px; }
+
+    input, textarea {
+      width: 100%;
+      background: var(--navy);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--white);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input::placeholder, textarea::placeholder { color: #4B5A72; }
+    input:focus, textarea:focus {
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 3px var(--indigo-glow);
+    }
+    input.error, textarea.error { border-color: var(--error); }
+
+    textarea { resize: vertical; min-height: 100px; }
+
+    .field-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    /* Two-col grid */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* File upload */
+    .file-drop {
+      width: 100%;
+      background: var(--navy);
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .file-drop:hover, .file-drop.dragover {
+      border-color: var(--indigo);
+      background: var(--indigo-glow);
+    }
+    .file-drop input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer;
+      padding: 0; border: none; background: none;
+      width: 100%; height: 100%;
+    }
+    .file-icon {
+      font-size: 26px; margin-bottom: 8px;
+    }
+    .file-drop-text {
+      font-size: 13px; color: var(--muted);
+    }
+    .file-drop-text span { color: var(--indigo); font-weight: 500; }
+    .file-name {
+      margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--green);
+    }
+
+    /* Submit */
+    .submit-row {
+      margin-top: 36px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    }
+    .submit-note {
+      font-size: 12px; color: var(--muted);
+      max-width: 300px;
+    }
+
+    .btn-submit {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px; font-weight: 600;
+      padding: 14px 32px;
+      border-radius: 8px;
+      border: none;
+      background: var(--indigo);
+      color: #fff;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-submit:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99,102,241,0.35); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SUCCESS ── */
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .success-icon {
+      font-size: 48px; margin-bottom: 20px;
+    }
+    .success-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .success-msg { color: var(--muted); font-size: 15px; max-width: 360px; margin: 0 auto; }
+
+    /* ── ERROR BANNER ── */
+    .error-banner {
+      display: none;
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--error);
+      margin-bottom: 20px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 0 24px 48px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #3B4A63;
+    }
+
+    @media (max-width: 480px) {
+      .form-card { padding: 28px 20px; }
+      .submit-row { flex-direction: column; }
+      .btn-submit { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <main>
+    <p class="eyebrow">Alaada · Open Roles</p>
+    <h1>Developer<br><span class="accent">Internship</span></h1>
+    <p class="terminal-line">
+      <span>> apply --role=dev-intern --location=remote</span>
+      <span class="cursor"></span>
+    </p>
+
+    <div class="meta-row">
+      <span class="chip green">● Open</span>
+      <span class="chip indigo">Remote / Kolkata</span>
+      <span class="chip">3–6 months</span>
+      <span class="chip">Full-stack · AI</span>
+    </div>
+
+    <div class="form-card">
+      <div id="form-area">
+        <div class="error-banner" id="error-banner">Something went wrong. Please try again.</div>
+
+        <form id="apply-form" novalidate>
+          <!-- Personal -->
+          <div class="form-section">
+            <p class="section-label">Personal Info</p>
+            <div class="grid-2">
+              <div class="field">
+                <label for="name">Full Name <span class="req">*</span></label>
+                <input type="text" id="name" name="name" placeholder="Arzo Das" required />
+              </div>
+              <div class="field">
+                <label for="email">Email <span class="req">*</span></label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" required />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <label for="phone">Phone <span class="req">*</span></label>
+                <input type="tel" id="phone" name="phone" placeholder="+91 00000 00000" required />
+              </div>
+              <div class="field">
+                <label for="address">Location / Address <span class="req">*</span></label>
+                <input type="text" id="address" name="address" placeholder="Kolkata, West Bengal" required />
+              </div>
+            </div>
+          </div>
+
+          <!-- Links -->
+          <div class="form-section">
+            <p class="section-label">Online Presence</p>
+            <div class="field">
+              <label for="linkedin">LinkedIn URL</label>
+              <input type="url" id="linkedin" name="linkedIn" placeholder="https://linkedin.com/in/yourname" />
+            </div>
+            <div class="field">
+              <label for="github">GitHub URL</label>
+              <input type="url" id="github" name="github" placeholder="https://github.com/yourhandle" />
+            </div>
+            <p class="field-note">Provide at least one — LinkedIn or GitHub.</p>
+          </div>
+
+          <!-- CV -->
+          <div class="form-section">
+            <p class="section-label">Your CV / Résumé</p>
+            <div class="field">
+              <label>Upload CV <span class="req">*</span></label>
+              <div class="file-drop" id="file-drop">
+                <input type="file" id="cv" name="cv" accept=".pdf,.doc,.docx" required />
+                <div class="file-icon">📄</div>
+                <p class="file-drop-text">Drag & drop or <span>browse file</span></p>
+                <p class="file-drop-text" style="font-size:11px;margin-top:4px;">PDF, DOC, DOCX · Max 5 MB</p>
+                <p class="file-name" id="file-name"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Why -->
+          <div class="form-section">
+            <p class="section-label">Tell Us More</p>
+            <div class="field">
+              <label for="message">Why do you want to build with Alaada?</label>
+              <textarea id="message" name="message" placeholder="What excites you about building AI-first products? Any projects you're proud of?"></textarea>
+            </div>
+          </div>
+
+          <div class="submit-row">
+            <p class="submit-note">We review every application personally. Expect a response within 5–7 days.</p>
+            <button type="submit" class="btn-submit" id="submit-btn">
+              <span id="btn-text">Submit Application</span>
+              <div class="spinner" id="spinner"></div>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Success -->
+      <div class="success-screen" id="success-screen">
+        <div class="success-icon">🚀</div>
+        <p class="success-title">Application Received!</p>
+        <p class="success-msg">Thanks for applying. We'll review your details and get back to you within a week. Keep building.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2026 Alaada · Built in Kolkata · alaada.com
+  </footer>
+
+  <script>
+    // File drop feedback
+    const fileDrop = document.getElementById('file-drop');
+    const fileInput = document.getElementById('cv');
+    const fileNameEl = document.getElementById('file-name');
+
+    fileInput.addEventListener('change', () => {
+      const f = fileInput.files[0];
+      fileNameEl.textContent = f ? `✓ ${f.name}` : '';
+    });
+
+    fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+    fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+    fileDrop.addEventListener('drop', e => {
+      e.preventDefault();
+      fileDrop.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        fileNameEl.textContent = `✓ ${e.dataTransfer.files[0].name}`;
+      }
+    });
+
+    // Validation helpers
+    function markError(el) { el.classList.add('error'); }
+    function clearError(el) { el.classList.remove('error'); }
+
+    ['name','email','phone','address'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', () => clearError(el));
+    });
+
+    // Form submit
+    document.getElementById('apply-form').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const name    = document.getElementById('name');
+      const email   = document.getElementById('email');
+      const phone   = document.getElementById('phone');
+      const address = document.getElementById('address');
+      const linkedin = document.getElementById('linkedin');
+      const github   = document.getElementById('github');
+      const cv      = document.getElementById('cv');
+
+      let valid = true;
+
+      if (!name.value.trim())    { markError(name);    valid = false; }
+      if (!email.value.trim() || !email.value.includes('@')) { markError(email); valid = false; }
+      if (!phone.value.trim())   { markError(phone);   valid = false; }
+      if (!address.value.trim()) { markError(address); valid = false; }
+      if (!linkedin.value.trim() && !github.value.trim()) {
+        markError(linkedin); markError(github); valid = false;
+      }
+      if (!cv.files || !cv.files[0]) { fileDrop.style.borderColor = 'var(--error)'; valid = false; }
+
+      if (!valid) {
+        document.getElementById('error-banner').style.display = 'block';
+        document.getElementById('error-banner').textContent = 'Please fill in all required fields.';
+        return;
+      }
+
+      // Build FormData
+      const fd = new FormData();
+      fd.append('name',    name.value.trim());
+      fd.append('email',   email.value.trim());
+      fd.append('phone',   phone.value.trim());
+      fd.append('address', address.value.trim());
+      if (linkedin.value.trim()) fd.append('linkedIn', linkedin.value.trim());
+      if (github.value.trim())   fd.append('github',   github.value.trim());
+      fd.append('cv',      cv.files[0]);
+      const msg = document.getElementById('message').value.trim();
+      if (msg) fd.append('message', msg);
+
+      const btn     = document.getElementById('submit-btn');
+      const btnText = document.getElementById('btn-text');
+      const spinner = document.getElementById('spinner');
+      const errBanner = document.getElementById('error-banner');
+
+      btn.disabled = true;
+      btnText.textContent = 'Sending…';
+      spinner.style.display = 'block';
+      errBanner.style.display = 'none';
+
+      try {
+        const res = await fetch('https://formspree.io/f/xeewvkoa', {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          body: fd,
+        });
+
+        if (res.ok) {
+          document.getElementById('form-area').style.display = 'none';
+          document.getElementById('success-screen').style.display = 'block';
+        } else {
+          const data = await res.json().catch(() => ({}));
+          errBanner.textContent = data.error || 'Submission failed. Please try again.';
+          errBanner.style.display = 'block';
+          btn.disabled = false;
+          btnText.textContent = 'Submit Application';
+          spinner.style.display = 'none';
+        }
+      } catch {
+        errBanner.textContent = 'Network error. Please check your connection.';
+        errBanner.style.display = 'block';
+        btn.disabled = false;
+        btnText.textContent = 'Submit Application';
+        spinner.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
