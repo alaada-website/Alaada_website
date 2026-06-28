@@ -1848,6 +1848,161 @@ async function doEx(fmt){
 /* ─── INIT ────────────────────────────────────────────────────── */
 window.addEventListener('load',()=>G.init());
 </script>
+ 
+<!-- ── 1. CSS ─ paste inside your existing <style> tag ────────── -->
+<style>
+/* ── FOOTFALL WELCOME MODAL ──────────────────────────────────── */
+#ffModal {
+  position: fixed; inset: 0; z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(5, 6, 15, 0.82);
+  backdrop-filter: blur(10px);
+  animation: ffFadeIn .25s ease;
+}
+@keyframes ffFadeIn { from { opacity: 0 } to { opacity: 1 } }
+ 
+#ffBox {
+  background: linear-gradient(160deg, #13141d 0%, #0f1119 100%);
+  border: 1px solid rgba(61,143,255,.22);
+  border-radius: 18px;
+  width: 420px; max-width: 92vw;
+  padding: 36px 32px 28px;
+  box-shadow: 0 28px 70px rgba(0,0,0,.65),
+              0 0 0 1px rgba(255,255,255,.04) inset;
+  text-align: center;
+  animation: ffSlideUp .3s cubic-bezier(.2,.8,.2,1);
+  position: relative;
+  overflow: hidden;
+}
+@keyframes ffSlideUp {
+  from { transform: translateY(18px); opacity: 0 }
+  to   { transform: translateY(0);    opacity: 1 }
+}
+ 
+/* glow ring behind the logo gem */
+#ffBox::before {
+  content: '';
+  position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(61,143,255,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+ 
+#ffGem {
+  width: 56px; height: 56px; border-radius: 15px;
+  background: linear-gradient(135deg, #f0a500, #e09000);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+  box-shadow: 0 4px 24px rgba(240,165,0,.45);
+}
+#ffGem svg { width: 26px; height: 26px; fill: rgba(255,255,255,.95) }
+ 
+#ffTitle {
+  font-size: 20px; font-weight: 800; color: #f0f2ff;
+  letter-spacing: -.4px; margin-bottom: 8px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+#ffTitle b { color: #f0a500 }
+ 
+#ffSub {
+  font-size: 13px; color: #8892b0; line-height: 1.6;
+  margin-bottom: 28px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+ 
+#ffBtns { display: flex; gap: 10px; justify-content: center }
+ 
+#ffYes {
+  flex: 1; height: 44px; border-radius: 10px;
+  background: linear-gradient(135deg, #f0a500, #e09000);
+  border: none; color: #1a0f00;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 800;
+  cursor: pointer; transition: all .18s;
+  box-shadow: 0 3px 14px rgba(240,165,0,.35);
+}
+#ffYes:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(240,165,0,.5);
+}
+#ffYes:active { transform: scale(.96) }
+ 
+#ffNo {
+  flex: 1; height: 44px; border-radius: 10px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.1);
+  color: #5a6080;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .18s;
+}
+#ffNo:hover {
+  border-color: rgba(255,77,106,.35);
+  color: #ff7090; background: rgba(255,77,106,.06);
+}
+#ffNo:active { transform: scale(.96) }
+ 
+#ffThanks {
+  font-size: 13px; color: #3d4260;
+  margin-top: 16px; font-family: 'Plus Jakarta Sans', sans-serif;
+}
+ 
+/* exit message replaces the buttons */
+#ffExitMsg {
+  display: none;
+  font-size: 14px; color: #5a6080; line-height: 1.7;
+  padding-top: 4px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+#ffExitMsg a {
+  color: #f0a500; text-decoration: none; font-weight: 700; cursor: pointer
+}
+#ffExitMsg a:hover { text-decoration: underline }
+</style>
+<script>
+/* ── FOOTFALL MODAL ─────────────────────────────────────────── */
+async function ffContinue() {
+  // Record the footfall
+  try {
+    await fetch(`${API}/api/footfall`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // body intentionally empty — server reads IP from request
+    });
+  } catch (_) {
+    // Silently ignore — don't block the user if backend is offline
+  }
+ 
+  // Animate modal out, then remove
+  const modal = document.getElementById('ffModal');
+  modal.style.transition = 'opacity .25s';
+  modal.style.opacity    = '0';
+  setTimeout(() => modal.remove(), 280);
+ 
+  // Focus the grid so keyboard shortcuts work immediately
+  setTimeout(() => document.getElementById('gscroll')?.focus({ preventScroll: true }), 300);
+}
+ 
+function ffDecline() {
+  // Hide buttons, show friendly exit message
+  document.getElementById('ffBtns').style.display    = 'none';
+  document.getElementById('ffSub').style.display     = 'none';
+  document.getElementById('ffExitMsg').style.display = 'block';
+ 
+  // Subtly dim the background content to signal "not active"
+  document.getElementById('app').style.filter  = 'brightness(.45) blur(1px)';
+  document.getElementById('app').style.pointerEvents = 'none';
+}
+ 
+// Show the modal on load (after the grid has initialised)
+window.addEventListener('load', () => {
+  // Small delay so the grid renders first — feels more polished
+  setTimeout(() => {
+    const modal = document.getElementById('ffModal');
+    if (modal) modal.style.display = 'flex';
+  }, 300);
+});
+</script>
 
 <!-- AI Chat panel -->
 <div id="chatBackdrop" onclick="G.closeChat()"></div>
@@ -1878,6 +2033,39 @@ window.addEventListener('load',()=>G.init());
 
 <!-- Mobile cell-ref pill -->
 <div id="mobilePill"><span id="mpRef">A1</span><span class="v" id="mpVal"></span></div>
+
+<div id="ffModal">
+  <div id="ffBox">
+    <!-- logo gem -->
+    <div id="ffGem">
+      <svg viewBox="0 0 14 14">
+        <rect x="1" y="1" width="5" height="5" rx="1"/>
+        <rect x="8" y="1" width="5" height="5" rx="1"/>
+        <rect x="1" y="8" width="5" height="5" rx="1"/>
+        <rect x="8" y="8" width="5" height="5" rx="1"/>
+      </svg>
+    </div>
+ 
+    <div id="ffTitle">Welcome to Alaada <b>Sheets</b></div>
+    <div id="ffSub">
+      Excel-grade formulas · Orbit AI · Charts · Tally export<br>
+      Do you want to continue to the spreadsheet?
+    </div>
+ 
+    <div id="ffBtns">
+      <button id="ffYes" onclick="ffContinue()">✓ Yes, Continue</button>
+      <button id="ffNo"  onclick="ffDecline()">✕ No thanks</button>
+    </div>
+ 
+    <div id="ffExitMsg">
+      No problem! Come back anytime.<br>
+      <a onclick="ffContinue()">Changed your mind? Click here →</a>
+    </div>
+ 
+    <div id="ffThanks"></div>
+  </div>
+</div>
+ 
 
 </body>
 </html>
