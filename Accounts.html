@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Alaada Accounts — Ledgers, Vouchers &amp; Reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ============================================================
+   ALAADA ACCOUNTS — design tokens (shared with alaada.com)
+   ============================================================ */
+:root{
+  --bg:#f5f4ef; --bg2:#eceae3; --white:#ffffff;
+  --ink:#121110; --ink2:#46443f; --ink3:#97948d;
+  --border:rgba(0,0,0,0.08); --borderM:rgba(0,0,0,0.14);
+  --blue:#1a5fff; --blue2:#e6edff; --blue3:rgba(26,95,255,0.1);
+  --teal:#00957a; --teal2:#dcf5ef; --teal3:rgba(0,149,122,0.1);
+  --gold:#d4930a; --gold2:#fdf3d9; --gold3:rgba(212,147,10,0.1);
+  --red:#d63a3a; --red2:#fbe7e7;
+  --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:24px;
+  --sh-sm:0 1px 3px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+  --sh-md:0 2px 8px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08);
+  --sidebar-w:230px; --topbar-h:60px;
+  --mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Figtree',sans-serif;background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased; font-size:14.5px; line-height:1.5;
+}
+::selection{background:var(--blue3);}
+a{color:inherit;}
+button{font-family:inherit;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--borderM);border-radius:20px;border:2px solid var(--bg);}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ---------- layout shell ---------- */
+#app{display:flex;min-height:100vh;}
+
+/* ---------- topbar ---------- */
+#topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);z-index:200;
+  background:rgba(245,244,239,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:18px;padding:0 20px 0 18px;
+}
+.brand{display:flex;align-items:center;gap:9px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.02rem;letter-spacing:-.4px;flex-shrink:0;}
+.brand-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Syne';font-weight:800;font-size:.72rem;flex-shrink:0;}
+.brand small{display:block;font-family:'Figtree';font-weight:600;font-size:.62rem;color:var(--ink3);letter-spacing:.4px;text-transform:uppercase;margin-top:-1px;}
+
+#company-picker{position:relative;flex-shrink:0;}
+#company-btn{
+  display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--borderM);
+  border-radius:100px;padding:6px 8px 6px 12px;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--ink);
+  box-shadow:var(--sh-sm); max-width:260px;
+}
+#company-btn .co-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);flex-shrink:0;}
+#company-btn span.co-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+#company-btn svg{flex-shrink:0;color:var(--ink3);}
+#company-menu{
+  position:absolute;top:calc(100% + 8px);left:0;width:300px;background:var(--white);
+  border:1px solid var(--borderM);border-radius:var(--r-md);box-shadow:var(--sh-md);
+  display:none;overflow:hidden;z-index:250;
+}
+#company-menu.open{display:block;}
+.co-list{max-height:260px;overflow-y:auto;}
+.co-item{display:flex;flex-direction:column;gap:1px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);}
+.co-item:last-child{border-bottom:none;}
+.co-item:hover{background:var(--bg);}
+.co-item.active{background:var(--blue3);}
+.co-item .n{font-weight:600;font-size:.85rem;}
+.co-item .m{font-size:.7rem;color:var(--ink3);}
+.co-menu-foot{padding:8px;border-top:1px solid var(--border);background:var(--bg);}
+.co-new-btn{width:100%;text-align:left;background:none;border:none;padding:8px 8px;font-size:.8rem;font-weight:600;color:var(--blue);cursor:pointer;border-radius:var(--r-sm);}
+.co-new-btn:hover{background:var(--blue2);}
+
+/* balance beam — signature element */
+#balance-beam{
+  display:flex;align-items:center;gap:9px;margin-left:auto;padding:5px 12px 5px 8px;border-radius:100px;
+  background:var(--white);border:1px solid var(--borderM);box-shadow:var(--sh-sm);cursor:pointer;flex-shrink:0;
+  transition:border-color .2s;
+}
+#balance-beam:hover{border-color:rgba(0,149,122,.35);}
+#beam-svg{display:block;}
+.beam-fulcrum{fill:var(--ink);}
+.beam-bar{stroke:var(--ink2);stroke-width:2;transition:transform .6s cubic-bezier(.22,.61,.36,1);transform-origin:17px 8px;}
+.beam-pan{fill:none;stroke:var(--ink2);stroke-width:1.6;transition:transform .6s cubic-bezier(.22,.61,.36,1);}
+.beam-pan.left{transform-origin:5px 8px;}
+.beam-pan.right{transform-origin:29px 8px;}
+#beam-label{font-size:.72rem;font-weight:700;color:var(--ink2);white-space:nowrap;}
+#beam-label.ok{color:var(--teal);}
+#beam-label.off{color:var(--red);}
+
+#api-status{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--ink3);flex-shrink:0;cursor:pointer;padding:4px 6px;border-radius:var(--r-sm);}
+#api-status:hover{background:var(--bg2);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ink3);flex-shrink:0;}
+.dot.up{background:#22c55e;}
+.dot.down{background:var(--red);}
+
+/* ---------- sidebar ---------- */
+#sidebar{
+  position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--sidebar-w);
+  background:var(--white);border-right:1px solid var(--border);
+  padding:18px 12px;overflow-y:auto;z-index:100;
+}
+.side-group{margin-bottom:18px;}
+.side-label{font-size:.65rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink3);padding:0 10px;margin-bottom:6px;}
+.side-link{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);font-size:.85rem;font-weight:500;
+  color:var(--ink2);cursor:pointer;transition:background .12s,color .12s; margin-bottom:1px;
+}
+.side-link svg{flex-shrink:0;opacity:.75;}
+.side-link:hover{background:var(--bg);color:var(--ink);}
+.side-link.active{background:var(--blue3);color:var(--blue);font-weight:700;}
+.side-link.active svg{opacity:1;}
+.side-sub{margin-left:14px;border-left:1px solid var(--border);padding-left:4px;display:none;}
+.side-sub.open{display:block;}
+.side-sub .side-link{font-size:.79rem;padding:6px 10px;}
+
+/* ---------- main ---------- */
+#main{margin-left:var(--sidebar-w);margin-top:var(--topbar-h);flex:1;padding:26px 30px 60px;max-width:1180px;}
+@media(max-width:900px){
+  :root{--sidebar-w:0px;}
+  #sidebar{display:none;}
+  #main{padding:20px 16px 50px;}
+}
+
+.view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.view-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;}
+.view-sub{color:var(--ink3);font-size:.85rem;margin-top:3px;}
+.view-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:.82rem;font-family:'Figtree';
+  padding:9px 16px;border-radius:var(--r-sm);border:1.5px solid transparent;cursor:pointer;transition:transform .12s,box-shadow .12s,background .12s,border-color .12s;white-space:nowrap;}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--ink);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);}
+.btn-primary:hover{background:#000;box-shadow:0 4px 16px rgba(0,0,0,.24);}
+.btn-blue{background:var(--blue);color:#fff;box-shadow:0 2px 10px rgba(26,95,255,.28);}
+.btn-blue:hover{background:#1450d6;}
+.btn-teal{background:var(--teal);color:#fff;box-shadow:0 2px 10px rgba(0,149,122,.26);}
+.btn-teal:hover{background:#007a65;}
+.btn-ghost{background:var(--white);color:var(--ink2);border-color:var(--borderM);}
+.btn-ghost:hover{border-color:var(--ink3);color:var(--ink);}
+.btn-danger{background:var(--white);color:var(--red);border-color:rgba(214,58,58,.35);}
+.btn-danger:hover{background:var(--red2);}
+.btn-sm{padding:6px 11px;font-size:.74rem;border-radius:7px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* cards */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm);}
+.card-pad{padding:22px;}
+.grid{display:grid;gap:16px;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+@media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-3{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}}
+
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--sh-sm);position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.c-blue::before{background:var(--blue);} .stat-card.c-teal::before{background:var(--teal);}
+.stat-card.c-gold::before{background:var(--gold);} .stat-card.c-ink::before{background:var(--ink);}
+.stat-card.c-red::before{background:var(--red);}
+.stat-label{font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;}
+.stat-value{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;}
+.stat-value.neg{color:var(--red);}
+
+/* tables */
+.table-wrap{overflow-x:auto;border-radius:var(--r-lg);border:1px solid var(--border);background:var(--white);box-shadow:var(--sh-sm);}
+table{width:100%;border-collapse:collapse;font-size:.83rem;}
+thead th{text-align:left;font-size:.68rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);
+  background:var(--bg);padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(0,0,0,.014);}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;}
+td.mono{font-family:var(--mono);font-size:.78rem;}
+.row-link{cursor:pointer;}
+
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;letter-spacing:.3px;padding:3px 9px;border-radius:100px;text-transform:uppercase;}
+.badge-draft{background:var(--gold2);color:var(--gold);}
+.badge-posted{background:var(--teal2);color:var(--teal);}
+.badge-cancelled{background:var(--red2);color:var(--red);}
+.badge-active{background:var(--teal2);color:var(--teal);}
+.badge-archived{background:var(--bg2);color:var(--ink3);}
+
+/* forms */
+.form-row{margin-bottom:15px;}
+.form-row label{display:block;font-size:.76rem;font-weight:700;color:var(--ink2);margin-bottom:6px;letter-spacing:.2px;}
+.form-row .hint{font-size:.7rem;color:var(--ink3);margin-top:5px;}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=password],input[type=search],select,textarea{
+  width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;
+  font-family:'Figtree';font-size:.85rem;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s,background .15s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue3);background:var(--white);}
+select{cursor:pointer;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr;}}
+.check-row{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--ink2);}
+.check-row input{width:auto;}
+
+/* line items (voucher entry) */
+.lines-table{width:100%;border-collapse:collapse;margin-bottom:8px;}
+.lines-table th{font-size:.65rem;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);text-align:left;padding:0 8px 6px;}
+.lines-table td{padding:4px 6px;}
+.lines-table td.rm{width:32px;}
+.line-remove{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--white);color:var(--ink3);cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;}
+.line-remove:hover{border-color:var(--red);color:var(--red);}
+.totals-row{display:flex;justify-content:flex-end;gap:24px;padding:10px 8px;border-top:1px dashed var(--borderM);margin-top:4px;font-family:var(--mono);font-size:.82rem;}
+.totals-row.balanced{color:var(--teal);}
+.totals-row.unbalanced{color:var(--red);}
+
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap;}
+.tab{padding:9px 14px;font-size:.82rem;font-weight:600;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.tab:hover{color:var(--ink);}
+.tab.active{color:var(--blue);border-color:var(--blue);}
+
+/* empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--ink3);}
+.empty-icon{font-size:2rem;margin-bottom:12px;opacity:.6;}
+.empty h4{font-family:'Syne';font-size:1rem;color:var(--ink);margin-bottom:6px;}
+.empty p{font-size:.82rem;max-width:340px;margin:0 auto 18px;}
+
+/* modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(18,17,16,.45);backdrop-filter:blur(3px);z-index:400;display:none;align-items:flex-start;justify-content:center;padding:60px 16px;overflow-y:auto;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--white);border-radius:var(--r-lg);box-shadow:var(--sh-md);width:100%;max-width:560px;overflow:hidden;animation:modalIn .18s ease;}
+.modal.wide{max-width:760px;}
+@keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);}
+.modal-head h3{font-family:'Syne';font-weight:800;font-size:1.02rem;letter-spacing:-.3px;}
+.modal-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--bg);color:var(--ink2);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:var(--bg2);}
+.modal-body{padding:22px;max-height:70vh;overflow-y:auto;}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:16px 22px;border-top:1px solid var(--border);background:var(--bg);}
+
+/* toasts */
+#toasts{position:fixed;bottom:22px;right:22px;z-index:600;display:flex;flex-direction:column;gap:8px;max-width:340px;}
+.toast{background:var(--ink);color:#fff;padding:12px 16px;border-radius:var(--r-sm);font-size:.82rem;box-shadow:var(--sh-md);display:flex;align-items:flex-start;gap:9px;animation:toastIn .2s ease;}
+.toast.err{background:var(--red);}
+.toast.ok{background:var(--teal);}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* loading */
+.spin{width:16px;height:16px;border:2px solid rgba(0,0,0,.15);border-top-color:var(--ink);border-radius:50%;animation:sp .7s linear infinite;display:inline-block;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.loading-row td{text-align:center;color:var(--ink3);padding:26px;}
+
+/* welcome / api setup screen */
+#gate{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+.gate-card{max-width:440px;width:100%;background:var(--white);border:1px solid var(--border);border-radius:var(--r-xl);padding:36px 32px;box-shadow:var(--sh-md);}
+.gate-logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Syne';font-weight:800;margin-bottom:18px;}
+.gate-card h2{font-family:'Syne';font-weight:800;font-size:1.35rem;letter-spacing:-.6px;margin-bottom:6px;}
+.gate-card p{color:var(--ink3);font-size:.85rem;margin-bottom:20px;line-height:1.6;}
+.gate-status{display:flex;align-items:center;gap:8px;font-size:.78rem;margin-top:10px;color:var(--ink3);}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:100px;background:var(--bg);color:var(--ink2);border:1px solid var(--border);}
+.help-text{font-size:.72rem;color:var(--ink3);margin-top:4px;}
+.section-divider{height:1px;background:var(--border);margin:22px 0;}
+.kv{display:flex;justify-content:space-between;font-size:.82rem;padding:6px 0;border-bottom:1px dashed var(--border);}
+.kv:last-child{border-bottom:none;}
+.kv .k{color:var(--ink3);}
+.kv .v{font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- ============== API GATE (first run / connection lost) ============== -->
+<div id="gate" style="display:none;">
+  <div class="gate-card">
+    <div class="gate-logo">A</div>
+    <h2>Connect to Alaada Accounts</h2>
+    <p>Point this dashboard at your Accounts Engine API — running locally, or deployed on Render.</p>
+    <div class="form-row">
+      <label for="gate-url">API base URL</label>
+      <input type="text" id="gate-url" placeholder="http://127.0.0.1:8000" value="https://accounts-0o52.onrender.com"/>
+      <div class="help-text">Saved in this browser only. Change it any time from the status dot in the top bar.</div>
+    </div>
+    <button class="btn btn-blue" id="gate-connect" style="width:100%;justify-content:center;">Connect →</button>
+    <div class="gate-status" id="gate-status"></div>
+  </div>
+</div>
+
+<div id="app" style="display:flex;">
+
+  <!-- ============== TOPBAR ============== -->
+  <header id="topbar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div>Accounts<small>by Alaada</small></div>
+    </div>
+
+    <div id="company-picker">
+      <button id="company-btn"><span class="co-dot"></span><span class="co-name" id="co-current">No company</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div id="company-menu">
+        <div class="co-list" id="co-list"></div>
+        <div class="co-menu-foot"><button class="co-new-btn" id="co-new-btn">+ New company</button></div>
+      </div>
+    </div>
+
+    <div id="balance-beam" title="Trial balance — click to view report">
+      <svg id="beam-svg" width="34" height="20" viewBox="0 0 34 20">
+        <line x1="17" y1="4" x2="17" y2="16" stroke="var(--ink2)" stroke-width="2"/>
+        <circle cx="17" cy="4" r="1.6" class="beam-fulcrum"/>
+        <g id="beam-bar-g">
+          <line class="beam-bar" id="beam-bar" x1="5" y1="8" x2="29" y2="8"/>
+          <line class="beam-pan left" id="beam-pan-l" x1="5" y1="8" x2="5" y2="14"/>
+          <path class="beam-pan left" d="M1,14 A4,3 0 0 0 9,14" />
+          <line class="beam-pan right" id="beam-pan-r" x1="29" y1="8" x2="29" y2="14"/>
+          <path class="beam-pan right" d="M25,14 A4,3 0 0 0 33,14" />
+        </g>
+      </svg>
+      <span id="beam-label">—</span>
+    </div>
+
+    <div id="api-status" title="Click to change API URL">
+      <span class="dot" id="api-dot"></span>
+      <span id="api-label">checking…</span>
+    </div>
+  </header>
+
+  <!-- ============== SIDEBAR ============== -->
+  <nav id="sidebar">
+    <div class="side-group">
+      <div class="side-link active" data-view="dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Dashboard
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-label">Books</div>
+      <div class="side-link" data-view="groups">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16M4 4v6a2 2 0 0 0 2 2h4M4 4v12a2 2 0 0 0 2 2h4M20 4v16"/><rect x="10" y="10" width="10" height="4" rx="1"/><rect x="10" y="16" width="10" height="4" rx="1"/></svg>
+        Chart of Accounts
+      </div>
+      <div class="side-link" data-view="ledgers">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        Ledgers
+      </div>
+      <div class="side-link" data-view="vouchers">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
+        Vouchers
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-label">Reports</div>
+      <div class="side-link" data-view="report-trial-balance">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+        Trial Balance
+      </div>
+      <div class="side-link" data-view="report-pnl">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-6"/></svg>
+        Profit &amp; Loss
+      </div>
+      <div class="side-link" data-view="report-bs">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+        Balance Sheet
+      </div>
+      <div class="side-link" data-view="report-daybook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>
+        Day Book
+      </div>
+      <div class="side-link" data-view="report-cashbook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+        Cash Book
+      </div>
+      <div class="side-link" data-view="report-bankbook">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6"/></svg>
+        Bank Book
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-label">Company</div>
+      <div class="side-link" data-view="settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+        Company &amp; Financial Years
+      </div>
+      <div class="side-link" data-view="audit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Audit Log
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============== MAIN ============== -->
+  <main id="main">
+    <div id="view"></div>
+  </main>
+</div>
+
+<div id="toasts"></div>
+
+<!-- generic modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">Title</h3>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   STATE + STORAGE
+   ============================================================ */
+const LS = {
+  api: 'alaada_acc_api',
+  company: 'alaada_acc_company',
+};
+const DEFAULT_API = 'https://accounts-0o52.onrender.com';
+let API_BASE = localStorage.getItem(LS.api) || DEFAULT_API;
+let STATE = {
+  companies: [],
+  companyId: localStorage.getItem(LS.company) || null,
+  company: null,
+  groups: [],
+  ledgers: [],
+  voucherTypes: [],
+  financialYears: [],
+  currentView: 'dashboard',
+};
+
+/* ============================================================
+   API WRAPPER
+   ============================================================ */
+async function api(path, {method='GET', body=null, qs=null, raw=false} = {}) {
+  let url = API_BASE.replace(/\/$/,'') + path;
+  if (qs) {
+    const params = Object.entries(qs).filter(([,v]) => v !== undefined && v !== null && v !== '');
+    if (params.length) url += '?' + params.map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+  }
+  const opts = {method, headers:{}};
+  if (body !== null) { opts.headers['Content-Type']='application/json'; opts.body = JSON.stringify(body); }
+  let res;
+  try { res = await fetch(url, opts); }
+  catch(e){ throw new ApiError('Could not reach the API. Check the URL and that the server is running.', 0, {}); }
+  if (raw) return res;
+  let data = null;
+  const text = await res.text();
+  try { data = text ? JSON.parse(text) : null; } catch(e){ data = null; }
+  if (!res.ok) {
+    const msg = (data && data.error && data.error.message) || `Request failed (${res.status})`;
+    throw new ApiError(msg, res.status, data);
+  }
+  return data;
+}
+class ApiError extends Error { constructor(msg, status, data){ super(msg); this.status=status; this.data=data; } }
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+function toast(msg, type='') {
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' '+type : '');
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+}
+function errToast(e){ toast(e.message || 'Something went wrong', 'err'); console.error(e); }
+
+/* ============================================================
+   FORMAT HELPERS
+   ============================================================ */
+function money(v, currency){
+  const n = Number(v || 0);
+  const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const sym = currency === 'USD' ? '$' : (currency === 'EUR' ? '€' : '₹');
+  return (n < 0 ? '−' : '') + sym + abs;
+}
+function fmtDate(d){ if(!d) return '—'; const dt = new Date(d); if(isNaN(dt)) return d; return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function esc(s){ return (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function el(html){ const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+const modalBackdrop = document.getElementById('modal-backdrop');
+function openModal({title, bodyHtml, footHtml, wide=false, onMount=null}) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-foot').innerHTML = footHtml || '';
+  document.getElementById('modal').classList.toggle('wide', wide);
+  modalBackdrop.classList.add('open');
+  if (onMount) onMount();
+}
+function closeModal(){ modalBackdrop.classList.remove('open'); }
+document.getElementById('modal-close').onclick = closeModal;
+modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) closeModal(); });
+
+/* ============================================================
+   API GATE
+   ============================================================ */
+const gate = document.getElementById('gate');
+const gateUrl = document.getElementById('gate-url');
+const gateStatus = document.getElementById('gate-status');
+
+async function tryConnect(url, {silent=false} = {}) {
+  API_BASE = url.trim().replace(/\/$/,'');
+  if (!silent) { gateStatus.innerHTML = '<span class="spin"></span> Connecting…'; }
+  try {
+    const res = await fetch(API_BASE + '/health');
+    if (!res.ok) throw new Error();
+    localStorage.setItem(LS.api, API_BASE);
+    setApiStatus('up');
+    gate.style.display = 'none';
+    await bootstrap();
+    return true;
+  } catch(e) {
+    setApiStatus('down');
+    if (!silent) gateStatus.innerHTML = '⚠ Could not connect to <span class="mono">'+esc(API_BASE)+'</span>. Check the URL, CORS settings, and that the server is running.';
+    return false;
+  }
+}
+document.getElementById('gate-connect').onclick = () => tryConnect(gateUrl.value);
+gateUrl.addEventListener('keydown', e => { if (e.key==='Enter') tryConnect(gateUrl.value); });
+
+function setApiStatus(state){
+  // state: 'up' | 'down' | 'connecting'
+  const dot = document.getElementById('api-dot'), label = document.getElementById('api-label');
+  dot.className = 'dot ' + (state==='up' ? 'up' : (state==='connecting' ? '' : 'down'));
+  label.textContent = state==='up' ? 'Connected' : (state==='connecting' ? 'Connecting…' : 'Offline');
+}
+document.getElementById('api-status').onclick = () => {
+  gateUrl.value = API_BASE || DEFAULT_API;
+  gate.style.display = 'flex';
+  gateStatus.textContent = '';
+};
+
+/* ============================================================
+   BOOTSTRAP
+   ============================================================ */
+async function bootstrap() {
+  await loadCompanies();
+  renderSidebarRouting();
+  navigate(STATE.currentView);
+  pollHealth();
+}
+setInterval(() => { if (API_BASE) pollHealth(); }, 20000);
+async function pollHealth(){
+  try { const r = await fetch(API_BASE + '/health'); setApiStatus(r.ok ? 'up' : 'down'); } catch(e){ setApiStatus('down'); }
+}
+
+/* ============================================================
+   SILENT AUTO-CONNECT — never blocks the UI with the gate.
+   Retries quietly in the background (Render free-tier services can
+   take up to ~60s to wake from sleep), showing a friendly inline
+   state in the main view instead of a full-screen prompt.
+   ============================================================ */
+function renderConnectingView(attempt){
+  view().innerHTML = `<div class="empty" style="padding-top:80px;">
+    <div class="empty-icon"><span class="spin" style="width:26px;height:26px;border-width:3px;"></span></div>
+    <h4>${attempt>1 ? 'Still waking things up…' : 'Connecting to your Accounts Engine…'}</h4>
+    <p>${attempt>1
+        ? `Free-tier services on Render can take up to a minute to wake from sleep. Retrying automatically (attempt ${attempt}).`
+        : `Reaching <span class="mono">${esc(API_BASE)}</span>`}</p>
+  </div>`;
+}
+function renderOfflineView(){
+  view().innerHTML = emptyState('⚠','Could not connect',
+    `Couldn't reach <span class="mono">${esc(API_BASE)}</span>. It may be asleep, unreachable, or blocking this origin (CORS).`,
+    `<button class="btn btn-blue" onclick="startAutoConnect()">Retry now</button>
+     <button class="btn btn-ghost" onclick="document.getElementById('api-status').click()" style="margin-left:8px;">Change API URL</button>`);
+}
+async function startAutoConnect(){
+  gateUrl.value = API_BASE;
+  setApiStatus('connecting');
+  renderConnectingView(1);
+  const delays = [0, 2000, 3000, 5000, 8000, 8000, 8000, 8000]; // ~40s of gentle retries
+  for (let i = 0; i < delays.length; i++) {
+    if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
+    if (i > 0) renderConnectingView(i+1);
+    try {
+      const res = await fetch(API_BASE + '/health');
+      if (res.ok) { localStorage.setItem(LS.api, API_BASE); setApiStatus('up'); await bootstrap(); return; }
+    } catch(e) { /* keep retrying */ }
+  }
+  setApiStatus('down');
+  renderOfflineView();
+}
+startAutoConnect();
+
+/* ============================================================
+   COMPANY PICKER
+   ============================================================ */
+async function loadCompanies() {
+  try {
+    const page = await api('/companies', {qs:{page:1, page_size:100}});
+    STATE.companies = page.items || [];
+  } catch(e) { STATE.companies = []; errToast(e); }
+  renderCompanyMenu();
+  if (!STATE.companyId && STATE.companies.length) STATE.companyId = STATE.companies[0].id;
+  if (STATE.companyId) await selectCompany(STATE.companyId, {silentNav:true});
+  else { STATE.company = null; document.getElementById('co-current').textContent = 'No company'; }
+}
+
+function renderCompanyMenu(){
+  const list = document.getElementById('co-list');
+  if (!STATE.companies.length) {
+    list.innerHTML = `<div style="padding:16px 14px;font-size:.8rem;color:var(--ink3);">No companies yet — create your first one.</div>`;
+    return;
+  }
+  list.innerHTML = STATE.companies.map(c => `
+    <div class="co-item ${c.id===STATE.companyId?'active':''}" data-id="${c.id}">
+      <span class="n">${esc(c.name)}</span>
+      <span class="m">${esc(c.base_currency||'INR')} · ${c.legal_name?esc(c.legal_name):'—'}</span>
+    </div>`).join('');
+  list.querySelectorAll('.co-item').forEach(itEl => {
+    itEl.onclick = () => { selectCompany(itEl.dataset.id); document.getElementById('company-menu').classList.remove('open'); };
+  });
+}
+document.getElementById('company-btn').onclick = () => document.getElementById('company-menu').classList.toggle('open');
+document.addEventListener('click', e => {
+  if (!document.getElementById('company-picker').contains(e.target)) document.getElementById('company-menu').classList.remove('open');
+});
+document.getElementById('co-new-btn').onclick = () => { document.getElementById('company-menu').classList.remove('open'); openCompanyForm(); };
+
+async function selectCompany(id, {silentNav=false} = {}) {
+  STATE.companyId = id;
+  localStorage.setItem(LS.company, id);
+  try {
+    STATE.company = await api(`/companies/${id}`);
+  } catch(e) { errToast(e); STATE.company = null; return; }
+  document.getElementById('co-current').textContent = STATE.company.name;
+  renderCompanyMenu();
+  await Promise.all([loadGroups(), loadLedgers(), loadVoucherTypes(), loadFinancialYears()]);
+  refreshBalanceBeam();
+  if (!silentNav) navigate(STATE.currentView);
+  else navigate(STATE.currentView);
+}
+
+async function loadGroups(){ if(!STATE.companyId) return; try{ STATE.groups = await api(`/companies/${STATE.companyId}/account-groups`);}catch(e){STATE.groups=[];} }
+async function loadLedgers(){ if(!STATE.companyId) return; try{ const p = await api(`/companies/${STATE.companyId}/ledgers`, {qs:{page_size:500}}); STATE.ledgers = p.items||[]; }catch(e){STATE.ledgers=[];} }
+async function loadVoucherTypes(){ if(!STATE.companyId) return; try{ STATE.voucherTypes = await api(`/companies/${STATE.companyId}/voucher-types`);}catch(e){STATE.voucherTypes=[];} }
+async function loadFinancialYears(){ if(!STATE.companyId) return; try{ STATE.financialYears = await api(`/companies/${STATE.companyId}/financial-years`);}catch(e){STATE.financialYears=[];} }
+
+function requireCompany(){
+  if (!STATE.companyId) {
+    view().innerHTML = emptyState('🏢','No company selected','Create a company to start recording ledgers and vouchers.',
+      `<button class="btn btn-blue" onclick="openCompanyForm()">+ Create company</button>`);
+    return false;
+  }
+  return true;
+}
+
+/* ============================================================
+   BALANCE BEAM (signature element) — reflects trial balance
+   ============================================================ */
+async function refreshBalanceBeam(){
+  const label = document.getElementById('beam-label');
+  const bar = document.getElementById('beam-bar');
+  const panL = document.getElementById('beam-pan-l');
+  const panR = document.getElementById('beam-pan-r');
+  if (!STATE.companyId) { label.textContent='—'; label.className=''; return; }
+  try {
+    const tb = await api(`/companies/${STATE.companyId}/reports/trial-balance`);
+    const d = tb.total_debit, c = tb.total_credit;
+    const balanced = tb.is_balanced;
+    label.textContent = balanced ? 'Books balanced' : 'Out of balance';
+    label.className = balanced ? 'ok' : 'off';
+    const tilt = balanced ? 0 : Math.max(-10, Math.min(10, (d-c) > 0 ? -8 : 8));
+    bar.style.transform = `rotate(${tilt}deg)`;
+    panL.style.transform = `rotate(${tilt}deg)`;
+    panR.style.transform = `rotate(${tilt}deg)`;
+  } catch(e) { label.textContent='—'; label.className=''; }
+}
+document.getElementById('balance-beam').onclick = () => navigate('report-trial-balance');
+
+/* ============================================================
+   ROUTING / SIDEBAR
+   ============================================================ */
+function view(){ return document.getElementById('view'); }
+function renderSidebarRouting(){
+  document.querySelectorAll('.side-link[data-view]').forEach(l => {
+    l.onclick = () => navigate(l.dataset.view);
+  });
+}
+const VIEW_RENDERERS = {}; // filled below
+
+function navigate(v){
+  STATE.currentView = v;
+  document.querySelectorAll('.side-link[data-view]').forEach(l => l.classList.toggle('active', l.dataset.view===v));
+  const fn = VIEW_RENDERERS[v] || renderDashboard;
+  fn();
+}
+
+function emptyState(icon, title, body, actionsHtml){
+  return `<div class="empty"><div class="empty-icon">${icon}</div><h4>${esc(title)}</h4><p>${body}</p>${actionsHtml||''}</div>`;
+}
+function viewHead(title, sub, actionsHtml){
+  return `<div class="view-head"><div><div class="view-title">${esc(title)}</div>${sub?`<div class="view-sub">${sub}</div>`:''}</div><div class="view-actions">${actionsHtml||''}</div></div>`;
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+async function renderDashboard(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead(STATE.company.name, `Fiscal overview · ${esc(STATE.company.base_currency||'INR')} · as of ${fmtDate(todayStr())}`,
+    `<button class="btn btn-ghost btn-sm" onclick="seedDemo()">✦ Seed demo data</button>
+     <button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`) +
+    `<div id="dash-body"><div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading dashboard…</td></tr></tbody></table></div></div>`;
+  try {
+    const d = await api(`/companies/${STATE.companyId}/dashboard`);
+    const cur = STATE.company.base_currency;
+    const body = `
+      <div class="grid grid-4" style="margin-bottom:18px;">
+        <div class="stat-card c-blue"><div class="stat-label">Total Assets</div><div class="stat-value">${money(d.total_assets,cur)}</div></div>
+        <div class="stat-card c-gold"><div class="stat-label">Total Liabilities</div><div class="stat-value">${money(d.total_liabilities,cur)}</div></div>
+        <div class="stat-card c-teal"><div class="stat-label">Net Profit (YTD)</div><div class="stat-value ${d.net_profit<0?'neg':''}">${money(d.net_profit,cur)}</div></div>
+        <div class="stat-card c-ink"><div class="stat-label">Posted Vouchers</div><div class="stat-value">${d.voucher_count}</div></div>
+      </div>
+      <div class="grid grid-3" style="margin-bottom:22px;">
+        <div class="stat-card c-teal"><div class="stat-label">Cash Balance</div><div class="stat-value">${money(d.cash_balance,cur)}</div></div>
+        <div class="stat-card c-blue"><div class="stat-label">Bank Balance</div><div class="stat-value">${money(d.bank_balance,cur)}</div></div>
+        <div class="stat-card c-gold"><div class="stat-label">Total Income (YTD)</div><div class="stat-value">${money(d.total_income,cur)}</div></div>
+      </div>
+      <div class="view-head" style="margin-bottom:12px;"><div class="view-title" style="font-size:1.05rem;">Recent activity</div>
+        <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('vouchers')">View all vouchers →</button></div></div>
+      ${renderRecentTable(d.recent_transactions, cur)}
+    `;
+    document.getElementById('dash-body').innerHTML = body;
+  } catch(e) {
+    document.getElementById('dash-body').innerHTML = emptyState('⚠','Could not load dashboard', esc(e.message), `<button class="btn btn-ghost" onclick="navigate('dashboard')">Retry</button>`);
+  }
+}
+function renderRecentTable(items, cur){
+  if (!items || !items.length) return emptyState('🧾','No transactions yet','Record your first voucher to see activity here.',`<button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`);
+  return `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Voucher #</th><th>Narration</th><th>Status</th></tr></thead>
+    <tbody>${items.map(v => `<tr class="row-link" onclick="openVoucherDetail('${v.id}')">
+      <td>${fmtDate(v.date)}</td><td class="mono">${esc(v.voucher_number)}</td><td>${esc(v.narration||'—')}</td>
+      <td><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+async function seedDemo(){
+  try {
+    toast('Seeding demo company…');
+    const c = await api('/demo/seed', {method:'POST'});
+    await loadCompanies();
+    await selectCompany(c.id);
+    toast('Demo company ready ✓','ok');
+    navigate('dashboard');
+  } catch(e){ errToast(e); }
+}
+VIEW_RENDERERS['dashboard'] = renderDashboard;
+
+/* ============================================================
+   CHART OF ACCOUNTS (groups)
+   ============================================================ */
+async function renderGroups(){
+  if (!requireCompany()) return;
+  await loadGroups();
+  const byType = {ASSET:[],LIABILITY:[],EQUITY:[],INCOME:[],EXPENSE:[]};
+  STATE.groups.forEach(g => (byType[g.account_type] = byType[g.account_type]||[]).push(g));
+  const typeMeta = {ASSET:['Assets','blue'],LIABILITY:['Liabilities','gold'],EQUITY:['Equity','ink'],INCOME:['Income','teal'],EXPENSE:['Expenses','red']};
+  view().innerHTML = viewHead('Chart of Accounts', 'Groups organise your ledgers by account type.',
+    `<button class="btn btn-blue" onclick="openGroupForm()">+ New group</button>`) +
+    `<div class="grid grid-2">${Object.entries(typeMeta).map(([type,[label]]) => {
+      const groups = byType[type]||[];
+      const roots = groups.filter(g=>!g.parent_id);
+      const childrenOf = pid => groups.filter(g=>g.parent_id===pid);
+      const renderNode = g => `<div style="padding:7px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:.83rem;font-weight:${g.is_primary?800:500};">${esc(g.name)}${g.is_primary?' <span class="pill" style="margin-left:6px;">primary</span>':''}</span>
+          ${!g.is_primary?`<button class="btn btn-ghost btn-sm" onclick="deleteGroup('${g.id}')">Delete</button>`:''}
+        </div>
+        ${childrenOf(g.id).map(c => `<div style="padding:6px 0 6px 16px;border-bottom:1px dashed var(--border);font-size:.8rem;color:var(--ink2);display:flex;justify-content:space-between;">
+          <span>↳ ${esc(c.name)}</span><button class="btn btn-ghost btn-sm" onclick="deleteGroup('${c.id}')">Delete</button></div>`).join('')}
+      `;
+      return `<div class="card card-pad"><div style="font-family:'Syne';font-weight:800;margin-bottom:10px;">${label}</div>
+        ${roots.length?roots.map(renderNode).join(''):'<div style="font-size:.8rem;color:var(--ink3);">No groups yet</div>'}
+      </div>`;
+    }).join('')}</div>`;
+}
+VIEW_RENDERERS['groups'] = renderGroups;
+
+function openGroupForm(){
+  const opts = STATE.groups.map(g => `<option value="${g.id}">${esc(g.name)} (${g.account_type})</option>`).join('');
+  openModal({
+    title:'New account group',
+    bodyHtml:`
+      <div class="form-row"><label>Group name</label><input type="text" id="f-gname" placeholder="e.g. Fixed Deposits"/></div>
+      <div class="form-row"><label>Account type</label>
+        <select id="f-gtype"><option value="ASSET">Asset</option><option value="LIABILITY">Liability</option><option value="EQUITY">Equity</option><option value="INCOME">Income</option><option value="EXPENSE">Expense</option></select>
+      </div>
+      <div class="form-row"><label>Parent group (optional)</label><select id="f-gparent"><option value="">— top level —</option>${opts}</select></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="f-gsave">Create group</button>`,
+    onMount:() => { document.getElementById('f-gsave').onclick = submitGroupForm; }
+  });
+}
+async function submitGroupForm(){
+  const name = document.getElementById('f-gname').value.trim();
+  const account_type = document.getElementById('f-gtype').value;
+  const parent_id = document.getElementById('f-gparent').value || null;
+  if (!name) return toast('Group name is required','err');
+  try {
+    await api(`/companies/${STATE.companyId}/account-groups`, {method:'POST', body:{name, account_type, parent_id}});
+    toast('Group created ✓','ok'); closeModal(); renderGroups();
+  } catch(e){ errToast(e); }
+}
+async function deleteGroup(id){
+  if (!confirm('Delete this account group?')) return;
+  try { await api(`/companies/${STATE.companyId}/account-groups/${id}`, {method:'DELETE'}); toast('Group deleted','ok'); renderGroups(); }
+  catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   LEDGERS
+   ============================================================ */
+async function renderLedgers(){
+  if (!requireCompany()) return;
+  await loadLedgers();
+  view().innerHTML = viewHead('Ledgers', `${STATE.ledgers.length} ledger${STATE.ledgers.length===1?'':'s'} in ${esc(STATE.company.name)}`,
+    `<input type="search" id="ledger-search" placeholder="Search ledgers…" style="width:200px;">
+     <button class="btn btn-blue" onclick="openLedgerForm()">+ New ledger</button>`) +
+    `<div id="ledger-table"></div>`;
+  document.getElementById('ledger-search').oninput = (e) => renderLedgerTable(e.target.value);
+  renderLedgerTable('');
+}
+function groupName(id){ const g = STATE.groups.find(g=>g.id===id); return g? g.name : '—'; }
+function renderLedgerTable(q){
+  const cur = STATE.company.base_currency;
+  let items = STATE.ledgers;
+  if (q) items = items.filter(l => l.name.toLowerCase().includes(q.toLowerCase()) || (l.code||'').toLowerCase().includes(q.toLowerCase()));
+  if (!items.length) { document.getElementById('ledger-table').innerHTML = emptyState('📒','No ledgers found', q?'No ledgers match your search.':'Create your first ledger — Cash, Bank, Sales, or a customer/supplier account.', q?'':`<button class="btn btn-blue" onclick="openLedgerForm()">+ New ledger</button>`); return; }
+  document.getElementById('ledger-table').innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Group</th><th>Opening Balance</th><th>Type</th><th>Status</th><th></th></tr></thead>
+    <tbody>${items.map(l => `<tr>
+      <td class="row-link" onclick="openLedgerDetail('${l.id}')"><strong>${esc(l.name)}</strong>${l.cash_bank_type?` <span class="pill">${l.cash_bank_type}</span>`:''}</td>
+      <td>${esc(groupName(l.group_id))}</td>
+      <td class="num">${money(l.opening_balance, l.currency)}</td>
+      <td>${l.opening_balance_type}</td>
+      <td><span class="badge badge-${l.status.toLowerCase()}">${l.status}</span></td>
+      <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openLedgerDetail('${l.id}')">View</button></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+VIEW_RENDERERS['ledgers'] = renderLedgers;
+
+function openLedgerForm(){
+  const groupOpts = STATE.groups.map(g => `<option value="${g.id}">${esc(g.name)} (${g.account_type})</option>`).join('');
+  openModal({
+    title:'New ledger', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Ledger name</label><input type="text" id="f-lname" placeholder="e.g. HDFC Bank Current A/c"/></div>
+        <div class="form-row"><label>Account group</label><select id="f-lgroup">${groupOpts || '<option value="">Create a group first</option>'}</select></div>
+        <div class="form-row"><label>Opening balance</label><input type="number" step="0.01" id="f-lob" value="0"/></div>
+        <div class="form-row"><label>Balance side</label><select id="f-lobtype"><option value="DEBIT">Debit</option><option value="CREDIT">Credit</option></select></div>
+        <div class="form-row"><label>Currency</label><input type="text" id="f-lcur" value="${esc(STATE.company.base_currency||'INR')}"/></div>
+        <div class="form-row"><label>Cash / Bank tag (optional)</label><select id="f-lcbtype"><option value="">— none —</option><option value="CASH">Cash</option><option value="BANK">Bank</option></select></div>
+      </div>
+      <div class="form-row"><label class="check-row"><input type="checkbox" id="f-lgst"/> GST applicable</label></div>
+      <div class="form-row" id="f-lgstnum-row" style="display:none;"><label>GST number</label><input type="text" id="f-lgstnum"/></div>
+      <div class="form-row"><label>Notes (optional)</label><textarea id="f-ldesc" rows="2"></textarea></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="f-lsave">Create ledger</button>`,
+    onMount:() => {
+      document.getElementById('f-lgst').onchange = e => document.getElementById('f-lgstnum-row').style.display = e.target.checked?'block':'none';
+      document.getElementById('f-lsave').onclick = submitLedgerForm;
+    }
+  });
+}
+async function submitLedgerForm(){
+  const name = document.getElementById('f-lname').value.trim();
+  const group_id = document.getElementById('f-lgroup').value;
+  if (!name) return toast('Ledger name is required','err');
+  if (!group_id) return toast('Choose an account group','err');
+  const payload = {
+    name, group_id,
+    opening_balance: parseFloat(document.getElementById('f-lob').value || '0'),
+    opening_balance_type: document.getElementById('f-lobtype').value,
+    currency: document.getElementById('f-lcur').value.trim() || 'INR',
+    gst_applicable: document.getElementById('f-lgst').checked,
+    gst_number: document.getElementById('f-lgstnum') ? (document.getElementById('f-lgstnum').value.trim() || null) : null,
+    cash_bank_type: document.getElementById('f-lcbtype').value || null,
+    description: document.getElementById('f-ldesc').value.trim() || null,
+  };
+  try {
+    await api(`/companies/${STATE.companyId}/ledgers`, {method:'POST', body:payload});
+    toast('Ledger created ✓','ok'); closeModal(); await loadLedgers(); renderLedgers();
+  } catch(e){ errToast(e); }
+}
+
+async function openLedgerDetail(id){
+  const l = STATE.ledgers.find(x=>x.id===id); if (!l) return;
+  openModal({
+    title: l.name, wide:true,
+    bodyHtml: `<div id="ld-body"><span class="spin"></span> Loading ledger…</div>`,
+    footHtml: `<button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      ${l.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveLedger('${l.id}')">Archive</button>`:''}`,
+  });
+  try {
+    const [balRes, gl] = await Promise.all([
+      api(`/companies/${STATE.companyId}/ledgers/${id}/balance`),
+      api(`/companies/${STATE.companyId}/reports/general-ledger/${id}`)
+    ]);
+    document.getElementById('ld-body').innerHTML = `
+      <div class="grid grid-3" style="margin-bottom:18px;">
+        <div class="stat-card c-blue"><div class="stat-label">Current Balance</div><div class="stat-value">${money(balRes.balance, l.currency)}</div></div>
+        <div class="stat-card c-teal"><div class="stat-label">Opening Balance</div><div class="stat-value">${money(gl.opening_balance, l.currency)}</div></div>
+        <div class="stat-card c-gold"><div class="stat-label">Group</div><div class="stat-value" style="font-size:1rem;">${esc(groupName(l.group_id))}</div></div>
+      </div>
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:8px;">Ledger entries</div>
+      ${gl.entries.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Narration</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Running</th></tr></thead>
+      <tbody>${gl.entries.map(r => `<tr><td>${fmtDate(r.date)}</td><td>${esc(r.narration||'—')}${r.is_reversal?' <span class="pill">reversal</span>':''}</td>
+        <td class="num">${r.debit>0?money(r.debit,l.currency):''}</td><td class="num">${r.credit>0?money(r.credit,l.currency):''}</td>
+        <td class="num">${money(r.running_balance,l.currency)}</td></tr>`).join('')}</tbody></table></div>`
+        : emptyState('📄','No postings yet','This ledger has no posted transactions.')}
+    `;
+  } catch(e){ document.getElementById('ld-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+async function archiveLedger(id){
+  if (!confirm('Archive this ledger? It will no longer be usable in new vouchers.')) return;
+  try { await api(`/companies/${STATE.companyId}/ledgers/${id}/archive`, {method:'POST'}); toast('Ledger archived','ok'); closeModal(); await loadLedgers(); renderLedgers(); }
+  catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   VOUCHERS
+   ============================================================ */
+let voucherFilters = {status:'', voucher_type_id:'', date_from:'', date_to:''};
+async function renderVouchers(){
+  if (!requireCompany()) return;
+  const typeOpts = STATE.voucherTypes.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  view().innerHTML = viewHead('Vouchers', 'Every transaction, from draft to posted.',
+    `<button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`) +
+    `<div class="card card-pad" style="margin-bottom:16px;">
+      <div class="form-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="form-row" style="margin-bottom:0;"><label>Type</label><select id="vf-type"><option value="">All types</option>${typeOpts}</select></div>
+        <div class="form-row" style="margin-bottom:0;"><label>Status</label><select id="vf-status"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="POSTED">Posted</option><option value="CANCELLED">Cancelled</option></select></div>
+        <div class="form-row" style="margin-bottom:0;"><label>From</label><input type="date" id="vf-from"/></div>
+        <div class="form-row" style="margin-bottom:0;"><label>To</label><input type="date" id="vf-to"/></div>
+      </div>
+    </div>
+    <div id="voucher-table"></div>`;
+  ['vf-type','vf-status','vf-from','vf-to'].forEach(id => document.getElementById(id).onchange = loadVoucherTable);
+  loadVoucherTable();
+}
+VIEW_RENDERERS['vouchers'] = renderVouchers;
+
+async function loadVoucherTable(){
+  const qs = {
+    page:1, page_size:100,
+    voucher_type_id: document.getElementById('vf-type').value || undefined,
+    status: document.getElementById('vf-status').value || undefined,
+    date_from: document.getElementById('vf-from').value || undefined,
+    date_to: document.getElementById('vf-to').value || undefined,
+  };
+  document.getElementById('voucher-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading vouchers…</td></tr></tbody></table></div>`;
+  try {
+    const page = await api(`/companies/${STATE.companyId}/vouchers`, {qs});
+    renderVoucherTable(page.items);
+  } catch(e){ document.getElementById('voucher-table').innerHTML = emptyState('⚠','Could not load vouchers', esc(e.message)); }
+}
+function voucherTypeName(id){ const t = STATE.voucherTypes.find(t=>t.id===id); return t?t.name:'—'; }
+function renderVoucherTable(items){
+  if (!items.length) { document.getElementById('voucher-table').innerHTML = emptyState('🧾','No vouchers found','Try different filters, or record a new voucher.',`<button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`); return; }
+  document.getElementById('voucher-table').innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>No.</th><th>Type</th><th>Narration</th><th class="num">Amount</th><th>Status</th></tr></thead>
+    <tbody>${items.map(v => {
+      const total = v.lines.reduce((s,l)=>s+parseFloat(l.debit||0),0);
+      return `<tr class="row-link" onclick="openVoucherDetail('${v.id}')">
+        <td>${fmtDate(v.date)}</td><td class="mono">${esc(v.voucher_number)}</td><td>${esc(voucherTypeName(v.voucher_type_id))}</td>
+        <td>${esc(v.narration||'—')}</td><td class="num">${money(total, STATE.company.base_currency)}</td>
+        <td><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></td></tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+function openVoucherForm(){
+  if (!STATE.voucherTypes.length) return toast('No voucher types available for this company','err');
+  if (!STATE.ledgers.length) return toast('Create at least one ledger before recording vouchers','err');
+  const typeOpts = STATE.voucherTypes.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  openModal({
+    title:'New voucher', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Voucher type</label><select id="vf2-type">${typeOpts}</select></div>
+        <div class="form-row"><label>Date</label><input type="date" id="vf2-date" value="${todayStr()}"/></div>
+      </div>
+      <div class="form-row"><label>Narration (optional)</label><input type="text" id="vf2-narr" placeholder="What is this voucher for?"/></div>
+      <div class="form-row">
+        <label>Line items</label>
+        <table class="lines-table" id="lines-table">
+          <thead><tr><th style="width:38%;">Ledger</th><th class="num" style="width:22%;">Debit</th><th class="num" style="width:22%;">Credit</th><th>Remarks</th><th class="rm"></th></tr></thead>
+          <tbody id="lines-body"></tbody>
+        </table>
+        <button class="btn btn-ghost btn-sm" id="add-line-btn">+ Add line</button>
+      </div>
+      <div class="totals-row" id="totals-row">Debit: 0.00 &nbsp;|&nbsp; Credit: 0.00</div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="vf2-save">Save as draft</button>`,
+    onMount:() => {
+      addVoucherLine(); addVoucherLine();
+      document.getElementById('add-line-btn').onclick = addVoucherLine;
+      document.getElementById('vf2-save').onclick = submitVoucherForm;
+    }
+  });
+}
+function ledgerOptionsHtml(){
+  return STATE.ledgers.filter(l=>l.status==='ACTIVE').map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+}
+function addVoucherLine(){
+  const tbody = document.getElementById('lines-body');
+  const row = el(`<tr>
+    <td><select class="ln-ledger">${ledgerOptionsHtml()}</select></td>
+    <td><input type="number" step="0.01" class="ln-debit" placeholder="0.00"/></td>
+    <td><input type="number" step="0.01" class="ln-credit" placeholder="0.00"/></td>
+    <td><input type="text" class="ln-remarks" placeholder="optional"/></td>
+    <td class="rm"><button type="button" class="line-remove">✕</button></td>
+  </tr>`);
+  row.querySelector('.line-remove').onclick = () => { row.remove(); updateTotals(); };
+  row.querySelector('.ln-debit').oninput = (e) => { if(parseFloat(e.target.value)>0) row.querySelector('.ln-credit').value=''; updateTotals(); };
+  row.querySelector('.ln-credit').oninput = (e) => { if(parseFloat(e.target.value)>0) row.querySelector('.ln-debit').value=''; updateTotals(); };
+  tbody.appendChild(row);
+  updateTotals();
+}
+function updateTotals(){
+  const rows = document.querySelectorAll('#lines-body tr');
+  let d=0,c=0;
+  rows.forEach(r => { d += parseFloat(r.querySelector('.ln-debit').value||0); c += parseFloat(r.querySelector('.ln-credit').value||0); });
+  const t = document.getElementById('totals-row');
+  const bal = Math.abs(d-c) < 0.005;
+  t.className = 'totals-row ' + (bal && d>0 ? 'balanced' : 'unbalanced');
+  t.textContent = `Debit: ${d.toFixed(2)}   |   Credit: ${c.toFixed(2)}   ${bal && d>0 ? '✓ balanced' : (d||c ? '✗ not balanced' : '')}`;
+}
+async function submitVoucherForm(){
+  const rows = document.querySelectorAll('#lines-body tr');
+  const lines = [];
+  for (const r of rows) {
+    const ledger_id = r.querySelector('.ln-ledger').value;
+    const debit = parseFloat(r.querySelector('.ln-debit').value || 0);
+    const credit = parseFloat(r.querySelector('.ln-credit').value || 0);
+    const remarks = r.querySelector('.ln-remarks').value.trim() || null;
+    if (debit===0 && credit===0) continue;
+    lines.push({ledger_id, debit, credit, remarks});
+  }
+  if (lines.length < 2) return toast('Add at least two line items','err');
+  const payload = {
+    voucher_type_id: document.getElementById('vf2-type').value,
+    date: document.getElementById('vf2-date').value,
+    narration: document.getElementById('vf2-narr').value.trim() || null,
+    lines,
+  };
+  try {
+    const v = await api(`/companies/${STATE.companyId}/vouchers`, {method:'POST', body:payload});
+    toast('Voucher saved as draft ✓','ok'); closeModal();
+    openVoucherDetail(v.id);
+  } catch(e){ errToast(e); }
+}
+
+async function openVoucherDetail(id){
+  openModal({title:'Voucher', wide:true, bodyHtml:`<div id="vd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  try {
+    const v = await api(`/companies/${STATE.companyId}/vouchers/${id}`);
+    const cur = STATE.company.base_currency;
+    const total = v.lines.reduce((s,l)=>s+parseFloat(l.debit||0),0);
+    document.getElementById('modal-title').textContent = `${voucherTypeName(v.voucher_type_id)} · ${v.voucher_number}`;
+    document.getElementById('vd-body').innerHTML = `
+      <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(v.date)}</span></div>
+      <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(v.narration||'—')}</span></div>
+      <div class="section-divider"></div>
+      <table class="lines-table"><thead><tr><th>Ledger</th><th class="num">Debit</th><th class="num">Credit</th><th>Remarks</th></tr></thead>
+      <tbody>${v.lines.map(l => `<tr><td>${esc((STATE.ledgers.find(x=>x.id===l.ledger_id)||{}).name || l.ledger_id)}</td>
+        <td class="num">${l.debit>0?money(l.debit,cur):''}</td><td class="num">${l.credit>0?money(l.credit,cur):''}</td><td>${esc(l.remarks||'')}</td></tr>`).join('')}</tbody></table>
+      <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(total,cur)}</div>
+    `;
+    const foot = document.getElementById('modal-foot');
+    let actions = `<button class="btn btn-ghost" onclick="closeModal()">Close</button>`;
+    if (v.status==='DRAFT') actions += `<button class="btn btn-danger" onclick="deleteVoucherAction('${v.id}')">Delete</button><button class="btn btn-teal" onclick="postVoucherAction('${v.id}')">Post voucher</button>`;
+    if (v.status==='POSTED') actions += `<button class="btn btn-danger" onclick="cancelVoucherAction('${v.id}')">Cancel (reverse)</button>`;
+    foot.innerHTML = actions;
+  } catch(e){ document.getElementById('vd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+async function postVoucherAction(id){
+  try { await api(`/companies/${STATE.companyId}/vouchers/${id}/post`, {method:'POST'}); toast('Voucher posted ✓','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
+  catch(e){ errToast(e); }
+}
+async function cancelVoucherAction(id){
+  if (!confirm('Cancel this posted voucher? A reversal entry will be created — the original stays in the audit trail.')) return;
+  try { await api(`/companies/${STATE.companyId}/vouchers/${id}/cancel`, {method:'POST'}); toast('Voucher cancelled (reversed) ✓','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); }
+  catch(e){ errToast(e); }
+}
+async function deleteVoucherAction(id){
+  if (!confirm('Delete this draft voucher? This cannot be undone.')) return;
+  try { await api(`/companies/${STATE.companyId}/vouchers/${id}`, {method:'DELETE'}); toast('Draft deleted','ok'); closeModal(); if(STATE.currentView==='vouchers') loadVoucherTable(); }
+  catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   REPORTS
+   ============================================================ */
+async function renderTrialBalance(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Trial Balance', 'Every ledger balance, debit and credit side by side.',
+    `<input type="date" id="tb-asof" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadTrialBalance()">Refresh</button>`) +
+    `<div id="tb-body"></div>`;
+  document.getElementById('tb-asof').onchange = loadTrialBalance;
+  loadTrialBalance();
+}
+async function loadTrialBalance(){
+  const as_of = document.getElementById('tb-asof').value;
+  document.getElementById('tb-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const tb = await api(`/companies/${STATE.companyId}/reports/trial-balance`, {qs:{as_of}});
+    const cur = STATE.company.base_currency;
+    document.getElementById('tb-body').innerHTML = `
+      <div class="grid grid-3" style="margin-bottom:16px;">
+        <div class="stat-card c-blue"><div class="stat-label">Total Debit</div><div class="stat-value">${money(tb.total_debit,cur)}</div></div>
+        <div class="stat-card c-gold"><div class="stat-label">Total Credit</div><div class="stat-value">${money(tb.total_credit,cur)}</div></div>
+        <div class="stat-card ${tb.is_balanced?'c-teal':'c-red'}"><div class="stat-label">Status</div><div class="stat-value" style="font-size:1.1rem;">${tb.is_balanced?'✓ Balanced':'✗ Out of balance'}</div></div>
+      </div>
+      ${tb.rows.length ? `<div class="table-wrap"><table><thead><tr><th>Ledger</th><th>Group</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+      <tbody>${tb.rows.map(r => `<tr><td>${esc(r.ledger_name)}</td><td>${esc(r.group)}</td><td class="num">${r.debit>0?money(r.debit,cur):''}</td><td class="num">${r.credit>0?money(r.credit,cur):''}</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('📊','No balances yet','Post some vouchers to see the trial balance.')}
+    `;
+  } catch(e){ document.getElementById('tb-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
+}
+VIEW_RENDERERS['report-trial-balance'] = renderTrialBalance;
+
+async function renderPnl(){
+  if (!requireCompany()) return;
+  const fyStart = STATE.company.financial_year_start || todayStr().slice(0,4)+'-04-01';
+  view().innerHTML = viewHead('Profit &amp; Loss', 'Income and expenses for a chosen period.',
+    `<input type="date" id="pnl-from" value="${fyStart}"><input type="date" id="pnl-to" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadPnl()">Run</button>`) +
+    `<div id="pnl-body"></div>`;
+  loadPnl();
+}
+async function loadPnl(){
+  const date_from = document.getElementById('pnl-from').value, date_to = document.getElementById('pnl-to').value;
+  document.getElementById('pnl-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const p = await api(`/companies/${STATE.companyId}/reports/profit-and-loss`, {qs:{date_from, date_to}});
+    const cur = STATE.company.base_currency;
+    document.getElementById('pnl-body').innerHTML = `
+      <div class="grid grid-3" style="margin-bottom:16px;">
+        <div class="stat-card c-teal"><div class="stat-label">Total Income</div><div class="stat-value">${money(p.total_income,cur)}</div></div>
+        <div class="stat-card c-gold"><div class="stat-label">Total Expenses</div><div class="stat-value">${money(p.total_expenses,cur)}</div></div>
+        <div class="stat-card ${p.net_profit>=0?'c-blue':'c-red'}"><div class="stat-label">Net Profit</div><div class="stat-value ${p.net_profit<0?'neg':''}">${money(p.net_profit,cur)}</div></div>
+      </div>
+      <div class="grid grid-2">
+        <div class="card card-pad"><div style="font-weight:800;margin-bottom:10px;">Income</div>
+        ${p.income.length? p.income.map(r=>`<div class="kv"><span class="k">${esc(r.ledger_name)}</span><span class="v">${money(r.balance,cur)}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No income posted in this period.</div>'}</div>
+        <div class="card card-pad"><div style="font-weight:800;margin-bottom:10px;">Expenses</div>
+        ${p.expenses.length? p.expenses.map(r=>`<div class="kv"><span class="k">${esc(r.ledger_name)}</span><span class="v">${money(r.balance,cur)}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No expenses posted in this period.</div>'}</div>
+      </div>
+    `;
+  } catch(e){ document.getElementById('pnl-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
+}
+VIEW_RENDERERS['report-pnl'] = renderPnl;
+
+async function renderBalanceSheet(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Balance Sheet', 'Assets, liabilities and equity — always in balance.',
+    `<input type="date" id="bs-asof" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadBalanceSheet()">Run</button>`) +
+    `<div id="bs-body"></div>`;
+  loadBalanceSheet();
+}
+async function loadBalanceSheet(){
+  const as_of = document.getElementById('bs-asof').value;
+  document.getElementById('bs-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const b = await api(`/companies/${STATE.companyId}/reports/balance-sheet`, {qs:{as_of}});
+    const cur = STATE.company.base_currency;
+    document.getElementById('bs-body').innerHTML = `
+      <div class="grid grid-3" style="margin-bottom:16px;">
+        <div class="stat-card c-blue"><div class="stat-label">Total Assets</div><div class="stat-value">${money(b.total_assets,cur)}</div></div>
+        <div class="stat-card c-gold"><div class="stat-label">Liabilities + Equity</div><div class="stat-value">${money(b.total_liabilities+b.total_equity,cur)}</div></div>
+        <div class="stat-card ${b.is_balanced?'c-teal':'c-red'}"><div class="stat-label">Status</div><div class="stat-value" style="font-size:1.1rem;">${b.is_balanced?'✓ Balanced':'✗ Out of balance'}</div></div>
+      </div>
+      <div class="grid grid-3">
+        <div class="card card-pad"><div style="font-weight:800;margin-bottom:10px;">Assets</div>${b.assets.length?b.assets.map(r=>`<div class="kv"><span class="k">${esc(r.ledger_name)}</span><span class="v">${money(r.balance,cur)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink3);">None</div>'}</div>
+        <div class="card card-pad"><div style="font-weight:800;margin-bottom:10px;">Liabilities</div>${b.liabilities.length?b.liabilities.map(r=>`<div class="kv"><span class="k">${esc(r.ledger_name)}</span><span class="v">${money(r.balance,cur)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink3);">None</div>'}</div>
+        <div class="card card-pad"><div style="font-weight:800;margin-bottom:10px;">Equity</div>${b.equity.length?b.equity.map(r=>`<div class="kv"><span class="k">${esc(r.ledger_name)}</span><span class="v">${money(r.balance,cur)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink3);">None</div>'}<div class="kv"><span class="k">Current year profit</span><span class="v">${money(b.current_year_net_profit,cur)}</span></div></div>
+      </div>
+    `;
+  } catch(e){ document.getElementById('bs-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
+}
+VIEW_RENDERERS['report-bs'] = renderBalanceSheet;
+
+async function renderDayBook(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Day Book', 'A chronological log of every posted or cancelled voucher.',
+    `<input type="date" id="db-from"><input type="date" id="db-to" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadDayBook()">Run</button>`) +
+    `<div id="db-body"></div>`;
+  loadDayBook();
+}
+async function loadDayBook(){
+  const date_from = document.getElementById('db-from').value || undefined, date_to = document.getElementById('db-to').value || undefined;
+  document.getElementById('db-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const rows = await api(`/companies/${STATE.companyId}/reports/day-book`, {qs:{date_from, date_to}});
+    const cur = STATE.company.base_currency;
+    document.getElementById('db-body').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Voucher #</th><th>Type</th><th>Narration</th><th class="num">Total</th><th>Status</th></tr></thead>
+      <tbody>${rows.map(v => `<tr class="row-link" onclick="openVoucherDetail('${v.voucher_id}')"><td>${fmtDate(v.date)}</td><td class="mono">${esc(v.voucher_number)}</td><td>${esc(v.voucher_type)}</td><td>${esc(v.narration||'—')}</td><td class="num">${money(v.total,cur)}</td><td><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('📅','No entries in this period','Try a wider date range.');
+  } catch(e){ document.getElementById('db-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
+}
+VIEW_RENDERERS['report-daybook'] = renderDayBook;
+
+function renderCashOrBankBook(kind){
+  return async function(){
+    if (!requireCompany()) return;
+    const label = kind==='cash' ? 'Cash Book' : 'Bank Book';
+    view().innerHTML = viewHead(label, `All movement through ${kind} ledgers.`,
+      `<input type="date" id="cb-from"><input type="date" id="cb-to" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadCashBankBook('${kind}')">Run</button>`) +
+      `<div id="cb-body"></div>`;
+    loadCashBankBook(kind);
+  };
+}
+async function loadCashBankBook(kind){
+  const date_from = document.getElementById('cb-from').value || undefined, date_to = document.getElementById('cb-to').value || undefined;
+  document.getElementById('cb-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const b = await api(`/companies/${STATE.companyId}/reports/${kind}-book`, {qs:{date_from, date_to}});
+    const cur = STATE.company.base_currency;
+    if (!b.ledgers.length) { document.getElementById('cb-body').innerHTML = emptyState('🏦', `No ${kind} ledgers tagged`, `Tag a ledger as ${kind==='cash'?'Cash':'Bank'} when creating or editing it.`); return; }
+    document.getElementById('cb-body').innerHTML = `
+      <div class="stat-card c-teal" style="margin-bottom:16px;max-width:260px;"><div class="stat-label">Net Movement</div><div class="stat-value ${b.net_movement<0?'neg':''}">${money(b.net_movement,cur)}</div></div>
+      ${b.entries.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Ledger</th><th>Narration</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+      <tbody>${b.entries.map(r => `<tr><td>${fmtDate(r.date)}</td><td>${esc(r.ledger_name)}</td><td>${esc(r.narration||'—')}</td><td class="num">${r.debit>0?money(r.debit,cur):''}</td><td class="num">${r.credit>0?money(r.credit,cur):''}</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('📄','No entries in this period','Try a wider date range.')}
+    `;
+  } catch(e){ document.getElementById('cb-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
+}
+VIEW_RENDERERS['report-cashbook'] = renderCashOrBankBook('cash');
+VIEW_RENDERERS['report-bankbook'] = renderCashOrBankBook('bank');
+
+/* ============================================================
+   COMPANY SETTINGS + FINANCIAL YEARS
+   ============================================================ */
+async function renderSettings(){
+  if (!requireCompany()) return;
+  const c = STATE.company;
+  view().innerHTML = viewHead('Company &amp; Financial Years', 'Manage company details and accounting periods.',
+    `<button class="btn btn-ghost" onclick="openCompanyForm()">+ New company</button>
+     <button class="btn btn-danger" onclick="deleteCurrentCompany()">Delete this company</button>`) +
+    `<div class="grid grid-2">
+      <div class="card card-pad">
+        <div style="font-weight:800;margin-bottom:12px;">Company details</div>
+        <div class="kv"><span class="k">Name</span><span class="v">${esc(c.name)}</span></div>
+        <div class="kv"><span class="k">Legal name</span><span class="v">${esc(c.legal_name||'—')}</span></div>
+        <div class="kv"><span class="k">GSTIN</span><span class="v">${esc(c.gst_number||'—')}</span></div>
+        <div class="kv"><span class="k">PAN</span><span class="v">${esc(c.pan||'—')}</span></div>
+        <div class="kv"><span class="k">Base currency</span><span class="v">${esc(c.base_currency)}</span></div>
+        <div class="kv"><span class="k">Time zone</span><span class="v">${esc(c.time_zone)}</span></div>
+        <div class="kv"><span class="k">Address</span><span class="v" style="text-align:right;max-width:220px;">${esc(c.address||'—')}</span></div>
+      </div>
+      <div class="card card-pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-weight:800;">Financial years</div>
+          <button class="btn btn-ghost btn-sm" onclick="openFyForm()">+ Add</button>
+        </div>
+        <div id="fy-list"></div>
+      </div>
+    </div>
+    <div class="card card-pad" style="margin-top:16px;">
+      <div style="font-weight:800;margin-bottom:12px;">Data</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="downloadExport()">Export company JSON</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadCsv('ledgers')">Export ledgers CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadCsv('vouchers')">Export vouchers CSV</button>
+        <button class="btn btn-teal btn-sm" onclick="createBackup()">Create backup</button>
+      </div>
+    </div>`;
+  renderFyList();
+}
+VIEW_RENDERERS['settings'] = renderSettings;
+
+function renderFyList(){
+  const list = document.getElementById('fy-list');
+  if (!STATE.financialYears.length) { list.innerHTML = '<div style="font-size:.8rem;color:var(--ink3);">No financial years yet.</div>'; return; }
+  list.innerHTML = STATE.financialYears.map(fy => `
+    <div class="kv"><span class="k">${fmtDate(fy.start_date)} → ${fmtDate(fy.end_date)}</span>
+    <span class="v">
+      <span class="badge ${fy.is_closed?'badge-cancelled':'badge-active'}">${fy.is_closed?'Closed':'Open'}</span>
+      <button class="btn btn-ghost btn-sm" style="margin-left:6px;" onclick="toggleFy('${fy.id}', ${fy.is_closed})">${fy.is_closed?'Reopen':'Close'}</button>
+    </span></div>`).join('');
+}
+function openFyForm(){
+  openModal({
+    title:'Add financial year',
+    bodyHtml:`<div class="form-grid"><div class="form-row"><label>Start date</label><input type="date" id="fy-start"/></div><div class="form-row"><label>End date</label><input type="date" id="fy-end"/></div></div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="fy-save">Add</button>`,
+    onMount:() => document.getElementById('fy-save').onclick = async () => {
+      try {
+        await api(`/companies/${STATE.companyId}/financial-years`, {method:'POST', body:{start_date:document.getElementById('fy-start').value, end_date:document.getElementById('fy-end').value}});
+        toast('Financial year added ✓','ok'); closeModal(); await loadFinancialYears(); renderFyList();
+      } catch(e){ errToast(e); }
+    }
+  });
+}
+async function toggleFy(id, isClosed){
+  try {
+    await api(`/companies/${STATE.companyId}/financial-years/${id}/${isClosed?'reopen':'close'}`, {method:'POST'});
+    toast(isClosed?'Financial year reopened':'Financial year closed','ok');
+    await loadFinancialYears(); renderFyList();
+  } catch(e){ errToast(e); }
+}
+async function downloadExport(){
+  window.open(API_BASE + `/companies/${STATE.companyId}/export/json`, '_blank');
+}
+async function downloadCsv(kind){
+  window.open(API_BASE + `/companies/${STATE.companyId}/export/${kind}.csv`, '_blank');
+}
+async function createBackup(){
+  try { const m = await api(`/companies/${STATE.companyId}/backup`, {method:'POST'}); toast(`Backup created: ${m.file_name}`,'ok'); } catch(e){ errToast(e); }
+}
+async function deleteCurrentCompany(){
+  if (!confirm(`Delete "${STATE.company.name}"? This hides it from the app (data is retained for audit purposes).`)) return;
+  try {
+    await api(`/companies/${STATE.companyId}`, {method:'DELETE'});
+    toast('Company deleted','ok');
+    STATE.companyId = null; localStorage.removeItem(LS.company);
+    await loadCompanies(); navigate('dashboard');
+  } catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   AUDIT LOG
+   ============================================================ */
+async function renderAudit(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Audit Log', 'An append-only trail of every change made to your books.') + `<div id="audit-body"></div>`;
+  try {
+    const page = await api(`/companies/${STATE.companyId}/audit-logs`, {qs:{page_size:80}});
+    const items = page.items;
+    document.getElementById('audit-body').innerHTML = items.length ? `<div class="table-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>Entity</th><th>Entity ID</th></tr></thead>
+      <tbody>${items.map(a => `<tr><td>${new Date(a.timestamp).toLocaleString('en-IN')}</td><td>${esc(a.action)}</td><td>${esc(a.entity)}</td><td class="mono">${esc((a.entity_id||'').slice(0,10))}…</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('🗒','No audit entries yet','Actions will appear here as you use the app.');
+  } catch(e){ document.getElementById('audit-body').innerHTML = emptyState('⚠','Could not load audit log', esc(e.message)); }
+}
+VIEW_RENDERERS['audit'] = renderAudit;
+
+/* ============================================================
+   COMPANY CREATE FORM
+   ============================================================ */
+function openCompanyForm(){
+  openModal({
+    title:'New company', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Company name *</label><input type="text" id="c-name" placeholder="e.g. Alaada Traders Pvt Ltd"/></div>
+        <div class="form-row"><label>Legal name</label><input type="text" id="c-legal"/></div>
+        <div class="form-row"><label>Base currency</label><input type="text" id="c-cur" value="INR"/></div>
+        <div class="form-row"><label>Time zone</label><input type="text" id="c-tz" value="Asia/Kolkata"/></div>
+        <div class="form-row"><label>Financial year start</label><input type="date" id="c-fystart"/></div>
+        <div class="form-row"><label>Financial year end</label><input type="date" id="c-fyend"/></div>
+        <div class="form-row"><label>GSTIN</label><input type="text" id="c-gst"/></div>
+        <div class="form-row"><label>PAN</label><input type="text" id="c-pan"/></div>
+      </div>
+      <div class="form-row"><label>Address</label><textarea id="c-addr" rows="2"></textarea></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="c-save">Create company</button>`,
+    onMount:() => document.getElementById('c-save').onclick = submitCompanyForm
+  });
+}
+async function submitCompanyForm(){
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) return toast('Company name is required','err');
+  const payload = {
+    name,
+    legal_name: document.getElementById('c-legal').value.trim() || null,
+    base_currency: document.getElementById('c-cur').value.trim() || 'INR',
+    time_zone: document.getElementById('c-tz').value.trim() || 'Asia/Kolkata',
+    financial_year_start: document.getElementById('c-fystart').value || null,
+    financial_year_end: document.getElementById('c-fyend').value || null,
+    gst_number: document.getElementById('c-gst').value.trim() || null,
+    pan: document.getElementById('c-pan').value.trim() || null,
+    address: document.getElementById('c-addr').value.trim() || null,
+  };
+  try {
+    const c = await api('/companies', {method:'POST', body:payload});
+    toast('Company created ✓','ok'); closeModal();
+    await loadCompanies(); await selectCompany(c.id); navigate('dashboard');
+  } catch(e){ errToast(e); }
+}
+</script>
+</body>
+</html>
