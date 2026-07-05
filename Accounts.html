@@ -478,10 +478,19 @@ function markBackupNeeded(companyId){ localStorage.setItem(LS.dirtyBackup + comp
 function clearBackupNeeded(companyId){ localStorage.removeItem(LS.dirtyBackup + companyId); }
 function backupNeeded(companyId){ return localStorage.getItem(LS.dirtyBackup + companyId) === '1'; }
 function backupFileName(companyId){ return `alaada-accounts-backup-${companyId}.json`; }
-function backupRecordFromPayload(payload, fileName='backup.json'){
+function requireBackupArray(payload, key){
+  if (!Array.isArray(payload[key])) throw new Error(`Backup JSON is missing ${key}.`);
+}
+function validateBackupPayload(payload){
   if (!payload || payload.export_format !== 'alaada.company.v1' || !payload.company || !payload.company.id) {
     throw new Error('This is not a valid Alaada company backup JSON file.');
   }
+  ['account_groups','ledgers','voucher_types','financial_years','vouchers','audit_logs'].forEach(key => requireBackupArray(payload, key));
+  if (payload.journal_entries !== undefined) requireBackupArray(payload, 'journal_entries');
+  return payload;
+}
+function backupRecordFromPayload(payload, fileName='backup.json'){
+  validateBackupPayload(payload);
   return {
     companyId: payload.company.id,
     companyName: payload.company.name || 'Company',
@@ -490,6 +499,18 @@ function backupRecordFromPayload(payload, fileName='backup.json'){
     sourceFileName: fileName,
     payload,
   };
+}
+function backupSummary(record){
+  const payload = record && record.payload ? record.payload : {};
+  const count = key => Array.isArray(payload[key]) ? payload[key].length : 0;
+  const posted = Array.isArray(payload.vouchers) ? payload.vouchers.filter(v => v.status === 'POSTED').length : 0;
+  return [
+    {label:'Ledgers', value:count('ledgers')},
+    {label:'Vouchers', value:count('vouchers')},
+    {label:'Posted', value:posted},
+    {label:'Journal entries', value:count('journal_entries')},
+    {label:'Audit logs', value:count('audit_logs')},
+  ];
 }
 
 function openBackupDb(){
@@ -711,12 +732,22 @@ async function renderOfflineBackupView(){
   STATE.offlineBackup = backup;
   if (backup) {
     const saved = fmtDate(backup.savedAt);
-    view().innerHTML = emptyState('!',
-      'Cloud database unavailable',
-      `Opened the latest local backup for <strong>${esc(backup.companyName)}</strong> from this device (${saved}). Reconnect to restore it to the cloud database.`,
-      `<button class="btn btn-blue" onclick="startAutoConnect()">Retry cloud</button>
-       <button class="btn btn-teal" onclick="restoreOfflineBackup()" style="margin-left:8px;">Restore after reconnect</button>
-       <button class="btn btn-ghost" onclick="downloadOfflineBackup()" style="margin-left:8px;">Download backup</button>`);
+    const summary = backupSummary(backup);
+    view().innerHTML = `
+      <div class="empty" style="padding-top:58px;max-width:820px;margin:0 auto;">
+        <div class="empty-icon">!</div>
+        <h4>Cloud database unavailable</h4>
+        <p>Opened the latest local backup for <strong>${esc(backup.companyName)}</strong> from this device (${saved}).</p>
+        <div class="stat-grid" style="margin-top:18px;text-align:left;">
+          ${summary.map(item => `<div class="stat"><span>${esc(item.label)}</span><strong>${esc(item.value)}</strong></div>`).join('')}
+        </div>
+        <p style="margin-top:16px;">Reconnect to restore this backup to the cloud database, or download the JSON copy from this device.</p>
+        <div style="margin-top:18px;">
+          <button class="btn btn-blue" onclick="startAutoConnect()">Retry cloud</button>
+          <button class="btn btn-teal" onclick="restoreOfflineBackup()" style="margin-left:8px;">Restore after reconnect</button>
+          <button class="btn btn-ghost" onclick="downloadOfflineBackup()" style="margin-left:8px;">Download backup</button>
+        </div>
+      </div>`;
     return;
   }
   renderOfflineView();
