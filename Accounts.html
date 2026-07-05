@@ -421,6 +421,7 @@ select{cursor:pointer;}
 const LS = {
   api: 'alaada_acc_api',
   company: 'alaada_acc_company',
+  dirtyBackup: 'alaada_acc_backup_dirty_',
 };
 const DEFAULT_API = 'https://accounts-0o52.onrender.com';
 let API_BASE = localStorage.getItem(LS.api) || DEFAULT_API;
@@ -433,6 +434,7 @@ let STATE = {
   voucherTypes: [],
   financialYears: [],
   currentView: 'dashboard',
+  offlineBackup: null,
 };
 
 /* ============================================================
@@ -457,9 +459,135 @@ async function api(path, {method='GET', body=null, qs=null, raw=false} = {}) {
     const msg = (data && data.error && data.error.message) || `Request failed (${res.status})`;
     throw new ApiError(msg, res.status, data);
   }
+  const selectedCompanyPath = STATE.companyId ? `/companies/${STATE.companyId}` : null;
+  const affectsSelectedCompany = selectedCompanyPath && (path === selectedCompanyPath || path.startsWith(selectedCompanyPath + '/'));
+  if (!['GET','HEAD'].includes(method.toUpperCase()) && affectsSelectedCompany && !path.includes('/backup')) {
+    markBackupNeeded(STATE.companyId);
+  }
   return data;
 }
 class ApiError extends Error { constructor(msg, status, data){ super(msg); this.status=status; this.data=data; } }
+
+/* ============================================================
+   LOCAL DEVICE BACKUPS
+   ============================================================ */
+const BACKUP_DB = 'alaada_accounts_backups';
+const BACKUP_STORE = 'company_backups';
+
+function markBackupNeeded(companyId){ localStorage.setItem(LS.dirtyBackup + companyId, '1'); }
+function clearBackupNeeded(companyId){ localStorage.removeItem(LS.dirtyBackup + companyId); }
+function backupNeeded(companyId){ return localStorage.getItem(LS.dirtyBackup + companyId) === '1'; }
+function backupFileName(companyId){ return `alaada-accounts-backup-${companyId}.json`; }
+function backupRecordFromPayload(payload, fileName='backup.json'){
+  if (!payload || payload.export_format !== 'alaada.company.v1' || !payload.company || !payload.company.id) {
+    throw new Error('This is not a valid Alaada company backup JSON file.');
+  }
+  return {
+    companyId: payload.company.id,
+    companyName: payload.company.name || 'Company',
+    savedAt: new Date().toISOString(),
+    fileName: backupFileName(payload.company.id),
+    sourceFileName: fileName,
+    payload,
+  };
+}
+
+function openBackupDb(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(BACKUP_DB, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(BACKUP_STORE)) db.createObjectStore(BACKUP_STORE, {keyPath:'companyId'});
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function putLocalBackup(record){
+  const db = await openBackupDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(BACKUP_STORE, 'readwrite');
+    tx.objectStore(BACKUP_STORE).put(record);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+async function getLocalBackup(companyId){
+  if (!companyId) return null;
+  const db = await openBackupDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(BACKUP_STORE, 'readonly');
+    const req = tx.objectStore(BACKUP_STORE).get(companyId);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => db.close();
+  });
+}
+async function latestLocalBackup(){
+  const db = await openBackupDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(BACKUP_STORE, 'readonly');
+    const req = tx.objectStore(BACKUP_STORE).getAll();
+    req.onsuccess = () => {
+      const rows = req.result || [];
+      rows.sort((a,b) => String(b.savedAt).localeCompare(String(a.savedAt)));
+      resolve(rows[0] || null);
+    };
+    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => db.close();
+  });
+}
+async function saveBackupFile(payload, fileName){
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  if (window.showSaveFilePicker) {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: fileName,
+      types: [{description:'Alaada company backup', accept:{'application/json':['.json']}}],
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+async function saveLocalCompanyBackup({download=false, silent=false} = {}){
+  if (!STATE.companyId) return null;
+  const payload = await api(`/companies/${STATE.companyId}/export/json`);
+  const record = {
+    companyId: STATE.companyId,
+    companyName: payload.company && payload.company.name ? payload.company.name : (STATE.company ? STATE.company.name : 'Company'),
+    savedAt: new Date().toISOString(),
+    fileName: backupFileName(STATE.companyId),
+    payload,
+  };
+  await putLocalBackup(record);
+  clearBackupNeeded(STATE.companyId);
+  if (download) await saveBackupFile(payload, record.fileName);
+  if (!silent) toast(`Backup updated: ${record.fileName}`, 'ok');
+  return record;
+}
+async function ensureLocalBackupForSelectedCompany(){
+  if (!STATE.companyId) return;
+  try {
+    const existing = await getLocalBackup(STATE.companyId);
+    if (!existing) await saveLocalCompanyBackup({download:false, silent:true});
+  } catch(e){ console.warn(e); }
+}
+async function restoreLocalBackupToCloud(record){
+  if (!record || !record.payload) return null;
+  const restored = await api('/companies/import/json', {method:'POST', body:record.payload});
+  toast(`Restored local backup: ${restored.name}`, 'ok');
+  await loadCompanies();
+  await selectCompany(restored.id);
+  try { await saveLocalCompanyBackup({download:false, silent:true}); } catch(e){ console.warn(e); }
+  return restored;
+}
 
 /* ============================================================
    TOASTS
@@ -577,6 +705,35 @@ function renderOfflineView(){
     `<button class="btn btn-blue" onclick="startAutoConnect()">Retry now</button>
      <button class="btn btn-ghost" onclick="document.getElementById('api-status').click()" style="margin-left:8px;">Change API URL</button>`);
 }
+async function renderOfflineBackupView(){
+  let backup = null;
+  try { backup = await latestLocalBackup(); } catch(e) { console.warn(e); }
+  STATE.offlineBackup = backup;
+  if (backup) {
+    const saved = fmtDate(backup.savedAt);
+    view().innerHTML = emptyState('!',
+      'Cloud database unavailable',
+      `Opened the latest local backup for <strong>${esc(backup.companyName)}</strong> from this device (${saved}). Reconnect to restore it to the cloud database.`,
+      `<button class="btn btn-blue" onclick="startAutoConnect()">Retry cloud</button>
+       <button class="btn btn-teal" onclick="restoreOfflineBackup()" style="margin-left:8px;">Restore after reconnect</button>
+       <button class="btn btn-ghost" onclick="downloadOfflineBackup()" style="margin-left:8px;">Download backup</button>`);
+    return;
+  }
+  renderOfflineView();
+}
+async function restoreOfflineBackup(){
+  if (!STATE.offlineBackup) return toast('No local backup found on this device', 'err');
+  try {
+    const ok = await tryConnect(API_BASE, {silent:true});
+    if (!ok) return toast('Cloud database is still unavailable. Your local backup remains on this device.', 'err');
+    await restoreLocalBackupToCloud(STATE.offlineBackup);
+  } catch(e){ errToast(e); }
+}
+async function downloadOfflineBackup(){
+  if (!STATE.offlineBackup) return toast('No local backup found on this device', 'err');
+  try { await saveBackupFile(STATE.offlineBackup.payload, STATE.offlineBackup.fileName); }
+  catch(e){ if (e && e.name !== 'AbortError') errToast(e); }
+}
 async function startAutoConnect(){
   gateUrl.value = API_BASE;
   setApiStatus('connecting');
@@ -591,7 +748,7 @@ async function startAutoConnect(){
     } catch(e) { /* keep retrying */ }
   }
   setApiStatus('down');
-  renderOfflineView();
+  await renderOfflineBackupView();
 }
 startAutoConnect();
 
@@ -635,10 +792,23 @@ async function selectCompany(id, {silentNav=false} = {}) {
   localStorage.setItem(LS.company, id);
   try {
     STATE.company = await api(`/companies/${id}`);
-  } catch(e) { errToast(e); STATE.company = null; return; }
+  } catch(e) {
+    if (e.status === 404) {
+      try {
+        const backup = await getLocalBackup(id);
+        if (backup) {
+          toast('Company missing in cloud database. Restoring latest local backup...', '');
+          await restoreLocalBackupToCloud(backup);
+          return;
+        }
+      } catch(inner){ console.warn(inner); }
+    }
+    errToast(e); STATE.company = null; return;
+  }
   document.getElementById('co-current').textContent = STATE.company.name;
   renderCompanyMenu();
   await Promise.all([loadGroups(), loadLedgers(), loadVoucherTypes(), loadFinancialYears()]);
+  ensureLocalBackupForSelectedCompany();
   refreshBalanceBeam();
   if (!silentNav) navigate(STATE.currentView);
   else navigate(STATE.currentView);
@@ -1276,6 +1446,7 @@ async function renderSettings(){
         <button class="btn btn-ghost btn-sm" onclick="downloadCsv('ledgers')">Export ledgers CSV</button>
         <button class="btn btn-ghost btn-sm" onclick="downloadCsv('vouchers')">Export vouchers CSV</button>
         <button class="btn btn-teal btn-sm" onclick="createBackup()">Create backup</button>
+        <button class="btn btn-ghost btn-sm" onclick="restoreBackupFromDevice()">Restore backup JSON</button>
       </div>
     </div>`;
   renderFyList();
@@ -1319,12 +1490,48 @@ async function downloadCsv(kind){
   window.open(API_BASE + `/companies/${STATE.companyId}/export/${kind}.csv`, '_blank');
 }
 async function createBackup(){
-  try { const m = await api(`/companies/${STATE.companyId}/backup`, {method:'POST'}); toast(`Backup created: ${m.file_name}`,'ok'); } catch(e){ errToast(e); }
+  try {
+    const local = await saveLocalCompanyBackup({download:true, silent:true});
+    try { await api(`/companies/${STATE.companyId}/backup`, {method:'POST', body:null}); }
+    catch(serverErr){ console.warn(serverErr); }
+    toast(`Backup updated on this device: ${local.fileName}`,'ok');
+  } catch(e){
+    if (e && e.name === 'AbortError') toast('Backup kept in browser storage. Device file save was cancelled.', '');
+    else errToast(e);
+  }
+}
+async function restoreBackupFromDevice(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json,.json';
+  input.onchange = async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      const record = backupRecordFromPayload(payload, file.name);
+      await putLocalBackup(record);
+      clearBackupNeeded(record.companyId);
+      const ok = await tryConnect(API_BASE, {silent:true});
+      if (!ok) {
+        STATE.offlineBackup = record;
+        toast('Backup saved on this device. Reconnect to restore it to the cloud database.', 'ok');
+        await renderOfflineBackupView();
+        return;
+      }
+      await restoreLocalBackupToCloud(record);
+    } catch(e){ errToast(e); }
+  };
+  input.click();
 }
 async function deleteCurrentCompany(){
   if (!confirm(`Delete "${STATE.company.name}"? This hides it from the app (data is retained for audit purposes).`)) return;
   try {
-    await api(`/companies/${STATE.companyId}`, {method:'DELETE'});
+    const deletingCompanyId = STATE.companyId;
+    await saveLocalCompanyBackup({download:false, silent:true});
+    await api(`/companies/${deletingCompanyId}`, {method:'DELETE'});
+    clearBackupNeeded(deletingCompanyId);
     toast('Company deleted','ok');
     STATE.companyId = null; localStorage.removeItem(LS.company);
     await loadCompanies(); navigate('dashboard');
@@ -1386,10 +1593,28 @@ async function submitCompanyForm(){
   };
   try {
     const c = await api('/companies', {method:'POST', body:payload});
+    markBackupNeeded(c.id);
     toast('Company created ✓','ok'); closeModal();
     await loadCompanies(); await selectCompany(c.id); navigate('dashboard');
   } catch(e){ errToast(e); }
 }
+
+async function refreshBackupBeforeLeaving(){
+  if (!STATE.companyId || !backupNeeded(STATE.companyId)) return;
+  try { await saveLocalCompanyBackup({download:false, silent:true}); }
+  catch(e){ console.warn(e); }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') refreshBackupBeforeLeaving();
+});
+window.addEventListener('pagehide', refreshBackupBeforeLeaving);
+window.addEventListener('beforeunload', e => {
+  if (STATE.companyId && backupNeeded(STATE.companyId)) {
+    e.preventDefault();
+    e.returnValue = 'Alaada has changes that should be backed up on this device before you leave.';
+    return e.returnValue;
+  }
+});
 </script>
 </body>
 </html>
