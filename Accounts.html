@@ -487,6 +487,20 @@ function validateBackupPayload(payload){
   }
   ['account_groups','ledgers','voucher_types','financial_years','vouchers','audit_logs'].forEach(key => requireBackupArray(payload, key));
   if (payload.journal_entries !== undefined) requireBackupArray(payload, 'journal_entries');
+  if (payload.customers !== undefined) requireBackupArray(payload, 'customers');
+  if (payload.suppliers !== undefined) requireBackupArray(payload, 'suppliers');
+  ['item_categories','units_of_measure','warehouses','stock_items','stock_ledger_entries'].forEach(key => {
+    if (payload[key] !== undefined) requireBackupArray(payload, key);
+  });
+  ['gst_tax_rates','tax_classifications'].forEach(key => {
+    if (payload[key] !== undefined) requireBackupArray(payload, key);
+  });
+  if (payload.payment_transactions !== undefined) requireBackupArray(payload, 'payment_transactions');
+  if (payload.sales_orders !== undefined) requireBackupArray(payload, 'sales_orders');
+  if (payload.sales_invoices !== undefined) requireBackupArray(payload, 'sales_invoices');
+  if (payload.purchase_orders !== undefined) requireBackupArray(payload, 'purchase_orders');
+  if (payload.purchase_bills !== undefined) requireBackupArray(payload, 'purchase_bills');
+  if (payload.business_events !== undefined) requireBackupArray(payload, 'business_events');
   return payload;
 }
 function backupRecordFromPayload(payload, fileName='backup.json'){
@@ -509,6 +523,17 @@ function backupSummary(record){
     {label:'Vouchers', value:count('vouchers')},
     {label:'Posted', value:posted},
     {label:'Journal entries', value:count('journal_entries')},
+    {label:'Customers', value:count('customers')},
+    {label:'Suppliers', value:count('suppliers')},
+    {label:'Stock items', value:count('stock_items')},
+    {label:'Warehouses', value:count('warehouses')},
+    {label:'GST rates', value:count('gst_tax_rates')},
+    {label:'Payments', value:count('payment_transactions')},
+    {label:'Sales orders', value:count('sales_orders')},
+    {label:'Sales invoices', value:count('sales_invoices')},
+    {label:'Purchase orders', value:count('purchase_orders')},
+    {label:'Purchase bills', value:count('purchase_bills')},
+    {label:'Business events', value:count('business_events')},
     {label:'Audit logs', value:count('audit_logs')},
   ];
 }
