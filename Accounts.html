@@ -306,7 +306,12 @@ select{cursor:pointer;}
       </div>
     </div>
 
-    <div id="balance-beam" title="Trial balance — click to view report">
+    <button id="global-search-btn" class="btn btn-ghost btn-sm" style="margin-left:auto;flex-shrink:0;" title="Search this company (customers, suppliers, items, orders, invoices, bills)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Search
+    </button>
+
+    <div id="balance-beam" style="margin-left:0;" title="Trial balance — click to view report">
       <svg id="beam-svg" width="34" height="20" viewBox="0 0 34 20">
         <line x1="17" y1="4" x2="17" y2="16" stroke="var(--ink2)" stroke-width="2"/>
         <circle cx="17" cy="4" r="1.6" class="beam-fulcrum"/>
@@ -350,6 +355,74 @@ select{cursor:pointer;}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
         Vouchers
       </div>
+      <div class="side-link" data-view="payments">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+        Payments
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-label">Business</div>
+      <div class="side-link" data-view="customers">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customers
+      </div>
+      <div class="side-link" data-view="suppliers">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="15" height="13" rx="1"/><path d="M16 11h3l4 4v5h-7"/><circle cx="5.5" cy="20" r="1.6"/><circle cx="18.5" cy="20" r="1.6"/></svg>
+        Suppliers
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-label">Sales</div>
+      <div class="side-link" data-view="sales-orders">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2 5 6v16h14V6l-4-4z"/><path d="M9 2v4h6V2"/></svg>
+        Sales Orders
+      </div>
+      <div class="side-link" data-view="sales-invoices">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
+        Sales Invoices
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-label">Purchases</div>
+      <div class="side-link" data-view="purchase-orders">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2 5 6v16h14V6l-4-4z"/><path d="M9 2v4h6V2"/></svg>
+        Purchase Orders
+      </div>
+      <div class="side-link" data-view="purchase-bills">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
+        Purchase Bills
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-label">Inventory</div>
+      <div class="side-link" data-view="inventory-items">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8L12 3 3 8l9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+        Items
+      </div>
+      <div class="side-link" data-view="inventory-stock">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Current Stock
+      </div>
+      <div class="side-link" data-view="inventory-setup">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+        Categories, UOM &amp; Warehouses
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-label">GST</div>
+      <div class="side-link" data-view="gst-rates">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 9h.01M15 15h.01M15 9l-6 6"/></svg>
+        Tax Rates
+      </div>
+      <div class="side-link" data-view="gst-classifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 8.5 12 2 3.5 8.5 12 15z"/><path d="M3.5 8.5V17L12 22l8.5-5V8.5"/></svg>
+        HSN / SAC
+      </div>
     </div>
 
     <div class="side-group">
@@ -389,6 +462,10 @@ select{cursor:pointer;}
       <div class="side-link" data-view="audit">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         Audit Log
+      </div>
+      <div class="side-link" data-view="business-events">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h7l-1 8 11-12h-7l1-8z"/></svg>
+        Business Events
       </div>
     </div>
   </nav>
@@ -433,6 +510,14 @@ let STATE = {
   ledgers: [],
   voucherTypes: [],
   financialYears: [],
+  customers: [],
+  suppliers: [],
+  categories: [],
+  uoms: [],
+  warehouses: [],
+  stockItems: [],
+  gstRates: [],
+  taxClassifications: [],
   currentView: 'dashboard',
   offlineBackup: null,
 };
@@ -863,7 +948,11 @@ async function selectCompany(id, {silentNav=false} = {}) {
   }
   document.getElementById('co-current').textContent = STATE.company.name;
   renderCompanyMenu();
-  await Promise.all([loadGroups(), loadLedgers(), loadVoucherTypes(), loadFinancialYears()]);
+  await Promise.all([
+    loadGroups(), loadLedgers(), loadVoucherTypes(), loadFinancialYears(),
+    loadCustomers(), loadSuppliers(), loadCategories(), loadUoms(),
+    loadWarehouses(), loadStockItems(), loadGstRates(), loadTaxClassifications(),
+  ]);
   ensureLocalBackupForSelectedCompany();
   refreshBalanceBeam();
   if (!silentNav) navigate(STATE.currentView);
@@ -874,6 +963,22 @@ async function loadGroups(){ if(!STATE.companyId) return; try{ STATE.groups = aw
 async function loadLedgers(){ if(!STATE.companyId) return; try{ const p = await api(`/companies/${STATE.companyId}/ledgers`, {qs:{page_size:500}}); STATE.ledgers = p.items||[]; }catch(e){STATE.ledgers=[];} }
 async function loadVoucherTypes(){ if(!STATE.companyId) return; try{ STATE.voucherTypes = await api(`/companies/${STATE.companyId}/voucher-types`);}catch(e){STATE.voucherTypes=[];} }
 async function loadFinancialYears(){ if(!STATE.companyId) return; try{ STATE.financialYears = await api(`/companies/${STATE.companyId}/financial-years`);}catch(e){STATE.financialYears=[];} }
+async function loadCustomers(){ if(!STATE.companyId) return; try{ const p = await api(`/companies/${STATE.companyId}/customers`, {qs:{page_size:500}}); STATE.customers = p.items||[]; }catch(e){STATE.customers=[];} }
+async function loadSuppliers(){ if(!STATE.companyId) return; try{ const p = await api(`/companies/${STATE.companyId}/suppliers`, {qs:{page_size:500}}); STATE.suppliers = p.items||[]; }catch(e){STATE.suppliers=[];} }
+async function loadCategories(){ if(!STATE.companyId) return; try{ STATE.categories = await api(`/companies/${STATE.companyId}/inventory/categories`);}catch(e){STATE.categories=[];} }
+async function loadUoms(){ if(!STATE.companyId) return; try{ STATE.uoms = await api(`/companies/${STATE.companyId}/inventory/uoms`);}catch(e){STATE.uoms=[];} }
+async function loadWarehouses(){ if(!STATE.companyId) return; try{ STATE.warehouses = await api(`/companies/${STATE.companyId}/inventory/warehouses`);}catch(e){STATE.warehouses=[];} }
+async function loadStockItems(){ if(!STATE.companyId) return; try{ const p = await api(`/companies/${STATE.companyId}/inventory/items`, {qs:{page_size:500}}); STATE.stockItems = p.items||[]; }catch(e){STATE.stockItems=[];} }
+async function loadGstRates(){ if(!STATE.companyId) return; try{ STATE.gstRates = await api(`/companies/${STATE.companyId}/gst/rates`);}catch(e){STATE.gstRates=[];} }
+async function loadTaxClassifications(){ if(!STATE.companyId) return; try{ STATE.taxClassifications = await api(`/companies/${STATE.companyId}/gst/classifications`);}catch(e){STATE.taxClassifications=[];} }
+
+/* lookups used across ERP views */
+function customerName(id){ const c = STATE.customers.find(x=>x.id===id); return c ? c.name : '—'; }
+function supplierName(id){ const s = STATE.suppliers.find(x=>x.id===id); return s ? s.name : '—'; }
+function itemName(id){ const i = STATE.stockItems.find(x=>x.id===id); return i ? i.name : '—'; }
+function warehouseName(id){ const w = STATE.warehouses.find(x=>x.id===id); return w ? w.name : '—'; }
+function uomSymbol(id){ const u = STATE.uoms.find(x=>x.id===id); return u ? u.symbol : ''; }
+function categoryName(id){ const c = STATE.categories.find(x=>x.id===id); return c ? c.name : '—'; }
 
 function requireCompany(){
   if (!STATE.companyId) {
@@ -951,12 +1056,36 @@ async function renderDashboard(){
         <div class="stat-card c-teal"><div class="stat-label">Net Profit (YTD)</div><div class="stat-value ${d.net_profit<0?'neg':''}">${money(d.net_profit,cur)}</div></div>
         <div class="stat-card c-ink"><div class="stat-label">Posted Vouchers</div><div class="stat-value">${d.voucher_count}</div></div>
       </div>
-      <div class="grid grid-3" style="margin-bottom:22px;">
+      <div class="grid grid-4" style="margin-bottom:18px;">
         <div class="stat-card c-teal"><div class="stat-label">Cash Balance</div><div class="stat-value">${money(d.cash_balance,cur)}</div></div>
         <div class="stat-card c-blue"><div class="stat-label">Bank Balance</div><div class="stat-value">${money(d.bank_balance,cur)}</div></div>
         <div class="stat-card c-gold"><div class="stat-label">Total Income (YTD)</div><div class="stat-value">${money(d.total_income,cur)}</div></div>
+        <div class="stat-card c-red"><div class="stat-label">Total Expenses (YTD)</div><div class="stat-value">${money(d.total_expenses,cur)}</div></div>
       </div>
-      <div class="view-head" style="margin-bottom:12px;"><div class="view-title" style="font-size:1.05rem;">Recent activity</div>
+      <div class="grid grid-4" style="margin-bottom:22px;">
+        <div class="stat-card c-blue" style="cursor:pointer;" onclick="navigate('customers')"><div class="stat-label">Receivables</div><div class="stat-value">${money(d.outstanding_receivables,cur)}</div></div>
+        <div class="stat-card c-gold" style="cursor:pointer;" onclick="navigate('suppliers')"><div class="stat-label">Payables</div><div class="stat-value">${money(d.outstanding_payables,cur)}</div></div>
+        <div class="stat-card c-teal" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Inventory Value</div><div class="stat-value">${money(d.inventory_value,cur)}</div></div>
+        <div class="stat-card ${(d.low_stock_items||[]).length?'c-red':'c-ink'}" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Low Stock Items</div><div class="stat-value">${(d.low_stock_items||[]).length}</div></div>
+      </div>
+      <div class="grid grid-2" style="margin-bottom:22px;">
+        <div class="card card-pad">
+          <div style="font-weight:800;margin-bottom:10px;">Top customers (YTD sales)</div>
+          ${(d.top_customers&&d.top_customers.length) ? d.top_customers.map(c=>`<div class="kv"><span class="k">${esc(c.customer_name)}</span><span class="v">${money(c.total_sales,cur)}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No posted sales invoices yet.</div>'}
+        </div>
+        <div class="card card-pad">
+          <div style="font-weight:800;margin-bottom:10px;">Top suppliers (YTD purchases)</div>
+          ${(d.top_suppliers&&d.top_suppliers.length) ? d.top_suppliers.map(s=>`<div class="kv"><span class="k">${esc(s.supplier_name)}</span><span class="v">${money(s.total_purchases,cur)}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No posted purchase bills yet.</div>'}
+        </div>
+      </div>
+      ${(d.low_stock_items&&d.low_stock_items.length) ? `
+      <div class="view-head" style="margin-bottom:12px;"><div class="view-title" style="font-size:1.05rem;">Low stock</div>
+        <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('inventory-stock')">View all stock →</button></div></div>
+      <div class="table-wrap" style="margin-bottom:22px;"><table><thead><tr><th>Item</th><th>Warehouse</th><th class="num">Quantity</th><th class="num">Reorder Level</th></tr></thead>
+      <tbody>${d.low_stock_items.map(r=>`<tr><td>${esc(r.item_name)}${r.sku?` <span class="pill">${esc(r.sku)}</span>`:''}</td><td>${esc(r.warehouse_name)}</td><td class="num">${r.quantity}</td><td class="num">${r.reorder_level}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      <div class="view-head" style="margin-bottom:12px;"><div class="view-title" style="font-size:1.05rem;">Recent orders &amp; documents</div></div>
+      ${renderRecentOrdersTable(d.recent_orders, cur)}
+      <div class="view-head" style="margin-bottom:12px;margin-top:22px;"><div class="view-title" style="font-size:1.05rem;">Recent activity</div>
         <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('vouchers')">View all vouchers →</button></div></div>
       ${renderRecentTable(d.recent_transactions, cur)}
     `;
@@ -964,6 +1093,20 @@ async function renderDashboard(){
   } catch(e) {
     document.getElementById('dash-body').innerHTML = emptyState('⚠','Could not load dashboard', esc(e.message), `<button class="btn btn-ghost" onclick="navigate('dashboard')">Retry</button>`);
   }
+}
+function renderRecentOrdersTable(items, cur){
+  if (!items || !items.length) return emptyState('📦','No orders or invoices yet','Sales orders, invoices, purchase orders and bills will show up here.');
+  const openers = {
+    SALES_ORDER: id => openSalesOrderDetail(id), SALES_INVOICE: id => openSalesInvoiceDetail(id),
+    PURCHASE_ORDER: id => openPurchaseOrderDetail(id), PURCHASE_BILL: id => openPurchaseBillDetail(id),
+  };
+  const typeLabel = {SALES_ORDER:'Sales Order', SALES_INVOICE:'Sales Invoice', PURCHASE_ORDER:'Purchase Order', PURCHASE_BILL:'Purchase Bill'};
+  window.__dashOpeners = openers;
+  return `<div class="table-wrap"><table><thead><tr><th>Type</th><th>No.</th><th>Date</th><th class="num">Amount</th><th>Status</th></tr></thead>
+    <tbody>${items.map(o => `<tr class="row-link" onclick="window.__dashOpeners['${o.type}']('${o.id}')">
+      <td>${esc(typeLabel[o.type]||o.type)}</td><td class="mono">${esc(o.number)}</td><td>${fmtDate(o.date)}</td>
+      <td class="num">${money(o.amount,cur)}</td><td><span class="badge badge-${String(o.status).toLowerCase()}">${esc(o.status)}</span></td></tr>`).join('')}
+    </tbody></table></div>`;
 }
 function renderRecentTable(items, cur){
   if (!items || !items.length) return emptyState('🧾','No transactions yet','Record your first voucher to see activity here.',`<button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`);
@@ -1329,6 +1472,1196 @@ async function deleteVoucherAction(id){
 }
 
 /* ============================================================
+   PAYMENTS (customer receipts, supplier payments, cash/bank movements)
+   ============================================================ */
+const PAYMENT_KIND_LABEL = {
+  CUSTOMER_RECEIPT:'Customer Receipt', SUPPLIER_PAYMENT:'Supplier Payment',
+  CASH_RECEIPT:'Cash Receipt', CASH_PAYMENT:'Cash Payment',
+  BANK_RECEIPT:'Bank Receipt', BANK_PAYMENT:'Bank Payment',
+};
+let paymentFilters = {payment_kind:''};
+async function renderPayments(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Payments', 'Customer receipts, supplier payments, and cash/bank movements — each one posts a voucher automatically.',
+    `<button class="btn btn-blue" onclick="openPaymentForm()">+ New payment</button>`) +
+    `<div class="card card-pad" style="margin-bottom:16px;">
+      <div class="form-row" style="margin-bottom:0;max-width:280px;"><label>Kind</label>
+        <select id="pf-kind"><option value="">All kinds</option>${Object.entries(PAYMENT_KIND_LABEL).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div id="payment-table"></div>`;
+  document.getElementById('pf-kind').onchange = loadPaymentTable;
+  loadPaymentTable();
+}
+VIEW_RENDERERS['payments'] = renderPayments;
+async function loadPaymentTable(){
+  const qs = {page:1, page_size:100, payment_kind: document.getElementById('pf-kind').value || undefined};
+  document.getElementById('payment-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading payments…</td></tr></tbody></table></div>`;
+  try {
+    const page = await api(`/companies/${STATE.companyId}/payments`, {qs});
+    const items = page.items;
+    const cur = STATE.company.base_currency;
+    if (!items.length) { document.getElementById('payment-table').innerHTML = emptyState('💸','No payments recorded','Record a receipt or payment to see it here.',`<button class="btn btn-blue" onclick="openPaymentForm()">+ New payment</button>`); return; }
+    document.getElementById('payment-table').innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Kind</th><th>Party</th><th class="num">Amount</th><th>Reference</th><th>Narration</th><th></th></tr></thead>
+      <tbody>${items.map(p => `<tr>
+        <td>${fmtDate(p.payment_date)}</td>
+        <td><span class="pill">${esc(PAYMENT_KIND_LABEL[p.payment_kind]||p.payment_kind)}</span></td>
+        <td>${esc(p.customer_id ? customerName(p.customer_id) : (p.supplier_id ? supplierName(p.supplier_id) : '—'))}</td>
+        <td class="num">${money(p.amount, cur)}</td>
+        <td class="mono">${esc(p.reference_number||'—')}</td>
+        <td>${esc(p.narration||'—')}</td>
+        <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="openVoucherDetail('${p.voucher_id}')">View voucher</button></td>
+      </tr>`).join('')}</tbody></table></div>`;
+  } catch(e){ document.getElementById('payment-table').innerHTML = emptyState('⚠','Could not load payments', esc(e.message)); }
+}
+function openPaymentForm(){
+  if (!STATE.ledgers.length) return toast('Create at least one ledger before recording payments','err');
+  const cashBankOpts = STATE.ledgers.filter(l=>l.status==='ACTIVE' && l.cash_bank_type).map(l=>`<option value="${l.id}">${esc(l.name)} (${l.cash_bank_type})</option>`).join('') || `<option value="">— tag a ledger as Cash/Bank first —</option>`;
+  const partyLedgerOpts = ledgerOptionsHtml();
+  openModal({
+    title:'New payment', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Payment kind</label>
+          <select id="pm-kind">${Object.entries(PAYMENT_KIND_LABEL).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>
+        </div>
+        <div class="form-row"><label>Date</label><input type="date" id="pm-date" value="${todayStr()}"/></div>
+        <div class="form-row"><label>Amount</label><input type="number" step="0.01" id="pm-amount" placeholder="0.00"/></div>
+        <div class="form-row"><label>Reference no. (optional)</label><input type="text" id="pm-ref"/></div>
+        <div class="form-row"><label>Cash / Bank ledger</label><select id="pm-cashbank">${cashBankOpts}</select></div>
+        <div class="form-row"><label>Counterparty ledger</label><select id="pm-counterparty">${partyLedgerOpts}</select></div>
+        <div class="form-row" id="pm-customer-row" style="display:none;"><label>Customer</label><select id="pm-customer"><option value="">— select —</option>${STATE.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row" id="pm-supplier-row" style="display:none;"><label>Supplier</label><select id="pm-supplier"><option value="">— select —</option>${STATE.suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row"><label>Narration (optional)</label><input type="text" id="pm-narr"/></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="pm-save">Record payment</button>`,
+    onMount:() => {
+      const kindSel = document.getElementById('pm-kind');
+      const toggle = () => {
+        const k = kindSel.value;
+        document.getElementById('pm-customer-row').style.display = k==='CUSTOMER_RECEIPT' ? 'block' : 'none';
+        document.getElementById('pm-supplier-row').style.display = k==='SUPPLIER_PAYMENT' ? 'block' : 'none';
+      };
+      kindSel.onchange = toggle; toggle();
+      document.getElementById('pm-save').onclick = submitPaymentForm;
+    }
+  });
+}
+async function submitPaymentForm(){
+  const payment_kind = document.getElementById('pm-kind').value;
+  const amount = parseFloat(document.getElementById('pm-amount').value || '0');
+  const cash_bank_ledger_id = document.getElementById('pm-cashbank').value;
+  const counterparty_ledger_id = document.getElementById('pm-counterparty').value;
+  if (!cash_bank_ledger_id) return toast('Choose a cash/bank ledger — tag one as Cash or Bank under Ledgers first','err');
+  if (amount <= 0) return toast('Amount must be greater than zero','err');
+  const payload = {
+    payment_kind, amount, cash_bank_ledger_id, counterparty_ledger_id,
+    payment_date: document.getElementById('pm-date').value,
+    reference_number: document.getElementById('pm-ref').value.trim() || null,
+    narration: document.getElementById('pm-narr').value.trim() || null,
+    customer_id: payment_kind==='CUSTOMER_RECEIPT' ? (document.getElementById('pm-customer').value || null) : null,
+    supplier_id: payment_kind==='SUPPLIER_PAYMENT' ? (document.getElementById('pm-supplier').value || null) : null,
+  };
+  try {
+    await api(`/companies/${STATE.companyId}/payments`, {method:'POST', body:payload});
+    toast('Payment recorded ✓','ok'); closeModal(); refreshBalanceBeam();
+    if (STATE.currentView==='payments') loadPaymentTable();
+  } catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   CUSTOMERS
+   ============================================================ */
+async function renderCustomers(){
+  if (!requireCompany()) return;
+  await loadCustomers();
+  view().innerHTML = viewHead('Customers', `${STATE.customers.length} customer${STATE.customers.length===1?'':'s'} in ${esc(STATE.company.name)}`,
+    `<input type="search" id="cust-search" placeholder="Search customers…" style="width:200px;">
+     <button class="btn btn-blue" onclick="openCustomerForm()">+ New customer</button>`) +
+    `<div id="customer-table"></div>`;
+  document.getElementById('cust-search').oninput = (e) => renderCustomerTable(e.target.value);
+  renderCustomerTable('');
+}
+VIEW_RENDERERS['customers'] = renderCustomers;
+function renderCustomerTable(q){
+  let items = STATE.customers;
+  if (q) items = items.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || (c.email||'').toLowerCase().includes(q.toLowerCase()) || (c.phone||'').includes(q));
+  if (!items.length) { document.getElementById('customer-table').innerHTML = emptyState('👤','No customers found', q?'No customers match your search.':'Add customers to raise sales orders and invoices against them.', q?'':`<button class="btn btn-blue" onclick="openCustomerForm()">+ New customer</button>`); return; }
+  document.getElementById('customer-table').innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Contact</th><th>GSTIN</th><th class="num">Credit Limit</th><th>Status</th><th></th></tr></thead>
+    <tbody>${items.map(c => `<tr>
+      <td class="row-link" onclick="openCustomerDetail('${c.id}')"><strong>${esc(c.name)}</strong></td>
+      <td>${esc(c.contact_person||c.phone||c.email||'—')}</td>
+      <td class="mono">${esc(c.gst_number||'—')}</td>
+      <td class="num">${money(c.credit_limit, STATE.company.base_currency)}</td>
+      <td><span class="badge badge-${c.status.toLowerCase()}">${c.status}</span></td>
+      <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openCustomerDetail('${c.id}')">View</button></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+function openCustomerForm(existing){
+  const c = existing || {};
+  openModal({
+    title: existing?'Edit customer':'New customer', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Customer name *</label><input type="text" id="cu-name" value="${esc(c.name||'')}"/></div>
+        <div class="form-row"><label>Contact person</label><input type="text" id="cu-contact" value="${esc(c.contact_person||'')}"/></div>
+        <div class="form-row"><label>Email</label><input type="email" id="cu-email" value="${esc(c.email||'')}"/></div>
+        <div class="form-row"><label>Phone</label><input type="text" id="cu-phone" value="${esc(c.phone||'')}"/></div>
+        <div class="form-row"><label>GSTIN</label><input type="text" id="cu-gst" value="${esc(c.gst_number||'')}"/></div>
+        <div class="form-row"><label>PAN</label><input type="text" id="cu-pan" value="${esc(c.pan||'')}"/></div>
+        <div class="form-row"><label>Credit limit</label><input type="number" step="0.01" id="cu-credit" value="${c.credit_limit||0}"/></div>
+        <div class="form-row"><label>Payment terms</label><input type="text" id="cu-terms" placeholder="e.g. Net 30" value="${esc(c.payment_terms||'')}"/></div>
+      </div>
+      <div class="form-row"><label>Billing address</label><textarea id="cu-baddr" rows="2">${esc(c.billing_address||'')}</textarea></div>
+      <div class="form-row"><label>Shipping address</label><textarea id="cu-saddr" rows="2">${esc(c.shipping_address||'')}</textarea></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="cu-save">${existing?'Save changes':'Create customer'}</button>`,
+    onMount:() => document.getElementById('cu-save').onclick = () => submitCustomerForm(existing && existing.id)
+  });
+}
+async function submitCustomerForm(id){
+  const name = document.getElementById('cu-name').value.trim();
+  if (!name) return toast('Customer name is required','err');
+  const payload = {
+    name,
+    contact_person: document.getElementById('cu-contact').value.trim() || null,
+    email: document.getElementById('cu-email').value.trim() || null,
+    phone: document.getElementById('cu-phone').value.trim() || null,
+    gst_number: document.getElementById('cu-gst').value.trim() || null,
+    pan: document.getElementById('cu-pan').value.trim() || null,
+    credit_limit: parseFloat(document.getElementById('cu-credit').value || '0'),
+    payment_terms: document.getElementById('cu-terms').value.trim() || null,
+    billing_address: document.getElementById('cu-baddr').value.trim() || null,
+    shipping_address: document.getElementById('cu-saddr').value.trim() || null,
+  };
+  try {
+    if (id) await api(`/companies/${STATE.companyId}/customers/${id}`, {method:'PATCH', body:payload});
+    else await api(`/companies/${STATE.companyId}/customers`, {method:'POST', body:payload});
+    toast(id?'Customer updated ✓':'Customer created ✓','ok'); closeModal(); await loadCustomers(); renderCustomers();
+  } catch(e){ errToast(e); }
+}
+async function openCustomerDetail(id){
+  const c = STATE.customers.find(x=>x.id===id); if (!c) return;
+  openModal({
+    title:c.name, wide:true,
+    bodyHtml:`
+      <div class="kv"><span class="k">Contact person</span><span class="v">${esc(c.contact_person||'—')}</span></div>
+      <div class="kv"><span class="k">Email</span><span class="v">${esc(c.email||'—')}</span></div>
+      <div class="kv"><span class="k">Phone</span><span class="v">${esc(c.phone||'—')}</span></div>
+      <div class="kv"><span class="k">GSTIN</span><span class="v">${esc(c.gst_number||'—')}</span></div>
+      <div class="kv"><span class="k">PAN</span><span class="v">${esc(c.pan||'—')}</span></div>
+      <div class="kv"><span class="k">Credit limit</span><span class="v">${money(c.credit_limit, STATE.company.base_currency)}</span></div>
+      <div class="kv"><span class="k">Payment terms</span><span class="v">${esc(c.payment_terms||'—')}</span></div>
+      <div class="kv"><span class="k">Billing address</span><span class="v" style="text-align:right;max-width:260px;">${esc(c.billing_address||'—')}</span></div>
+      <div class="kv"><span class="k">Shipping address</span><span class="v" style="text-align:right;max-width:260px;">${esc(c.shipping_address||'—')}</span></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      ${c.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveCustomerAction('${c.id}')">Archive</button>`:''}
+      <button class="btn btn-blue" onclick="closeModal();editCustomerAction('${c.id}')">Edit</button>`,
+  });
+}
+function editCustomerAction(id){ const c = STATE.customers.find(x=>x.id===id); if (c) openCustomerForm(c); }
+async function archiveCustomerAction(id){
+  if (!confirm('Archive this customer?')) return;
+  try { await api(`/companies/${STATE.companyId}/customers/${id}/archive`, {method:'POST'}); toast('Customer archived','ok'); closeModal(); await loadCustomers(); renderCustomers(); }
+  catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   SUPPLIERS
+   ============================================================ */
+async function renderSuppliers(){
+  if (!requireCompany()) return;
+  await loadSuppliers();
+  view().innerHTML = viewHead('Suppliers', `${STATE.suppliers.length} supplier${STATE.suppliers.length===1?'':'s'} in ${esc(STATE.company.name)}`,
+    `<input type="search" id="sup-search" placeholder="Search suppliers…" style="width:200px;">
+     <button class="btn btn-blue" onclick="openSupplierForm()">+ New supplier</button>`) +
+    `<div id="supplier-table"></div>`;
+  document.getElementById('sup-search').oninput = (e) => renderSupplierTable(e.target.value);
+  renderSupplierTable('');
+}
+VIEW_RENDERERS['suppliers'] = renderSuppliers;
+function renderSupplierTable(q){
+  let items = STATE.suppliers;
+  if (q) items = items.filter(s => s.name.toLowerCase().includes(q.toLowerCase()) || (s.email||'').toLowerCase().includes(q.toLowerCase()) || (s.phone||'').includes(q));
+  if (!items.length) { document.getElementById('supplier-table').innerHTML = emptyState('🏭','No suppliers found', q?'No suppliers match your search.':'Add suppliers to raise purchase orders and bills against them.', q?'':`<button class="btn btn-blue" onclick="openSupplierForm()">+ New supplier</button>`); return; }
+  document.getElementById('supplier-table').innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Contact</th><th>GSTIN</th><th class="num">Credit Period</th><th>Status</th><th></th></tr></thead>
+    <tbody>${items.map(s => `<tr>
+      <td class="row-link" onclick="openSupplierDetail('${s.id}')"><strong>${esc(s.name)}</strong></td>
+      <td>${esc(s.contact_person||s.phone||s.email||'—')}</td>
+      <td class="mono">${esc(s.gst_number||'—')}</td>
+      <td class="num">${s.credit_period_days} days</td>
+      <td><span class="badge badge-${s.status.toLowerCase()}">${s.status}</span></td>
+      <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openSupplierDetail('${s.id}')">View</button></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+function openSupplierForm(existing){
+  const s = existing || {};
+  openModal({
+    title: existing?'Edit supplier':'New supplier', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Supplier name *</label><input type="text" id="su-name" value="${esc(s.name||'')}"/></div>
+        <div class="form-row"><label>Contact person</label><input type="text" id="su-contact" value="${esc(s.contact_person||'')}"/></div>
+        <div class="form-row"><label>Email</label><input type="email" id="su-email" value="${esc(s.email||'')}"/></div>
+        <div class="form-row"><label>Phone</label><input type="text" id="su-phone" value="${esc(s.phone||'')}"/></div>
+        <div class="form-row"><label>GSTIN</label><input type="text" id="su-gst" value="${esc(s.gst_number||'')}"/></div>
+        <div class="form-row"><label>PAN</label><input type="text" id="su-pan" value="${esc(s.pan||'')}"/></div>
+        <div class="form-row"><label>Payment terms</label><input type="text" id="su-terms" placeholder="e.g. Net 45" value="${esc(s.payment_terms||'')}"/></div>
+        <div class="form-row"><label>Credit period (days)</label><input type="number" id="su-credit" value="${s.credit_period_days||0}"/></div>
+      </div>
+      <div class="form-row"><label>Address</label><textarea id="su-addr" rows="2">${esc(s.address||'')}</textarea></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="su-save">${existing?'Save changes':'Create supplier'}</button>`,
+    onMount:() => document.getElementById('su-save').onclick = () => submitSupplierForm(existing && existing.id)
+  });
+}
+async function submitSupplierForm(id){
+  const name = document.getElementById('su-name').value.trim();
+  if (!name) return toast('Supplier name is required','err');
+  const payload = {
+    name,
+    contact_person: document.getElementById('su-contact').value.trim() || null,
+    email: document.getElementById('su-email').value.trim() || null,
+    phone: document.getElementById('su-phone').value.trim() || null,
+    gst_number: document.getElementById('su-gst').value.trim() || null,
+    pan: document.getElementById('su-pan').value.trim() || null,
+    payment_terms: document.getElementById('su-terms').value.trim() || null,
+    credit_period_days: parseInt(document.getElementById('su-credit').value || '0', 10),
+    address: document.getElementById('su-addr').value.trim() || null,
+  };
+  try {
+    if (id) await api(`/companies/${STATE.companyId}/suppliers/${id}`, {method:'PATCH', body:payload});
+    else await api(`/companies/${STATE.companyId}/suppliers`, {method:'POST', body:payload});
+    toast(id?'Supplier updated ✓':'Supplier created ✓','ok'); closeModal(); await loadSuppliers(); renderSuppliers();
+  } catch(e){ errToast(e); }
+}
+async function openSupplierDetail(id){
+  const s = STATE.suppliers.find(x=>x.id===id); if (!s) return;
+  openModal({
+    title:s.name, wide:true,
+    bodyHtml:`
+      <div class="kv"><span class="k">Contact person</span><span class="v">${esc(s.contact_person||'—')}</span></div>
+      <div class="kv"><span class="k">Email</span><span class="v">${esc(s.email||'—')}</span></div>
+      <div class="kv"><span class="k">Phone</span><span class="v">${esc(s.phone||'—')}</span></div>
+      <div class="kv"><span class="k">GSTIN</span><span class="v">${esc(s.gst_number||'—')}</span></div>
+      <div class="kv"><span class="k">PAN</span><span class="v">${esc(s.pan||'—')}</span></div>
+      <div class="kv"><span class="k">Payment terms</span><span class="v">${esc(s.payment_terms||'—')}</span></div>
+      <div class="kv"><span class="k">Credit period</span><span class="v">${s.credit_period_days} days</span></div>
+      <div class="kv"><span class="k">Address</span><span class="v" style="text-align:right;max-width:260px;">${esc(s.address||'—')}</span></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      ${s.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveSupplierAction('${s.id}')">Archive</button>`:''}
+      <button class="btn btn-blue" onclick="closeModal();editSupplierAction('${s.id}')">Edit</button>`,
+  });
+}
+function editSupplierAction(id){ const s = STATE.suppliers.find(x=>x.id===id); if (s) openSupplierForm(s); }
+async function archiveSupplierAction(id){
+  if (!confirm('Archive this supplier?')) return;
+  try { await api(`/companies/${STATE.companyId}/suppliers/${id}/archive`, {method:'POST'}); toast('Supplier archived','ok'); closeModal(); await loadSuppliers(); renderSuppliers(); }
+  catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   SHARED LINE-ITEM EDITOR (sales orders/invoices, purchase orders/bills)
+   ============================================================ */
+function itemOptionsHtml(){
+  return STATE.stockItems.filter(i=>i.status==='ACTIVE').map(i => `<option value="${i.id}">${esc(i.name)}${i.sku?` (${esc(i.sku)})`:''}</option>`).join('') || '<option value="">— create an item first —</option>';
+}
+function docLineRow(){
+  return el(`<tr>
+    <td><select class="dl-item">${itemOptionsHtml()}</select></td>
+    <td><input type="text" class="dl-desc" placeholder="optional"/></td>
+    <td><input type="number" step="0.001" class="dl-qty" placeholder="0"/></td>
+    <td><input type="number" step="0.01" class="dl-price" placeholder="0.00"/></td>
+    <td class="rm"><button type="button" class="line-remove">✕</button></td>
+  </tr>`);
+}
+function addDocLine(tbodyId, totalId){
+  const tbody = document.getElementById(tbodyId);
+  const row = docLineRow();
+  row.querySelector('.line-remove').onclick = () => { row.remove(); updateDocTotal(tbodyId, totalId); };
+  row.querySelector('.dl-qty').oninput = () => updateDocTotal(tbodyId, totalId);
+  row.querySelector('.dl-price').oninput = () => updateDocTotal(tbodyId, totalId);
+  tbody.appendChild(row);
+  updateDocTotal(tbodyId, totalId);
+}
+function updateDocTotal(tbodyId, totalId){
+  const rows = document.querySelectorAll(`#${tbodyId} tr`);
+  let total = 0;
+  rows.forEach(r => { const q = parseFloat(r.querySelector('.dl-qty').value||0); const p = parseFloat(r.querySelector('.dl-price').value||0); total += q*p; });
+  const totalEl = document.getElementById(totalId);
+  if (totalEl) totalEl.textContent = `Subtotal: ${total.toFixed(2)}`;
+  return total;
+}
+function collectDocLines(tbodyId, priceKey){
+  const rows = document.querySelectorAll(`#${tbodyId} tr`);
+  const lines = [];
+  rows.forEach(r => {
+    const item_id = r.querySelector('.dl-item').value;
+    const quantity = parseFloat(r.querySelector('.dl-qty').value || 0);
+    const price = parseFloat(r.querySelector('.dl-price').value || 0);
+    const description = r.querySelector('.dl-desc').value.trim() || null;
+    if (!item_id || quantity<=0) return;
+    lines.push({item_id, description, quantity, [priceKey]: price});
+  });
+  return lines;
+}
+function docLinesTableHtml(tbodyId, priceLabel){
+  return `<table class="lines-table" id="${tbodyId.replace('-body','')}">
+    <thead><tr><th style="width:34%;">Item</th><th style="width:24%;">Description</th><th class="num" style="width:14%;">Qty</th><th class="num" style="width:16%;">${priceLabel}</th><th class="rm"></th></tr></thead>
+    <tbody id="${tbodyId}"></tbody></table>`;
+}
+
+/* ============================================================
+   SALES ORDERS
+   ============================================================ */
+let salesOrderFilters = {status:''};
+async function renderSalesOrders(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Sales Orders', 'Orders confirmed with a customer, before invoicing.',
+    `<button class="btn btn-blue" onclick="openSalesOrderForm()">+ New sales order</button>`) +
+    `<div class="card card-pad" style="margin-bottom:16px;"><div class="form-row" style="margin-bottom:0;max-width:220px;"><label>Status</label>
+      <select id="so-filter-status"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="CONFIRMED">Confirmed</option><option value="CANCELLED">Cancelled</option></select></div></div>
+    <div id="so-table"></div>`;
+  document.getElementById('so-filter-status').onchange = loadSalesOrderTable;
+  loadSalesOrderTable();
+}
+VIEW_RENDERERS['sales-orders'] = renderSalesOrders;
+async function loadSalesOrderTable(){
+  document.getElementById('so-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const page = await api(`/companies/${STATE.companyId}/sales/orders`, {qs:{page_size:100, status: document.getElementById('so-filter-status').value || undefined}});
+    const items = page.items, cur = STATE.company.base_currency;
+    if (!items.length) { document.getElementById('so-table').innerHTML = emptyState('📋','No sales orders found','Create a sales order for a customer.',`<button class="btn btn-blue" onclick="openSalesOrderForm()">+ New sales order</button>`); return; }
+    document.getElementById('so-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th class="num">Total</th><th>Status</th></tr></thead>
+      <tbody>${items.map(o => `<tr class="row-link" onclick="openSalesOrderDetail('${o.id}')">
+        <td class="mono">${esc(o.order_number)}</td><td>${fmtDate(o.order_date)}</td><td>${esc(customerName(o.customer_id))}</td>
+        <td class="num">${money(o.total_amount,cur)}</td><td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td></tr>`).join('')}</tbody></table></div>`;
+  } catch(e){ document.getElementById('so-table').innerHTML = emptyState('⚠','Could not load sales orders', esc(e.message)); }
+}
+function openSalesOrderForm(){
+  if (!STATE.customers.length) return toast('Create a customer first','err');
+  if (!STATE.stockItems.length) return toast('Create a stock item first','err');
+  openModal({
+    title:'New sales order', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Customer</label><select id="so-customer">${STATE.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Warehouse (optional)</label><select id="so-wh"><option value="">— none —</option>${STATE.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Order date</label><input type="date" id="so-date" value="${todayStr()}"/></div>
+        <div class="form-row"><label>Expected delivery (optional)</label><input type="date" id="so-eta"/></div>
+      </div>
+      <div class="form-row"><label>Narration (optional)</label><input type="text" id="so-narr"/></div>
+      <div class="form-row"><label>Line items</label>${docLinesTableHtml('so-lines-body','Unit Price')}
+        <button class="btn btn-ghost btn-sm" id="so-addline">+ Add line</button></div>
+      <div class="totals-row balanced" id="so-total" style="justify-content:flex-start;">Subtotal: 0.00</div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="so-save">Create order</button>`,
+    onMount:() => {
+      addDocLine('so-lines-body','so-total'); addDocLine('so-lines-body','so-total');
+      document.getElementById('so-addline').onclick = () => addDocLine('so-lines-body','so-total');
+      document.getElementById('so-save').onclick = submitSalesOrderForm;
+    }
+  });
+}
+async function submitSalesOrderForm(){
+  const lines = collectDocLines('so-lines-body','unit_price');
+  if (!lines.length) return toast('Add at least one line item','err');
+  const payload = {
+    order_date: document.getElementById('so-date').value,
+    expected_delivery_date: document.getElementById('so-eta').value || null,
+    customer_id: document.getElementById('so-customer').value,
+    warehouse_id: document.getElementById('so-wh').value || null,
+    narration: document.getElementById('so-narr').value.trim() || null,
+    lines,
+  };
+  try {
+    const o = await api(`/companies/${STATE.companyId}/sales/orders`, {method:'POST', body:payload});
+    toast('Sales order created ✓','ok'); closeModal(); openSalesOrderDetail(o.id);
+    if (STATE.currentView==='sales-orders') loadSalesOrderTable();
+  } catch(e){ errToast(e); }
+}
+async function openSalesOrderDetail(id){
+  openModal({title:'Sales order', wide:true, bodyHtml:`<div id="sod-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  try {
+    const o = await api(`/companies/${STATE.companyId}/sales/orders/${id}`);
+    const cur = STATE.company.base_currency;
+    document.getElementById('modal-title').textContent = `Sales Order · ${o.order_number}`;
+    document.getElementById('sod-body').innerHTML = `
+      <div class="kv"><span class="k">Customer</span><span class="v">${esc(customerName(o.customer_id))}</span></div>
+      <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(o.order_date)}</span></div>
+      <div class="kv"><span class="k">Expected delivery</span><span class="v">${o.expected_delivery_date?fmtDate(o.expected_delivery_date):'—'}</span></div>
+      <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(o.narration||'—')}</span></div>
+      <div class="section-divider"></div>
+      <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Total</th></tr></thead>
+      <tbody>${o.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_price,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
+      <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(o.total_amount,cur)}</div>
+    `;
+    const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
+    if (o.status==='DRAFT') actions.push(`<button class="btn btn-danger" onclick="cancelSalesOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-teal" onclick="confirmSalesOrderAction('${o.id}')">Confirm</button>`);
+    if (o.status==='CONFIRMED') actions.push(`<button class="btn btn-danger" onclick="cancelSalesOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-blue" onclick="closeModal();openSalesInvoiceFormFromOrder('${o.id}')">Create invoice →</button>`);
+    document.getElementById('modal-foot').innerHTML = actions.join('');
+  } catch(e){ document.getElementById('sod-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+async function confirmSalesOrderAction(id){
+  try { await api(`/companies/${STATE.companyId}/sales/orders/${id}/confirm`, {method:'POST'}); toast('Sales order confirmed ✓','ok'); openSalesOrderDetail(id); if(STATE.currentView==='sales-orders') loadSalesOrderTable(); }
+  catch(e){ errToast(e); }
+}
+async function cancelSalesOrderAction(id){
+  if (!confirm('Cancel this sales order?')) return;
+  try { await api(`/companies/${STATE.companyId}/sales/orders/${id}/cancel`, {method:'POST'}); toast('Sales order cancelled','ok'); openSalesOrderDetail(id); if(STATE.currentView==='sales-orders') loadSalesOrderTable(); }
+  catch(e){ errToast(e); }
+}
+async function openSalesInvoiceFormFromOrder(orderId){
+  try { const o = await api(`/companies/${STATE.companyId}/sales/orders/${orderId}`); openSalesInvoiceForm(o); }
+  catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   SALES INVOICES
+   ============================================================ */
+async function renderSalesInvoices(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Sales Invoices', 'Posting an invoice creates the voucher and moves stock out automatically.',
+    `<button class="btn btn-blue" onclick="openSalesInvoiceForm()">+ New sales invoice</button>`) +
+    `<div class="card card-pad" style="margin-bottom:16px;"><div class="form-row" style="margin-bottom:0;max-width:220px;"><label>Status</label>
+      <select id="si-filter-status"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="POSTED">Posted</option><option value="CANCELLED">Cancelled</option></select></div></div>
+    <div id="si-table"></div>`;
+  document.getElementById('si-filter-status').onchange = loadSalesInvoiceTable;
+  loadSalesInvoiceTable();
+}
+VIEW_RENDERERS['sales-invoices'] = renderSalesInvoices;
+async function loadSalesInvoiceTable(){
+  document.getElementById('si-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const page = await api(`/companies/${STATE.companyId}/sales/invoices`, {qs:{page_size:100, status: document.getElementById('si-filter-status').value || undefined}});
+    const items = page.items, cur = STATE.company.base_currency;
+    if (!items.length) { document.getElementById('si-table').innerHTML = emptyState('🧾','No sales invoices found','Create an invoice for a customer.',`<button class="btn btn-blue" onclick="openSalesInvoiceForm()">+ New sales invoice</button>`); return; }
+    document.getElementById('si-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Invoice #</th><th>Date</th><th>Customer</th><th class="num">Total</th><th>Status</th></tr></thead>
+      <tbody>${items.map(i => `<tr class="row-link" onclick="openSalesInvoiceDetail('${i.id}')">
+        <td class="mono">${esc(i.invoice_number)}</td><td>${fmtDate(i.invoice_date)}</td><td>${esc(customerName(i.customer_id))}</td>
+        <td class="num">${money(i.total_amount,cur)}</td><td><span class="badge badge-${i.status.toLowerCase()}">${i.status}</span></td></tr>`).join('')}</tbody></table></div>`;
+  } catch(e){ document.getElementById('si-table').innerHTML = emptyState('⚠','Could not load sales invoices', esc(e.message)); }
+}
+function openSalesInvoiceForm(prefillOrder){
+  if (!STATE.customers.length) return toast('Create a customer first','err');
+  if (!STATE.stockItems.length) return toast('Create a stock item first','err');
+  if (!STATE.warehouses.length) return toast('Create a warehouse first','err');
+  const salesLedgers = STATE.ledgers.filter(l=>l.status==='ACTIVE');
+  openModal({
+    title: prefillOrder ? `New invoice from ${prefillOrder.order_number}` : 'New sales invoice', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Customer</label><select id="si-customer">${STATE.customers.map(c=>`<option value="${c.id}" ${prefillOrder&&prefillOrder.customer_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Customer ledger (receivable)</label><select id="si-custledger">${ledgerOptionsHtml()}</select></div>
+        <div class="form-row"><label>Sales ledger (income)</label><select id="si-salesledger">${ledgerOptionsHtml()}</select></div>
+        <div class="form-row"><label>Warehouse</label><select id="si-wh">${STATE.warehouses.map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Invoice date</label><input type="date" id="si-date" value="${todayStr()}"/></div>
+      </div>
+      <div class="form-row"><label>Narration (optional)</label><input type="text" id="si-narr" value="${prefillOrder?('Against order '+esc(prefillOrder.order_number)):''}"/></div>
+      <div class="form-row"><label>Line items</label>${docLinesTableHtml('si-lines-body','Unit Price')}
+        <button class="btn btn-ghost btn-sm" id="si-addline">+ Add line</button></div>
+      <div class="totals-row balanced" id="si-total" style="justify-content:flex-start;">Subtotal: 0.00</div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="si-save">Save as draft</button>`,
+    onMount:() => {
+      if (prefillOrder && prefillOrder.lines && prefillOrder.lines.length) {
+        prefillOrder.lines.forEach(l => {
+          addDocLine('si-lines-body','si-total');
+          const rows = document.querySelectorAll('#si-lines-body tr'); const row = rows[rows.length-1];
+          row.querySelector('.dl-item').value = l.item_id;
+          row.querySelector('.dl-desc').value = l.description || '';
+          row.querySelector('.dl-qty').value = l.quantity;
+          row.querySelector('.dl-price').value = l.unit_price;
+        });
+        updateDocTotal('si-lines-body','si-total');
+      } else {
+        addDocLine('si-lines-body','si-total'); addDocLine('si-lines-body','si-total');
+      }
+      document.getElementById('si-addline').onclick = () => addDocLine('si-lines-body','si-total');
+      document.getElementById('si-save').onclick = submitSalesInvoiceForm;
+    }
+  });
+}
+async function submitSalesInvoiceForm(){
+  const lines = collectDocLines('si-lines-body','unit_price');
+  if (!lines.length) return toast('Add at least one line item','err');
+  const payload = {
+    invoice_date: document.getElementById('si-date').value,
+    customer_id: document.getElementById('si-customer').value,
+    customer_ledger_id: document.getElementById('si-custledger').value,
+    sales_ledger_id: document.getElementById('si-salesledger').value,
+    warehouse_id: document.getElementById('si-wh').value,
+    narration: document.getElementById('si-narr').value.trim() || null,
+    lines,
+  };
+  try {
+    const inv = await api(`/companies/${STATE.companyId}/sales/invoices`, {method:'POST', body:payload});
+    toast('Sales invoice saved as draft ✓','ok'); closeModal(); openSalesInvoiceDetail(inv.id);
+    if (STATE.currentView==='sales-invoices') loadSalesInvoiceTable();
+  } catch(e){ errToast(e); }
+}
+async function openSalesInvoiceDetail(id){
+  openModal({title:'Sales invoice', wide:true, bodyHtml:`<div id="sid-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  try {
+    const inv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}`);
+    const cur = STATE.company.base_currency;
+    document.getElementById('modal-title').textContent = `Sales Invoice · ${inv.invoice_number}`;
+    document.getElementById('sid-body').innerHTML = `
+      <div class="kv"><span class="k">Customer</span><span class="v">${esc(customerName(inv.customer_id))}</span></div>
+      <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(inv.invoice_date)}</span></div>
+      <div class="kv"><span class="k">Warehouse</span><span class="v">${esc(warehouseName(inv.warehouse_id))}</span></div>
+      <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${inv.status.toLowerCase()}">${inv.status}</span></span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(inv.narration||'—')}</span></div>
+      <div class="section-divider"></div>
+      <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Total</th></tr></thead>
+      <tbody>${inv.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_price,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
+      <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(inv.total_amount,cur)}</div>
+    `;
+    const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
+    if (inv.status==='DRAFT') actions.push(`<button class="btn btn-teal" onclick="postSalesInvoiceAction('${inv.id}')">Post invoice</button>`);
+    if (inv.voucher_id) actions.push(`<button class="btn btn-ghost" onclick="openVoucherDetail('${inv.voucher_id}')">View voucher</button>`);
+    document.getElementById('modal-foot').innerHTML = actions.join('');
+  } catch(e){ document.getElementById('sid-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+async function postSalesInvoiceAction(id){
+  try { await api(`/companies/${STATE.companyId}/sales/invoices/${id}/post`, {method:'POST'}); toast('Sales invoice posted ✓','ok'); refreshBalanceBeam(); openSalesInvoiceDetail(id); if(STATE.currentView==='sales-invoices') loadSalesInvoiceTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
+  catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   PURCHASE ORDERS
+   ============================================================ */
+async function renderPurchaseOrders(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Purchase Orders', 'Orders placed with a supplier, before billing.',
+    `<button class="btn btn-blue" onclick="openPurchaseOrderForm()">+ New purchase order</button>`) +
+    `<div class="card card-pad" style="margin-bottom:16px;"><div class="form-row" style="margin-bottom:0;max-width:220px;"><label>Status</label>
+      <select id="po-filter-status"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="CONFIRMED">Confirmed</option><option value="CANCELLED">Cancelled</option></select></div></div>
+    <div id="po-table"></div>`;
+  document.getElementById('po-filter-status').onchange = loadPurchaseOrderTable;
+  loadPurchaseOrderTable();
+}
+VIEW_RENDERERS['purchase-orders'] = renderPurchaseOrders;
+async function loadPurchaseOrderTable(){
+  document.getElementById('po-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const page = await api(`/companies/${STATE.companyId}/purchase/orders`, {qs:{page_size:100, status: document.getElementById('po-filter-status').value || undefined}});
+    const items = page.items, cur = STATE.company.base_currency;
+    if (!items.length) { document.getElementById('po-table').innerHTML = emptyState('📋','No purchase orders found','Create a purchase order for a supplier.',`<button class="btn btn-blue" onclick="openPurchaseOrderForm()">+ New purchase order</button>`); return; }
+    document.getElementById('po-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Order #</th><th>Date</th><th>Supplier</th><th class="num">Total</th><th>Status</th></tr></thead>
+      <tbody>${items.map(o => `<tr class="row-link" onclick="openPurchaseOrderDetail('${o.id}')">
+        <td class="mono">${esc(o.order_number)}</td><td>${fmtDate(o.order_date)}</td><td>${esc(supplierName(o.supplier_id))}</td>
+        <td class="num">${money(o.total_amount,cur)}</td><td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td></tr>`).join('')}</tbody></table></div>`;
+  } catch(e){ document.getElementById('po-table').innerHTML = emptyState('⚠','Could not load purchase orders', esc(e.message)); }
+}
+function openPurchaseOrderForm(){
+  if (!STATE.suppliers.length) return toast('Create a supplier first','err');
+  if (!STATE.stockItems.length) return toast('Create a stock item first','err');
+  openModal({
+    title:'New purchase order', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Supplier</label><select id="po-supplier">${STATE.suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Warehouse (optional)</label><select id="po-wh"><option value="">— none —</option>${STATE.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Order date</label><input type="date" id="po-date" value="${todayStr()}"/></div>
+        <div class="form-row"><label>Expected receipt (optional)</label><input type="date" id="po-eta"/></div>
+      </div>
+      <div class="form-row"><label>Narration (optional)</label><input type="text" id="po-narr"/></div>
+      <div class="form-row"><label>Line items</label>${docLinesTableHtml('po-lines-body','Unit Cost')}
+        <button class="btn btn-ghost btn-sm" id="po-addline">+ Add line</button></div>
+      <div class="totals-row balanced" id="po-total" style="justify-content:flex-start;">Subtotal: 0.00</div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="po-save">Create order</button>`,
+    onMount:() => {
+      addDocLine('po-lines-body','po-total'); addDocLine('po-lines-body','po-total');
+      document.getElementById('po-addline').onclick = () => addDocLine('po-lines-body','po-total');
+      document.getElementById('po-save').onclick = submitPurchaseOrderForm;
+    }
+  });
+}
+async function submitPurchaseOrderForm(){
+  const lines = collectDocLines('po-lines-body','unit_cost');
+  if (!lines.length) return toast('Add at least one line item','err');
+  const payload = {
+    order_date: document.getElementById('po-date').value,
+    expected_receipt_date: document.getElementById('po-eta').value || null,
+    supplier_id: document.getElementById('po-supplier').value,
+    warehouse_id: document.getElementById('po-wh').value || null,
+    narration: document.getElementById('po-narr').value.trim() || null,
+    lines,
+  };
+  try {
+    const o = await api(`/companies/${STATE.companyId}/purchase/orders`, {method:'POST', body:payload});
+    toast('Purchase order created ✓','ok'); closeModal(); openPurchaseOrderDetail(o.id);
+    if (STATE.currentView==='purchase-orders') loadPurchaseOrderTable();
+  } catch(e){ errToast(e); }
+}
+async function openPurchaseOrderDetail(id){
+  openModal({title:'Purchase order', wide:true, bodyHtml:`<div id="pod-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  try {
+    const o = await api(`/companies/${STATE.companyId}/purchase/orders/${id}`);
+    const cur = STATE.company.base_currency;
+    document.getElementById('modal-title').textContent = `Purchase Order · ${o.order_number}`;
+    document.getElementById('pod-body').innerHTML = `
+      <div class="kv"><span class="k">Supplier</span><span class="v">${esc(supplierName(o.supplier_id))}</span></div>
+      <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(o.order_date)}</span></div>
+      <div class="kv"><span class="k">Expected receipt</span><span class="v">${o.expected_receipt_date?fmtDate(o.expected_receipt_date):'—'}</span></div>
+      <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(o.narration||'—')}</span></div>
+      <div class="section-divider"></div>
+      <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Total</th></tr></thead>
+      <tbody>${o.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_cost,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
+      <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(o.total_amount,cur)}</div>
+    `;
+    const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
+    if (o.status==='DRAFT') actions.push(`<button class="btn btn-danger" onclick="cancelPurchaseOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-teal" onclick="confirmPurchaseOrderAction('${o.id}')">Confirm</button>`);
+    if (o.status==='CONFIRMED') actions.push(`<button class="btn btn-danger" onclick="cancelPurchaseOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-blue" onclick="closeModal();openPurchaseBillFormFromOrder('${o.id}')">Create bill →</button>`);
+    document.getElementById('modal-foot').innerHTML = actions.join('');
+  } catch(e){ document.getElementById('pod-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+async function confirmPurchaseOrderAction(id){
+  try { await api(`/companies/${STATE.companyId}/purchase/orders/${id}/confirm`, {method:'POST'}); toast('Purchase order confirmed ✓','ok'); openPurchaseOrderDetail(id); if(STATE.currentView==='purchase-orders') loadPurchaseOrderTable(); }
+  catch(e){ errToast(e); }
+}
+async function cancelPurchaseOrderAction(id){
+  if (!confirm('Cancel this purchase order?')) return;
+  try { await api(`/companies/${STATE.companyId}/purchase/orders/${id}/cancel`, {method:'POST'}); toast('Purchase order cancelled','ok'); openPurchaseOrderDetail(id); if(STATE.currentView==='purchase-orders') loadPurchaseOrderTable(); }
+  catch(e){ errToast(e); }
+}
+async function openPurchaseBillFormFromOrder(orderId){
+  try { const o = await api(`/companies/${STATE.companyId}/purchase/orders/${orderId}`); openPurchaseBillForm(o); }
+  catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   PURCHASE BILLS
+   ============================================================ */
+async function renderPurchaseBills(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Purchase Bills', 'Posting a bill creates the voucher and moves stock in automatically.',
+    `<button class="btn btn-blue" onclick="openPurchaseBillForm()">+ New purchase bill</button>`) +
+    `<div class="card card-pad" style="margin-bottom:16px;"><div class="form-row" style="margin-bottom:0;max-width:220px;"><label>Status</label>
+      <select id="pb-filter-status"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="POSTED">Posted</option><option value="CANCELLED">Cancelled</option></select></div></div>
+    <div id="pb-table"></div>`;
+  document.getElementById('pb-filter-status').onchange = loadPurchaseBillTable;
+  loadPurchaseBillTable();
+}
+VIEW_RENDERERS['purchase-bills'] = renderPurchaseBills;
+async function loadPurchaseBillTable(){
+  document.getElementById('pb-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const page = await api(`/companies/${STATE.companyId}/purchase/bills`, {qs:{page_size:100, status: document.getElementById('pb-filter-status').value || undefined}});
+    const items = page.items, cur = STATE.company.base_currency;
+    if (!items.length) { document.getElementById('pb-table').innerHTML = emptyState('🧾','No purchase bills found','Create a bill for a supplier.',`<button class="btn btn-blue" onclick="openPurchaseBillForm()">+ New purchase bill</button>`); return; }
+    document.getElementById('pb-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Bill #</th><th>Date</th><th>Supplier</th><th class="num">Total</th><th>Status</th></tr></thead>
+      <tbody>${items.map(b => `<tr class="row-link" onclick="openPurchaseBillDetail('${b.id}')">
+        <td class="mono">${esc(b.bill_number)}</td><td>${fmtDate(b.bill_date)}</td><td>${esc(supplierName(b.supplier_id))}</td>
+        <td class="num">${money(b.total_amount,cur)}</td><td><span class="badge badge-${b.status.toLowerCase()}">${b.status}</span></td></tr>`).join('')}</tbody></table></div>`;
+  } catch(e){ document.getElementById('pb-table').innerHTML = emptyState('⚠','Could not load purchase bills', esc(e.message)); }
+}
+function openPurchaseBillForm(prefillOrder){
+  if (!STATE.suppliers.length) return toast('Create a supplier first','err');
+  if (!STATE.stockItems.length) return toast('Create a stock item first','err');
+  if (!STATE.warehouses.length) return toast('Create a warehouse first','err');
+  openModal({
+    title: prefillOrder ? `New bill from ${prefillOrder.order_number}` : 'New purchase bill', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Supplier</label><select id="pb-supplier">${STATE.suppliers.map(s=>`<option value="${s.id}" ${prefillOrder&&prefillOrder.supplier_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Supplier ledger (payable)</label><select id="pb-supledger">${ledgerOptionsHtml()}</select></div>
+        <div class="form-row"><label>Purchase ledger (expense)</label><select id="pb-purledger">${ledgerOptionsHtml()}</select></div>
+        <div class="form-row"><label>Warehouse</label><select id="pb-wh">${STATE.warehouses.map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Bill date</label><input type="date" id="pb-date" value="${todayStr()}"/></div>
+      </div>
+      <div class="form-row"><label>Narration (optional)</label><input type="text" id="pb-narr" value="${prefillOrder?('Against order '+esc(prefillOrder.order_number)):''}"/></div>
+      <div class="form-row"><label>Line items</label>${docLinesTableHtml('pb-lines-body','Unit Cost')}
+        <button class="btn btn-ghost btn-sm" id="pb-addline">+ Add line</button></div>
+      <div class="totals-row balanced" id="pb-total" style="justify-content:flex-start;">Subtotal: 0.00</div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="pb-save">Save as draft</button>`,
+    onMount:() => {
+      if (prefillOrder && prefillOrder.lines && prefillOrder.lines.length) {
+        prefillOrder.lines.forEach(l => {
+          addDocLine('pb-lines-body','pb-total');
+          const rows = document.querySelectorAll('#pb-lines-body tr'); const row = rows[rows.length-1];
+          row.querySelector('.dl-item').value = l.item_id;
+          row.querySelector('.dl-desc').value = l.description || '';
+          row.querySelector('.dl-qty').value = l.quantity;
+          row.querySelector('.dl-price').value = l.unit_cost;
+        });
+        updateDocTotal('pb-lines-body','pb-total');
+      } else {
+        addDocLine('pb-lines-body','pb-total'); addDocLine('pb-lines-body','pb-total');
+      }
+      document.getElementById('pb-addline').onclick = () => addDocLine('pb-lines-body','pb-total');
+      document.getElementById('pb-save').onclick = submitPurchaseBillForm;
+    }
+  });
+}
+async function submitPurchaseBillForm(){
+  const lines = collectDocLines('pb-lines-body','unit_cost');
+  if (!lines.length) return toast('Add at least one line item','err');
+  const payload = {
+    bill_date: document.getElementById('pb-date').value,
+    supplier_id: document.getElementById('pb-supplier').value,
+    supplier_ledger_id: document.getElementById('pb-supledger').value,
+    purchase_ledger_id: document.getElementById('pb-purledger').value,
+    warehouse_id: document.getElementById('pb-wh').value,
+    narration: document.getElementById('pb-narr').value.trim() || null,
+    lines,
+  };
+  try {
+    const b = await api(`/companies/${STATE.companyId}/purchase/bills`, {method:'POST', body:payload});
+    toast('Purchase bill saved as draft ✓','ok'); closeModal(); openPurchaseBillDetail(b.id);
+    if (STATE.currentView==='purchase-bills') loadPurchaseBillTable();
+  } catch(e){ errToast(e); }
+}
+async function openPurchaseBillDetail(id){
+  openModal({title:'Purchase bill', wide:true, bodyHtml:`<div id="pbd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  try {
+    const b = await api(`/companies/${STATE.companyId}/purchase/bills/${id}`);
+    const cur = STATE.company.base_currency;
+    document.getElementById('modal-title').textContent = `Purchase Bill · ${b.bill_number}`;
+    document.getElementById('pbd-body').innerHTML = `
+      <div class="kv"><span class="k">Supplier</span><span class="v">${esc(supplierName(b.supplier_id))}</span></div>
+      <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(b.bill_date)}</span></div>
+      <div class="kv"><span class="k">Warehouse</span><span class="v">${esc(warehouseName(b.warehouse_id))}</span></div>
+      <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${b.status.toLowerCase()}">${b.status}</span></span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(b.narration||'—')}</span></div>
+      <div class="section-divider"></div>
+      <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Total</th></tr></thead>
+      <tbody>${b.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_cost,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
+      <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(b.total_amount,cur)}</div>
+    `;
+    const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
+    if (b.status==='DRAFT') actions.push(`<button class="btn btn-teal" onclick="postPurchaseBillAction('${b.id}')">Post bill</button>`);
+    if (b.voucher_id) actions.push(`<button class="btn btn-ghost" onclick="openVoucherDetail('${b.voucher_id}')">View voucher</button>`);
+    document.getElementById('modal-foot').innerHTML = actions.join('');
+  } catch(e){ document.getElementById('pbd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+async function postPurchaseBillAction(id){
+  try { await api(`/companies/${STATE.companyId}/purchase/bills/${id}/post`, {method:'POST'}); toast('Purchase bill posted ✓','ok'); refreshBalanceBeam(); openPurchaseBillDetail(id); if(STATE.currentView==='purchase-bills') loadPurchaseBillTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
+  catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   INVENTORY — SETUP (categories, units of measure, warehouses)
+   ============================================================ */
+async function renderInventorySetup(){
+  if (!requireCompany()) return;
+  await Promise.all([loadCategories(), loadUoms(), loadWarehouses()]);
+  view().innerHTML = viewHead('Categories, UOM &amp; Warehouses', 'Master data that stock items and movements rely on.', '') +
+    `<div class="grid grid-3">
+      <div class="card card-pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="font-weight:800;">Categories</div><button class="btn btn-ghost btn-sm" onclick="openCategoryForm()">+ Add</button></div>
+        <div id="cat-list">${STATE.categories.length ? STATE.categories.map(c=>`<div class="kv"><span class="k">${esc(c.name)}</span><span class="v" style="font-size:.72rem;color:var(--ink3);">${esc(c.description||'')}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No categories yet.</div>'}</div>
+      </div>
+      <div class="card card-pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="font-weight:800;">Units of Measure</div><button class="btn btn-ghost btn-sm" onclick="openUomForm()">+ Add</button></div>
+        <div id="uom-list">${STATE.uoms.length ? STATE.uoms.map(u=>`<div class="kv"><span class="k">${esc(u.name)} (${esc(u.symbol)})</span><span class="v">precision ${u.precision}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No units yet.</div>'}</div>
+      </div>
+      <div class="card card-pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="font-weight:800;">Warehouses</div><button class="btn btn-ghost btn-sm" onclick="openWarehouseForm()">+ Add</button></div>
+        <div id="wh-list">${STATE.warehouses.length ? STATE.warehouses.map(w=>`<div class="kv"><span class="k">${esc(w.name)}${w.is_default?' <span class="pill">default</span>':''}</span><span class="v"><span class="badge badge-${w.status.toLowerCase()}">${w.status}</span></span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No warehouses yet.</div>'}</div>
+      </div>
+    </div>`;
+}
+VIEW_RENDERERS['inventory-setup'] = renderInventorySetup;
+function openCategoryForm(){
+  openModal({
+    title:'New item category',
+    bodyHtml:`<div class="form-row"><label>Name</label><input type="text" id="cat-name" placeholder="e.g. Electronics"/></div><div class="form-row"><label>Description (optional)</label><textarea id="cat-desc" rows="2"></textarea></div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="cat-save">Create category</button>`,
+    onMount:() => document.getElementById('cat-save').onclick = async () => {
+      const name = document.getElementById('cat-name').value.trim();
+      if (!name) return toast('Category name is required','err');
+      try {
+        await api(`/companies/${STATE.companyId}/inventory/categories`, {method:'POST', body:{name, description: document.getElementById('cat-desc').value.trim() || null}});
+        toast('Category created ✓','ok'); closeModal(); renderInventorySetup();
+      } catch(e){ errToast(e); }
+    }
+  });
+}
+function openUomForm(){
+  openModal({
+    title:'New unit of measure',
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Name</label><input type="text" id="uom-name" placeholder="e.g. Kilogram"/></div>
+        <div class="form-row"><label>Symbol</label><input type="text" id="uom-symbol" placeholder="e.g. kg"/></div>
+      </div>
+      <div class="form-row"><label>Decimal precision</label><input type="number" id="uom-precision" value="2" min="0" max="6"/></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="uom-save">Create unit</button>`,
+    onMount:() => document.getElementById('uom-save').onclick = async () => {
+      const name = document.getElementById('uom-name').value.trim();
+      const symbol = document.getElementById('uom-symbol').value.trim();
+      if (!name || !symbol) return toast('Name and symbol are both required','err');
+      try {
+        await api(`/companies/${STATE.companyId}/inventory/uoms`, {method:'POST', body:{name, symbol, precision: parseInt(document.getElementById('uom-precision').value||'2',10)}});
+        toast('Unit created ✓','ok'); closeModal(); renderInventorySetup();
+      } catch(e){ errToast(e); }
+    }
+  });
+}
+function openWarehouseForm(){
+  openModal({
+    title:'New warehouse',
+    bodyHtml:`
+      <div class="form-row"><label>Name</label><input type="text" id="wh-name" placeholder="e.g. Main Godown"/></div>
+      <div class="form-row"><label>Code (optional)</label><input type="text" id="wh-code"/></div>
+      <div class="form-row"><label>Address (optional)</label><textarea id="wh-addr" rows="2"></textarea></div>
+      <div class="form-row"><label class="check-row"><input type="checkbox" id="wh-default"/> Set as default warehouse</label></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="wh-save">Create warehouse</button>`,
+    onMount:() => document.getElementById('wh-save').onclick = async () => {
+      const name = document.getElementById('wh-name').value.trim();
+      if (!name) return toast('Warehouse name is required','err');
+      try {
+        await api(`/companies/${STATE.companyId}/inventory/warehouses`, {method:'POST', body:{
+          name, code: document.getElementById('wh-code').value.trim() || null,
+          address: document.getElementById('wh-addr').value.trim() || null,
+          is_default: document.getElementById('wh-default').checked,
+        }});
+        toast('Warehouse created ✓','ok'); closeModal(); renderInventorySetup();
+      } catch(e){ errToast(e); }
+    }
+  });
+}
+
+/* ============================================================
+   INVENTORY — STOCK ITEMS
+   ============================================================ */
+async function renderInventoryItems(){
+  if (!requireCompany()) return;
+  await Promise.all([loadStockItems(), loadCategories(), loadUoms()]);
+  view().innerHTML = viewHead('Items', `${STATE.stockItems.length} item${STATE.stockItems.length===1?'':'s'} in ${esc(STATE.company.name)}`,
+    `<input type="search" id="item-search" placeholder="Search items…" style="width:200px;">
+     <button class="btn btn-blue" onclick="openItemForm()">+ New item</button>`) +
+    `<div id="item-table"></div>`;
+  document.getElementById('item-search').oninput = (e) => renderItemTable(e.target.value);
+  renderItemTable('');
+}
+VIEW_RENDERERS['inventory-items'] = renderInventoryItems;
+function renderItemTable(q){
+  let items = STATE.stockItems;
+  if (q) items = items.filter(i => i.name.toLowerCase().includes(q.toLowerCase()) || (i.sku||'').toLowerCase().includes(q.toLowerCase()));
+  if (!STATE.uoms.length) { document.getElementById('item-table').innerHTML = emptyState('📦','Create a unit of measure first', 'Items need a unit of measure (e.g. pcs, kg) before they can be created.', `<button class="btn btn-blue" onclick="navigate('inventory-setup')">Go to setup →</button>`); return; }
+  if (!items.length) { document.getElementById('item-table').innerHTML = emptyState('📦','No items found', q?'No items match your search.':'Add your first stock item.', q?'':`<button class="btn btn-blue" onclick="openItemForm()">+ New item</button>`); return; }
+  document.getElementById('item-table').innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>SKU</th><th>Category</th><th>UOM</th><th class="num">GST %</th><th>Status</th><th></th></tr></thead>
+    <tbody>${items.map(i => `<tr>
+      <td class="row-link" onclick="openItemDetail('${i.id}')"><strong>${esc(i.name)}</strong></td>
+      <td class="mono">${esc(i.sku||'—')}</td>
+      <td>${esc(categoryName(i.category_id))}</td>
+      <td>${esc(uomSymbol(i.uom_id))}</td>
+      <td class="num">${i.gst_rate}%</td>
+      <td><span class="badge badge-${i.status.toLowerCase()}">${i.status}</span></td>
+      <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openItemDetail('${i.id}')">View</button></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+function openItemForm(existing){
+  const it = existing || {};
+  if (!STATE.uoms.length) return toast('Create a unit of measure first (Inventory → Categories, UOM & Warehouses)','err');
+  openModal({
+    title: existing?'Edit item':'New item', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Item name *</label><input type="text" id="it-name" value="${esc(it.name||'')}"/></div>
+        <div class="form-row"><label>SKU (optional)</label><input type="text" id="it-sku" value="${esc(it.sku||'')}"/></div>
+        <div class="form-row"><label>Category (optional)</label><select id="it-cat"><option value="">— none —</option>${STATE.categories.map(c=>`<option value="${c.id}" ${it.category_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Unit of measure *</label><select id="it-uom">${STATE.uoms.map(u=>`<option value="${u.id}" ${it.uom_id===u.id?'selected':''}>${esc(u.name)} (${esc(u.symbol)})</option>`).join('')}</select></div>
+        <div class="form-row"><label>HSN/SAC (optional)</label><input type="text" id="it-hsn" value="${esc(it.hsn_sac||'')}"/></div>
+        <div class="form-row"><label>GST rate %</label><input type="number" step="0.01" id="it-gst" value="${it.gst_rate||0}"/></div>
+        <div class="form-row"><label>Reorder level</label><input type="number" step="0.01" id="it-reorder" value="${it.reorder_level||0}"/></div>
+      </div>
+      <div class="form-row"><label class="check-row"><input type="checkbox" id="it-negstock" ${it.allow_negative_stock?'checked':''}/> Allow negative stock</label></div>
+      <div class="form-row"><label>Description (optional)</label><textarea id="it-desc" rows="2">${esc(it.description||'')}</textarea></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="it-save">${existing?'Save changes':'Create item'}</button>`,
+    onMount:() => document.getElementById('it-save').onclick = () => submitItemForm(existing && existing.id)
+  });
+}
+async function submitItemForm(id){
+  const name = document.getElementById('it-name').value.trim();
+  if (!name) return toast('Item name is required','err');
+  const payload = {
+    name,
+    sku: document.getElementById('it-sku').value.trim() || null,
+    category_id: document.getElementById('it-cat').value || null,
+    uom_id: document.getElementById('it-uom').value,
+    hsn_sac: document.getElementById('it-hsn').value.trim() || null,
+    gst_rate: parseFloat(document.getElementById('it-gst').value || '0'),
+    reorder_level: parseFloat(document.getElementById('it-reorder').value || '0'),
+    allow_negative_stock: document.getElementById('it-negstock').checked,
+    description: document.getElementById('it-desc').value.trim() || null,
+  };
+  try {
+    if (id) await api(`/companies/${STATE.companyId}/inventory/items/${id}`, {method:'PATCH', body:payload});
+    else await api(`/companies/${STATE.companyId}/inventory/items`, {method:'POST', body:payload});
+    toast(id?'Item updated ✓':'Item created ✓','ok'); closeModal(); await loadStockItems(); renderInventoryItems();
+  } catch(e){ errToast(e); }
+}
+async function openItemDetail(id){
+  const it = STATE.stockItems.find(x=>x.id===id); if (!it) return;
+  openModal({title:it.name, wide:true, bodyHtml:`<div id="item-detail-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  let stockRows = [];
+  try { stockRows = await api(`/companies/${STATE.companyId}/inventory/current-stock`, {qs:{item_id:id}}); } catch(e){ stockRows = []; }
+  document.getElementById('item-detail-body').innerHTML = `
+    <div class="kv"><span class="k">SKU</span><span class="v">${esc(it.sku||'—')}</span></div>
+    <div class="kv"><span class="k">Category</span><span class="v">${esc(categoryName(it.category_id))}</span></div>
+    <div class="kv"><span class="k">UOM</span><span class="v">${esc(uomSymbol(it.uom_id))}</span></div>
+    <div class="kv"><span class="k">HSN/SAC</span><span class="v">${esc(it.hsn_sac||'—')}</span></div>
+    <div class="kv"><span class="k">GST rate</span><span class="v">${it.gst_rate}%</span></div>
+    <div class="kv"><span class="k">Reorder level</span><span class="v">${it.reorder_level}</span></div>
+    <div class="kv"><span class="k">Allow negative stock</span><span class="v">${it.allow_negative_stock?'Yes':'No'}</span></div>
+    <div class="section-divider"></div>
+    <div style="font-weight:700;font-size:.85rem;margin-bottom:8px;">Stock by warehouse</div>
+    ${stockRows.length ? `<div class="table-wrap"><table><thead><tr><th>Warehouse</th><th class="num">Quantity</th><th></th></tr></thead>
+      <tbody>${stockRows.map(r=>`<tr><td>${esc(r.warehouse_name)}</td><td class="num ${r.is_low_stock?'neg':''}">${r.quantity}</td><td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="viewStockLedger('${it.id}','${r.warehouse_id}')">Ledger</button></td></tr>`).join('')}</tbody></table></div>`
+      : '<div style="font-size:.8rem;color:var(--ink3);">No stock movements recorded yet.</div>'}
+  `;
+  const foot = document.getElementById('modal-foot');
+  foot.innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Close</button>
+    ${it.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveItemAction('${it.id}')">Archive</button>`:''}
+    <button class="btn btn-teal" onclick="openStockMovementForm('${it.id}')">+ Stock movement</button>
+    <button class="btn btn-blue" onclick="closeModal();openItemForm(STATE.stockItems.find(x=>x.id==='${it.id}'))">Edit</button>`;
+}
+async function archiveItemAction(id){
+  if (!confirm('Archive this item?')) return;
+  try { await api(`/companies/${STATE.companyId}/inventory/items/${id}/archive`, {method:'POST'}); toast('Item archived','ok'); closeModal(); await loadStockItems(); renderInventoryItems(); }
+  catch(e){ errToast(e); }
+}
+function openStockMovementForm(itemId){
+  if (!STATE.warehouses.length) return toast('Create a warehouse first','err');
+  openModal({
+    title:'Record stock movement', wide:true,
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Warehouse</label><select id="sm-wh">${STATE.warehouses.filter(w=>w.status==='ACTIVE').map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Movement type</label><select id="sm-type"><option value="OPENING">Opening</option><option value="ADJUSTMENT_IN">Adjustment In</option><option value="ADJUSTMENT_OUT">Adjustment Out</option></select></div>
+        <div class="form-row"><label>Date</label><input type="date" id="sm-date" value="${todayStr()}"/></div>
+        <div class="form-row"><label>Quantity</label><input type="number" step="0.001" id="sm-qty" placeholder="0"/></div>
+      </div>
+      <div class="form-row"><label>Narration (optional)</label><input type="text" id="sm-narr"/></div>
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="sm-save">Record movement</button>`,
+    onMount:() => document.getElementById('sm-save').onclick = async () => {
+      const quantity = parseFloat(document.getElementById('sm-qty').value || '0');
+      if (quantity <= 0) return toast('Quantity must be greater than zero','err');
+      try {
+        await api(`/companies/${STATE.companyId}/inventory/stock-movements`, {method:'POST', body:{
+          item_id: itemId, warehouse_id: document.getElementById('sm-wh').value,
+          movement_date: document.getElementById('sm-date').value,
+          movement_type: document.getElementById('sm-type').value,
+          quantity, narration: document.getElementById('sm-narr').value.trim() || null,
+        }});
+        toast('Stock movement recorded ✓','ok'); closeModal(); openItemDetail(itemId);
+      } catch(e){ errToast(e); }
+    }
+  });
+}
+async function viewStockLedger(itemId, warehouseId){
+  openModal({title:'Stock ledger', wide:true, bodyHtml:`<div id="sl-body"><span class="spin"></span> Loading…</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
+  try {
+    const rows = await api(`/companies/${STATE.companyId}/inventory/items/${itemId}/stock-ledger`, {qs:{warehouse_id: warehouseId}});
+    document.getElementById('sl-body').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th class="num">In</th><th class="num">Out</th><th>Narration</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${fmtDate(r.movement_date)}</td><td>${esc(r.movement_type)}</td><td class="num">${r.quantity_in>0?r.quantity_in:''}</td><td class="num">${r.quantity_out>0?r.quantity_out:''}</td><td>${esc(r.narration||'—')}</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('📄','No movements yet','');
+  } catch(e){ document.getElementById('sl-body').innerHTML = emptyState('⚠','Could not load stock ledger', esc(e.message)); }
+}
+
+/* ============================================================
+   INVENTORY — CURRENT STOCK
+   ============================================================ */
+async function renderInventoryStock(){
+  if (!requireCompany()) return;
+  await Promise.all([loadWarehouses(), loadStockItems()]);
+  const whOpts = STATE.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('');
+  view().innerHTML = viewHead('Current Stock', 'Live quantities across all warehouses.',
+    `<select id="stk-wh"><option value="">All warehouses</option>${whOpts}</select><button class="btn btn-ghost btn-sm" onclick="loadStockTable()">Refresh</button>`) +
+    `<div id="stock-table"></div>`;
+  document.getElementById('stk-wh').onchange = loadStockTable;
+  loadStockTable();
+}
+VIEW_RENDERERS['inventory-stock'] = renderInventoryStock;
+async function loadStockTable(){
+  const warehouse_id = document.getElementById('stk-wh').value || undefined;
+  document.getElementById('stock-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
+  try {
+    const rows = await api(`/companies/${STATE.companyId}/inventory/current-stock`, {qs:{warehouse_id}});
+    document.getElementById('stock-table').innerHTML = rows.length ? `<div class="table-wrap"><table>
+      <thead><tr><th>Item</th><th>SKU</th><th>Warehouse</th><th class="num">Quantity</th><th class="num">Reorder Level</th><th>Status</th></tr></thead>
+      <tbody>${rows.map(r => `<tr class="row-link" onclick="openItemDetail('${r.item_id}')">
+        <td><strong>${esc(r.item_name)}</strong></td><td class="mono">${esc(r.sku||'—')}</td><td>${esc(r.warehouse_name)}</td>
+        <td class="num ${r.is_low_stock?'neg':''}">${r.quantity}</td><td class="num">${r.reorder_level}</td>
+        <td>${r.is_low_stock?'<span class="badge badge-cancelled">Low</span>':'<span class="badge badge-active">OK</span>'}</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('📦','No stock movements yet','Record stock movements from an item’s detail view, or post purchase bills to receive stock.');
+  } catch(e){ document.getElementById('stock-table').innerHTML = emptyState('⚠','Could not load stock', esc(e.message)); }
+}
+
+/* ============================================================
+   GST — TAX RATES
+   ============================================================ */
+async function renderGstRates(){
+  if (!requireCompany()) return;
+  await loadGstRates();
+  view().innerHTML = viewHead('GST Tax Rates', 'Standard tax rates used when preparing GST returns.',
+    `<button class="btn btn-blue" onclick="openGstRateForm()">+ New rate</button>`) +
+    (STATE.gstRates.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th class="num">Rate %</th><th>Description</th><th>Status</th><th></th></tr></thead>
+      <tbody>${STATE.gstRates.map(r => `<tr>
+        <td><strong>${esc(r.name)}</strong></td><td class="num">${r.rate_percent}%</td><td>${esc(r.description||'—')}</td>
+        <td><span class="badge badge-${r.is_active?'active':'archived'}">${r.is_active?'Active':'Inactive'}</span></td>
+        <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="editGstRateAction('${r.id}')">Edit</button></td>
+      </tr>`).join('')}</tbody></table></div>`
+      : emptyState('%','No GST rates yet','Create standard rates like 5%, 12%, 18%, 28%.',`<button class="btn btn-blue" onclick="openGstRateForm()">+ New rate</button>`));
+}
+VIEW_RENDERERS['gst-rates'] = renderGstRates;
+function openGstRateForm(existing){
+  const r = existing || {};
+  openModal({
+    title: existing?'Edit GST rate':'New GST rate',
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Name</label><input type="text" id="gr-name" placeholder="e.g. GST 18%" value="${esc(r.name||'')}"/></div>
+        <div class="form-row"><label>Rate %</label><input type="number" step="0.01" id="gr-rate" value="${r.rate_percent!=null?r.rate_percent:0}"/></div>
+      </div>
+      <div class="form-row"><label>Description (optional)</label><input type="text" id="gr-desc" value="${esc(r.description||'')}"/></div>
+      ${existing?`<div class="form-row"><label class="check-row"><input type="checkbox" id="gr-active" ${r.is_active?'checked':''}/> Active</label></div>`:''}
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="gr-save">${existing?'Save changes':'Create rate'}</button>`,
+    onMount:() => document.getElementById('gr-save').onclick = async () => {
+      const name = document.getElementById('gr-name').value.trim();
+      if (!name) return toast('Name is required','err');
+      const payload = { name, rate_percent: parseFloat(document.getElementById('gr-rate').value||'0'), description: document.getElementById('gr-desc').value.trim() || null };
+      if (existing) payload.is_active = document.getElementById('gr-active').checked;
+      try {
+        if (existing) await api(`/companies/${STATE.companyId}/gst/rates/${existing.id}`, {method:'PATCH', body:payload});
+        else await api(`/companies/${STATE.companyId}/gst/rates`, {method:'POST', body:payload});
+        toast(existing?'Rate updated ✓':'Rate created ✓','ok'); closeModal(); renderGstRates();
+      } catch(e){ errToast(e); }
+    }
+  });
+}
+function editGstRateAction(id){ const r = STATE.gstRates.find(x=>x.id===id); if (r) openGstRateForm(r); }
+
+/* ============================================================
+   GST — HSN / SAC CLASSIFICATIONS
+   ============================================================ */
+async function renderGstClassifications(){
+  if (!requireCompany()) return;
+  await Promise.all([loadTaxClassifications(), loadGstRates()]);
+  view().innerHTML = viewHead('HSN / SAC Classifications', 'Product (HSN) and service (SAC) tax classification codes.',
+    `<button class="btn btn-blue" onclick="openTaxClassificationForm()">+ New classification</button>`) +
+    (STATE.taxClassifications.length ? `<div class="table-wrap"><table><thead><tr><th>Type</th><th>Code</th><th>Description</th><th>GST rate</th><th>Status</th><th></th></tr></thead>
+      <tbody>${STATE.taxClassifications.map(c => `<tr>
+        <td><span class="pill">${esc(c.classification_type)}</span></td><td class="mono">${esc(c.code)}</td><td>${esc(c.description)}</td>
+        <td>${c.gst_rate_id ? esc((STATE.gstRates.find(r=>r.id===c.gst_rate_id)||{}).name || '—') : '—'}</td>
+        <td><span class="badge badge-${c.is_active?'active':'archived'}">${c.is_active?'Active':'Inactive'}</span></td>
+        <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="editTaxClassificationAction('${c.id}')">Edit</button></td>
+      </tr>`).join('')}</tbody></table></div>`
+      : emptyState('📑','No HSN/SAC codes yet','Add classification codes for the products and services you sell.',`<button class="btn btn-blue" onclick="openTaxClassificationForm()">+ New classification</button>`));
+}
+VIEW_RENDERERS['gst-classifications'] = renderGstClassifications;
+function openTaxClassificationForm(existing){
+  const c = existing || {};
+  openModal({
+    title: existing?'Edit classification':'New classification',
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Type</label><select id="tc-type"><option value="HSN" ${c.classification_type==='HSN'?'selected':''}>HSN (goods)</option><option value="SAC" ${c.classification_type==='SAC'?'selected':''}>SAC (services)</option></select></div>
+        <div class="form-row"><label>Code</label><input type="text" id="tc-code" value="${esc(c.code||'')}"/></div>
+      </div>
+      <div class="form-row"><label>Description</label><input type="text" id="tc-desc" value="${esc(c.description||'')}"/></div>
+      <div class="form-row"><label>GST rate (optional)</label><select id="tc-rate"><option value="">— none —</option>${STATE.gstRates.map(r=>`<option value="${r.id}" ${c.gst_rate_id===r.id?'selected':''}>${esc(r.name)} (${r.rate_percent}%)</option>`).join('')}</select></div>
+      ${existing?`<div class="form-row"><label class="check-row"><input type="checkbox" id="tc-active" ${c.is_active?'checked':''}/> Active</label></div>`:''}
+    `,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="tc-save">${existing?'Save changes':'Create classification'}</button>`,
+    onMount:() => document.getElementById('tc-save').onclick = async () => {
+      const code = document.getElementById('tc-code').value.trim();
+      const description = document.getElementById('tc-desc').value.trim();
+      if (!code || !description) return toast('Code and description are required','err');
+      const payload = { classification_type: document.getElementById('tc-type').value, code, description, gst_rate_id: document.getElementById('tc-rate').value || null };
+      if (existing) payload.is_active = document.getElementById('tc-active').checked;
+      try {
+        if (existing) await api(`/companies/${STATE.companyId}/gst/classifications/${existing.id}`, {method:'PATCH', body:payload});
+        else await api(`/companies/${STATE.companyId}/gst/classifications`, {method:'POST', body:payload});
+        toast(existing?'Classification updated ✓':'Classification created ✓','ok'); closeModal(); renderGstClassifications();
+      } catch(e){ errToast(e); }
+    }
+  });
+}
+function editTaxClassificationAction(id){ const c = STATE.taxClassifications.find(x=>x.id===id); if (c) openTaxClassificationForm(c); }
+
+/* ============================================================
+   BUSINESS EVENTS (append-only automation/AI-hook log)
+   ============================================================ */
+async function renderBusinessEvents(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Business Events', 'Every business action emits an event here — useful for hooking up automations or AI agents (e.g. Orbit AI) downstream.', '') +
+    `<div id="be-body"></div>`;
+  try {
+    const page = await api(`/companies/${STATE.companyId}/business-events`, {qs:{page_size:80}});
+    const items = page.items;
+    document.getElementById('be-body').innerHTML = items.length ? `<div class="table-wrap"><table><thead><tr><th>Time</th><th>Event</th><th>Entity</th><th>Entity ID</th><th>Consumed</th></tr></thead>
+      <tbody>${items.map(e => `<tr><td>${new Date(e.created_at).toLocaleString('en-IN')}</td><td class="mono">${esc(e.event_type)}</td><td>${esc(e.entity)}</td><td class="mono">${esc((e.entity_id||'').slice(0,10))}…</td><td>${e.consumed?'✓':'—'}</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('⚡','No business events yet','Events appear as you create and post records.');
+  } catch(e){ document.getElementById('be-body').innerHTML = emptyState('⚠','Could not load business events', esc(e.message)); }
+}
+VIEW_RENDERERS['business-events'] = renderBusinessEvents;
+
+/* ============================================================
+   GLOBAL SEARCH (customers, suppliers, items, orders, invoices, bills)
+   ============================================================ */
+document.getElementById('global-search-btn').onclick = openGlobalSearch;
+function openGlobalSearch(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'Search this company', wide:true,
+    bodyHtml:`<input type="search" id="gs-input" placeholder="Search customers, suppliers, items, orders, invoices, bills…" autofocus/><div id="gs-results" style="margin-top:14px;"></div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`,
+    onMount:() => {
+      const input = document.getElementById('gs-input');
+      input.focus();
+      let t = null;
+      input.oninput = () => { clearTimeout(t); t = setTimeout(() => runGlobalSearch(input.value.trim()), 260); };
+    }
+  });
+}
+async function runGlobalSearch(q){
+  const box = document.getElementById('gs-results');
+  if (!box) return;
+  if (!q) { box.innerHTML = '<div style="font-size:.8rem;color:var(--ink3);">Start typing to search across this company…</div>'; return; }
+  box.innerHTML = `<div style="padding:20px 0;text-align:center;"><span class="spin"></span></div>`;
+  try {
+    const r = await api(`/companies/${STATE.companyId}/search`, {qs:{q, limit:8}});
+    const g = r.groups || {};
+    const sections = [
+      ['customers','Customers', c=>`<div class="row-link" onclick="closeModal();navigate('customers')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)}</span><span style="color:var(--ink3);font-size:.78rem;">${esc(c.subtitle||'')}</span></div>`],
+      ['suppliers','Suppliers', c=>`<div class="row-link" onclick="closeModal();navigate('suppliers')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)}</span><span style="color:var(--ink3);font-size:.78rem;">${esc(c.subtitle||'')}</span></div>`],
+      ['products','Items', c=>`<div class="row-link" onclick="closeModal();navigate('inventory-items')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)}</span><span style="color:var(--ink3);font-size:.78rem;">${esc(c.subtitle||'')}</span></div>`],
+      ['sales_orders','Sales Orders', c=>`<div class="row-link" onclick="closeModal();openSalesOrderDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['sales_invoices','Sales Invoices', c=>`<div class="row-link" onclick="closeModal();openSalesInvoiceDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['purchase_orders','Purchase Orders', c=>`<div class="row-link" onclick="closeModal();openPurchaseOrderDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['purchase_bills','Purchase Bills', c=>`<div class="row-link" onclick="closeModal();openPurchaseBillDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+    ];
+    const html = sections.map(([key,label,render]) => {
+      const items = g[key] || [];
+      if (!items.length) return '';
+      return `<div style="margin-bottom:14px;"><div style="font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">${label}</div>${items.map(render).join('')}</div>`;
+    }).join('');
+    box.innerHTML = html || emptyState('🔎','No matches', `Nothing found for "${esc(q)}".`);
+  } catch(e){ box.innerHTML = emptyState('⚠','Search failed', esc(e.message)); }
+}
+
+/* ============================================================
    REPORTS
    ============================================================ */
 async function renderTrialBalance(){
@@ -1501,6 +2834,7 @@ async function renderSettings(){
         <button class="btn btn-ghost btn-sm" onclick="downloadExport()">Export company JSON</button>
         <button class="btn btn-ghost btn-sm" onclick="downloadCsv('ledgers')">Export ledgers CSV</button>
         <button class="btn btn-ghost btn-sm" onclick="downloadCsv('vouchers')">Export vouchers CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="importLedgersCsv()">Import ledgers CSV</button>
         <button class="btn btn-teal btn-sm" onclick="createBackup()">Create backup</button>
         <button class="btn btn-ghost btn-sm" onclick="restoreBackupFromDevice()">Restore backup JSON</button>
       </div>
@@ -1544,6 +2878,28 @@ async function downloadExport(){
 }
 async function downloadCsv(kind){
   window.open(API_BASE + `/companies/${STATE.companyId}/export/${kind}.csv`, '_blank');
+}
+function importLedgersCsv(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.csv,text/csv';
+  input.onchange = async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const res = await fetch(API_BASE.replace(/\/$/,'') + `/companies/${STATE.companyId}/import/ledgers.csv`, {method:'POST', body:form});
+      const text = await res.text();
+      let data = null; try { data = text ? JSON.parse(text) : null; } catch(e){}
+      if (!res.ok) throw new Error((data && data.error && data.error.message) || `Import failed (${res.status})`);
+      toast(`Imported ${Array.isArray(data)?data.length:0} ledger(s) ✓`,'ok');
+      markBackupNeeded(STATE.companyId);
+      await loadLedgers();
+      if (STATE.currentView==='ledgers') renderLedgers();
+    } catch(e){ errToast(e); }
+  };
+  input.click();
 }
 async function createBackup(){
   try {
