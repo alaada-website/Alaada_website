@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Alaada Accounts â€” Ledgers, Vouchers &amp; Reports</title>
+<title>Alaada Accounts — Ledgers, Vouchers &amp; Reports</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 /* ============================================================
-   ALAADA ACCOUNTS â€” design tokens (shared with alaada.com)
+   ALAADA ACCOUNTS — design tokens (shared with alaada.com)
    ============================================================ */
 :root{
   --bg:#f5f4ef; --bg2:#eceae3; --white:#ffffff;
@@ -78,7 +78,7 @@ button{font-family:inherit;}
 .co-new-btn{width:100%;text-align:left;background:none;border:none;padding:8px 8px;font-size:.8rem;font-weight:600;color:var(--blue);cursor:pointer;border-radius:var(--r-sm);}
 .co-new-btn:hover{background:var(--blue2);}
 
-/* balance beam â€” signature element */
+/* balance beam — signature element */
 #balance-beam{
   display:flex;align-items:center;gap:9px;margin-left:auto;padding:5px 12px 5px 8px;border-radius:100px;
   background:var(--white);border:1px solid var(--borderM);box-shadow:var(--sh-sm);cursor:pointer;flex-shrink:0;
@@ -294,13 +294,13 @@ select{cursor:pointer;}
   <div class="gate-card">
     <div class="gate-logo">A</div>
     <h2>Connect to Alaada Accounts</h2>
-    <p>Point this dashboard at your Accounts Engine API â€” running locally, or deployed on Render.</p>
+    <p>Point this dashboard at your Accounts Engine API — running locally, or deployed on Render.</p>
     <div class="form-row">
       <label for="gate-url">API base URL</label>
       <input type="text" id="gate-url" placeholder="http://127.0.0.1:8000" value="https://accounts-0o52.onrender.com"/>
       <div class="help-text">Saved in this browser only. Change it any time from the status dot in the top bar.</div>
     </div>
-    <button class="btn btn-blue" id="gate-connect" style="width:100%;justify-content:center;">Connect â†’</button>
+    <button class="btn btn-blue" id="gate-connect" style="width:100%;justify-content:center;">Connect →</button>
     <div class="gate-status" id="gate-status"></div>
   </div>
 </div>
@@ -329,7 +329,7 @@ select{cursor:pointer;}
       Search
     </button>
 
-    <div id="balance-beam" style="margin-left:0;" title="Trial balance â€” click to view report">
+    <div id="balance-beam" style="margin-left:0;" title="Trial balance — click to view report">
       <svg id="beam-svg" width="34" height="20" viewBox="0 0 34 20">
         <line x1="17" y1="4" x2="17" y2="16" stroke="var(--ink2)" stroke-width="2"/>
         <circle cx="17" cy="4" r="1.6" class="beam-fulcrum"/>
@@ -341,12 +341,12 @@ select{cursor:pointer;}
           <path class="beam-pan right" d="M25,14 A4,3 0 0 0 33,14" />
         </g>
       </svg>
-      <span id="beam-label">â€”</span>
+      <span id="beam-label">—</span>
     </div>
 
     <div id="api-status" title="Click to change API URL">
       <span class="dot" id="api-dot"></span>
-      <span id="api-label">checkingâ€¦</span>
+      <span id="api-label">checking…</span>
     </div>
   </header>
 
@@ -532,7 +532,7 @@ select{cursor:pointer;}
   <div class="modal" id="modal">
     <div class="modal-head">
       <h3 id="modal-title">Title</h3>
-      <button class="modal-close" id="modal-close">âœ•</button>
+      <button class="modal-close" id="modal-close">✕</button>
     </div>
     <div class="modal-body" id="modal-body"></div>
     <div class="modal-foot" id="modal-foot"></div>
@@ -816,10 +816,10 @@ function errToast(e){ toast(e.message || 'Something went wrong', 'err'); console
 function money(v, currency){
   const n = Number(v || 0);
   const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
-  const sym = currency === 'USD' ? '$' : (currency === 'EUR' ? 'â‚¬' : 'â‚¹');
-  return (n < 0 ? 'âˆ’' : '') + sym + abs;
+  const sym = currency === 'USD' ? '$' : (currency === 'EUR' ? '€' : '₹');
+  return (n < 0 ? '−' : '') + sym + abs;
 }
-function fmtDate(d){ if(!d) return 'â€”'; const dt = new Date(d); if(isNaN(dt)) return d; return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDate(d){ if(!d) return '—'; const dt = new Date(d); if(isNaN(dt)) return d; return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function esc(s){ return (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function el(html){ const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
@@ -849,7 +849,7 @@ const gateStatus = document.getElementById('gate-status');
 
 async function tryConnect(url, {silent=false} = {}) {
   API_BASE = url.trim().replace(/\/$/,'');
-  if (!silent) { gateStatus.innerHTML = '<span class="spin"></span> Connectingâ€¦'; }
+  if (!silent) { gateStatus.innerHTML = '<span class="spin"></span> Connecting…'; }
   try {
     const res = await fetch(API_BASE + '/health');
     if (!res.ok) throw new Error();
@@ -860,7 +860,7 @@ async function tryConnect(url, {silent=false} = {}) {
     return true;
   } catch(e) {
     setApiStatus('down');
-    if (!silent) gateStatus.innerHTML = 'âš  Could not connect to <span class="mono">'+esc(API_BASE)+'</span>. Check the URL, CORS settings, and that the server is running.';
+    if (!silent) gateStatus.innerHTML = '⚠ Could not connect to <span class="mono">'+esc(API_BASE)+'</span>. Check the URL, CORS settings, and that the server is running.';
     return false;
   }
 }
@@ -871,7 +871,7 @@ function setApiStatus(state){
   // state: 'up' | 'down' | 'connecting'
   const dot = document.getElementById('api-dot'), label = document.getElementById('api-label');
   dot.className = 'dot ' + (state==='up' ? 'up' : (state==='connecting' ? '' : 'down'));
-  label.textContent = state==='up' ? 'Connected' : (state==='connecting' ? 'Connectingâ€¦' : 'Offline');
+  label.textContent = state==='up' ? 'Connected' : (state==='connecting' ? 'Connecting…' : 'Offline');
 }
 document.getElementById('api-status').onclick = () => {
   gateUrl.value = API_BASE || DEFAULT_API;
@@ -894,7 +894,7 @@ async function pollHealth(){
 }
 
 /* ============================================================
-   SILENT AUTO-CONNECT â€” never blocks the UI with the gate.
+   SILENT AUTO-CONNECT — never blocks the UI with the gate.
    Retries quietly in the background (Render free-tier services can
    take up to ~60s to wake from sleep), showing a friendly inline
    state in the main view instead of a full-screen prompt.
@@ -902,14 +902,14 @@ async function pollHealth(){
 function renderConnectingView(attempt){
   view().innerHTML = `<div class="empty" style="padding-top:80px;">
     <div class="empty-icon"><span class="spin" style="width:26px;height:26px;border-width:3px;"></span></div>
-    <h4>${attempt>1 ? 'Still waking things upâ€¦' : 'Connecting to your Accounts Engineâ€¦'}</h4>
+    <h4>${attempt>1 ? 'Still waking things up…' : 'Connecting to your Accounts Engine…'}</h4>
     <p>${attempt>1
         ? `Free-tier services on Render can take up to a minute to wake from sleep. Retrying automatically (attempt ${attempt}).`
         : `Reaching <span class="mono">${esc(API_BASE)}</span>`}</p>
   </div>`;
 }
 function renderOfflineView(){
-  view().innerHTML = emptyState('âš ','Could not connect',
+  view().innerHTML = emptyState('⚠','Could not connect',
     `Couldn't reach <span class="mono">${esc(API_BASE)}</span>. It may be asleep, unreachable, or blocking this origin (CORS).`,
     `<button class="btn btn-blue" onclick="startAutoConnect()">Retry now</button>
      <button class="btn btn-ghost" onclick="document.getElementById('api-status').click()" style="margin-left:8px;">Change API URL</button>`);
@@ -988,13 +988,13 @@ async function loadCompanies() {
 function renderCompanyMenu(){
   const list = document.getElementById('co-list');
   if (!STATE.companies.length) {
-    list.innerHTML = `<div style="padding:16px 14px;font-size:.8rem;color:var(--ink3);">No companies yet â€” create your first one.</div>`;
+    list.innerHTML = `<div style="padding:16px 14px;font-size:.8rem;color:var(--ink3);">No companies yet — create your first one.</div>`;
     return;
   }
   list.innerHTML = STATE.companies.map(c => `
     <div class="co-item ${c.id===STATE.companyId?'active':''}" data-id="${c.id}">
       <span class="n">${esc(c.name)}</span>
-      <span class="m">${esc(c.base_currency||'INR')} Â· ${c.legal_name?esc(c.legal_name):'â€”'}</span>
+      <span class="m">${esc(c.base_currency||'INR')} · ${c.legal_name?esc(c.legal_name):'—'}</span>
     </div>`).join('');
   list.querySelectorAll('.co-item').forEach(itEl => {
     itEl.onclick = () => { selectCompany(itEl.dataset.id); document.getElementById('company-menu').classList.remove('open'); };
@@ -1052,16 +1052,16 @@ async function loadGstRates(){ if(!STATE.companyId) return; try{ STATE.gstRates 
 async function loadTaxClassifications(){ if(!STATE.companyId) return; try{ STATE.taxClassifications = await api(`/companies/${STATE.companyId}/gst/classifications`);}catch(e){STATE.taxClassifications=[];} }
 
 /* lookups used across ERP views */
-function customerName(id){ const c = STATE.customers.find(x=>x.id===id); return c ? c.name : 'â€”'; }
-function supplierName(id){ const s = STATE.suppliers.find(x=>x.id===id); return s ? s.name : 'â€”'; }
-function itemName(id){ const i = STATE.stockItems.find(x=>x.id===id); return i ? i.name : 'â€”'; }
-function warehouseName(id){ const w = STATE.warehouses.find(x=>x.id===id); return w ? w.name : 'â€”'; }
+function customerName(id){ const c = STATE.customers.find(x=>x.id===id); return c ? c.name : '—'; }
+function supplierName(id){ const s = STATE.suppliers.find(x=>x.id===id); return s ? s.name : '—'; }
+function itemName(id){ const i = STATE.stockItems.find(x=>x.id===id); return i ? i.name : '—'; }
+function warehouseName(id){ const w = STATE.warehouses.find(x=>x.id===id); return w ? w.name : '—'; }
 function uomSymbol(id){ const u = STATE.uoms.find(x=>x.id===id); return u ? u.symbol : ''; }
-function categoryName(id){ const c = STATE.categories.find(x=>x.id===id); return c ? c.name : 'â€”'; }
+function categoryName(id){ const c = STATE.categories.find(x=>x.id===id); return c ? c.name : '—'; }
 
 function requireCompany(){
   if (!STATE.companyId) {
-    view().innerHTML = emptyState('ðŸ¢','No company selected','Create a company to start recording ledgers and vouchers.',
+    view().innerHTML = emptyState('🏢','No company selected','Create a company to start recording ledgers and vouchers.',
       `<button class="btn btn-blue" onclick="openCompanyForm()">+ Create company</button>`);
     return false;
   }
@@ -1069,14 +1069,14 @@ function requireCompany(){
 }
 
 /* ============================================================
-   BALANCE BEAM (signature element) â€” reflects trial balance
+   BALANCE BEAM (signature element) — reflects trial balance
    ============================================================ */
 async function refreshBalanceBeam(){
   const label = document.getElementById('beam-label');
   const bar = document.getElementById('beam-bar');
   const panL = document.getElementById('beam-pan-l');
   const panR = document.getElementById('beam-pan-r');
-  if (!STATE.companyId) { label.textContent='â€”'; label.className=''; return; }
+  if (!STATE.companyId) { label.textContent='—'; label.className=''; return; }
   try {
     const tb = await api(`/companies/${STATE.companyId}/reports/trial-balance`);
     const d = tb.total_debit, c = tb.total_credit;
@@ -1087,7 +1087,7 @@ async function refreshBalanceBeam(){
     bar.style.transform = `rotate(${tilt}deg)`;
     panL.style.transform = `rotate(${tilt}deg)`;
     panR.style.transform = `rotate(${tilt}deg)`;
-  } catch(e) { label.textContent='â€”'; label.className=''; }
+  } catch(e) { label.textContent='—'; label.className=''; }
 }
 document.getElementById('balance-beam').onclick = () => navigate('report-trial-balance');
 
@@ -1122,10 +1122,10 @@ function viewHead(title, sub, actionsHtml){
    ============================================================ */
 async function renderDashboard(){
   if (!requireCompany()) return;
-  view().innerHTML = viewHead(STATE.company.name, `Fiscal overview Â· ${esc(STATE.company.base_currency||'INR')} Â· as of ${fmtDate(todayStr())}`,
-    `<button class="btn btn-ghost btn-sm" onclick="seedDemo()">âœ¦ Seed demo data</button>
+  view().innerHTML = viewHead(STATE.company.name, `Fiscal overview · ${esc(STATE.company.base_currency||'INR')} · as of ${fmtDate(todayStr())}`,
+    `<button class="btn btn-ghost btn-sm" onclick="seedDemo()">✦ Seed demo data</button>
      <button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`) +
-    `<div id="dash-body"><div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading dashboardâ€¦</td></tr></tbody></table></div></div>`;
+    `<div id="dash-body"><div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading dashboard…</td></tr></tbody></table></div></div>`;
   try {
     const d = await api(`/companies/${STATE.companyId}/dashboard`);
     const cur = STATE.company.base_currency;
@@ -1160,22 +1160,22 @@ async function renderDashboard(){
       </div>
       ${(d.low_stock_items&&d.low_stock_items.length) ? `
       <div class="view-head" style="margin-bottom:12px;"><div class="view-title" style="font-size:1.05rem;">Low stock</div>
-        <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('inventory-stock')">View all stock â†’</button></div></div>
+        <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('inventory-stock')">View all stock →</button></div></div>
       <div class="table-wrap" style="margin-bottom:22px;"><table><thead><tr><th>Item</th><th>Warehouse</th><th class="num">Quantity</th><th class="num">Reorder Level</th></tr></thead>
       <tbody>${d.low_stock_items.map(r=>`<tr><td>${esc(r.item_name)}${r.sku?` <span class="pill">${esc(r.sku)}</span>`:''}</td><td>${esc(r.warehouse_name)}</td><td class="num">${r.quantity}</td><td class="num">${r.reorder_level}</td></tr>`).join('')}</tbody></table></div>` : ''}
       <div class="view-head" style="margin-bottom:12px;"><div class="view-title" style="font-size:1.05rem;">Recent orders &amp; documents</div></div>
       ${renderRecentOrdersTable(d.recent_orders, cur)}
       <div class="view-head" style="margin-bottom:12px;margin-top:22px;"><div class="view-title" style="font-size:1.05rem;">Recent activity</div>
-        <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('vouchers')">View all vouchers â†’</button></div></div>
+        <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('vouchers')">View all vouchers →</button></div></div>
       ${renderRecentTable(d.recent_transactions, cur)}
     `;
     document.getElementById('dash-body').innerHTML = body;
   } catch(e) {
-    document.getElementById('dash-body').innerHTML = emptyState('âš ','Could not load dashboard', esc(e.message), `<button class="btn btn-ghost" onclick="navigate('dashboard')">Retry</button>`);
+    document.getElementById('dash-body').innerHTML = emptyState('⚠','Could not load dashboard', esc(e.message), `<button class="btn btn-ghost" onclick="navigate('dashboard')">Retry</button>`);
   }
 }
 function renderRecentOrdersTable(items, cur){
-  if (!items || !items.length) return emptyState('ðŸ“¦','No orders or invoices yet','Sales orders, invoices, purchase orders and bills will show up here.');
+  if (!items || !items.length) return emptyState('📦','No orders or invoices yet','Sales orders, invoices, purchase orders and bills will show up here.');
   const openers = {
     SALES_ORDER: id => openSalesOrderDetail(id), DELIVERY_NOTE: id => openDeliveryNoteDetail(id), SALES_INVOICE: id => openSalesInvoiceDetail(id), SALES_RETURN: id => openSalesReturnDetail(id),
     PURCHASE_ORDER: id => openPurchaseOrderDetail(id), GOODS_RECEIPT: id => openGoodsReceiptDetail(id), PURCHASE_BILL: id => openPurchaseBillDetail(id), PURCHASE_RETURN: id => openPurchaseReturnDetail(id),
@@ -1189,20 +1189,20 @@ function renderRecentOrdersTable(items, cur){
     </tbody></table></div>`;
 }
 function renderRecentTable(items, cur){
-  if (!items || !items.length) return emptyState('ðŸ§¾','No transactions yet','Record your first voucher to see activity here.',`<button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`);
+  if (!items || !items.length) return emptyState('🧾','No transactions yet','Record your first voucher to see activity here.',`<button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`);
   return `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Voucher #</th><th>Narration</th><th>Status</th></tr></thead>
     <tbody>${items.map(v => `<tr class="row-link" onclick="openVoucherDetail('${v.id}')">
-      <td>${fmtDate(v.date)}</td><td class="mono">${esc(v.voucher_number)}</td><td>${esc(v.narration||'â€”')}</td>
+      <td>${fmtDate(v.date)}</td><td class="mono">${esc(v.voucher_number)}</td><td>${esc(v.narration||'—')}</td>
       <td><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></td></tr>`).join('')}
     </tbody></table></div>`;
 }
 async function seedDemo(){
   try {
-    toast('Seeding demo companyâ€¦');
+    toast('Seeding demo company…');
     const c = await api('/demo/seed', {method:'POST'});
     await loadCompanies();
     await selectCompany(c.id);
-    toast('Demo company ready âœ“','ok');
+    toast('Demo company ready ✓','ok');
     navigate('dashboard');
   } catch(e){ errToast(e); }
 }
@@ -1228,7 +1228,7 @@ async function renderGroups(){
           ${!g.is_primary?`<button class="btn btn-ghost btn-sm" onclick="deleteGroup('${g.id}')">Delete</button>`:''}
         </div>
         ${childrenOf(g.id).map(c => `<div style="padding:6px 0 6px 16px;border-bottom:1px dashed var(--border);font-size:.8rem;color:var(--ink2);display:flex;justify-content:space-between;">
-          <span>â†³ ${esc(c.name)}</span><button class="btn btn-ghost btn-sm" onclick="deleteGroup('${c.id}')">Delete</button></div>`).join('')}
+          <span>↳ ${esc(c.name)}</span><button class="btn btn-ghost btn-sm" onclick="deleteGroup('${c.id}')">Delete</button></div>`).join('')}
       `;
       return `<div class="card card-pad"><div style="font-family:'Syne';font-weight:800;margin-bottom:10px;">${label}</div>
         ${roots.length?roots.map(renderNode).join(''):'<div style="font-size:.8rem;color:var(--ink3);">No groups yet</div>'}
@@ -1246,7 +1246,7 @@ function openGroupForm(){
       <div class="form-row"><label>Account type</label>
         <select id="f-gtype"><option value="ASSET">Asset</option><option value="LIABILITY">Liability</option><option value="EQUITY">Equity</option><option value="INCOME">Income</option><option value="EXPENSE">Expense</option></select>
       </div>
-      <div class="form-row"><label>Parent group (optional)</label><select id="f-gparent"><option value="">â€” top level â€”</option>${opts}</select></div>
+      <div class="form-row"><label>Parent group (optional)</label><select id="f-gparent"><option value="">— top level —</option>${opts}</select></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="f-gsave">Create group</button>`,
     onMount:() => { document.getElementById('f-gsave').onclick = submitGroupForm; }
@@ -1259,7 +1259,7 @@ async function submitGroupForm(){
   if (!name) return toast('Group name is required','err');
   try {
     await api(`/companies/${STATE.companyId}/account-groups`, {method:'POST', body:{name, account_type, parent_id}});
-    toast('Group created âœ“','ok'); closeModal(); renderGroups();
+    toast('Group created ✓','ok'); closeModal(); renderGroups();
   } catch(e){ errToast(e); }
 }
 async function deleteGroup(id){
@@ -1275,18 +1275,18 @@ async function renderLedgers(){
   if (!requireCompany()) return;
   await loadLedgers();
   view().innerHTML = viewHead('Ledgers', `${STATE.ledgers.length} ledger${STATE.ledgers.length===1?'':'s'} in ${esc(STATE.company.name)}`,
-    `<input type="search" id="ledger-search" placeholder="Search ledgersâ€¦" style="width:200px;">
+    `<input type="search" id="ledger-search" placeholder="Search ledgers…" style="width:200px;">
      <button class="btn btn-blue" onclick="openLedgerForm()">+ New ledger</button>`) +
     `<div id="ledger-table"></div>`;
   document.getElementById('ledger-search').oninput = (e) => renderLedgerTable(e.target.value);
   renderLedgerTable('');
 }
-function groupName(id){ const g = STATE.groups.find(g=>g.id===id); return g? g.name : 'â€”'; }
+function groupName(id){ const g = STATE.groups.find(g=>g.id===id); return g? g.name : '—'; }
 function renderLedgerTable(q){
   const cur = STATE.company.base_currency;
   let items = STATE.ledgers;
   if (q) items = items.filter(l => l.name.toLowerCase().includes(q.toLowerCase()) || (l.code||'').toLowerCase().includes(q.toLowerCase()));
-  if (!items.length) { document.getElementById('ledger-table').innerHTML = emptyState('ðŸ“’','No ledgers found', q?'No ledgers match your search.':'Create your first ledger â€” Cash, Bank, Sales, or a customer/supplier account.', q?'':`<button class="btn btn-blue" onclick="openLedgerForm()">+ New ledger</button>`); return; }
+  if (!items.length) { document.getElementById('ledger-table').innerHTML = emptyState('📒','No ledgers found', q?'No ledgers match your search.':'Create your first ledger — Cash, Bank, Sales, or a customer/supplier account.', q?'':`<button class="btn btn-blue" onclick="openLedgerForm()">+ New ledger</button>`); return; }
   document.getElementById('ledger-table').innerHTML = `<div class="table-wrap"><table>
     <thead><tr><th>Name</th><th>Group</th><th>Opening Balance</th><th>Type</th><th>Status</th><th></th></tr></thead>
     <tbody>${items.map(l => `<tr>
@@ -1311,7 +1311,7 @@ function openLedgerForm(){
         <div class="form-row"><label>Opening balance</label><input type="number" step="0.01" id="f-lob" value="0"/></div>
         <div class="form-row"><label>Balance side</label><select id="f-lobtype"><option value="DEBIT">Debit</option><option value="CREDIT">Credit</option></select></div>
         <div class="form-row"><label>Currency</label><input type="text" id="f-lcur" value="${esc(STATE.company.base_currency||'INR')}"/></div>
-        <div class="form-row"><label>Cash / Bank tag (optional)</label><select id="f-lcbtype"><option value="">â€” none â€”</option><option value="CASH">Cash</option><option value="BANK">Bank</option></select></div>
+        <div class="form-row"><label>Cash / Bank tag (optional)</label><select id="f-lcbtype"><option value="">— none —</option><option value="CASH">Cash</option><option value="BANK">Bank</option></select></div>
       </div>
       <div class="form-row"><label class="check-row"><input type="checkbox" id="f-lgst"/> GST applicable</label></div>
       <div class="form-row" id="f-lgstnum-row" style="display:none;"><label>GST number</label><input type="text" id="f-lgstnum"/></div>
@@ -1341,7 +1341,7 @@ async function submitLedgerForm(){
   };
   try {
     await api(`/companies/${STATE.companyId}/ledgers`, {method:'POST', body:payload});
-    toast('Ledger created âœ“','ok'); closeModal(); await loadLedgers(); renderLedgers();
+    toast('Ledger created ✓','ok'); closeModal(); await loadLedgers(); renderLedgers();
   } catch(e){ errToast(e); }
 }
 
@@ -1349,7 +1349,7 @@ async function openLedgerDetail(id){
   const l = STATE.ledgers.find(x=>x.id===id); if (!l) return;
   openModal({
     title: l.name, wide:true,
-    bodyHtml: `<div id="ld-body"><span class="spin"></span> Loading ledgerâ€¦</div>`,
+    bodyHtml: `<div id="ld-body"><span class="spin"></span> Loading ledger…</div>`,
     footHtml: `<button class="btn btn-ghost" onclick="closeModal()">Close</button>
       ${l.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveLedger('${l.id}')">Archive</button>`:''}`,
   });
@@ -1366,10 +1366,10 @@ async function openLedgerDetail(id){
       </div>
       <div style="font-weight:700;font-size:.85rem;margin-bottom:8px;">Ledger entries</div>
       ${gl.entries.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Narration</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Running</th></tr></thead>
-      <tbody>${gl.entries.map(r => `<tr><td>${fmtDate(r.date)}</td><td>${esc(r.narration||'â€”')}${r.is_reversal?' <span class="pill">reversal</span>':''}</td>
+      <tbody>${gl.entries.map(r => `<tr><td>${fmtDate(r.date)}</td><td>${esc(r.narration||'—')}${r.is_reversal?' <span class="pill">reversal</span>':''}</td>
         <td class="num">${r.debit>0?money(r.debit,l.currency):''}</td><td class="num">${r.credit>0?money(r.credit,l.currency):''}</td>
         <td class="num">${money(r.running_balance,l.currency)}</td></tr>`).join('')}</tbody></table></div>`
-        : emptyState('ðŸ“„','No postings yet','This ledger has no posted transactions.')}
+        : emptyState('📄','No postings yet','This ledger has no posted transactions.')}
     `;
   } catch(e){ document.getElementById('ld-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
@@ -1410,22 +1410,22 @@ async function loadVoucherTable(){
     date_from: document.getElementById('vf-from').value || undefined,
     date_to: document.getElementById('vf-to').value || undefined,
   };
-  document.getElementById('voucher-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading vouchersâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('voucher-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading vouchers…</td></tr></tbody></table></div>`;
   try {
     const page = await api(`/companies/${STATE.companyId}/vouchers`, {qs});
     renderVoucherTable(page.items);
-  } catch(e){ document.getElementById('voucher-table').innerHTML = emptyState('âš ','Could not load vouchers', esc(e.message)); }
+  } catch(e){ document.getElementById('voucher-table').innerHTML = emptyState('⚠','Could not load vouchers', esc(e.message)); }
 }
-function voucherTypeName(id){ const t = STATE.voucherTypes.find(t=>t.id===id); return t?t.name:'â€”'; }
+function voucherTypeName(id){ const t = STATE.voucherTypes.find(t=>t.id===id); return t?t.name:'—'; }
 function renderVoucherTable(items){
-  if (!items.length) { document.getElementById('voucher-table').innerHTML = emptyState('ðŸ§¾','No vouchers found','Try different filters, or record a new voucher.',`<button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`); return; }
+  if (!items.length) { document.getElementById('voucher-table').innerHTML = emptyState('🧾','No vouchers found','Try different filters, or record a new voucher.',`<button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`); return; }
   document.getElementById('voucher-table').innerHTML = `<div class="table-wrap"><table>
     <thead><tr><th>Date</th><th>No.</th><th>Type</th><th>Narration</th><th class="num">Amount</th><th>Status</th></tr></thead>
     <tbody>${items.map(v => {
       const total = v.lines.reduce((s,l)=>s+parseFloat(l.debit||0),0);
       return `<tr class="row-link" onclick="openVoucherDetail('${v.id}')">
         <td>${fmtDate(v.date)}</td><td class="mono">${esc(v.voucher_number)}</td><td>${esc(voucherTypeName(v.voucher_type_id))}</td>
-        <td>${esc(v.narration||'â€”')}</td><td class="num">${money(total, STATE.company.base_currency)}</td>
+        <td>${esc(v.narration||'—')}</td><td class="num">${money(total, STATE.company.base_currency)}</td>
         <td><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></td></tr>`;
     }).join('')}</tbody></table></div>`;
 }
@@ -1470,7 +1470,7 @@ function addVoucherLine(){
     <td><input type="number" step="0.01" class="ln-debit" placeholder="0.00"/></td>
     <td><input type="number" step="0.01" class="ln-credit" placeholder="0.00"/></td>
     <td><input type="text" class="ln-remarks" placeholder="optional"/></td>
-    <td class="rm"><button type="button" class="line-remove">âœ•</button></td>
+    <td class="rm"><button type="button" class="line-remove">✕</button></td>
   </tr>`);
   row.querySelector('.line-remove').onclick = () => { row.remove(); updateTotals(); };
   row.querySelector('.ln-debit').oninput = (e) => { if(parseFloat(e.target.value)>0) row.querySelector('.ln-credit').value=''; updateTotals(); };
@@ -1485,7 +1485,7 @@ function updateTotals(){
   const t = document.getElementById('totals-row');
   const bal = Math.abs(d-c) < 0.005;
   t.className = 'totals-row ' + (bal && d>0 ? 'balanced' : 'unbalanced');
-  t.textContent = `Debit: ${d.toFixed(2)}   |   Credit: ${c.toFixed(2)}   ${bal && d>0 ? 'âœ“ balanced' : (d||c ? 'âœ— not balanced' : '')}`;
+  t.textContent = `Debit: ${d.toFixed(2)}   |   Credit: ${c.toFixed(2)}   ${bal && d>0 ? '✓ balanced' : (d||c ? '✗ not balanced' : '')}`;
 }
 async function submitVoucherForm(){
   const rows = document.querySelectorAll('#lines-body tr');
@@ -1507,22 +1507,22 @@ async function submitVoucherForm(){
   };
   try {
     const v = await api(`/companies/${STATE.companyId}/vouchers`, {method:'POST', body:payload});
-    toast('Voucher saved as draft âœ“','ok'); closeModal();
+    toast('Voucher saved as draft ✓','ok'); closeModal();
     openVoucherDetail(v.id);
   } catch(e){ errToast(e); }
 }
 
 async function openVoucherDetail(id){
-  openModal({title:'Voucher', wide:true, bodyHtml:`<div id="vd-body"><span class="spin"></span> Loadingâ€¦</div>`, footHtml:``});
+  openModal({title:'Voucher', wide:true, bodyHtml:`<div id="vd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   try {
     const v = await api(`/companies/${STATE.companyId}/vouchers/${id}`);
     const cur = STATE.company.base_currency;
     const total = v.lines.reduce((s,l)=>s+parseFloat(l.debit||0),0);
-    document.getElementById('modal-title').textContent = `${voucherTypeName(v.voucher_type_id)} Â· ${v.voucher_number}`;
+    document.getElementById('modal-title').textContent = `${voucherTypeName(v.voucher_type_id)} · ${v.voucher_number}`;
     document.getElementById('vd-body').innerHTML = `
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(v.date)}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></span></div>
-      <div class="kv"><span class="k">Narration</span><span class="v">${esc(v.narration||'â€”')}</span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(v.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Ledger</th><th class="num">Debit</th><th class="num">Credit</th><th>Remarks</th></tr></thead>
       <tbody>${v.lines.map(l => `<tr><td>${esc((STATE.ledgers.find(x=>x.id===l.ledger_id)||{}).name || l.ledger_id)}</td>
@@ -1537,12 +1537,12 @@ async function openVoucherDetail(id){
   } catch(e){ document.getElementById('vd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function postVoucherAction(id){
-  try { await api(`/companies/${STATE.companyId}/vouchers/${id}/post`, {method:'POST'}); toast('Voucher posted âœ“','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
+  try { await api(`/companies/${STATE.companyId}/vouchers/${id}/post`, {method:'POST'}); toast('Voucher posted ✓','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
   catch(e){ errToast(e); }
 }
 async function cancelVoucherAction(id){
-  if (!confirm('Cancel this posted voucher? A reversal entry will be created â€” the original stays in the audit trail.')) return;
-  try { await api(`/companies/${STATE.companyId}/vouchers/${id}/cancel`, {method:'POST'}); toast('Voucher cancelled (reversed) âœ“','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); }
+  if (!confirm('Cancel this posted voucher? A reversal entry will be created — the original stays in the audit trail.')) return;
+  try { await api(`/companies/${STATE.companyId}/vouchers/${id}/cancel`, {method:'POST'}); toast('Voucher cancelled (reversed) ✓','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); }
   catch(e){ errToast(e); }
 }
 async function deleteVoucherAction(id){
@@ -1562,7 +1562,7 @@ const PAYMENT_KIND_LABEL = {
 let paymentFilters = {payment_kind:''};
 async function renderPayments(){
   if (!requireCompany()) return;
-  view().innerHTML = viewHead('Payments', 'Customer receipts, supplier payments, and cash/bank movements â€” each one posts a voucher automatically.',
+  view().innerHTML = viewHead('Payments', 'Customer receipts, supplier payments, and cash/bank movements — each one posts a voucher automatically.',
     `<button class="btn btn-blue" onclick="openPaymentForm()">+ New payment</button>`) +
     `<div class="card card-pad" style="margin-bottom:16px;">
       <div class="form-row" style="margin-bottom:0;max-width:280px;"><label>Kind</label>
@@ -1576,28 +1576,28 @@ async function renderPayments(){
 VIEW_RENDERERS['payments'] = renderPayments;
 async function loadPaymentTable(){
   const qs = {page:1, page_size:100, payment_kind: document.getElementById('pf-kind').value || undefined};
-  document.getElementById('payment-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading paymentsâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('payment-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading payments…</td></tr></tbody></table></div>`;
   try {
     const page = await api(`/companies/${STATE.companyId}/payments`, {qs});
     const items = page.items;
     const cur = STATE.company.base_currency;
-    if (!items.length) { document.getElementById('payment-table').innerHTML = emptyState('ðŸ’¸','No payments recorded','Record a receipt or payment to see it here.',`<button class="btn btn-blue" onclick="openPaymentForm()">+ New payment</button>`); return; }
+    if (!items.length) { document.getElementById('payment-table').innerHTML = emptyState('💸','No payments recorded','Record a receipt or payment to see it here.',`<button class="btn btn-blue" onclick="openPaymentForm()">+ New payment</button>`); return; }
     document.getElementById('payment-table').innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>Date</th><th>Kind</th><th>Party</th><th class="num">Amount</th><th>Reference</th><th>Narration</th><th></th></tr></thead>
       <tbody>${items.map(p => `<tr>
         <td>${fmtDate(p.payment_date)}</td>
         <td><span class="pill">${esc(PAYMENT_KIND_LABEL[p.payment_kind]||p.payment_kind)}</span></td>
-        <td>${esc(p.customer_id ? customerName(p.customer_id) : (p.supplier_id ? supplierName(p.supplier_id) : 'â€”'))}</td>
+        <td>${esc(p.customer_id ? customerName(p.customer_id) : (p.supplier_id ? supplierName(p.supplier_id) : '—'))}</td>
         <td class="num">${money(p.amount, cur)}</td>
-        <td class="mono">${esc(p.reference_number||'â€”')}</td>
-        <td>${esc(p.narration||'â€”')}</td>
+        <td class="mono">${esc(p.reference_number||'—')}</td>
+        <td>${esc(p.narration||'—')}</td>
         <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="openVoucherDetail('${p.voucher_id}')">View voucher</button></td>
       </tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('payment-table').innerHTML = emptyState('âš ','Could not load payments', esc(e.message)); }
+  } catch(e){ document.getElementById('payment-table').innerHTML = emptyState('⚠','Could not load payments', esc(e.message)); }
 }
 function openPaymentForm(){
   if (!STATE.ledgers.length) return toast('Create at least one ledger before recording payments','err');
-  const cashBankOpts = STATE.ledgers.filter(l=>l.status==='ACTIVE' && l.cash_bank_type).map(l=>`<option value="${l.id}">${esc(l.name)} (${l.cash_bank_type})</option>`).join('') || `<option value="">â€” tag a ledger as Cash/Bank first â€”</option>`;
+  const cashBankOpts = STATE.ledgers.filter(l=>l.status==='ACTIVE' && l.cash_bank_type).map(l=>`<option value="${l.id}">${esc(l.name)} (${l.cash_bank_type})</option>`).join('') || `<option value="">— tag a ledger as Cash/Bank first —</option>`;
   const partyLedgerOpts = ledgerOptionsHtml();
   openModal({
     title:'New payment', wide:true,
@@ -1611,8 +1611,8 @@ function openPaymentForm(){
         <div class="form-row"><label>Reference no. (optional)</label><input type="text" id="pm-ref"/></div>
         <div class="form-row"><label>Cash / Bank ledger</label><select id="pm-cashbank">${cashBankOpts}</select></div>
         <div class="form-row"><label>Counterparty ledger</label><select id="pm-counterparty">${partyLedgerOpts}</select></div>
-        <div class="form-row" id="pm-customer-row" style="display:none;"><label>Customer</label><select id="pm-customer"><option value="">â€” select â€”</option>${STATE.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
-        <div class="form-row" id="pm-supplier-row" style="display:none;"><label>Supplier</label><select id="pm-supplier"><option value="">â€” select â€”</option>${STATE.suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></div>
+        <div class="form-row" id="pm-customer-row" style="display:none;"><label>Customer</label><select id="pm-customer"><option value="">— select —</option>${STATE.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row" id="pm-supplier-row" style="display:none;"><label>Supplier</label><select id="pm-supplier"><option value="">— select —</option>${STATE.suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></div>
       </div>
       <div class="form-row"><label>Narration (optional)</label><input type="text" id="pm-narr"/></div>
     `,
@@ -1634,7 +1634,7 @@ async function submitPaymentForm(){
   const amount = parseFloat(document.getElementById('pm-amount').value || '0');
   const cash_bank_ledger_id = document.getElementById('pm-cashbank').value;
   const counterparty_ledger_id = document.getElementById('pm-counterparty').value;
-  if (!cash_bank_ledger_id) return toast('Choose a cash/bank ledger â€” tag one as Cash or Bank under Ledgers first','err');
+  if (!cash_bank_ledger_id) return toast('Choose a cash/bank ledger — tag one as Cash or Bank under Ledgers first','err');
   if (amount <= 0) return toast('Amount must be greater than zero','err');
   const payload = {
     payment_kind, amount, cash_bank_ledger_id, counterparty_ledger_id,
@@ -1646,7 +1646,7 @@ async function submitPaymentForm(){
   };
   try {
     await api(`/companies/${STATE.companyId}/payments`, {method:'POST', body:payload});
-    toast('Payment recorded âœ“','ok'); closeModal(); refreshBalanceBeam();
+    toast('Payment recorded ✓','ok'); closeModal(); refreshBalanceBeam();
     if (STATE.currentView==='payments') loadPaymentTable();
   } catch(e){ errToast(e); }
 }
@@ -1658,7 +1658,7 @@ async function renderCustomers(){
   if (!requireCompany()) return;
   await loadCustomers();
   view().innerHTML = viewHead('Customers', `${STATE.customers.length} customer${STATE.customers.length===1?'':'s'} in ${esc(STATE.company.name)}`,
-    `<input type="search" id="cust-search" placeholder="Search customersâ€¦" style="width:200px;">
+    `<input type="search" id="cust-search" placeholder="Search customers…" style="width:200px;">
      <button class="btn btn-blue" onclick="openCustomerForm()">+ New customer</button>`) +
     `<div id="customer-table"></div>`;
   document.getElementById('cust-search').oninput = (e) => renderCustomerTable(e.target.value);
@@ -1668,13 +1668,13 @@ VIEW_RENDERERS['customers'] = renderCustomers;
 function renderCustomerTable(q){
   let items = STATE.customers;
   if (q) items = items.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || (c.email||'').toLowerCase().includes(q.toLowerCase()) || (c.phone||'').includes(q));
-  if (!items.length) { document.getElementById('customer-table').innerHTML = emptyState('ðŸ‘¤','No customers found', q?'No customers match your search.':'Add customers to raise sales orders and invoices against them.', q?'':`<button class="btn btn-blue" onclick="openCustomerForm()">+ New customer</button>`); return; }
+  if (!items.length) { document.getElementById('customer-table').innerHTML = emptyState('👤','No customers found', q?'No customers match your search.':'Add customers to raise sales orders and invoices against them.', q?'':`<button class="btn btn-blue" onclick="openCustomerForm()">+ New customer</button>`); return; }
   document.getElementById('customer-table').innerHTML = `<div class="table-wrap"><table>
     <thead><tr><th>Name</th><th>Contact</th><th>GSTIN</th><th class="num">Credit Limit</th><th>Status</th><th></th></tr></thead>
     <tbody>${items.map(c => `<tr>
       <td class="row-link" onclick="openCustomerDetail('${c.id}')"><strong>${esc(c.name)}</strong></td>
-      <td>${esc(c.contact_person||c.phone||c.email||'â€”')}</td>
-      <td class="mono">${esc(c.gst_number||'â€”')}</td>
+      <td>${esc(c.contact_person||c.phone||c.email||'—')}</td>
+      <td class="mono">${esc(c.gst_number||'—')}</td>
       <td class="num">${money(c.credit_limit, STATE.company.base_currency)}</td>
       <td><span class="badge badge-${c.status.toLowerCase()}">${c.status}</span></td>
       <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openCustomerDetail('${c.id}')">View</button></td>
@@ -1720,7 +1720,7 @@ async function submitCustomerForm(id){
   try {
     if (id) await api(`/companies/${STATE.companyId}/customers/${id}`, {method:'PATCH', body:payload});
     else await api(`/companies/${STATE.companyId}/customers`, {method:'POST', body:payload});
-    toast(id?'Customer updated âœ“':'Customer created âœ“','ok'); closeModal(); await loadCustomers(); renderCustomers();
+    toast(id?'Customer updated ✓':'Customer created ✓','ok'); closeModal(); await loadCustomers(); renderCustomers();
   } catch(e){ errToast(e); }
 }
 async function openCustomerDetail(id){
@@ -1728,15 +1728,15 @@ async function openCustomerDetail(id){
   openModal({
     title:c.name, wide:true,
     bodyHtml:`
-      <div class="kv"><span class="k">Contact person</span><span class="v">${esc(c.contact_person||'â€”')}</span></div>
-      <div class="kv"><span class="k">Email</span><span class="v">${esc(c.email||'â€”')}</span></div>
-      <div class="kv"><span class="k">Phone</span><span class="v">${esc(c.phone||'â€”')}</span></div>
-      <div class="kv"><span class="k">GSTIN</span><span class="v">${esc(c.gst_number||'â€”')}</span></div>
-      <div class="kv"><span class="k">PAN</span><span class="v">${esc(c.pan||'â€”')}</span></div>
+      <div class="kv"><span class="k">Contact person</span><span class="v">${esc(c.contact_person||'—')}</span></div>
+      <div class="kv"><span class="k">Email</span><span class="v">${esc(c.email||'—')}</span></div>
+      <div class="kv"><span class="k">Phone</span><span class="v">${esc(c.phone||'—')}</span></div>
+      <div class="kv"><span class="k">GSTIN</span><span class="v">${esc(c.gst_number||'—')}</span></div>
+      <div class="kv"><span class="k">PAN</span><span class="v">${esc(c.pan||'—')}</span></div>
       <div class="kv"><span class="k">Credit limit</span><span class="v">${money(c.credit_limit, STATE.company.base_currency)}</span></div>
-      <div class="kv"><span class="k">Payment terms</span><span class="v">${esc(c.payment_terms||'â€”')}</span></div>
-      <div class="kv"><span class="k">Billing address</span><span class="v" style="text-align:right;max-width:260px;">${esc(c.billing_address||'â€”')}</span></div>
-      <div class="kv"><span class="k">Shipping address</span><span class="v" style="text-align:right;max-width:260px;">${esc(c.shipping_address||'â€”')}</span></div>
+      <div class="kv"><span class="k">Payment terms</span><span class="v">${esc(c.payment_terms||'—')}</span></div>
+      <div class="kv"><span class="k">Billing address</span><span class="v" style="text-align:right;max-width:260px;">${esc(c.billing_address||'—')}</span></div>
+      <div class="kv"><span class="k">Shipping address</span><span class="v" style="text-align:right;max-width:260px;">${esc(c.shipping_address||'—')}</span></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>
       ${c.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveCustomerAction('${c.id}')">Archive</button>`:''}
@@ -1757,7 +1757,7 @@ async function renderSuppliers(){
   if (!requireCompany()) return;
   await loadSuppliers();
   view().innerHTML = viewHead('Suppliers', `${STATE.suppliers.length} supplier${STATE.suppliers.length===1?'':'s'} in ${esc(STATE.company.name)}`,
-    `<input type="search" id="sup-search" placeholder="Search suppliersâ€¦" style="width:200px;">
+    `<input type="search" id="sup-search" placeholder="Search suppliers…" style="width:200px;">
      <button class="btn btn-blue" onclick="openSupplierForm()">+ New supplier</button>`) +
     `<div id="supplier-table"></div>`;
   document.getElementById('sup-search').oninput = (e) => renderSupplierTable(e.target.value);
@@ -1767,13 +1767,13 @@ VIEW_RENDERERS['suppliers'] = renderSuppliers;
 function renderSupplierTable(q){
   let items = STATE.suppliers;
   if (q) items = items.filter(s => s.name.toLowerCase().includes(q.toLowerCase()) || (s.email||'').toLowerCase().includes(q.toLowerCase()) || (s.phone||'').includes(q));
-  if (!items.length) { document.getElementById('supplier-table').innerHTML = emptyState('ðŸ­','No suppliers found', q?'No suppliers match your search.':'Add suppliers to raise purchase orders and bills against them.', q?'':`<button class="btn btn-blue" onclick="openSupplierForm()">+ New supplier</button>`); return; }
+  if (!items.length) { document.getElementById('supplier-table').innerHTML = emptyState('🏭','No suppliers found', q?'No suppliers match your search.':'Add suppliers to raise purchase orders and bills against them.', q?'':`<button class="btn btn-blue" onclick="openSupplierForm()">+ New supplier</button>`); return; }
   document.getElementById('supplier-table').innerHTML = `<div class="table-wrap"><table>
     <thead><tr><th>Name</th><th>Contact</th><th>GSTIN</th><th class="num">Credit Period</th><th>Status</th><th></th></tr></thead>
     <tbody>${items.map(s => `<tr>
       <td class="row-link" onclick="openSupplierDetail('${s.id}')"><strong>${esc(s.name)}</strong></td>
-      <td>${esc(s.contact_person||s.phone||s.email||'â€”')}</td>
-      <td class="mono">${esc(s.gst_number||'â€”')}</td>
+      <td>${esc(s.contact_person||s.phone||s.email||'—')}</td>
+      <td class="mono">${esc(s.gst_number||'—')}</td>
       <td class="num">${s.credit_period_days} days</td>
       <td><span class="badge badge-${s.status.toLowerCase()}">${s.status}</span></td>
       <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openSupplierDetail('${s.id}')">View</button></td>
@@ -1817,7 +1817,7 @@ async function submitSupplierForm(id){
   try {
     if (id) await api(`/companies/${STATE.companyId}/suppliers/${id}`, {method:'PATCH', body:payload});
     else await api(`/companies/${STATE.companyId}/suppliers`, {method:'POST', body:payload});
-    toast(id?'Supplier updated âœ“':'Supplier created âœ“','ok'); closeModal(); await loadSuppliers(); renderSuppliers();
+    toast(id?'Supplier updated ✓':'Supplier created ✓','ok'); closeModal(); await loadSuppliers(); renderSuppliers();
   } catch(e){ errToast(e); }
 }
 async function openSupplierDetail(id){
@@ -1825,14 +1825,14 @@ async function openSupplierDetail(id){
   openModal({
     title:s.name, wide:true,
     bodyHtml:`
-      <div class="kv"><span class="k">Contact person</span><span class="v">${esc(s.contact_person||'â€”')}</span></div>
-      <div class="kv"><span class="k">Email</span><span class="v">${esc(s.email||'â€”')}</span></div>
-      <div class="kv"><span class="k">Phone</span><span class="v">${esc(s.phone||'â€”')}</span></div>
-      <div class="kv"><span class="k">GSTIN</span><span class="v">${esc(s.gst_number||'â€”')}</span></div>
-      <div class="kv"><span class="k">PAN</span><span class="v">${esc(s.pan||'â€”')}</span></div>
-      <div class="kv"><span class="k">Payment terms</span><span class="v">${esc(s.payment_terms||'â€”')}</span></div>
+      <div class="kv"><span class="k">Contact person</span><span class="v">${esc(s.contact_person||'—')}</span></div>
+      <div class="kv"><span class="k">Email</span><span class="v">${esc(s.email||'—')}</span></div>
+      <div class="kv"><span class="k">Phone</span><span class="v">${esc(s.phone||'—')}</span></div>
+      <div class="kv"><span class="k">GSTIN</span><span class="v">${esc(s.gst_number||'—')}</span></div>
+      <div class="kv"><span class="k">PAN</span><span class="v">${esc(s.pan||'—')}</span></div>
+      <div class="kv"><span class="k">Payment terms</span><span class="v">${esc(s.payment_terms||'—')}</span></div>
       <div class="kv"><span class="k">Credit period</span><span class="v">${s.credit_period_days} days</span></div>
-      <div class="kv"><span class="k">Address</span><span class="v" style="text-align:right;max-width:260px;">${esc(s.address||'â€”')}</span></div>
+      <div class="kv"><span class="k">Address</span><span class="v" style="text-align:right;max-width:260px;">${esc(s.address||'—')}</span></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>
       ${s.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveSupplierAction('${s.id}')">Archive</button>`:''}
@@ -1850,7 +1850,7 @@ async function archiveSupplierAction(id){
    SHARED LINE-ITEM EDITOR (sales orders/invoices, purchase orders/bills)
    ============================================================ */
 function itemOptionsHtml(){
-  return STATE.stockItems.filter(i=>i.status==='ACTIVE').map(i => `<option value="${i.id}">${esc(i.name)}${i.sku?` (${esc(i.sku)})`:''}</option>`).join('') || '<option value="">â€” create an item first â€”</option>';
+  return STATE.stockItems.filter(i=>i.status==='ACTIVE').map(i => `<option value="${i.id}">${esc(i.name)}${i.sku?` (${esc(i.sku)})`:''}</option>`).join('') || '<option value="">— create an item first —</option>';
 }
 function docLineRow(){
   return el(`<tr>
@@ -1858,7 +1858,7 @@ function docLineRow(){
     <td><input type="text" class="dl-desc" placeholder="optional"/></td>
     <td><input type="number" step="0.001" class="dl-qty" placeholder="0"/></td>
     <td><input type="number" step="0.01" class="dl-price" placeholder="0.00"/></td>
-    <td class="rm"><button type="button" class="line-remove">âœ•</button></td>
+    <td class="rm"><button type="button" class="line-remove">✕</button></td>
   </tr>`);
 }
 function addDocLine(tbodyId, totalId){
@@ -1901,7 +1901,7 @@ function qtyLineRow(){
     <td><select class="dl-item">${itemOptionsHtml()}</select></td>
     <td><input type="text" class="dl-desc" placeholder="optional"/></td>
     <td><input type="number" step="0.001" class="dl-qty" placeholder="0"/></td>
-    <td class="rm"><button type="button" class="line-remove">Ã¢Å“â€¢</button></td>
+    <td class="rm"><button type="button" class="line-remove">✕</button></td>
   </tr>`);
 }
 function addQtyLine(tbodyId){
@@ -1944,16 +1944,16 @@ async function renderSalesOrders(){
 }
 VIEW_RENDERERS['sales-orders'] = renderSalesOrders;
 async function loadSalesOrderTable(){
-  document.getElementById('so-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('so-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const page = await api(`/companies/${STATE.companyId}/sales/orders`, {qs:{page_size:100, status: document.getElementById('so-filter-status').value || undefined}});
     const items = page.items, cur = STATE.company.base_currency;
-    if (!items.length) { document.getElementById('so-table').innerHTML = emptyState('ðŸ“‹','No sales orders found','Create a sales order for a customer.',`<button class="btn btn-blue" onclick="openSalesOrderForm()">+ New sales order</button>`); return; }
+    if (!items.length) { document.getElementById('so-table').innerHTML = emptyState('📋','No sales orders found','Create a sales order for a customer.',`<button class="btn btn-blue" onclick="openSalesOrderForm()">+ New sales order</button>`); return; }
     document.getElementById('so-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(o => `<tr class="row-link" onclick="openSalesOrderDetail('${o.id}')">
         <td class="mono">${esc(o.order_number)}</td><td>${fmtDate(o.order_date)}</td><td>${esc(customerName(o.customer_id))}</td>
         <td class="num">${money(o.total_amount,cur)}</td><td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('so-table').innerHTML = emptyState('âš ','Could not load sales orders', esc(e.message)); }
+  } catch(e){ document.getElementById('so-table').innerHTML = emptyState('⚠','Could not load sales orders', esc(e.message)); }
 }
 function openSalesOrderForm(){
   if (!STATE.customers.length) return toast('Create a customer first','err');
@@ -1963,7 +1963,7 @@ function openSalesOrderForm(){
     bodyHtml:`
       <div class="form-grid">
         <div class="form-row"><label>Customer</label><select id="so-customer">${STATE.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
-        <div class="form-row"><label>Warehouse (optional)</label><select id="so-wh"><option value="">â€” none â€”</option>${STATE.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Warehouse (optional)</label><select id="so-wh"><option value="">— none —</option>${STATE.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Order date</label><input type="date" id="so-date" value="${todayStr()}"/></div>
         <div class="form-row"><label>Expected delivery (optional)</label><input type="date" id="so-eta"/></div>
       </div>
@@ -1993,30 +1993,30 @@ async function submitSalesOrderForm(){
   };
   try {
     const o = await api(`/companies/${STATE.companyId}/sales/orders`, {method:'POST', body:payload});
-    toast('Sales order created âœ“','ok'); closeModal(); openSalesOrderDetail(o.id);
+    toast('Sales order created ✓','ok'); closeModal(); openSalesOrderDetail(o.id);
     if (STATE.currentView==='sales-orders') loadSalesOrderTable();
   } catch(e){ errToast(e); }
 }
 async function openSalesOrderDetail(id){
-  openModal({title:'Sales order', wide:true, bodyHtml:`<div id="sod-body"><span class="spin"></span> Loadingâ€¦</div>`, footHtml:``});
+  openModal({title:'Sales order', wide:true, bodyHtml:`<div id="sod-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   try {
     const o = await api(`/companies/${STATE.companyId}/sales/orders/${id}`);
     const cur = STATE.company.base_currency;
-    document.getElementById('modal-title').textContent = `Sales Order Â· ${o.order_number}`;
+    document.getElementById('modal-title').textContent = `Sales Order · ${o.order_number}`;
     document.getElementById('sod-body').innerHTML = `
       <div class="kv"><span class="k">Customer</span><span class="v">${esc(customerName(o.customer_id))}</span></div>
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(o.order_date)}</span></div>
-      <div class="kv"><span class="k">Expected delivery</span><span class="v">${o.expected_delivery_date?fmtDate(o.expected_delivery_date):'â€”'}</span></div>
+      <div class="kv"><span class="k">Expected delivery</span><span class="v">${o.expected_delivery_date?fmtDate(o.expected_delivery_date):'—'}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></span></div>
-      <div class="kv"><span class="k">Narration</span><span class="v">${esc(o.narration||'â€”')}</span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(o.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Total</th></tr></thead>
-      <tbody>${o.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'â€”')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_price,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
+      <tbody>${o.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_price,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
       <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(o.total_amount,cur)}</div>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
     if (o.status==='DRAFT') actions.push(`<button class="btn btn-danger" onclick="cancelSalesOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-teal" onclick="confirmSalesOrderAction('${o.id}')">Confirm</button>`);
-    if (o.status==='CONFIRMED') actions.push(`<button class="btn btn-danger" onclick="cancelSalesOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-ghost" onclick="closeModal();openDeliveryNoteFormFromOrder('${o.id}')">Create delivery</button>`, `<button class="btn btn-blue" onclick="closeModal();openSalesInvoiceFormFromOrder('${o.id}')">Create invoice â†’</button>`);
+    if (o.status==='CONFIRMED') actions.push(`<button class="btn btn-danger" onclick="cancelSalesOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-ghost" onclick="closeModal();openDeliveryNoteFormFromOrder('${o.id}')">Create delivery</button>`, `<button class="btn btn-blue" onclick="closeModal();openSalesInvoiceFormFromOrder('${o.id}')">Create invoice →</button>`);
     document.getElementById('modal-foot').innerHTML = actions.join('');
   } catch(e){ document.getElementById('sod-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
@@ -2037,12 +2037,12 @@ async function loadSalesQuotationTable(){
   try {
     const page = await api(`/companies/${STATE.companyId}/sales/quotations`, {qs:{page_size:100, status: document.getElementById('sq-filter-status').value || undefined}});
     const items = page.items, cur = STATE.company.base_currency;
-    if (!items.length) { document.getElementById('sq-table').innerHTML = emptyState('â‚¹','No sales quotations found','Create a quote before converting demand into an order.',`<button class="btn btn-blue" onclick="openSalesQuotationForm()">+ New quotation</button>`); return; }
+    if (!items.length) { document.getElementById('sq-table').innerHTML = emptyState('₹','No sales quotations found','Create a quote before converting demand into an order.',`<button class="btn btn-blue" onclick="openSalesQuotationForm()">+ New quotation</button>`); return; }
     document.getElementById('sq-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Quotation #</th><th>Date</th><th>Customer</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(q => `<tr class="row-link" onclick="openSalesQuotationDetail('${q.id}')">
         <td class="mono">${esc(q.quotation_number)}</td><td>${fmtDate(q.quotation_date)}</td><td>${esc(customerName(q.customer_id))}</td>
         <td class="num">${money(q.total_amount,cur)}</td><td><span class="badge badge-${q.status.toLowerCase()}">${q.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('sq-table').innerHTML = emptyState('âš ','Could not load sales quotations', esc(e.message)); }
+  } catch(e){ document.getElementById('sq-table').innerHTML = emptyState('⚠','Could not load sales quotations', esc(e.message)); }
 }
 function openSalesQuotationForm(){
   if (!STATE.customers.length) return toast('Create a customer first','err');
@@ -2091,16 +2091,16 @@ async function openSalesQuotationDetail(id){
   try {
     const q = await api(`/companies/${STATE.companyId}/sales/quotations/${id}`);
     const cur = STATE.company.base_currency;
-    document.getElementById('modal-title').textContent = `Sales Quotation Â· ${q.quotation_number}`;
+    document.getElementById('modal-title').textContent = `Sales Quotation · ${q.quotation_number}`;
     document.getElementById('sqd-body').innerHTML = `
       <div class="kv"><span class="k">Customer</span><span class="v">${esc(customerName(q.customer_id))}</span></div>
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(q.quotation_date)}</span></div>
-      <div class="kv"><span class="k">Valid until</span><span class="v">${q.valid_until?fmtDate(q.valid_until):'â€”'}</span></div>
+      <div class="kv"><span class="k">Valid until</span><span class="v">${q.valid_until?fmtDate(q.valid_until):'—'}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${q.status.toLowerCase()}">${q.status}</span></span></div>
-      <div class="kv"><span class="k">Narration</span><span class="v">${esc(q.narration||'â€”')}</span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(q.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Total</th></tr></thead>
-      <tbody>${q.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'â€”')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_price,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
+      <tbody>${q.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_price,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
       <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(q.total_amount,cur)}</div>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
@@ -2143,12 +2143,12 @@ async function loadDeliveryNoteTable(){
   try {
     const page = await api(`/companies/${STATE.companyId}/sales/delivery-notes`, {qs:{page_size:100, status: document.getElementById('dn-filter-status').value || undefined}});
     const items = page.items;
-    if (!items.length) { document.getElementById('dn-table').innerHTML = emptyState('â‡¢','No delivery notes found','Create a delivery note to move goods out without posting accounting.',`<button class="btn btn-blue" onclick="openDeliveryNoteForm()">+ New delivery note</button>`); return; }
+    if (!items.length) { document.getElementById('dn-table').innerHTML = emptyState('⇢','No delivery notes found','Create a delivery note to move goods out without posting accounting.',`<button class="btn btn-blue" onclick="openDeliveryNoteForm()">+ New delivery note</button>`); return; }
     document.getElementById('dn-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Delivery #</th><th>Date</th><th>Customer</th><th>Status</th></tr></thead>
       <tbody>${items.map(n => `<tr class="row-link" onclick="openDeliveryNoteDetail('${n.id}')">
         <td class="mono">${esc(n.delivery_number)}</td><td>${fmtDate(n.delivery_date)}</td><td>${esc(customerName(n.customer_id))}</td>
         <td><span class="badge badge-${n.status.toLowerCase()}">${n.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('dn-table').innerHTML = emptyState('âš ','Could not load delivery notes', esc(e.message)); }
+  } catch(e){ document.getElementById('dn-table').innerHTML = emptyState('⚠','Could not load delivery notes', esc(e.message)); }
 }
 async function openDeliveryNoteForm(prefillOrder){
   if (!STATE.customers.length) return toast('Create a customer first','err');
@@ -2211,15 +2211,15 @@ async function openDeliveryNoteDetail(id){
   openModal({title:'Delivery note', wide:true, bodyHtml:`<div id="dnd-body"><span class="spin"></span> Loading...</div>`, footHtml:``});
   try {
     const n = await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}`);
-    document.getElementById('modal-title').textContent = `Delivery Note Â· ${n.delivery_number}`;
+    document.getElementById('modal-title').textContent = `Delivery Note · ${n.delivery_number}`;
     document.getElementById('dnd-body').innerHTML = `
       <div class="kv"><span class="k">Customer</span><span class="v">${esc(customerName(n.customer_id))}</span></div>
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(n.delivery_date)}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${n.status.toLowerCase()}">${n.status}</span></span></div>
-      <div class="kv"><span class="k">Narration</span><span class="v">${esc(n.narration||'â€”')}</span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(n.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th></tr></thead>
-      <tbody>${n.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'â€”')}</td><td class="num">${l.quantity}</td></tr>`).join('')}</tbody></table>
+      <tbody>${n.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td></tr>`).join('')}</tbody></table>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
     if (n.status === 'DRAFT') actions.push(`<button class="btn btn-danger" onclick="cancelDeliveryNoteAction('${n.id}')">Cancel</button>`, `<button class="btn btn-teal" onclick="postDeliveryNoteAction('${n.id}')">Post stock</button>`);
@@ -2236,7 +2236,7 @@ async function cancelDeliveryNoteAction(id){
   catch(e){ errToast(e); }
 }
 async function confirmSalesOrderAction(id){
-  try { await api(`/companies/${STATE.companyId}/sales/orders/${id}/confirm`, {method:'POST'}); toast('Sales order confirmed âœ“','ok'); openSalesOrderDetail(id); if(STATE.currentView==='sales-orders') loadSalesOrderTable(); }
+  try { await api(`/companies/${STATE.companyId}/sales/orders/${id}/confirm`, {method:'POST'}); toast('Sales order confirmed ✓','ok'); openSalesOrderDetail(id); if(STATE.currentView==='sales-orders') loadSalesOrderTable(); }
   catch(e){ errToast(e); }
 }
 async function cancelSalesOrderAction(id){
@@ -2264,16 +2264,16 @@ async function renderSalesInvoices(){
 }
 VIEW_RENDERERS['sales-invoices'] = renderSalesInvoices;
 async function loadSalesInvoiceTable(){
-  document.getElementById('si-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('si-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const page = await api(`/companies/${STATE.companyId}/sales/invoices`, {qs:{page_size:100, status: document.getElementById('si-filter-status').value || undefined}});
     const items = page.items, cur = STATE.company.base_currency;
-    if (!items.length) { document.getElementById('si-table').innerHTML = emptyState('ðŸ§¾','No sales invoices found','Create an invoice for a customer.',`<button class="btn btn-blue" onclick="openSalesInvoiceForm()">+ New sales invoice</button>`); return; }
+    if (!items.length) { document.getElementById('si-table').innerHTML = emptyState('🧾','No sales invoices found','Create an invoice for a customer.',`<button class="btn btn-blue" onclick="openSalesInvoiceForm()">+ New sales invoice</button>`); return; }
     document.getElementById('si-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Invoice #</th><th>Date</th><th>Customer</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(i => `<tr class="row-link" onclick="openSalesInvoiceDetail('${i.id}')">
         <td class="mono">${esc(i.invoice_number)}</td><td>${fmtDate(i.invoice_date)}</td><td>${esc(customerName(i.customer_id))}</td>
         <td class="num">${money(i.total_amount,cur)}</td><td><span class="badge badge-${i.status.toLowerCase()}">${i.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('si-table').innerHTML = emptyState('âš ','Could not load sales invoices', esc(e.message)); }
+  } catch(e){ document.getElementById('si-table').innerHTML = emptyState('⚠','Could not load sales invoices', esc(e.message)); }
 }
 function openSalesInvoiceForm(prefillOrder){
   if (!STATE.customers.length) return toast('Create a customer first','err');
@@ -2329,25 +2329,25 @@ async function submitSalesInvoiceForm(){
   };
   try {
     const inv = await api(`/companies/${STATE.companyId}/sales/invoices`, {method:'POST', body:payload});
-    toast('Sales invoice saved as draft âœ“','ok'); closeModal(); openSalesInvoiceDetail(inv.id);
+    toast('Sales invoice saved as draft ✓','ok'); closeModal(); openSalesInvoiceDetail(inv.id);
     if (STATE.currentView==='sales-invoices') loadSalesInvoiceTable();
   } catch(e){ errToast(e); }
 }
 async function openSalesInvoiceDetail(id){
-  openModal({title:'Sales invoice', wide:true, bodyHtml:`<div id="sid-body"><span class="spin"></span> Loadingâ€¦</div>`, footHtml:``});
+  openModal({title:'Sales invoice', wide:true, bodyHtml:`<div id="sid-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   try {
     const inv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}`);
     const cur = STATE.company.base_currency;
-    document.getElementById('modal-title').textContent = `Sales Invoice Â· ${inv.invoice_number}`;
+    document.getElementById('modal-title').textContent = `Sales Invoice · ${inv.invoice_number}`;
     document.getElementById('sid-body').innerHTML = `
       <div class="kv"><span class="k">Customer</span><span class="v">${esc(customerName(inv.customer_id))}</span></div>
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(inv.invoice_date)}</span></div>
       <div class="kv"><span class="k">Warehouse</span><span class="v">${esc(warehouseName(inv.warehouse_id))}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${inv.status.toLowerCase()}">${inv.status}</span></span></div>
-      <div class="kv"><span class="k">Narration</span><span class="v">${esc(inv.narration||'â€”')}</span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(inv.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Total</th></tr></thead>
-      <tbody>${inv.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'â€”')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_price,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
+      <tbody>${inv.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_price,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
       <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(inv.total_amount,cur)}</div>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
@@ -2358,7 +2358,7 @@ async function openSalesInvoiceDetail(id){
   } catch(e){ document.getElementById('sid-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function postSalesInvoiceAction(id){
-  try { await api(`/companies/${STATE.companyId}/sales/invoices/${id}/post`, {method:'POST'}); toast('Sales invoice posted âœ“','ok'); refreshBalanceBeam(); openSalesInvoiceDetail(id); if(STATE.currentView==='sales-invoices') loadSalesInvoiceTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
+  try { await api(`/companies/${STATE.companyId}/sales/invoices/${id}/post`, {method:'POST'}); toast('Sales invoice posted ✓','ok'); refreshBalanceBeam(); openSalesInvoiceDetail(id); if(STATE.currentView==='sales-invoices') loadSalesInvoiceTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
   catch(e){ errToast(e); }
 }
 
@@ -2378,12 +2378,12 @@ async function loadSalesReturnTable(){
   try {
     const page = await api(`/companies/${STATE.companyId}/sales/returns`, {qs:{page_size:100, status: document.getElementById('sr-filter-status').value || undefined}});
     const items = page.items, cur = STATE.company.base_currency;
-    if (!items.length) { document.getElementById('sr-table').innerHTML = emptyState('â†©','No sales returns found','Create a credit note when goods come back from a customer.',`<button class="btn btn-blue" onclick="openSalesReturnForm()">+ New sales return</button>`); return; }
+    if (!items.length) { document.getElementById('sr-table').innerHTML = emptyState('↩','No sales returns found','Create a credit note when goods come back from a customer.',`<button class="btn btn-blue" onclick="openSalesReturnForm()">+ New sales return</button>`); return; }
     document.getElementById('sr-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Return #</th><th>Date</th><th>Customer</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(r => `<tr class="row-link" onclick="openSalesReturnDetail('${r.id}')">
         <td class="mono">${esc(r.return_number)}</td><td>${fmtDate(r.return_date)}</td><td>${esc(customerName(r.customer_id))}</td>
         <td class="num">${money(r.total_amount,cur)}</td><td><span class="badge badge-${r.status.toLowerCase()}">${r.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('sr-table').innerHTML = emptyState('âš ','Could not load sales returns', esc(e.message)); }
+  } catch(e){ document.getElementById('sr-table').innerHTML = emptyState('⚠','Could not load sales returns', esc(e.message)); }
 }
 async function openSalesReturnForm(prefillInvoice){
   if (!STATE.customers.length) return toast('Create a customer first','err');
@@ -2492,16 +2492,16 @@ async function renderPurchaseOrders(){
 }
 VIEW_RENDERERS['purchase-orders'] = renderPurchaseOrders;
 async function loadPurchaseOrderTable(){
-  document.getElementById('po-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('po-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const page = await api(`/companies/${STATE.companyId}/purchase/orders`, {qs:{page_size:100, status: document.getElementById('po-filter-status').value || undefined}});
     const items = page.items, cur = STATE.company.base_currency;
-    if (!items.length) { document.getElementById('po-table').innerHTML = emptyState('ðŸ“‹','No purchase orders found','Create a purchase order for a supplier.',`<button class="btn btn-blue" onclick="openPurchaseOrderForm()">+ New purchase order</button>`); return; }
+    if (!items.length) { document.getElementById('po-table').innerHTML = emptyState('📋','No purchase orders found','Create a purchase order for a supplier.',`<button class="btn btn-blue" onclick="openPurchaseOrderForm()">+ New purchase order</button>`); return; }
     document.getElementById('po-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Order #</th><th>Date</th><th>Supplier</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(o => `<tr class="row-link" onclick="openPurchaseOrderDetail('${o.id}')">
         <td class="mono">${esc(o.order_number)}</td><td>${fmtDate(o.order_date)}</td><td>${esc(supplierName(o.supplier_id))}</td>
         <td class="num">${money(o.total_amount,cur)}</td><td><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('po-table').innerHTML = emptyState('âš ','Could not load purchase orders', esc(e.message)); }
+  } catch(e){ document.getElementById('po-table').innerHTML = emptyState('⚠','Could not load purchase orders', esc(e.message)); }
 }
 function openPurchaseOrderForm(){
   if (!STATE.suppliers.length) return toast('Create a supplier first','err');
@@ -2511,7 +2511,7 @@ function openPurchaseOrderForm(){
     bodyHtml:`
       <div class="form-grid">
         <div class="form-row"><label>Supplier</label><select id="po-supplier">${STATE.suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></div>
-        <div class="form-row"><label>Warehouse (optional)</label><select id="po-wh"><option value="">â€” none â€”</option>${STATE.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Warehouse (optional)</label><select id="po-wh"><option value="">— none —</option>${STATE.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Order date</label><input type="date" id="po-date" value="${todayStr()}"/></div>
         <div class="form-row"><label>Expected receipt (optional)</label><input type="date" id="po-eta"/></div>
       </div>
@@ -2541,35 +2541,35 @@ async function submitPurchaseOrderForm(){
   };
   try {
     const o = await api(`/companies/${STATE.companyId}/purchase/orders`, {method:'POST', body:payload});
-    toast('Purchase order created âœ“','ok'); closeModal(); openPurchaseOrderDetail(o.id);
+    toast('Purchase order created ✓','ok'); closeModal(); openPurchaseOrderDetail(o.id);
     if (STATE.currentView==='purchase-orders') loadPurchaseOrderTable();
   } catch(e){ errToast(e); }
 }
 async function openPurchaseOrderDetail(id){
-  openModal({title:'Purchase order', wide:true, bodyHtml:`<div id="pod-body"><span class="spin"></span> Loadingâ€¦</div>`, footHtml:``});
+  openModal({title:'Purchase order', wide:true, bodyHtml:`<div id="pod-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   try {
     const o = await api(`/companies/${STATE.companyId}/purchase/orders/${id}`);
     const cur = STATE.company.base_currency;
-    document.getElementById('modal-title').textContent = `Purchase Order Â· ${o.order_number}`;
+    document.getElementById('modal-title').textContent = `Purchase Order · ${o.order_number}`;
     document.getElementById('pod-body').innerHTML = `
       <div class="kv"><span class="k">Supplier</span><span class="v">${esc(supplierName(o.supplier_id))}</span></div>
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(o.order_date)}</span></div>
-      <div class="kv"><span class="k">Expected receipt</span><span class="v">${o.expected_receipt_date?fmtDate(o.expected_receipt_date):'â€”'}</span></div>
+      <div class="kv"><span class="k">Expected receipt</span><span class="v">${o.expected_receipt_date?fmtDate(o.expected_receipt_date):'—'}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${o.status.toLowerCase()}">${o.status}</span></span></div>
-      <div class="kv"><span class="k">Narration</span><span class="v">${esc(o.narration||'â€”')}</span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(o.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Total</th></tr></thead>
-      <tbody>${o.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'â€”')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_cost,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
+      <tbody>${o.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_cost,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
       <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(o.total_amount,cur)}</div>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
     if (o.status==='DRAFT') actions.push(`<button class="btn btn-danger" onclick="cancelPurchaseOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-teal" onclick="confirmPurchaseOrderAction('${o.id}')">Confirm</button>`);
-    if (o.status==='CONFIRMED') actions.push(`<button class="btn btn-danger" onclick="cancelPurchaseOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-ghost" onclick="closeModal();openGoodsReceiptFormFromOrder('${o.id}')">Receive goods</button>`, `<button class="btn btn-blue" onclick="closeModal();openPurchaseBillFormFromOrder('${o.id}')">Create bill â†’</button>`);
+    if (o.status==='CONFIRMED') actions.push(`<button class="btn btn-danger" onclick="cancelPurchaseOrderAction('${o.id}')">Cancel</button>`, `<button class="btn btn-ghost" onclick="closeModal();openGoodsReceiptFormFromOrder('${o.id}')">Receive goods</button>`, `<button class="btn btn-blue" onclick="closeModal();openPurchaseBillFormFromOrder('${o.id}')">Create bill →</button>`);
     document.getElementById('modal-foot').innerHTML = actions.join('');
   } catch(e){ document.getElementById('pod-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function confirmPurchaseOrderAction(id){
-  try { await api(`/companies/${STATE.companyId}/purchase/orders/${id}/confirm`, {method:'POST'}); toast('Purchase order confirmed âœ“','ok'); openPurchaseOrderDetail(id); if(STATE.currentView==='purchase-orders') loadPurchaseOrderTable(); }
+  try { await api(`/companies/${STATE.companyId}/purchase/orders/${id}/confirm`, {method:'POST'}); toast('Purchase order confirmed ✓','ok'); openPurchaseOrderDetail(id); if(STATE.currentView==='purchase-orders') loadPurchaseOrderTable(); }
   catch(e){ errToast(e); }
 }
 async function cancelPurchaseOrderAction(id){
@@ -2597,12 +2597,12 @@ async function loadGoodsReceiptTable(){
   try {
     const page = await api(`/companies/${STATE.companyId}/purchase/goods-receipts`, {qs:{page_size:100, status: document.getElementById('gr-filter-status').value || undefined}});
     const items = page.items;
-    if (!items.length) { document.getElementById('gr-table').innerHTML = emptyState('â‡ ','No goods receipts found','Create a goods receipt to move supplier stock in without posting accounting.',`<button class="btn btn-blue" onclick="openGoodsReceiptForm()">+ New goods receipt</button>`); return; }
+    if (!items.length) { document.getElementById('gr-table').innerHTML = emptyState('⇠','No goods receipts found','Create a goods receipt to move supplier stock in without posting accounting.',`<button class="btn btn-blue" onclick="openGoodsReceiptForm()">+ New goods receipt</button>`); return; }
     document.getElementById('gr-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Receipt #</th><th>Date</th><th>Supplier</th><th>Status</th></tr></thead>
       <tbody>${items.map(r => `<tr class="row-link" onclick="openGoodsReceiptDetail('${r.id}')">
         <td class="mono">${esc(r.receipt_number)}</td><td>${fmtDate(r.receipt_date)}</td><td>${esc(supplierName(r.supplier_id))}</td>
         <td><span class="badge badge-${r.status.toLowerCase()}">${r.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('gr-table').innerHTML = emptyState('âš ','Could not load goods receipts', esc(e.message)); }
+  } catch(e){ document.getElementById('gr-table').innerHTML = emptyState('⚠','Could not load goods receipts', esc(e.message)); }
 }
 async function openGoodsReceiptForm(prefillOrder){
   if (!STATE.suppliers.length) return toast('Create a supplier first','err');
@@ -2665,15 +2665,15 @@ async function openGoodsReceiptDetail(id){
   openModal({title:'Goods receipt', wide:true, bodyHtml:`<div id="grn-body"><span class="spin"></span> Loading...</div>`, footHtml:``});
   try {
     const r = await api(`/companies/${STATE.companyId}/purchase/goods-receipts/${id}`);
-    document.getElementById('modal-title').textContent = `Goods Receipt Â· ${r.receipt_number}`;
+    document.getElementById('modal-title').textContent = `Goods Receipt · ${r.receipt_number}`;
     document.getElementById('grn-body').innerHTML = `
       <div class="kv"><span class="k">Supplier</span><span class="v">${esc(supplierName(r.supplier_id))}</span></div>
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(r.receipt_date)}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${r.status.toLowerCase()}">${r.status}</span></span></div>
-      <div class="kv"><span class="k">Narration</span><span class="v">${esc(r.narration||'â€”')}</span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(r.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th></tr></thead>
-      <tbody>${r.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'â€”')}</td><td class="num">${l.quantity}</td></tr>`).join('')}</tbody></table>
+      <tbody>${r.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td></tr>`).join('')}</tbody></table>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
     if (r.status === 'DRAFT') actions.push(`<button class="btn btn-danger" onclick="cancelGoodsReceiptAction('${r.id}')">Cancel</button>`, `<button class="btn btn-teal" onclick="postGoodsReceiptAction('${r.id}')">Post stock</button>`);
@@ -2705,16 +2705,16 @@ async function renderPurchaseBills(){
 }
 VIEW_RENDERERS['purchase-bills'] = renderPurchaseBills;
 async function loadPurchaseBillTable(){
-  document.getElementById('pb-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('pb-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const page = await api(`/companies/${STATE.companyId}/purchase/bills`, {qs:{page_size:100, status: document.getElementById('pb-filter-status').value || undefined}});
     const items = page.items, cur = STATE.company.base_currency;
-    if (!items.length) { document.getElementById('pb-table').innerHTML = emptyState('ðŸ§¾','No purchase bills found','Create a bill for a supplier.',`<button class="btn btn-blue" onclick="openPurchaseBillForm()">+ New purchase bill</button>`); return; }
+    if (!items.length) { document.getElementById('pb-table').innerHTML = emptyState('🧾','No purchase bills found','Create a bill for a supplier.',`<button class="btn btn-blue" onclick="openPurchaseBillForm()">+ New purchase bill</button>`); return; }
     document.getElementById('pb-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Bill #</th><th>Date</th><th>Supplier</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(b => `<tr class="row-link" onclick="openPurchaseBillDetail('${b.id}')">
         <td class="mono">${esc(b.bill_number)}</td><td>${fmtDate(b.bill_date)}</td><td>${esc(supplierName(b.supplier_id))}</td>
         <td class="num">${money(b.total_amount,cur)}</td><td><span class="badge badge-${b.status.toLowerCase()}">${b.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('pb-table').innerHTML = emptyState('âš ','Could not load purchase bills', esc(e.message)); }
+  } catch(e){ document.getElementById('pb-table').innerHTML = emptyState('⚠','Could not load purchase bills', esc(e.message)); }
 }
 function openPurchaseBillForm(prefillOrder){
   if (!STATE.suppliers.length) return toast('Create a supplier first','err');
@@ -2769,25 +2769,25 @@ async function submitPurchaseBillForm(){
   };
   try {
     const b = await api(`/companies/${STATE.companyId}/purchase/bills`, {method:'POST', body:payload});
-    toast('Purchase bill saved as draft âœ“','ok'); closeModal(); openPurchaseBillDetail(b.id);
+    toast('Purchase bill saved as draft ✓','ok'); closeModal(); openPurchaseBillDetail(b.id);
     if (STATE.currentView==='purchase-bills') loadPurchaseBillTable();
   } catch(e){ errToast(e); }
 }
 async function openPurchaseBillDetail(id){
-  openModal({title:'Purchase bill', wide:true, bodyHtml:`<div id="pbd-body"><span class="spin"></span> Loadingâ€¦</div>`, footHtml:``});
+  openModal({title:'Purchase bill', wide:true, bodyHtml:`<div id="pbd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   try {
     const b = await api(`/companies/${STATE.companyId}/purchase/bills/${id}`);
     const cur = STATE.company.base_currency;
-    document.getElementById('modal-title').textContent = `Purchase Bill Â· ${b.bill_number}`;
+    document.getElementById('modal-title').textContent = `Purchase Bill · ${b.bill_number}`;
     document.getElementById('pbd-body').innerHTML = `
       <div class="kv"><span class="k">Supplier</span><span class="v">${esc(supplierName(b.supplier_id))}</span></div>
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(b.bill_date)}</span></div>
       <div class="kv"><span class="k">Warehouse</span><span class="v">${esc(warehouseName(b.warehouse_id))}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${b.status.toLowerCase()}">${b.status}</span></span></div>
-      <div class="kv"><span class="k">Narration</span><span class="v">${esc(b.narration||'â€”')}</span></div>
+      <div class="kv"><span class="k">Narration</span><span class="v">${esc(b.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Cost</th><th class="num">Total</th></tr></thead>
-      <tbody>${b.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'â€”')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_cost,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
+      <tbody>${b.lines.map(l=>`<tr><td>${esc(itemName(l.item_id))}</td><td>${esc(l.description||'—')}</td><td class="num">${l.quantity}</td><td class="num">${money(l.unit_cost,cur)}</td><td class="num">${money(l.line_total,cur)}</td></tr>`).join('')}</tbody></table>
       <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(b.total_amount,cur)}</div>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
@@ -2798,7 +2798,7 @@ async function openPurchaseBillDetail(id){
   } catch(e){ document.getElementById('pbd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function postPurchaseBillAction(id){
-  try { await api(`/companies/${STATE.companyId}/purchase/bills/${id}/post`, {method:'POST'}); toast('Purchase bill posted âœ“','ok'); refreshBalanceBeam(); openPurchaseBillDetail(id); if(STATE.currentView==='purchase-bills') loadPurchaseBillTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
+  try { await api(`/companies/${STATE.companyId}/purchase/bills/${id}/post`, {method:'POST'}); toast('Purchase bill posted ✓','ok'); refreshBalanceBeam(); openPurchaseBillDetail(id); if(STATE.currentView==='purchase-bills') loadPurchaseBillTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
   catch(e){ errToast(e); }
 }
 
@@ -2821,12 +2821,12 @@ async function loadPurchaseReturnTable(){
   try {
     const page = await api(`/companies/${STATE.companyId}/purchase/returns`, {qs:{page_size:100, status: document.getElementById('pr-filter-status').value || undefined}});
     const items = page.items, cur = STATE.company.base_currency;
-    if (!items.length) { document.getElementById('pr-table').innerHTML = emptyState('â†ª','No purchase returns found','Create a debit note when goods go back to a supplier.',`<button class="btn btn-blue" onclick="openPurchaseReturnForm()">+ New purchase return</button>`); return; }
+    if (!items.length) { document.getElementById('pr-table').innerHTML = emptyState('↪','No purchase returns found','Create a debit note when goods go back to a supplier.',`<button class="btn btn-blue" onclick="openPurchaseReturnForm()">+ New purchase return</button>`); return; }
     document.getElementById('pr-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Return #</th><th>Date</th><th>Supplier</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(r => `<tr class="row-link" onclick="openPurchaseReturnDetail('${r.id}')">
         <td class="mono">${esc(r.return_number)}</td><td>${fmtDate(r.return_date)}</td><td>${esc(supplierName(r.supplier_id))}</td>
         <td class="num">${money(r.total_amount,cur)}</td><td><span class="badge badge-${r.status.toLowerCase()}">${r.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('pr-table').innerHTML = emptyState('âš ','Could not load purchase returns', esc(e.message)); }
+  } catch(e){ document.getElementById('pr-table').innerHTML = emptyState('⚠','Could not load purchase returns', esc(e.message)); }
 }
 async function openPurchaseReturnForm(prefillBill){
   if (!STATE.suppliers.length) return toast('Create a supplier first','err');
@@ -2950,7 +2950,7 @@ function openCategoryForm(){
       if (!name) return toast('Category name is required','err');
       try {
         await api(`/companies/${STATE.companyId}/inventory/categories`, {method:'POST', body:{name, description: document.getElementById('cat-desc').value.trim() || null}});
-        toast('Category created âœ“','ok'); closeModal(); renderInventorySetup();
+        toast('Category created ✓','ok'); closeModal(); renderInventorySetup();
       } catch(e){ errToast(e); }
     }
   });
@@ -2972,7 +2972,7 @@ function openUomForm(){
       if (!name || !symbol) return toast('Name and symbol are both required','err');
       try {
         await api(`/companies/${STATE.companyId}/inventory/uoms`, {method:'POST', body:{name, symbol, precision: parseInt(document.getElementById('uom-precision').value||'2',10)}});
-        toast('Unit created âœ“','ok'); closeModal(); renderInventorySetup();
+        toast('Unit created ✓','ok'); closeModal(); renderInventorySetup();
       } catch(e){ errToast(e); }
     }
   });
@@ -2996,20 +2996,20 @@ function openWarehouseForm(){
           address: document.getElementById('wh-addr').value.trim() || null,
           is_default: document.getElementById('wh-default').checked,
         }});
-        toast('Warehouse created âœ“','ok'); closeModal(); renderInventorySetup();
+        toast('Warehouse created ✓','ok'); closeModal(); renderInventorySetup();
       } catch(e){ errToast(e); }
     }
   });
 }
 
 /* ============================================================
-   INVENTORY â€” STOCK ITEMS
+   INVENTORY — STOCK ITEMS
    ============================================================ */
 async function renderInventoryItems(){
   if (!requireCompany()) return;
   await Promise.all([loadStockItems(), loadCategories(), loadUoms()]);
   view().innerHTML = viewHead('Items', `${STATE.stockItems.length} item${STATE.stockItems.length===1?'':'s'} in ${esc(STATE.company.name)}`,
-    `<input type="search" id="item-search" placeholder="Search itemsâ€¦" style="width:200px;">
+    `<input type="search" id="item-search" placeholder="Search items…" style="width:200px;">
      <button class="btn btn-blue" onclick="openItemForm()">+ New item</button>`) +
     `<div id="item-table"></div>`;
   document.getElementById('item-search').oninput = (e) => renderItemTable(e.target.value);
@@ -3019,13 +3019,13 @@ VIEW_RENDERERS['inventory-items'] = renderInventoryItems;
 function renderItemTable(q){
   let items = STATE.stockItems;
   if (q) items = items.filter(i => i.name.toLowerCase().includes(q.toLowerCase()) || (i.sku||'').toLowerCase().includes(q.toLowerCase()));
-  if (!STATE.uoms.length) { document.getElementById('item-table').innerHTML = emptyState('ðŸ“¦','Create a unit of measure first', 'Items need a unit of measure (e.g. pcs, kg) before they can be created.', `<button class="btn btn-blue" onclick="navigate('inventory-setup')">Go to setup â†’</button>`); return; }
-  if (!items.length) { document.getElementById('item-table').innerHTML = emptyState('ðŸ“¦','No items found', q?'No items match your search.':'Add your first stock item.', q?'':`<button class="btn btn-blue" onclick="openItemForm()">+ New item</button>`); return; }
+  if (!STATE.uoms.length) { document.getElementById('item-table').innerHTML = emptyState('📦','Create a unit of measure first', 'Items need a unit of measure (e.g. pcs, kg) before they can be created.', `<button class="btn btn-blue" onclick="navigate('inventory-setup')">Go to setup →</button>`); return; }
+  if (!items.length) { document.getElementById('item-table').innerHTML = emptyState('📦','No items found', q?'No items match your search.':'Add your first stock item.', q?'':`<button class="btn btn-blue" onclick="openItemForm()">+ New item</button>`); return; }
   document.getElementById('item-table').innerHTML = `<div class="table-wrap"><table>
     <thead><tr><th>Name</th><th>SKU</th><th>Category</th><th>UOM</th><th class="num">GST %</th><th>Status</th><th></th></tr></thead>
     <tbody>${items.map(i => `<tr>
       <td class="row-link" onclick="openItemDetail('${i.id}')"><strong>${esc(i.name)}</strong></td>
-      <td class="mono">${esc(i.sku||'â€”')}</td>
+      <td class="mono">${esc(i.sku||'—')}</td>
       <td>${esc(categoryName(i.category_id))}</td>
       <td>${esc(uomSymbol(i.uom_id))}</td>
       <td class="num">${i.gst_rate}%</td>
@@ -3035,14 +3035,14 @@ function renderItemTable(q){
 }
 function openItemForm(existing){
   const it = existing || {};
-  if (!STATE.uoms.length) return toast('Create a unit of measure first (Inventory â†’ Categories, UOM & Warehouses)','err');
+  if (!STATE.uoms.length) return toast('Create a unit of measure first (Inventory → Categories, UOM & Warehouses)','err');
   openModal({
     title: existing?'Edit item':'New item', wide:true,
     bodyHtml:`
       <div class="form-grid">
         <div class="form-row"><label>Item name *</label><input type="text" id="it-name" value="${esc(it.name||'')}"/></div>
         <div class="form-row"><label>SKU (optional)</label><input type="text" id="it-sku" value="${esc(it.sku||'')}"/></div>
-        <div class="form-row"><label>Category (optional)</label><select id="it-cat"><option value="">â€” none â€”</option>${STATE.categories.map(c=>`<option value="${c.id}" ${it.category_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Category (optional)</label><select id="it-cat"><option value="">— none —</option>${STATE.categories.map(c=>`<option value="${c.id}" ${it.category_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Unit of measure *</label><select id="it-uom">${STATE.uoms.map(u=>`<option value="${u.id}" ${it.uom_id===u.id?'selected':''}>${esc(u.name)} (${esc(u.symbol)})</option>`).join('')}</select></div>
         <div class="form-row"><label>HSN/SAC (optional)</label><input type="text" id="it-hsn" value="${esc(it.hsn_sac||'')}"/></div>
         <div class="form-row"><label>GST rate %</label><input type="number" step="0.01" id="it-gst" value="${it.gst_rate||0}"/></div>
@@ -3072,19 +3072,19 @@ async function submitItemForm(id){
   try {
     if (id) await api(`/companies/${STATE.companyId}/inventory/items/${id}`, {method:'PATCH', body:payload});
     else await api(`/companies/${STATE.companyId}/inventory/items`, {method:'POST', body:payload});
-    toast(id?'Item updated âœ“':'Item created âœ“','ok'); closeModal(); await loadStockItems(); renderInventoryItems();
+    toast(id?'Item updated ✓':'Item created ✓','ok'); closeModal(); await loadStockItems(); renderInventoryItems();
   } catch(e){ errToast(e); }
 }
 async function openItemDetail(id){
   const it = STATE.stockItems.find(x=>x.id===id); if (!it) return;
-  openModal({title:it.name, wide:true, bodyHtml:`<div id="item-detail-body"><span class="spin"></span> Loadingâ€¦</div>`, footHtml:``});
+  openModal({title:it.name, wide:true, bodyHtml:`<div id="item-detail-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   let stockRows = [];
   try { stockRows = await api(`/companies/${STATE.companyId}/inventory/current-stock`, {qs:{item_id:id}}); } catch(e){ stockRows = []; }
   document.getElementById('item-detail-body').innerHTML = `
-    <div class="kv"><span class="k">SKU</span><span class="v">${esc(it.sku||'â€”')}</span></div>
+    <div class="kv"><span class="k">SKU</span><span class="v">${esc(it.sku||'—')}</span></div>
     <div class="kv"><span class="k">Category</span><span class="v">${esc(categoryName(it.category_id))}</span></div>
     <div class="kv"><span class="k">UOM</span><span class="v">${esc(uomSymbol(it.uom_id))}</span></div>
-    <div class="kv"><span class="k">HSN/SAC</span><span class="v">${esc(it.hsn_sac||'â€”')}</span></div>
+    <div class="kv"><span class="k">HSN/SAC</span><span class="v">${esc(it.hsn_sac||'—')}</span></div>
     <div class="kv"><span class="k">GST rate</span><span class="v">${it.gst_rate}%</span></div>
     <div class="kv"><span class="k">Reorder level</span><span class="v">${it.reorder_level}</span></div>
     <div class="kv"><span class="k">Allow negative stock</span><span class="v">${it.allow_negative_stock?'Yes':'No'}</span></div>
@@ -3129,23 +3129,23 @@ function openStockMovementForm(itemId){
           movement_type: document.getElementById('sm-type').value,
           quantity, narration: document.getElementById('sm-narr').value.trim() || null,
         }});
-        toast('Stock movement recorded âœ“','ok'); closeModal(); openItemDetail(itemId);
+        toast('Stock movement recorded ✓','ok'); closeModal(); openItemDetail(itemId);
       } catch(e){ errToast(e); }
     }
   });
 }
 async function viewStockLedger(itemId, warehouseId){
-  openModal({title:'Stock ledger', wide:true, bodyHtml:`<div id="sl-body"><span class="spin"></span> Loadingâ€¦</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
+  openModal({title:'Stock ledger', wide:true, bodyHtml:`<div id="sl-body"><span class="spin"></span> Loading…</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
   try {
     const rows = await api(`/companies/${STATE.companyId}/inventory/items/${itemId}/stock-ledger`, {qs:{warehouse_id: warehouseId}});
     document.getElementById('sl-body').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th class="num">In</th><th class="num">Out</th><th>Narration</th></tr></thead>
-      <tbody>${rows.map(r=>`<tr><td>${fmtDate(r.movement_date)}</td><td>${esc(r.movement_type)}</td><td class="num">${r.quantity_in>0?r.quantity_in:''}</td><td class="num">${r.quantity_out>0?r.quantity_out:''}</td><td>${esc(r.narration||'â€”')}</td></tr>`).join('')}</tbody></table></div>`
-      : emptyState('ðŸ“„','No movements yet','');
-  } catch(e){ document.getElementById('sl-body').innerHTML = emptyState('âš ','Could not load stock ledger', esc(e.message)); }
+      <tbody>${rows.map(r=>`<tr><td>${fmtDate(r.movement_date)}</td><td>${esc(r.movement_type)}</td><td class="num">${r.quantity_in>0?r.quantity_in:''}</td><td class="num">${r.quantity_out>0?r.quantity_out:''}</td><td>${esc(r.narration||'—')}</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('📄','No movements yet','');
+  } catch(e){ document.getElementById('sl-body').innerHTML = emptyState('⚠','Could not load stock ledger', esc(e.message)); }
 }
 
 /* ============================================================
-   INVENTORY â€” CURRENT STOCK
+   INVENTORY — CURRENT STOCK
    ============================================================ */
 async function renderInventoryStock(){
   if (!requireCompany()) return;
@@ -3160,21 +3160,21 @@ async function renderInventoryStock(){
 VIEW_RENDERERS['inventory-stock'] = renderInventoryStock;
 async function loadStockTable(){
   const warehouse_id = document.getElementById('stk-wh').value || undefined;
-  document.getElementById('stock-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('stock-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const rows = await api(`/companies/${STATE.companyId}/inventory/current-stock`, {qs:{warehouse_id}});
     document.getElementById('stock-table').innerHTML = rows.length ? `<div class="table-wrap"><table>
       <thead><tr><th>Item</th><th>SKU</th><th>Warehouse</th><th class="num">Quantity</th><th class="num">Reorder Level</th><th>Status</th></tr></thead>
       <tbody>${rows.map(r => `<tr class="row-link" onclick="openItemDetail('${r.item_id}')">
-        <td><strong>${esc(r.item_name)}</strong></td><td class="mono">${esc(r.sku||'â€”')}</td><td>${esc(r.warehouse_name)}</td>
+        <td><strong>${esc(r.item_name)}</strong></td><td class="mono">${esc(r.sku||'—')}</td><td>${esc(r.warehouse_name)}</td>
         <td class="num ${r.is_low_stock?'neg':''}">${r.quantity}</td><td class="num">${r.reorder_level}</td>
         <td>${r.is_low_stock?'<span class="badge badge-cancelled">Low</span>':'<span class="badge badge-active">OK</span>'}</td></tr>`).join('')}</tbody></table></div>`
-      : emptyState('ðŸ“¦','No stock movements yet','Record stock movements from an itemâ€™s detail view, or post purchase bills to receive stock.');
-  } catch(e){ document.getElementById('stock-table').innerHTML = emptyState('âš ','Could not load stock', esc(e.message)); }
+      : emptyState('📦','No stock movements yet','Record stock movements from an item’s detail view, or post purchase bills to receive stock.');
+  } catch(e){ document.getElementById('stock-table').innerHTML = emptyState('⚠','Could not load stock', esc(e.message)); }
 }
 
 /* ============================================================
-   GST â€” TAX RATES
+   GST — TAX RATES
    ============================================================ */
 async function renderGstRates(){
   if (!requireCompany()) return;
@@ -3183,7 +3183,7 @@ async function renderGstRates(){
     `<button class="btn btn-blue" onclick="openGstRateForm()">+ New rate</button>`) +
     (STATE.gstRates.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th class="num">Rate %</th><th>Description</th><th>Status</th><th></th></tr></thead>
       <tbody>${STATE.gstRates.map(r => `<tr>
-        <td><strong>${esc(r.name)}</strong></td><td class="num">${r.rate_percent}%</td><td>${esc(r.description||'â€”')}</td>
+        <td><strong>${esc(r.name)}</strong></td><td class="num">${r.rate_percent}%</td><td>${esc(r.description||'—')}</td>
         <td><span class="badge badge-${r.is_active?'active':'archived'}">${r.is_active?'Active':'Inactive'}</span></td>
         <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="editGstRateAction('${r.id}')">Edit</button></td>
       </tr>`).join('')}</tbody></table></div>`
@@ -3211,7 +3211,7 @@ function openGstRateForm(existing){
       try {
         if (existing) await api(`/companies/${STATE.companyId}/gst/rates/${existing.id}`, {method:'PATCH', body:payload});
         else await api(`/companies/${STATE.companyId}/gst/rates`, {method:'POST', body:payload});
-        toast(existing?'Rate updated âœ“':'Rate created âœ“','ok'); closeModal(); renderGstRates();
+        toast(existing?'Rate updated ✓':'Rate created ✓','ok'); closeModal(); renderGstRates();
       } catch(e){ errToast(e); }
     }
   });
@@ -3219,7 +3219,7 @@ function openGstRateForm(existing){
 function editGstRateAction(id){ const r = STATE.gstRates.find(x=>x.id===id); if (r) openGstRateForm(r); }
 
 /* ============================================================
-   GST â€” HSN / SAC CLASSIFICATIONS
+   GST — HSN / SAC CLASSIFICATIONS
    ============================================================ */
 async function renderGstClassifications(){
   if (!requireCompany()) return;
@@ -3229,11 +3229,11 @@ async function renderGstClassifications(){
     (STATE.taxClassifications.length ? `<div class="table-wrap"><table><thead><tr><th>Type</th><th>Code</th><th>Description</th><th>GST rate</th><th>Status</th><th></th></tr></thead>
       <tbody>${STATE.taxClassifications.map(c => `<tr>
         <td><span class="pill">${esc(c.classification_type)}</span></td><td class="mono">${esc(c.code)}</td><td>${esc(c.description)}</td>
-        <td>${c.gst_rate_id ? esc((STATE.gstRates.find(r=>r.id===c.gst_rate_id)||{}).name || 'â€”') : 'â€”'}</td>
+        <td>${c.gst_rate_id ? esc((STATE.gstRates.find(r=>r.id===c.gst_rate_id)||{}).name || '—') : '—'}</td>
         <td><span class="badge badge-${c.is_active?'active':'archived'}">${c.is_active?'Active':'Inactive'}</span></td>
         <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="editTaxClassificationAction('${c.id}')">Edit</button></td>
       </tr>`).join('')}</tbody></table></div>`
-      : emptyState('ðŸ“‘','No HSN/SAC codes yet','Add classification codes for the products and services you sell.',`<button class="btn btn-blue" onclick="openTaxClassificationForm()">+ New classification</button>`));
+      : emptyState('📑','No HSN/SAC codes yet','Add classification codes for the products and services you sell.',`<button class="btn btn-blue" onclick="openTaxClassificationForm()">+ New classification</button>`));
 }
 VIEW_RENDERERS['gst-classifications'] = renderGstClassifications;
 function openTaxClassificationForm(existing){
@@ -3246,7 +3246,7 @@ function openTaxClassificationForm(existing){
         <div class="form-row"><label>Code</label><input type="text" id="tc-code" value="${esc(c.code||'')}"/></div>
       </div>
       <div class="form-row"><label>Description</label><input type="text" id="tc-desc" value="${esc(c.description||'')}"/></div>
-      <div class="form-row"><label>GST rate (optional)</label><select id="tc-rate"><option value="">â€” none â€”</option>${STATE.gstRates.map(r=>`<option value="${r.id}" ${c.gst_rate_id===r.id?'selected':''}>${esc(r.name)} (${r.rate_percent}%)</option>`).join('')}</select></div>
+      <div class="form-row"><label>GST rate (optional)</label><select id="tc-rate"><option value="">— none —</option>${STATE.gstRates.map(r=>`<option value="${r.id}" ${c.gst_rate_id===r.id?'selected':''}>${esc(r.name)} (${r.rate_percent}%)</option>`).join('')}</select></div>
       ${existing?`<div class="form-row"><label class="check-row"><input type="checkbox" id="tc-active" ${c.is_active?'checked':''}/> Active</label></div>`:''}
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="tc-save">${existing?'Save changes':'Create classification'}</button>`,
@@ -3259,7 +3259,7 @@ function openTaxClassificationForm(existing){
       try {
         if (existing) await api(`/companies/${STATE.companyId}/gst/classifications/${existing.id}`, {method:'PATCH', body:payload});
         else await api(`/companies/${STATE.companyId}/gst/classifications`, {method:'POST', body:payload});
-        toast(existing?'Classification updated âœ“':'Classification created âœ“','ok'); closeModal(); renderGstClassifications();
+        toast(existing?'Classification updated ✓':'Classification created ✓','ok'); closeModal(); renderGstClassifications();
       } catch(e){ errToast(e); }
     }
   });
@@ -3271,15 +3271,15 @@ function editTaxClassificationAction(id){ const c = STATE.taxClassifications.fin
    ============================================================ */
 async function renderBusinessEvents(){
   if (!requireCompany()) return;
-  view().innerHTML = viewHead('Business Events', 'Every business action emits an event here â€” useful for hooking up automations or AI agents (e.g. Orbit AI) downstream.', '') +
+  view().innerHTML = viewHead('Business Events', 'Every business action emits an event here — useful for hooking up automations or AI agents (e.g. Orbit AI) downstream.', '') +
     `<div id="be-body"></div>`;
   try {
     const page = await api(`/companies/${STATE.companyId}/business-events`, {qs:{page_size:80}});
     const items = page.items;
     document.getElementById('be-body').innerHTML = items.length ? `<div class="table-wrap"><table><thead><tr><th>Time</th><th>Event</th><th>Entity</th><th>Entity ID</th><th>Consumed</th></tr></thead>
-      <tbody>${items.map(e => `<tr><td>${new Date(e.created_at).toLocaleString('en-IN')}</td><td class="mono">${esc(e.event_type)}</td><td>${esc(e.entity)}</td><td class="mono">${esc((e.entity_id||'').slice(0,10))}â€¦</td><td>${e.consumed?'âœ“':'â€”'}</td></tr>`).join('')}</tbody></table></div>`
-      : emptyState('âš¡','No business events yet','Events appear as you create and post records.');
-  } catch(e){ document.getElementById('be-body').innerHTML = emptyState('âš ','Could not load business events', esc(e.message)); }
+      <tbody>${items.map(e => `<tr><td>${new Date(e.created_at).toLocaleString('en-IN')}</td><td class="mono">${esc(e.event_type)}</td><td>${esc(e.entity)}</td><td class="mono">${esc((e.entity_id||'').slice(0,10))}…</td><td>${e.consumed?'✓':'—'}</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('⚡','No business events yet','Events appear as you create and post records.');
+  } catch(e){ document.getElementById('be-body').innerHTML = emptyState('⚠','Could not load business events', esc(e.message)); }
 }
 VIEW_RENDERERS['business-events'] = renderBusinessEvents;
 
@@ -3291,7 +3291,7 @@ function openGlobalSearch(){
   if (!requireCompany()) return;
   openModal({
     title:'Search this company', wide:true,
-    bodyHtml:`<input type="search" id="gs-input" placeholder="Search customers, suppliers, items, orders, invoices, billsâ€¦" autofocus/><div id="gs-results" style="margin-top:14px;"></div>`,
+    bodyHtml:`<input type="search" id="gs-input" placeholder="Search customers, suppliers, items, orders, invoices, bills…" autofocus/><div id="gs-results" style="margin-top:14px;"></div>`,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`,
     onMount:() => {
       const input = document.getElementById('gs-input');
@@ -3304,7 +3304,7 @@ function openGlobalSearch(){
 async function runGlobalSearch(q){
   const box = document.getElementById('gs-results');
   if (!box) return;
-  if (!q) { box.innerHTML = '<div style="font-size:.8rem;color:var(--ink3);">Start typing to search across this companyâ€¦</div>'; return; }
+  if (!q) { box.innerHTML = '<div style="font-size:.8rem;color:var(--ink3);">Start typing to search across this company…</div>'; return; }
   box.innerHTML = `<div style="padding:20px 0;text-align:center;"><span class="spin"></span></div>`;
   try {
     const r = await api(`/companies/${STATE.companyId}/search`, {qs:{q, limit:8}});
@@ -3314,13 +3314,13 @@ async function runGlobalSearch(q){
       ['customers','Customers', c=>`<div class="row-link" onclick="closeModal();navigate('customers')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)}</span><span style="color:var(--ink3);font-size:.78rem;">${esc(c.subtitle||'')}</span></div>`],
       ['suppliers','Suppliers', c=>`<div class="row-link" onclick="closeModal();navigate('suppliers')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)}</span><span style="color:var(--ink3);font-size:.78rem;">${esc(c.subtitle||'')}</span></div>`],
       ['products','Items', c=>`<div class="row-link" onclick="closeModal();navigate('inventory-items')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)}</span><span style="color:var(--ink3);font-size:.78rem;">${esc(c.subtitle||'')}</span></div>`],
-      ['sales_quotations','Sales Quotations', c=>`<div class="row-link" onclick="closeModal();openSalesQuotationDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} Â· ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
-      ['delivery_notes','Delivery Notes', c=>`<div class="row-link" onclick="closeModal();openDeliveryNoteDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} Â· ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
-      ['sales_orders','Sales Orders', c=>`<div class="row-link" onclick="closeModal();openSalesOrderDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} Â· ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
-      ['sales_invoices','Sales Invoices', c=>`<div class="row-link" onclick="closeModal();openSalesInvoiceDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} Â· ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
-      ['purchase_orders','Purchase Orders', c=>`<div class="row-link" onclick="closeModal();openPurchaseOrderDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} Â· ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
-      ['goods_receipts','Goods Receipts', c=>`<div class="row-link" onclick="closeModal();openGoodsReceiptDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} Â· ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
-      ['purchase_bills','Purchase Bills', c=>`<div class="row-link" onclick="closeModal();openPurchaseBillDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} Â· ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['sales_quotations','Sales Quotations', c=>`<div class="row-link" onclick="closeModal();openSalesQuotationDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['delivery_notes','Delivery Notes', c=>`<div class="row-link" onclick="closeModal();openDeliveryNoteDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['sales_orders','Sales Orders', c=>`<div class="row-link" onclick="closeModal();openSalesOrderDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['sales_invoices','Sales Invoices', c=>`<div class="row-link" onclick="closeModal();openSalesInvoiceDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['purchase_orders','Purchase Orders', c=>`<div class="row-link" onclick="closeModal();openPurchaseOrderDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['goods_receipts','Goods Receipts', c=>`<div class="row-link" onclick="closeModal();openGoodsReceiptDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
+      ['purchase_bills','Purchase Bills', c=>`<div class="row-link" onclick="closeModal();openPurchaseBillDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} · ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
       ['purchase_returns','Purchase Returns', c=>`<div class="row-link" onclick="closeModal();openPurchaseReturnDetail('${c.id}')" style="padding:8px 0;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;"><span>${esc(c.label)} - ${esc(c.subtitle||'')}</span><span class="badge badge-${String(c.status).toLowerCase()}">${esc(c.status)}</span></div>`],
     ];
     const html = sections.map(([key,label,render]) => {
@@ -3328,8 +3328,8 @@ async function runGlobalSearch(q){
       if (!items.length) return '';
       return `<div style="margin-bottom:14px;"><div style="font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">${label}</div>${items.map(render).join('')}</div>`;
     }).join('');
-    box.innerHTML = html || emptyState('ðŸ”Ž','No matches', `Nothing found for "${esc(q)}".`);
-  } catch(e){ box.innerHTML = emptyState('âš ','Search failed', esc(e.message)); }
+    box.innerHTML = html || emptyState('🔎','No matches', `Nothing found for "${esc(q)}".`);
+  } catch(e){ box.innerHTML = emptyState('⚠','Search failed', esc(e.message)); }
 }
 
 /* ============================================================
@@ -3345,7 +3345,7 @@ async function renderTrialBalance(){
 }
 async function loadTrialBalance(){
   const as_of = document.getElementById('tb-asof').value;
-  document.getElementById('tb-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('tb-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const tb = await api(`/companies/${STATE.companyId}/reports/trial-balance`, {qs:{as_of}});
     const cur = STATE.company.base_currency;
@@ -3353,13 +3353,13 @@ async function loadTrialBalance(){
       <div class="grid grid-3" style="margin-bottom:16px;">
         <div class="stat-card c-blue"><div class="stat-label">Total Debit</div><div class="stat-value">${money(tb.total_debit,cur)}</div></div>
         <div class="stat-card c-gold"><div class="stat-label">Total Credit</div><div class="stat-value">${money(tb.total_credit,cur)}</div></div>
-        <div class="stat-card ${tb.is_balanced?'c-teal':'c-red'}"><div class="stat-label">Status</div><div class="stat-value" style="font-size:1.1rem;">${tb.is_balanced?'âœ“ Balanced':'âœ— Out of balance'}</div></div>
+        <div class="stat-card ${tb.is_balanced?'c-teal':'c-red'}"><div class="stat-label">Status</div><div class="stat-value" style="font-size:1.1rem;">${tb.is_balanced?'✓ Balanced':'✗ Out of balance'}</div></div>
       </div>
       ${tb.rows.length ? `<div class="table-wrap"><table><thead><tr><th>Ledger</th><th>Group</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
       <tbody>${tb.rows.map(r => `<tr><td>${esc(r.ledger_name)}</td><td>${esc(r.group)}</td><td class="num">${r.debit>0?money(r.debit,cur):''}</td><td class="num">${r.credit>0?money(r.credit,cur):''}</td></tr>`).join('')}</tbody></table></div>`
-      : emptyState('ðŸ“Š','No balances yet','Post some vouchers to see the trial balance.')}
+      : emptyState('📊','No balances yet','Post some vouchers to see the trial balance.')}
     `;
-  } catch(e){ document.getElementById('tb-body').innerHTML = emptyState('âš ','Could not load report', esc(e.message)); }
+  } catch(e){ document.getElementById('tb-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
 }
 VIEW_RENDERERS['report-trial-balance'] = renderTrialBalance;
 
@@ -3373,7 +3373,7 @@ async function renderPnl(){
 }
 async function loadPnl(){
   const date_from = document.getElementById('pnl-from').value, date_to = document.getElementById('pnl-to').value;
-  document.getElementById('pnl-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('pnl-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const p = await api(`/companies/${STATE.companyId}/reports/profit-and-loss`, {qs:{date_from, date_to}});
     const cur = STATE.company.base_currency;
@@ -3390,20 +3390,20 @@ async function loadPnl(){
         ${p.expenses.length? p.expenses.map(r=>`<div class="kv"><span class="k">${esc(r.ledger_name)}</span><span class="v">${money(r.balance,cur)}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No expenses posted in this period.</div>'}</div>
       </div>
     `;
-  } catch(e){ document.getElementById('pnl-body').innerHTML = emptyState('âš ','Could not load report', esc(e.message)); }
+  } catch(e){ document.getElementById('pnl-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
 }
 VIEW_RENDERERS['report-pnl'] = renderPnl;
 
 async function renderBalanceSheet(){
   if (!requireCompany()) return;
-  view().innerHTML = viewHead('Balance Sheet', 'Assets, liabilities and equity â€” always in balance.',
+  view().innerHTML = viewHead('Balance Sheet', 'Assets, liabilities and equity — always in balance.',
     `<input type="date" id="bs-asof" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadBalanceSheet()">Run</button>`) +
     `<div id="bs-body"></div>`;
   loadBalanceSheet();
 }
 async function loadBalanceSheet(){
   const as_of = document.getElementById('bs-asof').value;
-  document.getElementById('bs-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('bs-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const b = await api(`/companies/${STATE.companyId}/reports/balance-sheet`, {qs:{as_of}});
     const cur = STATE.company.base_currency;
@@ -3411,7 +3411,7 @@ async function loadBalanceSheet(){
       <div class="grid grid-3" style="margin-bottom:16px;">
         <div class="stat-card c-blue"><div class="stat-label">Total Assets</div><div class="stat-value">${money(b.total_assets,cur)}</div></div>
         <div class="stat-card c-gold"><div class="stat-label">Liabilities + Equity</div><div class="stat-value">${money(b.total_liabilities+b.total_equity,cur)}</div></div>
-        <div class="stat-card ${b.is_balanced?'c-teal':'c-red'}"><div class="stat-label">Status</div><div class="stat-value" style="font-size:1.1rem;">${b.is_balanced?'âœ“ Balanced':'âœ— Out of balance'}</div></div>
+        <div class="stat-card ${b.is_balanced?'c-teal':'c-red'}"><div class="stat-label">Status</div><div class="stat-value" style="font-size:1.1rem;">${b.is_balanced?'✓ Balanced':'✗ Out of balance'}</div></div>
       </div>
       <div class="grid grid-3">
         <div class="card card-pad"><div style="font-weight:800;margin-bottom:10px;">Assets</div>${b.assets.length?b.assets.map(r=>`<div class="kv"><span class="k">${esc(r.ledger_name)}</span><span class="v">${money(r.balance,cur)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink3);">None</div>'}</div>
@@ -3419,7 +3419,7 @@ async function loadBalanceSheet(){
         <div class="card card-pad"><div style="font-weight:800;margin-bottom:10px;">Equity</div>${b.equity.length?b.equity.map(r=>`<div class="kv"><span class="k">${esc(r.ledger_name)}</span><span class="v">${money(r.balance,cur)}</span></div>`).join(''):'<div style="font-size:.8rem;color:var(--ink3);">None</div>'}<div class="kv"><span class="k">Current year profit</span><span class="v">${money(b.current_year_net_profit,cur)}</span></div></div>
       </div>
     `;
-  } catch(e){ document.getElementById('bs-body').innerHTML = emptyState('âš ','Could not load report', esc(e.message)); }
+  } catch(e){ document.getElementById('bs-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
 }
 VIEW_RENDERERS['report-bs'] = renderBalanceSheet;
 
@@ -3432,14 +3432,14 @@ async function renderDayBook(){
 }
 async function loadDayBook(){
   const date_from = document.getElementById('db-from').value || undefined, date_to = document.getElementById('db-to').value || undefined;
-  document.getElementById('db-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('db-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const rows = await api(`/companies/${STATE.companyId}/reports/day-book`, {qs:{date_from, date_to}});
     const cur = STATE.company.base_currency;
     document.getElementById('db-body').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Voucher #</th><th>Type</th><th>Narration</th><th class="num">Total</th><th>Status</th></tr></thead>
-      <tbody>${rows.map(v => `<tr class="row-link" onclick="openVoucherDetail('${v.voucher_id}')"><td>${fmtDate(v.date)}</td><td class="mono">${esc(v.voucher_number)}</td><td>${esc(v.voucher_type)}</td><td>${esc(v.narration||'â€”')}</td><td class="num">${money(v.total,cur)}</td><td><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></td></tr>`).join('')}</tbody></table></div>`
-      : emptyState('ðŸ“…','No entries in this period','Try a wider date range.');
-  } catch(e){ document.getElementById('db-body').innerHTML = emptyState('âš ','Could not load report', esc(e.message)); }
+      <tbody>${rows.map(v => `<tr class="row-link" onclick="openVoucherDetail('${v.voucher_id}')"><td>${fmtDate(v.date)}</td><td class="mono">${esc(v.voucher_number)}</td><td>${esc(v.voucher_type)}</td><td>${esc(v.narration||'—')}</td><td class="num">${money(v.total,cur)}</td><td><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('📅','No entries in this period','Try a wider date range.');
+  } catch(e){ document.getElementById('db-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
 }
 VIEW_RENDERERS['report-daybook'] = renderDayBook;
 
@@ -3455,18 +3455,18 @@ function renderCashOrBankBook(kind){
 }
 async function loadCashBankBook(kind){
   const date_from = document.getElementById('cb-from').value || undefined, date_to = document.getElementById('cb-to').value || undefined;
-  document.getElementById('cb-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loadingâ€¦</td></tr></tbody></table></div>`;
+  document.getElementById('cb-body').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
     const b = await api(`/companies/${STATE.companyId}/reports/${kind}-book`, {qs:{date_from, date_to}});
     const cur = STATE.company.base_currency;
-    if (!b.ledgers.length) { document.getElementById('cb-body').innerHTML = emptyState('ðŸ¦', `No ${kind} ledgers tagged`, `Tag a ledger as ${kind==='cash'?'Cash':'Bank'} when creating or editing it.`); return; }
+    if (!b.ledgers.length) { document.getElementById('cb-body').innerHTML = emptyState('🏦', `No ${kind} ledgers tagged`, `Tag a ledger as ${kind==='cash'?'Cash':'Bank'} when creating or editing it.`); return; }
     document.getElementById('cb-body').innerHTML = `
       <div class="stat-card c-teal" style="margin-bottom:16px;max-width:260px;"><div class="stat-label">Net Movement</div><div class="stat-value ${b.net_movement<0?'neg':''}">${money(b.net_movement,cur)}</div></div>
       ${b.entries.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Ledger</th><th>Narration</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
-      <tbody>${b.entries.map(r => `<tr><td>${fmtDate(r.date)}</td><td>${esc(r.ledger_name)}</td><td>${esc(r.narration||'â€”')}</td><td class="num">${r.debit>0?money(r.debit,cur):''}</td><td class="num">${r.credit>0?money(r.credit,cur):''}</td></tr>`).join('')}</tbody></table></div>`
-      : emptyState('ðŸ“„','No entries in this period','Try a wider date range.')}
+      <tbody>${b.entries.map(r => `<tr><td>${fmtDate(r.date)}</td><td>${esc(r.ledger_name)}</td><td>${esc(r.narration||'—')}</td><td class="num">${r.debit>0?money(r.debit,cur):''}</td><td class="num">${r.credit>0?money(r.credit,cur):''}</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('📄','No entries in this period','Try a wider date range.')}
     `;
-  } catch(e){ document.getElementById('cb-body').innerHTML = emptyState('âš ','Could not load report', esc(e.message)); }
+  } catch(e){ document.getElementById('cb-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
 }
 VIEW_RENDERERS['report-cashbook'] = renderCashOrBankBook('cash');
 VIEW_RENDERERS['report-bankbook'] = renderCashOrBankBook('bank');
@@ -3484,12 +3484,12 @@ async function renderSettings(){
       <div class="card card-pad">
         <div style="font-weight:800;margin-bottom:12px;">Company details</div>
         <div class="kv"><span class="k">Name</span><span class="v">${esc(c.name)}</span></div>
-        <div class="kv"><span class="k">Legal name</span><span class="v">${esc(c.legal_name||'â€”')}</span></div>
-        <div class="kv"><span class="k">GSTIN</span><span class="v">${esc(c.gst_number||'â€”')}</span></div>
-        <div class="kv"><span class="k">PAN</span><span class="v">${esc(c.pan||'â€”')}</span></div>
+        <div class="kv"><span class="k">Legal name</span><span class="v">${esc(c.legal_name||'—')}</span></div>
+        <div class="kv"><span class="k">GSTIN</span><span class="v">${esc(c.gst_number||'—')}</span></div>
+        <div class="kv"><span class="k">PAN</span><span class="v">${esc(c.pan||'—')}</span></div>
         <div class="kv"><span class="k">Base currency</span><span class="v">${esc(c.base_currency)}</span></div>
         <div class="kv"><span class="k">Time zone</span><span class="v">${esc(c.time_zone)}</span></div>
-        <div class="kv"><span class="k">Address</span><span class="v" style="text-align:right;max-width:220px;">${esc(c.address||'â€”')}</span></div>
+        <div class="kv"><span class="k">Address</span><span class="v" style="text-align:right;max-width:220px;">${esc(c.address||'—')}</span></div>
       </div>
       <div class="card card-pad">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -3518,7 +3518,7 @@ function renderFyList(){
   const list = document.getElementById('fy-list');
   if (!STATE.financialYears.length) { list.innerHTML = '<div style="font-size:.8rem;color:var(--ink3);">No financial years yet.</div>'; return; }
   list.innerHTML = STATE.financialYears.map(fy => `
-    <div class="kv"><span class="k">${fmtDate(fy.start_date)} â†’ ${fmtDate(fy.end_date)}</span>
+    <div class="kv"><span class="k">${fmtDate(fy.start_date)} → ${fmtDate(fy.end_date)}</span>
     <span class="v">
       <span class="badge ${fy.is_closed?'badge-cancelled':'badge-active'}">${fy.is_closed?'Closed':'Open'}</span>
       <button class="btn btn-ghost btn-sm" style="margin-left:6px;" onclick="toggleFy('${fy.id}', ${fy.is_closed})">${fy.is_closed?'Reopen':'Close'}</button>
@@ -3532,7 +3532,7 @@ function openFyForm(){
     onMount:() => document.getElementById('fy-save').onclick = async () => {
       try {
         await api(`/companies/${STATE.companyId}/financial-years`, {method:'POST', body:{start_date:document.getElementById('fy-start').value, end_date:document.getElementById('fy-end').value}});
-        toast('Financial year added âœ“','ok'); closeModal(); await loadFinancialYears(); renderFyList();
+        toast('Financial year added ✓','ok'); closeModal(); await loadFinancialYears(); renderFyList();
       } catch(e){ errToast(e); }
     }
   });
@@ -3564,7 +3564,7 @@ function importLedgersCsv(){
       const text = await res.text();
       let data = null; try { data = text ? JSON.parse(text) : null; } catch(e){}
       if (!res.ok) throw new Error((data && data.error && data.error.message) || `Import failed (${res.status})`);
-      toast(`Imported ${Array.isArray(data)?data.length:0} ledger(s) âœ“`,'ok');
+      toast(`Imported ${Array.isArray(data)?data.length:0} ledger(s) ✓`,'ok');
       markBackupNeeded(STATE.companyId);
       await loadLedgers();
       if (STATE.currentView==='ledgers') renderLedgers();
@@ -3631,9 +3631,9 @@ async function renderAudit(){
     const page = await api(`/companies/${STATE.companyId}/audit-logs`, {qs:{page_size:80}});
     const items = page.items;
     document.getElementById('audit-body').innerHTML = items.length ? `<div class="table-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>Entity</th><th>Entity ID</th></tr></thead>
-      <tbody>${items.map(a => `<tr><td>${new Date(a.timestamp).toLocaleString('en-IN')}</td><td>${esc(a.action)}</td><td>${esc(a.entity)}</td><td class="mono">${esc((a.entity_id||'').slice(0,10))}â€¦</td></tr>`).join('')}</tbody></table></div>`
-      : emptyState('ðŸ—’','No audit entries yet','Actions will appear here as you use the app.');
-  } catch(e){ document.getElementById('audit-body').innerHTML = emptyState('âš ','Could not load audit log', esc(e.message)); }
+      <tbody>${items.map(a => `<tr><td>${new Date(a.timestamp).toLocaleString('en-IN')}</td><td>${esc(a.action)}</td><td>${esc(a.entity)}</td><td class="mono">${esc((a.entity_id||'').slice(0,10))}…</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('🗒','No audit entries yet','Actions will appear here as you use the app.');
+  } catch(e){ document.getElementById('audit-body').innerHTML = emptyState('⚠','Could not load audit log', esc(e.message)); }
 }
 VIEW_RENDERERS['audit'] = renderAudit;
 
@@ -3677,7 +3677,7 @@ async function submitCompanyForm(){
   try {
     const c = await api('/companies', {method:'POST', body:payload});
     markBackupNeeded(c.id);
-    toast('Company created âœ“','ok'); closeModal();
+    toast('Company created ✓','ok'); closeModal();
     await loadCompanies(); await selectCompany(c.id); navigate('dashboard');
   } catch(e){ errToast(e); }
 }
@@ -3701,4 +3701,3 @@ window.addEventListener('beforeunload', e => {
 </script>
 </body>
 </html>
-
