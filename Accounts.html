@@ -285,6 +285,58 @@ select{cursor:pointer;}
 .kv:last-child{border-bottom:none;}
 .kv .k{color:var(--ink3);}
 .kv .v{font-weight:600;}
+
+
+/* ---------- backend features workbench ---------- */
+.api-feature-layout{display:grid;grid-template-columns:minmax(285px,34%) 1fr;gap:16px;align-items:start;}
+.api-feature-list,.api-operation-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm);overflow:hidden;}
+.api-feature-list{position:sticky;top:calc(var(--topbar-h) + 18px);max-height:calc(100vh - var(--topbar-h) - 42px);display:flex;flex-direction:column;}
+.api-feature-toolbar{padding:14px;border-bottom:1px solid var(--border);display:grid;gap:8px;background:var(--bg);}
+.api-feature-toolbar .toolbar-row{display:grid;grid-template-columns:1fr 150px;gap:8px;}
+.api-operation-list{overflow:auto;min-height:220px;}
+.api-operation-item{padding:11px 13px;border-bottom:1px solid var(--border);cursor:pointer;display:grid;grid-template-columns:54px 1fr;gap:9px;align-items:start;}
+.api-operation-item:last-child{border-bottom:none;}
+.api-operation-item:hover{background:var(--bg);}
+.api-operation-item.active{background:var(--blue3);box-shadow:inset 3px 0 0 var(--blue);}
+.api-operation-item .op-summary{font-weight:700;font-size:.79rem;line-height:1.35;}
+.api-operation-item .op-path{font-family:var(--mono);font-size:.64rem;color:var(--ink3);overflow-wrap:anywhere;margin-top:3px;}
+.api-method{display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:3px 6px;border-radius:6px;font-family:var(--mono);font-size:.63rem;font-weight:800;letter-spacing:.3px;border:1px solid transparent;}
+.api-method.get{color:var(--blue);background:var(--blue2);border-color:rgba(26,95,255,.18);}
+.api-method.post{color:var(--teal);background:var(--teal2);border-color:rgba(0,149,122,.18);}
+.api-method.patch,.api-method.put{color:var(--gold);background:var(--gold2);border-color:rgba(212,147,10,.2);}
+.api-method.delete{color:var(--red);background:var(--red2);border-color:rgba(214,58,58,.18);}
+.api-operation-head{padding:18px 20px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--white),var(--bg));}
+.api-operation-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:7px;}
+.api-operation-title h3{font-family:'Syne';font-size:1.05rem;letter-spacing:-.25px;}
+.api-operation-path{font-family:var(--mono);font-size:.74rem;color:var(--ink2);overflow-wrap:anywhere;}
+.api-operation-body{padding:20px;}
+.api-section{margin-bottom:20px;}
+.api-section:last-child{margin-bottom:0;}
+.api-section-title{font-size:.68rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:9px;display:flex;justify-content:space-between;gap:8px;}
+.api-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.api-field-full{grid-column:1/-1;}
+.api-param-meta{font-family:var(--mono);font-size:.64rem;color:var(--ink3);margin-top:4px;}
+.api-json-editor{min-height:260px;resize:vertical;font-family:var(--mono);font-size:.75rem;line-height:1.55;tab-size:2;white-space:pre;}
+.api-runbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:4px;}
+.api-response{margin-top:18px;border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;background:var(--bg);}
+.api-response-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid var(--border);background:var(--white);font-size:.75rem;}
+.api-response-body{padding:13px;max-height:520px;overflow:auto;}
+.api-response pre{font-family:var(--mono);font-size:.72rem;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;}
+.api-status-code{font-family:var(--mono);font-weight:800;}
+.api-status-code.ok{color:var(--teal);}.api-status-code.err{color:var(--red);}
+.api-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.api-mini-stat{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);padding:13px 15px;}
+.api-mini-stat .n{font-family:'Syne';font-weight:800;font-size:1.2rem;}.api-mini-stat .l{font-size:.65rem;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+.api-result-table{width:100%;min-width:620px;}
+.api-result-table td{max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.api-schema-note{background:var(--blue3);border:1px solid rgba(26,95,255,.14);border-radius:var(--r-sm);padding:10px 12px;font-size:.76rem;color:var(--ink2);margin-bottom:14px;}
+.api-count-badge{margin-left:auto;font-size:.62rem;padding:2px 7px;border-radius:100px;background:var(--bg2);color:var(--ink3);font-family:var(--mono);}
+.api-empty-detail{padding:70px 24px;text-align:center;color:var(--ink3);}
+.api-required{color:var(--red);}
+.api-file-row{padding:12px;border:1px dashed var(--borderM);border-radius:var(--r-sm);background:var(--bg);}
+@media(max-width:980px){.api-feature-layout{grid-template-columns:1fr;}.api-feature-list{position:static;max-height:460px;}.api-fields{grid-template-columns:1fr;}.api-stat-row{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.api-feature-toolbar .toolbar-row{grid-template-columns:1fr;}.api-stat-row{grid-template-columns:1fr 1fr;}}
+
 </style>
 </head>
 <body>
@@ -299,6 +351,11 @@ select{cursor:pointer;}
       <label for="gate-url">API base URL</label>
       <input type="text" id="gate-url" placeholder="http://127.0.0.1:8000" value="https://accounts-0o52.onrender.com"/>
       <div class="help-text">Saved in this browser only. Change it any time from the status dot in the top bar.</div>
+    </div>
+    <div class="form-row">
+      <label for="gate-api-key">API key <span style="font-weight:500;color:var(--ink3);">(optional unless backend auth is enforced)</span></label>
+      <input type="password" id="gate-api-key" placeholder="alaada_…" autocomplete="off"/>
+      <div class="help-text">Sent as <span class="mono">X-Alaada-API-Key</span> for company-scoped endpoints. Stored only in this browser.</div>
     </div>
     <button class="btn btn-blue" id="gate-connect" style="width:100%;justify-content:center;">Connect →</button>
     <div class="gate-status" id="gate-status"></div>
@@ -461,6 +518,14 @@ select{cursor:pointer;}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 8.5 12 2 3.5 8.5 12 15z"/><path d="M3.5 8.5V17L12 22l8.5-5V8.5"/></svg>
         HSN / SAC
       </div>
+      <div class="side-link" data-view="gst-compliance">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l2 2 4-5"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/><path d="M16 3h5v5"/></svg>
+        GST Compliance
+      </div>
+      <div class="side-link" data-view="withholding-compliance">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16"/><path d="M6 19V8l6-4 6 4v11"/><path d="M9 13h6"/><path d="M9 16h6"/></svg>
+        TDS / TCS
+      </div>
     </div>
 
     <div class="side-group">
@@ -488,6 +553,15 @@ select{cursor:pointer;}
       <div class="side-link" data-view="report-bankbook">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6"/></svg>
         Bank Book
+      </div>
+    </div>
+
+    <div class="side-group">
+      <div class="side-label">Enterprise</div>
+      <div class="side-link" data-view="backend-features">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/><path d="M10 7h4M7 10v4M17 10v4M10 17h4"/></svg>
+        Backend Features
+        <span class="api-count-badge" id="api-op-count">336</span>
       </div>
     </div>
 
@@ -546,12 +620,14 @@ select{cursor:pointer;}
    ============================================================ */
 const LS = {
   api: 'alaada_acc_api',
+  apiKey: 'alaada_acc_api_key',
   company: 'alaada_acc_company',
   dirtyBackup: 'alaada_acc_backup_dirty_',
   backupReminderDismissed: 'alaada_acc_backup_reminder_dismissed_',
 };
 const DEFAULT_API = 'https://accounts-0o52.onrender.com';
 let API_BASE = localStorage.getItem(LS.api) || DEFAULT_API;
+let API_KEY = localStorage.getItem(LS.apiKey) || '';
 let STATE = {
   companies: [],
   companyId: localStorage.getItem(LS.company) || null,
@@ -570,28 +646,39 @@ let STATE = {
   taxClassifications: [],
   currentView: 'dashboard',
   offlineBackup: null,
+  openapi: null,
+  openapiOperations: [],
+  apiExplorerSelected: null,
 };
 
 /* ============================================================
    API WRAPPER
    ============================================================ */
-async function api(path, {method='GET', body=null, qs=null, raw=false} = {}) {
+async function api(path, {method='GET', body=null, qs=null, raw=false, headers={}, formData=null} = {}) {
   let url = API_BASE.replace(/\/$/,'') + path;
   if (qs) {
     const params = Object.entries(qs).filter(([,v]) => v !== undefined && v !== null && v !== '');
     if (params.length) url += '?' + params.map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
   }
-  const opts = {method, headers:{}};
-  if (body !== null) { opts.headers['Content-Type']='application/json'; opts.body = JSON.stringify(body); }
+  const opts = {method, headers:{...headers}};
+  if (API_KEY && !opts.headers.Authorization && !opts.headers['X-Alaada-API-Key']) {
+    opts.headers['X-Alaada-API-Key'] = API_KEY;
+  }
+  if (formData) {
+    opts.body = formData;
+  } else if (body !== null) {
+    opts.headers['Content-Type'] = opts.headers['Content-Type'] || 'application/json';
+    opts.body = opts.headers['Content-Type'].includes('application/json') ? JSON.stringify(body) : body;
+  }
   let res;
   try { res = await fetch(url, opts); }
   catch(e){ throw new ApiError('Could not reach the API. Check the URL and that the server is running.', 0, {}); }
   if (raw) return res;
   let data = null;
   const text = await res.text();
-  try { data = text ? JSON.parse(text) : null; } catch(e){ data = null; }
+  try { data = text ? JSON.parse(text) : null; } catch(e){ data = text || null; }
   if (!res.ok) {
-    const msg = (data && data.error && data.error.message) || `Request failed (${res.status})`;
+    const msg = (data && data.error && data.error.message) || (typeof data === 'string' && data) || `Request failed (${res.status})`;
     throw new ApiError(msg, res.status, data);
   }
   const selectedCompanyPath = STATE.companyId ? `/companies/${STATE.companyId}` : null;
@@ -845,10 +932,14 @@ modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) c
    ============================================================ */
 const gate = document.getElementById('gate');
 const gateUrl = document.getElementById('gate-url');
+const gateApiKey = document.getElementById('gate-api-key');
+gateApiKey.value = API_KEY;
 const gateStatus = document.getElementById('gate-status');
 
 async function tryConnect(url, {silent=false} = {}) {
   API_BASE = url.trim().replace(/\/$/,'');
+  API_KEY = gateApiKey.value.trim();
+  if (API_KEY) localStorage.setItem(LS.apiKey, API_KEY); else localStorage.removeItem(LS.apiKey);
   if (!silent) { gateStatus.innerHTML = '<span class="spin"></span> Connecting…'; }
   try {
     const res = await fetch(API_BASE + '/health');
@@ -871,10 +962,11 @@ function setApiStatus(state){
   // state: 'up' | 'down' | 'connecting'
   const dot = document.getElementById('api-dot'), label = document.getElementById('api-label');
   dot.className = 'dot ' + (state==='up' ? 'up' : (state==='connecting' ? '' : 'down'));
-  label.textContent = state==='up' ? 'Connected' : (state==='connecting' ? 'Connecting…' : 'Offline');
+  label.textContent = state==='up' ? (API_KEY ? 'Connected · secured' : 'Connected') : (state==='connecting' ? 'Connecting…' : 'Offline');
 }
 document.getElementById('api-status').onclick = () => {
   gateUrl.value = API_BASE || DEFAULT_API;
+  gateApiKey.value = API_KEY;
   gate.style.display = 'flex';
   gateStatus.textContent = '';
 };
@@ -887,6 +979,7 @@ async function bootstrap() {
   renderSidebarRouting();
   navigate(STATE.currentView);
   pollHealth();
+  loadOpenApiSpec().catch(()=>{});
 }
 setInterval(() => { if (API_BASE) pollHealth(); }, 20000);
 async function pollHealth(){
@@ -2211,11 +2304,21 @@ async function openDeliveryNoteDetail(id){
   openModal({title:'Delivery note', wide:true, bodyHtml:`<div id="dnd-body"><span class="spin"></span> Loading...</div>`, footHtml:``});
   try {
     const n = await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}`);
+    let eway = null;
+    if (n.status === 'POSTED') {
+      try { eway = await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}/e-way-bill`); } catch (_) { eway = null; }
+    }
+    const ewayBadge = eway ? `<span class="badge badge-${eway.status==='GENERATED'||eway.status==='EXTENDED'?'active':eway.status==='CANCELLED'?'cancelled':'draft'}">${esc(eway.status)}</span>` : '<span class="badge badge-draft">Not generated</span>';
     document.getElementById('modal-title').textContent = `Delivery Note · ${n.delivery_number}`;
     document.getElementById('dnd-body').innerHTML = `
       <div class="kv"><span class="k">Customer</span><span class="v">${esc(customerName(n.customer_id))}</span></div>
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(n.delivery_date)}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${n.status.toLowerCase()}">${n.status}</span></span></div>
+      ${n.status==='POSTED' ? `<div class="kv"><span class="k">E-way bill</span><span class="v">${ewayBadge}</span></div>` : ''}
+      ${eway ? `<div class="kv"><span class="k">EWB no.</span><span class="v mono">${esc(eway.eway_bill_number)}</span></div>
+      <div class="kv"><span class="k">Valid until</span><span class="v">${new Date(eway.valid_until).toLocaleString('en-IN')}</span></div>
+      <div class="kv"><span class="k">Transport</span><span class="v">${esc(eway.transport_mode)} · ${esc(eway.vehicle_number||eway.transporter_name||eway.transporter_id||'-')} · ${eway.distance_km} km</span></div>
+      ${eway.cancelled_at ? `<div class="kv"><span class="k">Cancelled</span><span class="v">${new Date(eway.cancelled_at).toLocaleString('en-IN')} · ${esc(eway.cancel_reason||'')}</span></div>` : ''}` : ''}
       <div class="kv"><span class="k">Narration</span><span class="v">${esc(n.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th></tr></thead>
@@ -2223,6 +2326,10 @@ async function openDeliveryNoteDetail(id){
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
     if (n.status === 'DRAFT') actions.push(`<button class="btn btn-danger" onclick="cancelDeliveryNoteAction('${n.id}')">Cancel</button>`, `<button class="btn btn-teal" onclick="postDeliveryNoteAction('${n.id}')">Post stock</button>`);
+    if (n.status === 'POSTED' && !eway) actions.push(`<button class="btn btn-teal" onclick="generateEWayBillAction('${n.id}')">Generate EWB</button>`);
+    if (eway) actions.push(`<button class="btn btn-ghost" onclick="showEWayBillPayload('${n.id}')">EWB payload</button>`);
+    if (eway && eway.status !== 'CANCELLED') actions.push(`<button class="btn btn-ghost" onclick="extendEWayBillAction('${n.id}')">Extend</button>`, `<button class="btn btn-danger" onclick="cancelEWayBillAction('${n.id}')">Cancel EWB</button>`);
+    if (eway && eway.status === 'CANCELLED') actions.push(`<button class="btn btn-teal" onclick="generateEWayBillAction('${n.id}', true)">Regenerate EWB</button>`);
     document.getElementById('modal-foot').innerHTML = actions.join('');
   } catch(e){ document.getElementById('dnd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
@@ -2234,6 +2341,51 @@ async function cancelDeliveryNoteAction(id){
   if (!confirm('Cancel this delivery note?')) return;
   try { await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}/cancel`, {method:'POST'}); toast('Delivery note cancelled','ok'); openDeliveryNoteDetail(id); if(STATE.currentView==='delivery-notes') loadDeliveryNoteTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
   catch(e){ errToast(e); }
+}
+async function generateEWayBillAction(id, regenerate=false){
+  const distance = Number(prompt('Distance in km', '100') || 0);
+  if (!distance || distance < 1) return;
+  const vehicle = (prompt('Vehicle number', 'KA01AB1234') || '').trim().toUpperCase();
+  if (!vehicle) return;
+  const transporterName = (prompt('Transporter name', 'Alaada Logistics') || '').trim();
+  const body = {distance_km: distance, transport_mode:'ROAD', vehicle_number: vehicle, vehicle_type:'REGULAR', transporter_name: transporterName || null};
+  try {
+    await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}/e-way-bill/${regenerate?'regenerate':'generate'}`, {method:'POST', body});
+    toast(regenerate ? 'E-way bill regenerated' : 'E-way bill generated','ok');
+    openDeliveryNoteDetail(id);
+  } catch(e){ errToast(e); }
+}
+async function extendEWayBillAction(id){
+  const days = Number(prompt('Additional validity days', '1') || 0);
+  if (!days || days < 1) return;
+  const reason = (prompt('Extension reason', 'Vehicle delay') || '').trim();
+  if (!reason) return;
+  try {
+    await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}/e-way-bill/extend`, {method:'POST', body:{additional_days: days, reason}});
+    toast('E-way bill extended','ok');
+    openDeliveryNoteDetail(id);
+  } catch(e){ errToast(e); }
+}
+async function cancelEWayBillAction(id){
+  const reason = (prompt('Cancellation reason', 'Transport cancelled') || '').trim();
+  if (!reason) return;
+  try {
+    await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}/e-way-bill/cancel`, {method:'POST', body:{reason}});
+    toast('E-way bill cancelled','ok');
+    openDeliveryNoteDetail(id);
+  } catch(e){ errToast(e); }
+}
+async function showEWayBillPayload(id){
+  openModal({title:'E-way bill payload', wide:true, bodyHtml:`<div id="eway-body"><span class="spin"></span> Loading...</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
+  try {
+    const eway = await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}/e-way-bill`);
+    document.getElementById('eway-body').innerHTML = `
+      <div class="kv"><span class="k">EWB no.</span><span class="v mono">${esc(eway.eway_bill_number)}</span></div>
+      <div class="kv"><span class="k">Status</span><span class="v">${esc(eway.status)}</span></div>
+      <div class="section-divider"></div>
+      <pre style="white-space:pre-wrap;word-break:break-word;font-size:.72rem;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:420px;overflow:auto;">${esc(JSON.stringify(JSON.parse(eway.response_payload_json), null, 2))}</pre>
+    `;
+  } catch(e){ document.getElementById('eway-body').innerHTML = emptyState('⚠','Could not load e-way bill payload', esc(e.message)); }
 }
 async function confirmSalesOrderAction(id){
   try { await api(`/companies/${STATE.companyId}/sales/orders/${id}/confirm`, {method:'POST'}); toast('Sales order confirmed ✓','ok'); openSalesOrderDetail(id); if(STATE.currentView==='sales-orders') loadSalesOrderTable(); }
@@ -2337,13 +2489,23 @@ async function openSalesInvoiceDetail(id){
   openModal({title:'Sales invoice', wide:true, bodyHtml:`<div id="sid-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   try {
     const inv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}`);
+    let einv = null;
+    if (inv.status === 'POSTED') {
+      try { einv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}/e-invoice`); } catch (_) { einv = null; }
+    }
     const cur = STATE.company.base_currency;
     document.getElementById('modal-title').textContent = `Sales Invoice · ${inv.invoice_number}`;
+    const eInvBadge = einv ? `<span class="badge badge-${einv.status==='GENERATED'?'active':einv.status==='CANCELLED'?'cancelled':'draft'}">${esc(einv.status)}</span>` : '<span class="badge badge-draft">Not generated</span>';
     document.getElementById('sid-body').innerHTML = `
       <div class="kv"><span class="k">Customer</span><span class="v">${esc(customerName(inv.customer_id))}</span></div>
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(inv.invoice_date)}</span></div>
       <div class="kv"><span class="k">Warehouse</span><span class="v">${esc(warehouseName(inv.warehouse_id))}</span></div>
       <div class="kv"><span class="k">Status</span><span class="v"><span class="badge badge-${inv.status.toLowerCase()}">${inv.status}</span></span></div>
+      ${inv.status==='POSTED' ? `<div class="kv"><span class="k">E-invoice</span><span class="v">${eInvBadge}</span></div>` : ''}
+      ${einv ? `<div class="kv"><span class="k">IRN</span><span class="v mono" style="font-size:.72rem;word-break:break-all;">${esc(einv.irn)}</span></div>
+      <div class="kv"><span class="k">Ack no.</span><span class="v mono">${esc(einv.ack_number)}</span></div>
+      <div class="kv"><span class="k">Ack date</span><span class="v">${new Date(einv.ack_date).toLocaleString('en-IN')}</span></div>
+      ${einv.cancelled_at ? `<div class="kv"><span class="k">Cancelled</span><span class="v">${new Date(einv.cancelled_at).toLocaleString('en-IN')} · ${esc(einv.cancel_reason||'')}</span></div>` : ''}` : ''}
       <div class="kv"><span class="k">Narration</span><span class="v">${esc(inv.narration||'—')}</span></div>
       <div class="section-divider"></div>
       <table class="lines-table"><thead><tr><th>Item</th><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Total</th></tr></thead>
@@ -2352,6 +2514,9 @@ async function openSalesInvoiceDetail(id){
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
     if (inv.status==='DRAFT') actions.push(`<button class="btn btn-teal" onclick="postSalesInvoiceAction('${inv.id}')">Post invoice</button>`);
+    if (inv.status==='POSTED' && !einv) actions.push(`<button class="btn btn-teal" onclick="generateEInvoiceAction('${inv.id}')">Generate IRN</button>`);
+    if (einv) actions.push(`<button class="btn btn-ghost" onclick="showEInvoicePayload('${inv.id}')">Signed payload</button>`);
+    if (einv && einv.status==='GENERATED') actions.push(`<button class="btn btn-danger" onclick="cancelEInvoiceAction('${inv.id}')">Cancel IRN</button>`);
     if (inv.status==='POSTED') actions.push(`<button class="btn btn-blue" onclick="closeModal();openSalesReturnFormFromInvoice('${inv.id}')">Create return</button>`);
     if (inv.voucher_id) actions.push(`<button class="btn btn-ghost" onclick="openVoucherDetail('${inv.voucher_id}')">View voucher</button>`);
     document.getElementById('modal-foot').innerHTML = actions.join('');
@@ -2360,6 +2525,34 @@ async function openSalesInvoiceDetail(id){
 async function postSalesInvoiceAction(id){
   try { await api(`/companies/${STATE.companyId}/sales/invoices/${id}/post`, {method:'POST'}); toast('Sales invoice posted ✓','ok'); refreshBalanceBeam(); openSalesInvoiceDetail(id); if(STATE.currentView==='sales-invoices') loadSalesInvoiceTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
   catch(e){ errToast(e); }
+}
+async function generateEInvoiceAction(id){
+  try {
+    await api(`/companies/${STATE.companyId}/sales/invoices/${id}/e-invoice/generate`, {method:'POST', body:{}});
+    toast('E-invoice IRN generated','ok');
+    openSalesInvoiceDetail(id);
+  } catch(e){ errToast(e); }
+}
+async function cancelEInvoiceAction(id){
+  const reason = prompt('Cancellation reason');
+  if (!reason || !reason.trim()) return;
+  try {
+    await api(`/companies/${STATE.companyId}/sales/invoices/${id}/e-invoice/cancel`, {method:'POST', body:{reason: reason.trim()}});
+    toast('E-invoice cancelled','ok');
+    openSalesInvoiceDetail(id);
+  } catch(e){ errToast(e); }
+}
+async function showEInvoicePayload(id){
+  openModal({title:'E-invoice signed payload', wide:true, bodyHtml:`<div id="einv-body"><span class="spin"></span> Loading…</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
+  try {
+    const einv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}/e-invoice`);
+    document.getElementById('einv-body').innerHTML = `
+      <div class="kv"><span class="k">IRN</span><span class="v mono" style="font-size:.72rem;word-break:break-all;">${esc(einv.irn)}</span></div>
+      <div class="kv"><span class="k">QR hash</span><span class="v mono" style="font-size:.72rem;word-break:break-all;">${esc(einv.signed_qr_code)}</span></div>
+      <div class="section-divider"></div>
+      <pre style="white-space:pre-wrap;word-break:break-word;font-size:.72rem;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:420px;overflow:auto;">${esc(JSON.stringify(JSON.parse(einv.response_payload_json), null, 2))}</pre>
+    `;
+  } catch(e){ document.getElementById('einv-body').innerHTML = emptyState('⚠','Could not load e-invoice payload', esc(e.message)); }
 }
 
 async function renderSalesReturns(){
@@ -3266,6 +3459,299 @@ function openTaxClassificationForm(existing){
 }
 function editTaxClassificationAction(id){ const c = STATE.taxClassifications.find(x=>x.id===id); if (c) openTaxClassificationForm(c); }
 
+async function renderGstCompliance(){
+  if (!requireCompany()) return;
+  const fyStart = STATE.company.financial_year_start || `${todayStr().slice(0,4)}-04-01`;
+  view().innerHTML = viewHead('GST Compliance', 'GSTR-1, GSTR-3B, HSN/SAC, ITC and reconciliation for posted trade documents.',
+    `<input type="date" id="gstc-from" value="${fyStart}">
+     <input type="date" id="gstc-to" value="${todayStr()}">
+     <button class="btn btn-ghost btn-sm" onclick="loadGstCompliance()">Run</button>
+     <button class="btn btn-blue btn-sm" onclick="importGstr2bCsv()">Import GSTR-2B</button>`) +
+    `<div id="gstc-body"></div>`;
+  loadGstCompliance();
+}
+VIEW_RENDERERS['gst-compliance'] = renderGstCompliance;
+
+async function loadGstCompliance(){
+  const date_from = document.getElementById('gstc-from').value;
+  const date_to = document.getElementById('gstc-to').value;
+  const body = document.getElementById('gstc-body');
+  body.innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading GST compliance...</td></tr></tbody></table></div>`;
+  try {
+    const period_month = date_from ? date_from.slice(0,7) : undefined;
+    const [dashboard, gstr1, gstr3b, hsn, reconciliation, validation, transactions, gstr2bImports] = await Promise.all([
+      api(`/companies/${STATE.companyId}/gst/dashboard`, {qs:{date_from, date_to}}),
+      api(`/companies/${STATE.companyId}/gst/returns/gstr-1`, {qs:{date_from, date_to}}),
+      api(`/companies/${STATE.companyId}/gst/returns/gstr-3b`, {qs:{date_from, date_to}}),
+      api(`/companies/${STATE.companyId}/gst/reports/hsn-summary`, {qs:{date_from, date_to, outward_only:true}}),
+      api(`/companies/${STATE.companyId}/gst/reconciliation`, {qs:{date_from, date_to}}),
+      api(`/companies/${STATE.companyId}/gst/validation`, {qs:{date_from, date_to}}),
+      api(`/companies/${STATE.companyId}/gst/reports/transactions`, {qs:{date_from, date_to}}),
+      api(`/companies/${STATE.companyId}/gst/gstr-2b/imports`, {qs:{period_month}}),
+    ]);
+    const cur = STATE.company.base_currency;
+    const outwardTax = Number(gstr3b.outward_tax.cgst||0)+Number(gstr3b.outward_tax.sgst||0)+Number(gstr3b.outward_tax.igst||0)+Number(gstr3b.outward_tax.utgst||0)+Number(gstr3b.outward_tax.cess||0);
+    const inwardItc = Number(gstr3b.inward_itc.cgst||0)+Number(gstr3b.inward_itc.sgst||0)+Number(gstr3b.inward_itc.igst||0)+Number(gstr3b.inward_itc.utgst||0)+Number(gstr3b.inward_itc.cess||0);
+    const issues = validation.issues || reconciliation.issues || [];
+    body.innerHTML = `
+      <div class="grid grid-4" style="margin-bottom:16px;">
+        <div class="stat-card ${dashboard.gstr1_ready?'c-teal':'c-red'}"><div class="stat-label">GSTR-1</div><div class="stat-value" style="font-size:1.05rem;">${dashboard.gstr1_ready?'Ready':'Review'}</div></div>
+        <div class="stat-card ${dashboard.gstr3b_ready?'c-teal':'c-red'}"><div class="stat-label">GSTR-3B</div><div class="stat-value" style="font-size:1.05rem;">${dashboard.gstr3b_ready?'Ready':'Review'}</div></div>
+        <div class="stat-card c-blue"><div class="stat-label">Net Tax Payable</div><div class="stat-value ${Number(dashboard.net_tax_payable||0)<0?'neg':''}">${money(dashboard.net_tax_payable,cur)}</div></div>
+        <div class="stat-card ${issues.length?'c-gold':'c-ink'}"><div class="stat-label">Validation Issues</div><div class="stat-value">${issues.length}</div></div>
+      </div>
+
+      <div class="grid grid-3" style="margin-bottom:16px;">
+        <div class="card card-pad">
+          <div style="font-weight:800;margin-bottom:10px;">GSTR-1 outward</div>
+          <div class="kv"><span class="k">B2B lines</span><span class="v">${gstr1.b2b.length}</span></div>
+          <div class="kv"><span class="k">Credit/debit notes</span><span class="v">${gstr1.credit_debit_notes.length}</span></div>
+          <div class="kv"><span class="k">Taxable value</span><span class="v">${money(gstr1.summary.outward_taxable_value,cur)}</span></div>
+          <div class="kv"><span class="k">Output tax</span><span class="v">${money(outwardTax,cur)}</span></div>
+        </div>
+        <div class="card card-pad">
+          <div style="font-weight:800;margin-bottom:10px;">GSTR-3B ITC</div>
+          <div class="kv"><span class="k">Input CGST</span><span class="v">${money(gstr3b.inward_itc.cgst,cur)}</span></div>
+          <div class="kv"><span class="k">Input SGST/UTGST</span><span class="v">${money(Number(gstr3b.inward_itc.sgst||0)+Number(gstr3b.inward_itc.utgst||0),cur)}</span></div>
+          <div class="kv"><span class="k">Input IGST</span><span class="v">${money(gstr3b.inward_itc.igst,cur)}</span></div>
+          <div class="kv"><span class="k">Total ITC</span><span class="v">${money(inwardItc,cur)}</span></div>
+        </div>
+        <div class="card card-pad">
+          <div style="font-weight:800;margin-bottom:10px;">Reconciliation</div>
+          <div class="kv"><span class="k">Documents</span><span class="v">${reconciliation.document_count}</span></div>
+          <div class="kv"><span class="k">Output tax</span><span class="v">${money(reconciliation.output_tax,cur)}</span></div>
+          <div class="kv"><span class="k">ITC</span><span class="v">${money(reconciliation.input_tax_credit,cur)}</span></div>
+          <div class="kv"><span class="k">Reverse charge</span><span class="v">${money(reconciliation.reverse_charge_tax,cur)}</span></div>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:16px;">
+        <div class="card card-pad">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:800;">HSN / SAC outward summary</div><span class="pill">${hsn.length} row${hsn.length===1?'':'s'}</span></div>
+          ${hsn.length ? `<div class="table-wrap"><table><thead><tr><th>HSN/SAC</th><th class="num">Qty</th><th class="num">Taxable</th><th class="num">Tax</th></tr></thead><tbody>${hsn.map(r=>`<tr><td class="mono">${esc(r.hsn_sac)}</td><td class="num">${esc(r.quantity)}</td><td class="num">${money(r.taxable_value,cur)}</td><td class="num">${money(r.total_tax,cur)}</td></tr>`).join('')}</tbody></table></div>` : '<div style="font-size:.8rem;color:var(--ink3);">No outward HSN/SAC rows in this period.</div>'}
+        </div>
+        <div class="card card-pad">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:800;">Validation</div><span class="pill">${issues.length} issue${issues.length===1?'':'s'}</span></div>
+          ${issues.length ? `<div class="table-wrap"><table><thead><tr><th>Severity</th><th>Code</th><th>Document</th></tr></thead><tbody>${issues.slice(0,12).map(i=>`<tr><td><span class="badge badge-${String(i.severity||'warning').toLowerCase()==='error'?'cancelled':'draft'}">${esc(i.severity||'WARNING')}</span></td><td class="mono">${esc(i.code)}</td><td>${esc(i.document_number||i.entity_id||'-')}</td></tr>`).join('')}</tbody></table></div>` : '<div style="font-size:.8rem;color:var(--ink3);">No GST validation issues found for this period.</div>'}
+        </div>
+      </div>
+
+      <div class="card card-pad" style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-weight:800;">GSTR-2B imports</div>
+          <button class="btn btn-ghost btn-sm" onclick="importGstr2bCsv()">Import CSV</button>
+        </div>
+        ${gstr2bImports.length ? `<div class="table-wrap"><table><thead><tr><th>Period</th><th>File</th><th>Imported</th><th class="num">Lines</th><th></th></tr></thead><tbody>${gstr2bImports.map(i=>`<tr><td class="mono">${esc(i.period_month)}</td><td>${esc(i.source_filename)}</td><td>${new Date(i.imported_at).toLocaleString('en-IN')}</td><td class="num">${i.lines.length}</td><td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="showGstr2bReconciliation('${i.id}')">Reconcile</button></td></tr>`).join('')}</tbody></table></div>` : '<div style="font-size:.8rem;color:var(--ink3);">No GSTR-2B imports for this period yet.</div>'}
+      </div>
+
+      <div class="card card-pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:800;">GST transaction register</div><span class="pill">${transactions.length} line${transactions.length===1?'':'s'}</span></div>
+        ${transactions.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Document</th><th>Party</th><th>HSN/SAC</th><th class="num">Taxable</th><th class="num">CGST</th><th class="num">SGST/UTGST</th><th class="num">IGST</th></tr></thead>
+          <tbody>${transactions.map(r=>`<tr><td>${fmtDate(r.document_date)}</td><td><span class="mono">${esc(r.document_number)}</span><div style="font-size:.68rem;color:var(--ink3);">${esc(r.transaction_type)}</div></td><td>${esc(r.party_name)}</td><td class="mono">${esc(r.hsn_sac||'-')}</td><td class="num">${money(r.taxable_value,cur)}</td><td class="num">${money(r.cgst,cur)}</td><td class="num">${money(Number(r.sgst||0)+Number(r.utgst||0),cur)}</td><td class="num">${money(r.igst,cur)}</td></tr>`).join('')}</tbody></table></div>` : emptyState('🧾','No GST transactions','Post sales invoices, returns, purchase bills or purchase returns in this period.')}
+      </div>
+    `;
+  } catch(e){ body.innerHTML = emptyState('⚠','Could not load GST compliance', esc(e.message)); }
+}
+
+function importGstr2bCsv(){
+  if (!requireCompany()) return;
+  const from = document.getElementById('gstc-from');
+  const suggested = from && from.value ? from.value.slice(0,7) : todayStr().slice(0,7);
+  const period = window.prompt('GSTR-2B period (YYYY-MM)', suggested);
+  if (!period) return;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.csv,text/csv';
+  input.onchange = async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const headers = API_KEY ? {'X-Alaada-API-Key': API_KEY} : {};
+      const url = API_BASE.replace(/\/$/,'') + `/companies/${STATE.companyId}/gst/gstr-2b/import-csv?period_month=${encodeURIComponent(period)}`;
+      const res = await fetch(url, {method:'POST', headers, body:form});
+      const text = await res.text();
+      let data = null; try { data = text ? JSON.parse(text) : null; } catch(_e) {}
+      if (!res.ok) throw new Error((data && data.error && data.error.message) || text || `Import failed (${res.status})`);
+      toast(`GSTR-2B imported: ${(data.lines||[]).length} lines`,'ok');
+      loadGstCompliance();
+    } catch(e){ errToast(e); }
+  };
+  input.click();
+}
+
+async function showGstr2bReconciliation(importId){
+  if (!requireCompany()) return;
+  openModal({title:'GSTR-2B reconciliation', wide:true, bodyHtml:`<div id="gstr2b-recon-body"><span class="spin"></span> Loading...</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
+  try {
+    const r = await api(`/companies/${STATE.companyId}/gst/gstr-2b/imports/${importId}/reconcile`);
+    const cur = STATE.company.base_currency;
+    document.getElementById('gstr2b-recon-body').innerHTML = `
+      <div class="grid grid-4" style="margin-bottom:16px;">
+        <div class="stat-card c-teal"><div class="stat-label">Matched</div><div class="stat-value">${r.matched_count}</div></div>
+        <div class="stat-card c-gold"><div class="stat-label">Missing</div><div class="stat-value">${r.missing_in_books_count}</div></div>
+        <div class="stat-card ${r.tax_mismatch_count?'c-red':'c-ink'}"><div class="stat-label">Tax mismatch</div><div class="stat-value">${r.tax_mismatch_count}</div></div>
+        <div class="stat-card c-blue"><div class="stat-label">Difference</div><div class="stat-value ${Number(r.total_difference||0)<0?'neg':''}">${money(r.total_difference,cur)}</div></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Supplier GSTIN</th><th>Invoice</th><th>Date</th><th class="num">2B tax</th><th class="num">Books tax</th><th class="num">Difference</th><th>Status</th></tr></thead>
+      <tbody>${r.rows.map(row=>`<tr><td class="mono">${esc(row.supplier_gstin)}</td><td class="mono">${esc(row.invoice_number)}</td><td>${fmtDate(row.invoice_date)}</td><td class="num">${money(row.gstr2b_tax,cur)}</td><td class="num">${money(row.books_tax,cur)}</td><td class="num">${money(row.difference,cur)}</td><td><span class="badge badge-${row.status==='MATCHED'?'active':row.status==='TAX_MISMATCH'?'cancelled':'draft'}">${esc(row.status)}</span></td></tr>`).join('')}</tbody></table></div>
+    `;
+  } catch(e){ document.getElementById('gstr2b-recon-body').innerHTML = emptyState('⚠','Could not reconcile GSTR-2B', esc(e.message)); }
+}
+
+async function renderWithholdingCompliance(){
+  if (!requireCompany()) return;
+  const fyStart = STATE.company.financial_year_start || `${todayStr().slice(0,4)}-04-01`;
+  view().innerHTML = viewHead('TDS / TCS Compliance', 'Sections, PAN validation, higher-rate logic, challans, certificates and return-ready reports.',
+    `<input type="date" id="wh-from" value="${fyStart}">
+     <input type="date" id="wh-to" value="${todayStr()}">
+     <button class="btn btn-ghost btn-sm" onclick="loadWithholdingCompliance()">Run</button>
+     <button class="btn btn-blue btn-sm" onclick="openWithholdingSectionForm()">New Section</button>`) +
+    `<div id="wh-body"></div>`;
+  loadWithholdingCompliance();
+}
+VIEW_RENDERERS['withholding-compliance'] = renderWithholdingCompliance;
+
+async function loadWithholdingCompliance(){
+  const date_from = document.getElementById('wh-from').value;
+  const date_to = document.getElementById('wh-to').value;
+  const body = document.getElementById('wh-body');
+  body.innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading TDS/TCS compliance...</td></tr></tbody></table></div>`;
+  try {
+    const [sections, recordsPage, tdsReturn, tcsReturn] = await Promise.all([
+      api(`/companies/${STATE.companyId}/withholding/sections`),
+      api(`/companies/${STATE.companyId}/withholding/records`, {qs:{page_size:80}}),
+      api(`/companies/${STATE.companyId}/withholding/returns/TDS`, {qs:{date_from, date_to}}),
+      api(`/companies/${STATE.companyId}/withholding/returns/TCS`, {qs:{date_from, date_to}}),
+    ]);
+    const cur = STATE.company.base_currency;
+    const records = recordsPage.items || [];
+    body.innerHTML = `
+      <div class="grid grid-4" style="margin-bottom:16px;">
+        <div class="stat-card c-blue"><div class="stat-label">TDS Tax</div><div class="stat-value">${money(tdsReturn.tax_amount,cur)}</div></div>
+        <div class="stat-card ${Number(tdsReturn.pending_amount||0)?'c-gold':'c-teal'}"><div class="stat-label">TDS Pending</div><div class="stat-value">${money(tdsReturn.pending_amount,cur)}</div></div>
+        <div class="stat-card c-blue"><div class="stat-label">TCS Tax</div><div class="stat-value">${money(tcsReturn.tax_amount,cur)}</div></div>
+        <div class="stat-card ${Number(tcsReturn.pending_amount||0)?'c-gold':'c-teal'}"><div class="stat-label">TCS Pending</div><div class="stat-value">${money(tcsReturn.pending_amount,cur)}</div></div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:16px;">
+        <div class="card card-pad">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-weight:800;">Withholding sections</div>
+            <button class="btn btn-ghost btn-sm" onclick="openWithholdingSectionForm()">Add</button>
+          </div>
+          ${sections.length ? `<div class="table-wrap"><table><thead><tr><th>Kind</th><th>Section</th><th class="num">Rate</th><th class="num">Threshold</th><th>Status</th></tr></thead><tbody>${sections.map(s=>`<tr><td><span class="badge badge-${s.kind==='TDS'?'active':'draft'}">${esc(s.kind)}</span></td><td><span class="mono">${esc(s.section_code)}</span><div style="font-size:.68rem;color:var(--ink3);">${esc(s.description)}</div></td><td class="num">${esc(s.rate_percent)}%</td><td class="num">${money(s.threshold_amount,cur)}</td><td>${s.is_active?'Active':'Inactive'}</td></tr>`).join('')}</tbody></table></div>` : '<div style="font-size:.8rem;color:var(--ink3);">No TDS/TCS sections configured yet.</div>'}
+        </div>
+        <div class="card card-pad">
+          <div style="font-weight:800;margin-bottom:10px;">Return summary</div>
+          <div class="kv"><span class="k">TDS records</span><span class="v">${tdsReturn.record_count}</span></div>
+          <div class="kv"><span class="k">TDS challan paid</span><span class="v">${money(tdsReturn.challan_paid_amount,cur)}</span></div>
+          <div class="kv"><span class="k">TCS records</span><span class="v">${tcsReturn.record_count}</span></div>
+          <div class="kv"><span class="k">TCS challan paid</span><span class="v">${money(tcsReturn.challan_paid_amount,cur)}</span></div>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <div style="font-weight:800;">TDS/TCS records</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="recordWithholdingAction('TDS')">Record TDS</button>
+            <button class="btn btn-ghost btn-sm" onclick="recordWithholdingAction('TCS')">Record TCS</button>
+            <button class="btn btn-ghost btn-sm" onclick="createWithholdingChallanAction()">Pay Challan</button>
+            <button class="btn btn-ghost btn-sm" onclick="issueWithholdingCertificateAction()">Certificate</button>
+          </div>
+        </div>
+        ${records.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Kind</th><th>Section</th><th class="num">Taxable</th><th class="num">Tax</th><th>Status</th><th>Voucher</th></tr></thead><tbody>${records.map(r=>{
+          const section = sections.find(s=>s.id===r.section_id) || {};
+          return `<tr><td>${fmtDate(r.deduction_date)}</td><td><span class="badge badge-${r.kind==='TDS'?'active':'draft'}">${esc(r.kind)}</span></td><td class="mono">${esc(section.section_code||r.section_id.slice(0,8))}</td><td class="num">${money(r.taxable_amount,cur)}</td><td class="num">${money(r.tax_amount,cur)}</td><td><span class="badge badge-${r.status==='CERTIFICATE_ISSUED'?'active':r.status==='CHALLAN_PAID'?'draft':'muted'}">${esc(r.status)}</span></td><td class="mono">${esc((r.voucher_id||'').slice(0,10))}${r.voucher_id?'...':'-'}</td></tr>`;
+        }).join('')}</tbody></table></div>` : emptyState('₹','No withholding records','Record TDS from posted purchase bills or TCS from posted sales invoices.')}
+      </div>
+    `;
+  } catch(e){ body.innerHTML = emptyState('⚠','Could not load TDS/TCS compliance', esc(e.message)); }
+}
+
+function openWithholdingSectionForm(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'New TDS/TCS section',
+    bodyHtml:`
+      <div class="form-grid">
+        <div class="form-row"><label>Kind</label><select id="whs-kind"><option>TDS</option><option>TCS</option></select></div>
+        <div class="form-row"><label>Section code</label><input id="whs-code" placeholder="194C"></div>
+        <div class="form-row"><label>Description</label><input id="whs-desc" placeholder="Contractor payments"></div>
+        <div class="form-row"><label>Rate %</label><input id="whs-rate" type="number" step="0.01" value="1"></div>
+        <div class="form-row"><label>Threshold</label><input id="whs-threshold" type="number" step="0.01" value="0"></div>
+        <div class="form-row"><label>Higher rate %</label><input id="whs-higher" type="number" step="0.01" value="20"></div>
+      </div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="whs-save">Save</button>`
+  });
+  document.getElementById('whs-save').onclick = async () => {
+    try {
+      await api(`/companies/${STATE.companyId}/withholding/sections`, {method:'POST', body:{
+        kind: document.getElementById('whs-kind').value,
+        section_code: document.getElementById('whs-code').value.trim(),
+        description: document.getElementById('whs-desc').value.trim(),
+        rate_percent: document.getElementById('whs-rate').value || '0',
+        threshold_amount: document.getElementById('whs-threshold').value || '0',
+        higher_rate_percent: document.getElementById('whs-higher').value || '20',
+      }});
+      toast('Withholding section created ✓','ok'); closeModal(); loadWithholdingCompliance();
+    } catch(e){ errToast(e); }
+  };
+}
+
+async function recordWithholdingAction(kind){
+  if (!requireCompany()) return;
+  const sectionId = window.prompt(`${kind} section id`);
+  if (!sectionId) return;
+  const documentId = window.prompt(kind === 'TDS' ? 'Posted purchase bill id' : 'Posted sales invoice id');
+  if (!documentId) return;
+  const ledgerId = window.prompt(`${kind} payable ledger id`);
+  if (!ledgerId) return;
+  const dateValue = window.prompt(kind === 'TDS' ? 'Deduction date (YYYY-MM-DD)' : 'Collection date (YYYY-MM-DD)', todayStr());
+  if (!dateValue) return;
+  try {
+    const body = kind === 'TDS'
+      ? {section_id:sectionId, purchase_bill_id:documentId, payable_ledger_id:ledgerId, deduction_date:dateValue, post_voucher:true}
+      : {section_id:sectionId, sales_invoice_id:documentId, payable_ledger_id:ledgerId, collection_date:dateValue, post_voucher:true};
+    await api(`/companies/${STATE.companyId}/withholding/${kind.toLowerCase()}/records`, {method:'POST', body});
+    toast(`${kind} recorded ✓`,'ok'); loadWithholdingCompliance();
+  } catch(e){ errToast(e); }
+}
+
+async function createWithholdingChallanAction(){
+  if (!requireCompany()) return;
+  const kind = (window.prompt('Kind (TDS/TCS)', 'TDS') || '').toUpperCase();
+  if (!['TDS','TCS'].includes(kind)) return toast('Enter TDS or TCS','err');
+  const challanNumber = window.prompt('Challan number');
+  if (!challanNumber) return;
+  const recordIds = (window.prompt('Record ids, comma separated') || '').split(',').map(x=>x.trim()).filter(Boolean);
+  if (!recordIds.length) return;
+  const paymentDate = window.prompt('Payment date (YYYY-MM-DD)', todayStr());
+  if (!paymentDate) return;
+  try {
+    await api(`/companies/${STATE.companyId}/withholding/challans`, {method:'POST', body:{kind, challan_number:challanNumber, payment_date:paymentDate, record_ids:recordIds}});
+    toast('Challan recorded ✓','ok'); loadWithholdingCompliance();
+  } catch(e){ errToast(e); }
+}
+
+async function issueWithholdingCertificateAction(){
+  if (!requireCompany()) return;
+  const recordId = window.prompt('Withholding record id');
+  if (!recordId) return;
+  const certificateNumber = window.prompt('Certificate number');
+  if (!certificateNumber) return;
+  const issuedDate = window.prompt('Issued date (YYYY-MM-DD)', todayStr());
+  if (!issuedDate) return;
+  const quarter = window.prompt('Quarter', 'Q1');
+  if (!quarter) return;
+  try {
+    await api(`/companies/${STATE.companyId}/withholding/certificates`, {method:'POST', body:{record_id:recordId, certificate_number:certificateNumber, issued_date:issuedDate, quarter}});
+    toast('Certificate issued ✓','ok'); loadWithholdingCompliance();
+  } catch(e){ errToast(e); }
+}
+
 /* ============================================================
    BUSINESS EVENTS (append-only automation/AI-hook log)
    ============================================================ */
@@ -3544,11 +4030,27 @@ async function toggleFy(id, isClosed){
     await loadFinancialYears(); renderFyList();
   } catch(e){ errToast(e); }
 }
+async function authenticatedDownload(path, fallbackName){
+  try {
+    const res = await api(path, {raw:true});
+    if (!res.ok) {
+      let data = null; try { data = await res.json(); } catch(e){}
+      throw new ApiError((data && data.error && data.error.message) || `Download failed (${res.status})`, res.status, data);
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get('content-disposition') || '';
+    const match = disposition.match(/filename\*?=(?:UTF-8''|["'])?([^"';]+)/i);
+    const fileName = match ? decodeURIComponent(match[1].replace(/["']/g,'')) : fallbackName;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  } catch(e){ errToast(e); }
+}
 async function downloadExport(){
-  window.open(API_BASE + `/companies/${STATE.companyId}/export/json`, '_blank');
+  return authenticatedDownload(`/companies/${STATE.companyId}/export/json`, `alaada-${STATE.companyId}.json`);
 }
 async function downloadCsv(kind){
-  window.open(API_BASE + `/companies/${STATE.companyId}/export/${kind}.csv`, '_blank');
+  return authenticatedDownload(`/companies/${STATE.companyId}/export/${kind}.csv`, `${kind}.csv`);
 }
 function importLedgersCsv(){
   const input = document.createElement('input');
@@ -3560,7 +4062,8 @@ function importLedgersCsv(){
     const form = new FormData();
     form.append('file', file);
     try {
-      const res = await fetch(API_BASE.replace(/\/$/,'') + `/companies/${STATE.companyId}/import/ledgers.csv`, {method:'POST', body:form});
+      const importHeaders = API_KEY ? {'X-Alaada-API-Key': API_KEY} : {};
+      const res = await fetch(API_BASE.replace(/\/$/,'') + `/companies/${STATE.companyId}/import/ledgers.csv`, {method:'POST', headers:importHeaders, body:form});
       const text = await res.text();
       let data = null; try { data = text ? JSON.parse(text) : null; } catch(e){}
       if (!res.ok) throw new Error((data && data.error && data.error.message) || `Import failed (${res.status})`);
@@ -3620,6 +4123,408 @@ async function deleteCurrentCompany(){
     await loadCompanies(); navigate('dashboard');
   } catch(e){ errToast(e); }
 }
+
+
+/* ============================================================
+   ALL BACKEND FEATURES — OPENAPI-DRIVEN WORKBENCH
+   Every FastAPI operation is rendered from /openapi.json. This keeps the
+   frontend compatible when backend routes or Pydantic schemas are added.
+   ============================================================ */
+const API_HTTP_METHODS = ['get','post','put','patch','delete'];
+
+async function loadOpenApiSpec(force=false){
+  if (STATE.openapi && !force) return STATE.openapi;
+  const headers = API_KEY ? {'X-Alaada-API-Key':API_KEY} : {};
+  const res = await fetch(API_BASE.replace(/\/$/,'') + '/openapi.json', {headers});
+  if (!res.ok) throw new Error(`Could not load API schema (${res.status})`);
+  STATE.openapi = await res.json();
+  STATE.openapiOperations = [];
+  Object.entries(STATE.openapi.paths || {}).forEach(([path, pathItem]) => {
+    API_HTTP_METHODS.forEach(method => {
+      const operation = pathItem[method];
+      if (!operation) return;
+      STATE.openapiOperations.push({
+        id: `${method.toUpperCase()} ${path}`,
+        method: method.toUpperCase(),
+        path,
+        operation,
+        pathParameters: pathItem.parameters || [],
+        tag: (operation.tags && operation.tags[0]) || 'Other',
+        summary: operation.summary || operation.operationId || `${method.toUpperCase()} ${path}`,
+      });
+    });
+  });
+  STATE.openapiOperations.sort((a,b) => a.tag.localeCompare(b.tag) || a.path.localeCompare(b.path) || a.method.localeCompare(b.method));
+  const count = document.getElementById('api-op-count');
+  if (count) count.textContent = STATE.openapiOperations.length;
+  return STATE.openapi;
+}
+
+function apiResolveSchema(schema, seen=new Set()){
+  if (!schema) return {};
+  if (schema.$ref) {
+    const name = schema.$ref.split('/').pop();
+    if (seen.has(name)) return {type:'object', title:name};
+    const nextSeen = new Set(seen); nextSeen.add(name);
+    return apiResolveSchema((STATE.openapi.components && STATE.openapi.components.schemas && STATE.openapi.components.schemas[name]) || {}, nextSeen);
+  }
+  if (schema.allOf) {
+    return schema.allOf.reduce((acc, part) => {
+      const r = apiResolveSchema(part, seen);
+      return {...acc, ...r, properties:{...(acc.properties||{}), ...(r.properties||{})}, required:[...(acc.required||[]), ...(r.required||[])]};
+    }, {});
+  }
+  if (schema.anyOf || schema.oneOf) {
+    const choices = schema.anyOf || schema.oneOf;
+    const preferred = choices.find(x => x.type !== 'null') || choices[0];
+    return {...apiResolveSchema(preferred, seen), title:schema.title || preferred.title, description:schema.description || preferred.description};
+  }
+  return schema;
+}
+
+function apiSampleForSchema(schema, key='', depth=0, seen=new Set()){
+  if (depth > 5) return null;
+  if (!schema) return null;
+  if (schema.$ref) {
+    const name = schema.$ref.split('/').pop();
+    if (seen.has(name)) return null;
+    const nextSeen = new Set(seen); nextSeen.add(name);
+    return apiSampleForSchema((STATE.openapi.components && STATE.openapi.components.schemas && STATE.openapi.components.schemas[name]) || {}, key, depth+1, nextSeen);
+  }
+  if (schema.example !== undefined) return schema.example;
+  if (schema.default !== undefined) return schema.default;
+  if (schema.const !== undefined) return schema.const;
+  if (schema.enum && schema.enum.length) return schema.enum[0];
+  if (schema.allOf) {
+    const merged = {};
+    schema.allOf.forEach(part => {
+      const sample = apiSampleForSchema(part, key, depth+1, seen);
+      if (sample && typeof sample === 'object' && !Array.isArray(sample)) Object.assign(merged, sample);
+    });
+    return merged;
+  }
+  if (schema.anyOf || schema.oneOf) {
+    const choices = schema.anyOf || schema.oneOf;
+    const preferred = choices.find(x => x.type !== 'null') || choices[0];
+    return apiSampleForSchema(preferred, key, depth+1, seen);
+  }
+  const resolved = apiResolveSchema(schema, seen);
+  const type = resolved.type || (resolved.properties ? 'object' : undefined);
+  if (type === 'object') {
+    const out = {};
+    const props = resolved.properties || {};
+    const required = new Set(resolved.required || []);
+    Object.entries(props).slice(0,30).forEach(([name, prop]) => {
+      const include = required.has(name) || prop.default !== undefined || prop.example !== undefined || (prop.enum && prop.enum.length);
+      if (!include) return;
+      const value = apiSampleForSchema(prop, name, depth+1, seen);
+      if (value !== undefined) out[name] = value;
+    });
+    return out;
+  }
+  if (type === 'array') {
+    const item = apiSampleForSchema(resolved.items || {}, key, depth+1, seen);
+    return item === null || item === undefined ? [] : [item];
+  }
+  if (type === 'boolean') return false;
+  if (type === 'integer' || type === 'number') return 0;
+  if (type === 'string' || !type) {
+    if (resolved.format === 'date') return todayStr();
+    if (resolved.format === 'date-time') return new Date().toISOString();
+    if (resolved.format === 'email') return 'name@example.com';
+    if (resolved.format === 'binary') return undefined;
+    if (/company_id/i.test(key)) return STATE.companyId || '';
+    if (/(^|_)date$/i.test(key)) return todayStr();
+    if (/email/i.test(key)) return 'name@example.com';
+    if (/currency/i.test(key)) return (STATE.company && STATE.company.base_currency) || 'INR';
+    if (/time_zone/i.test(key)) return 'Asia/Kolkata';
+    if (/country/i.test(key)) return 'India';
+    if (/name/i.test(key)) return '';
+    return '';
+  }
+  return null;
+}
+
+function apiOperationParameters(op){
+  const merged = [...(op.pathParameters || []), ...(op.operation.parameters || [])];
+  const unique = new Map();
+  merged.forEach(p => unique.set(`${p.in}:${p.name}`, p));
+  return [...unique.values()];
+}
+
+function renderBackendFeatures(){
+  view().innerHTML = viewHead('Backend Features', 'Schema-driven access to every Accounts Engine route, including future routes added to FastAPI.',
+    `<button class="btn btn-ghost btn-sm" onclick="openApiCredentials()">API credentials</button>
+     <button class="btn btn-ghost btn-sm" onclick="refreshBackendFeatures()">↻ Refresh schema</button>`) +
+    `<div id="api-feature-root"><div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading OpenAPI schema…</td></tr></tbody></table></div></div>`;
+  loadOpenApiSpec().then(renderBackendFeatureShell).catch(e => {
+    document.getElementById('api-feature-root').innerHTML = emptyState('⚠','Could not load backend schema',esc(e.message),`<button class="btn btn-blue" onclick="refreshBackendFeatures()">Retry</button>`);
+  });
+}
+VIEW_RENDERERS['backend-features'] = renderBackendFeatures;
+
+async function refreshBackendFeatures(){
+  STATE.openapi = null; STATE.openapiOperations = []; STATE.apiExplorerSelected = null;
+  renderBackendFeatures();
+}
+
+function openApiCredentials(){
+  gateUrl.value = API_BASE;
+  gateApiKey.value = API_KEY;
+  gate.style.display = 'flex';
+  gateStatus.innerHTML = `<span class="dot ${API_KEY?'up':''}"></span>${API_KEY ? 'An API key is configured for authenticated company requests.' : 'No API key configured. This is valid when ALAADA_ENFORCE_API_AUTH=false.'}`;
+}
+
+function renderBackendFeatureShell(){
+  const ops = STATE.openapiOperations;
+  const tags = [...new Set(ops.map(o=>o.tag))].sort();
+  const writes = ops.filter(o=>o.method!=='GET').length;
+  const root = document.getElementById('api-feature-root');
+  if (!root) return;
+  root.innerHTML = `
+    <div class="api-stat-row">
+      <div class="api-mini-stat"><div class="n">${ops.length}</div><div class="l">Operations</div></div>
+      <div class="api-mini-stat"><div class="n">${tags.length}</div><div class="l">Feature areas</div></div>
+      <div class="api-mini-stat"><div class="n">${ops.filter(o=>o.method==='GET').length}</div><div class="l">Read endpoints</div></div>
+      <div class="api-mini-stat"><div class="n">${writes}</div><div class="l">Write endpoints</div></div>
+    </div>
+    <div class="api-feature-layout">
+      <div class="api-feature-list">
+        <div class="api-feature-toolbar">
+          <div class="toolbar-row">
+            <input type="search" id="api-op-search" placeholder="Search routes, modules or actions…" oninput="filterApiOperations()"/>
+            <select id="api-tag-filter" onchange="filterApiOperations()"><option value="">All modules</option>${tags.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select>
+          </div>
+          <div style="font-size:.7rem;color:var(--ink3);"><span id="api-visible-count">${ops.length}</span> operations shown</div>
+        </div>
+        <div class="api-operation-list" id="api-operation-list">${apiOperationListHtml(ops)}</div>
+      </div>
+      <div class="api-operation-panel" id="api-operation-panel"><div class="api-empty-detail"><div class="empty-icon">⌘</div><h4 style="font-family:'Syne';color:var(--ink);margin-bottom:6px;">Select a backend operation</h4><p>Choose any endpoint to generate its parameters, request body, upload controls, and response viewer.</p></div></div>
+    </div>`;
+  const selectedIndex = STATE.apiExplorerSelected !== null ? STATE.apiExplorerSelected : ops.findIndex(o=>o.tag==='CRM');
+  if (selectedIndex >= 0) selectApiOperation(selectedIndex);
+}
+
+function apiOperationListHtml(ops){
+  return ops.map(o => {
+    const idx = STATE.openapiOperations.indexOf(o);
+    return `<div class="api-operation-item ${STATE.apiExplorerSelected===idx?'active':''}" data-api-index="${idx}" data-search="${esc((o.tag+' '+o.summary+' '+o.path+' '+o.method).toLowerCase())}" data-tag="${esc(o.tag)}" onclick="selectApiOperation(${idx})">
+      <span class="api-method ${o.method.toLowerCase()}">${o.method}</span>
+      <div><div class="op-summary">${esc(o.summary)}</div><div class="op-path">${esc(o.tag)} · ${esc(o.path)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function filterApiOperations(){
+  const q = (document.getElementById('api-op-search').value || '').trim().toLowerCase();
+  const tag = document.getElementById('api-tag-filter').value;
+  let visible = 0;
+  document.querySelectorAll('.api-operation-item').forEach(el => {
+    const show = (!q || el.dataset.search.includes(q)) && (!tag || el.dataset.tag===tag);
+    el.style.display = show ? '' : 'none'; if (show) visible++;
+  });
+  document.getElementById('api-visible-count').textContent = visible;
+}
+
+function selectApiOperation(index){
+  STATE.apiExplorerSelected = index;
+  document.querySelectorAll('.api-operation-item').forEach(el => el.classList.toggle('active', Number(el.dataset.apiIndex)===index));
+  const op = STATE.openapiOperations[index];
+  const panel = document.getElementById('api-operation-panel');
+  if (!op || !panel) return;
+  const params = apiOperationParameters(op);
+  const pathParams = params.filter(p=>p.in==='path');
+  const queryParams = params.filter(p=>p.in==='query');
+  const bodyContent = (op.operation.requestBody && op.operation.requestBody.content) || {};
+  const jsonSchema = bodyContent['application/json'] && bodyContent['application/json'].schema;
+  const multipartSchema = bodyContent['multipart/form-data'] && bodyContent['multipart/form-data'].schema;
+  panel.innerHTML = `
+    <div class="api-operation-head">
+      <div class="api-operation-title"><span class="api-method ${op.method.toLowerCase()}">${op.method}</span><h3>${esc(op.summary)}</h3><span class="pill">${esc(op.tag)}</span></div>
+      <div class="api-operation-path">${esc(op.path)}</div>
+      ${op.operation.description ? `<div class="view-sub" style="margin-top:8px;">${esc(op.operation.description)}</div>` : ''}
+    </div>
+    <div class="api-operation-body">
+      <div class="api-schema-note">Generated from the live FastAPI OpenAPI schema. Company IDs are prefilled from the company picker; other record IDs must be supplied from the relevant list endpoint.</div>
+      ${renderApiParameterSection('Path parameters', pathParams)}
+      ${renderApiParameterSection('Query parameters', queryParams)}
+      ${jsonSchema ? renderApiJsonBody(jsonSchema, !!op.operation.requestBody.required) : ''}
+      ${multipartSchema ? renderApiMultipartBody(multipartSchema) : ''}
+      ${!jsonSchema && !multipartSchema && op.method!=='GET' ? `<div class="api-section"><div class="api-section-title">Request body</div><div class="help-text">This operation does not require a request body.</div></div>` : ''}
+      <div class="api-runbar">
+        <button class="btn ${op.method==='GET'?'btn-blue':op.method==='DELETE'?'btn-danger':'btn-teal'}" id="api-run-btn" onclick="executeApiOperation()">${op.method==='GET'?'Run request':'Execute '+op.method}</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyApiCurl()">Copy cURL</button>
+        <span class="help-text">Operation ID: <span class="mono">${esc(op.operation.operationId||'—')}</span></span>
+      </div>
+      <div id="api-response-slot"></div>
+    </div>`;
+}
+
+function renderApiParameterSection(title, params){
+  if (!params.length) return '';
+  return `<div class="api-section"><div class="api-section-title">${title}</div><div class="api-fields">${params.map((p,i)=>{
+    const schema = apiResolveSchema(p.schema || {});
+    const required = !!p.required;
+    let value = p.name==='company_id' ? (STATE.companyId||'') : (schema.default ?? '');
+    if (!value && schema.format==='date' && required) value=todayStr();
+    const enumOptions = schema.enum ? `<select class="api-param-input" data-param-name="${esc(p.name)}" data-param-in="${esc(p.in)}" data-required="${required}">${!required?'<option value="">— omit —</option>':''}${schema.enum.map(x=>`<option value="${esc(x)}" ${String(x)===String(value)?'selected':''}>${esc(x)}</option>`).join('')}</select>` :
+      `<input class="api-param-input" data-param-name="${esc(p.name)}" data-param-in="${esc(p.in)}" data-required="${required}" type="${schema.format==='date'?'date':(schema.type==='integer'||schema.type==='number')?'number':'text'}" value="${esc(value)}" placeholder="${esc((p.description||schema.description||p.name).slice(0,90))}"/>`;
+    return `<div class="form-row"><label>${esc(p.name)} ${required?'<span class="api-required">*</span>':''}</label>${enumOptions}<div class="api-param-meta">${esc(p.in)} · ${esc(schema.type||schema.format||'string')}${p.description?` · ${esc(p.description)}`:''}</div></div>`;
+  }).join('')}</div></div>`;
+}
+
+function renderApiJsonBody(schema, required){
+  const sample = apiSampleForSchema(schema);
+  return `<div class="api-section"><div class="api-section-title"><span>JSON request body ${required?'<span class="api-required">*</span>':''}</span><span><button class="btn btn-ghost btn-sm" onclick="formatApiJson()">Format</button> <button class="btn btn-ghost btn-sm" onclick="resetApiBodySample()">Reset sample</button></span></div>
+    <textarea id="api-body-json" class="api-json-editor" spellcheck="false">${esc(JSON.stringify(sample===undefined?{}:sample,null,2))}</textarea>
+    <div class="help-text">The starter payload includes required/default fields. Add optional fields from the schema list below.</div>
+    ${apiSchemaFieldsHtml(schema)}</div>`;
+}
+
+function apiSchemaFieldsHtml(schema){
+  const resolved=apiResolveSchema(schema);
+  const props=resolved.properties||{};
+  const required=new Set(resolved.required||[]);
+  if (!Object.keys(props).length) return '';
+  return `<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:.75rem;font-weight:700;">Available request fields (${Object.keys(props).length})</summary><div class="table-wrap" style="margin-top:9px;"><table><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>${Object.entries(props).map(([name,prop])=>{const p=apiResolveSchema(prop);return `<tr><td class="mono">${esc(name)}</td><td>${esc(p.type||p.format||(p.enum?'enum':'object'))}</td><td>${required.has(name)?'<span class="badge badge-cancelled">Required</span>':'—'}</td><td>${esc(p.description||'')}</td></tr>`;}).join('')}</tbody></table></div></details>`;
+}
+
+function formatApiJson(){
+  const editor=document.getElementById('api-body-json');
+  if (!editor) return;
+  try { editor.value=JSON.stringify(JSON.parse(editor.value||'{}'),null,2); }
+  catch(e){ toast(`Invalid JSON: ${e.message}`,'err'); }
+}
+
+function renderApiMultipartBody(schema){
+  const resolved = apiResolveSchema(schema);
+  const required = new Set(resolved.required || []);
+  return `<div class="api-section"><div class="api-section-title">Multipart form data</div><div class="api-fields">${Object.entries(resolved.properties||{}).map(([name,prop])=>{
+    const p = apiResolveSchema(prop);
+    const isFile = p.format==='binary';
+    return `<div class="form-row ${isFile?'api-field-full api-file-row':''}"><label>${esc(name)} ${required.has(name)?'<span class="api-required">*</span>':''}</label>${isFile ? `<input type="file" class="api-multipart-input" data-field-name="${esc(name)}" data-field-type="file"/>` : `<input type="text" class="api-multipart-input" data-field-name="${esc(name)}" data-field-type="text" placeholder="${esc(p.description||name)}"/>`}<div class="api-param-meta">${esc(p.type||p.format||'string')}</div></div>`;
+  }).join('')}</div></div>`;
+}
+
+function resetApiBodySample(){
+  const op = STATE.openapiOperations[STATE.apiExplorerSelected];
+  const schema = op && op.operation.requestBody && op.operation.requestBody.content && op.operation.requestBody.content['application/json'] && op.operation.requestBody.content['application/json'].schema;
+  if (schema && document.getElementById('api-body-json')) document.getElementById('api-body-json').value = JSON.stringify(apiSampleForSchema(schema),null,2);
+}
+
+function buildApiRequest({forCurl=false}={}){
+  const op = STATE.openapiOperations[STATE.apiExplorerSelected];
+  if (!op) throw new Error('No endpoint selected');
+  let path = op.path;
+  const query = new URLSearchParams();
+  document.querySelectorAll('.api-param-input').forEach(input => {
+    const value = input.value;
+    if (input.dataset.required==='true' && !value) throw new Error(`${input.dataset.paramName} is required`);
+    if (input.dataset.paramIn==='path') path = path.replace(`{${input.dataset.paramName}}`, encodeURIComponent(value));
+    else if (input.dataset.paramIn==='query' && value!=='') query.append(input.dataset.paramName, value);
+  });
+  const unresolved = path.match(/\{[^}]+\}/g);
+  if (unresolved) throw new Error(`Missing path parameter: ${unresolved[0]}`);
+  const bodyContent = (op.operation.requestBody && op.operation.requestBody.content) || {};
+  let body = null, formData = null, contentType = null;
+  if (bodyContent['application/json']) {
+    const raw = (document.getElementById('api-body-json') && document.getElementById('api-body-json').value.trim()) || '';
+    if (raw) { try { body=JSON.parse(raw); } catch(e){ throw new Error(`Invalid JSON body: ${e.message}`); } }
+    contentType='application/json';
+  } else if (bodyContent['multipart/form-data']) {
+    formData = new FormData();
+    document.querySelectorAll('.api-multipart-input').forEach(input => {
+      if (input.dataset.fieldType==='file') { if (input.files && input.files[0]) formData.append(input.dataset.fieldName,input.files[0]); }
+      else if (input.value!=='') formData.append(input.dataset.fieldName,input.value);
+    });
+    contentType='multipart/form-data';
+  }
+  return {op,path:path+(query.toString()?`?${query.toString()}`:''),body,formData,contentType};
+}
+
+async function executeApiOperation(){
+  const slot = document.getElementById('api-response-slot');
+  const button = document.getElementById('api-run-btn');
+  try {
+    const req = buildApiRequest();
+    if (req.op.method==='DELETE' && !confirm(`Delete through ${req.op.path}? This action may be irreversible.`)) return;
+    button.disabled=true; button.innerHTML='<span class="spin" style="border-color:rgba(255,255,255,.35);border-top-color:#fff;"></span> Running…';
+    slot.innerHTML = `<div class="api-response"><div class="api-response-body"><span class="spin"></span> Calling backend…</div></div>`;
+    const headers = {};
+    if (API_KEY) headers['X-Alaada-API-Key']=API_KEY;
+    if (req.contentType==='application/json') headers['Content-Type']='application/json';
+    const started = performance.now();
+    const res = await fetch(API_BASE.replace(/\/$/,'') + req.path, {method:req.op.method,headers,body:req.formData || (req.body!==null?JSON.stringify(req.body):undefined)});
+    const elapsed = Math.round(performance.now()-started);
+    const contentType = res.headers.get('content-type') || '';
+    let data;
+    if (contentType.includes('application/json')) data = await res.json();
+    else data = await res.blob();
+    renderApiExecutionResponse(res,data,elapsed,contentType);
+    if (res.ok && !['GET','HEAD'].includes(req.op.method) && STATE.companyId && req.path.startsWith(`/companies/${STATE.companyId}`)) {
+      if (!req.path.includes('/backup')) markBackupNeeded(STATE.companyId);
+      refreshCoreStateAfterWorkbench();
+    }
+  } catch(e){
+    slot.innerHTML = `<div class="api-response"><div class="api-response-head"><span class="api-status-code err">Request error</span></div><div class="api-response-body"><pre>${esc(e.message)}</pre></div></div>`;
+  } finally {
+    if (button) { const op=STATE.openapiOperations[STATE.apiExplorerSelected]; button.disabled=false; button.textContent=op && op.method==='GET'?'Run request':`Execute ${op?op.method:'request'}`; }
+  }
+}
+
+function renderApiExecutionResponse(res,data,elapsed,contentType){
+  const slot = document.getElementById('api-response-slot');
+  const ok = res.ok;
+  if (data instanceof Blob) {
+    const url=URL.createObjectURL(data);
+    const disposition=res.headers.get('content-disposition')||'';
+    const match=disposition.match(/filename\*?=(?:UTF-8''|["'])?([^"';]+)/i);
+    const name=match?decodeURIComponent(match[1].replace(/["']/g,'')):'download.bin';
+    slot.innerHTML=`<div class="api-response"><div class="api-response-head"><span class="api-status-code ${ok?'ok':'err'}">${res.status} ${esc(res.statusText)}</span><span>${elapsed} ms · ${esc(contentType||'binary')}</span></div><div class="api-response-body"><a class="btn btn-blue" href="${url}" download="${esc(name)}">Download ${esc(name)}</a></div></div>`;
+    return;
+  }
+  slot.innerHTML=`<div class="api-response"><div class="api-response-head"><span class="api-status-code ${ok?'ok':'err'}">${res.status} ${esc(res.statusText)}</span><span>${elapsed} ms · ${esc(contentType||'no content')}</span></div><div class="api-response-body">${apiResponseHtml(data)}</div></div>`;
+}
+
+function apiResponseHtml(data){
+  if (data===null || data===undefined || data==='') return '<div class="help-text">No response body.</div>';
+  let rows = null;
+  if (Array.isArray(data)) rows=data;
+  else if (data && Array.isArray(data.items)) rows=data.items;
+  if (rows && rows.length && rows.every(x=>x && typeof x==='object' && !Array.isArray(x))) {
+    const cols=[...new Set(rows.slice(0,20).flatMap(r=>Object.keys(r)))].slice(0,10);
+    const table=`<div class="table-wrap"><table class="api-result-table"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,100).map(r=>`<tr>${cols.map(c=>`<td title="${esc(apiCellValue(r[c]))}">${esc(apiCellValue(r[c]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const meta = data && !Array.isArray(data) ? `<div style="font-size:.72rem;color:var(--ink3);margin-bottom:9px;">${rows.length} item(s)${data.total!==undefined?` · total ${esc(data.total)}`:''}${data.page!==undefined?` · page ${esc(data.page)}`:''}</div>` : `<div style="font-size:.72rem;color:var(--ink3);margin-bottom:9px;">${rows.length} row(s)</div>`;
+    return meta+table+`<details style="margin-top:12px;"><summary style="cursor:pointer;font-size:.75rem;font-weight:700;">Raw JSON</summary><pre style="margin-top:9px;">${esc(JSON.stringify(data,null,2))}</pre></details>`;
+  }
+  return `<pre>${esc(typeof data==='string'?data:JSON.stringify(data,null,2))}</pre>`;
+}
+function apiCellValue(value){
+  if (value===null || value===undefined) return '';
+  if (typeof value==='object') return JSON.stringify(value);
+  return String(value);
+}
+
+function copyApiCurl(){
+  try {
+    const req=buildApiRequest({forCurl:true});
+    const url=API_BASE.replace(/\/$/,'')+req.path;
+    const parts=[`curl -X ${req.op.method}`, `'${url.replace(/'/g,"'\\''")}'`];
+    if (API_KEY) parts.push(`-H 'X-Alaada-API-Key: <YOUR_API_KEY>'`);
+    if (req.contentType==='application/json' && req.body!==null) parts.push(`-H 'Content-Type: application/json'`, `--data '${JSON.stringify(req.body).replace(/'/g,"'\\''")}'`);
+    if (req.contentType==='multipart/form-data') parts.push(`# Add multipart fields with -F 'field=value' and -F 'file=@path'`);
+    navigator.clipboard.writeText(parts.join(' \\\n  ')).then(()=>toast('cURL copied ✓','ok')).catch(()=>toast('Could not copy cURL','err'));
+  } catch(e){ errToast(e); }
+}
+
+async function refreshCoreStateAfterWorkbench(){
+  if (!STATE.companyId) return;
+  try {
+    await Promise.all([loadGroups(),loadLedgers(),loadVoucherTypes(),loadFinancialYears(),loadCustomers(),loadSuppliers(),loadCategories(),loadUoms(),loadWarehouses(),loadStockItems(),loadGstRates(),loadTaxClassifications()]);
+    refreshBalanceBeam();
+  } catch(e){ console.warn('Core state refresh after workbench action failed',e); }
+}
+
 
 /* ============================================================
    AUDIT LOG
