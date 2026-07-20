@@ -800,7 +800,7 @@ function renderNav() {
     </div>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
-      <li><a href="about.html">About</a></li>
+      <li><a href="about-us.html">About</a></li>
       <li><a href="blog.html" class="active">Blog</a></li>
       <li><a href="developers.html">Developers</a></li>
       <li><a href="index.html#orbit-section" class="nav-cta">Try Orbit →</a></li>
@@ -876,7 +876,7 @@ function renderOlderPosts(list) {
 
 function renderSidebar() {
   const top  = topPosts(4);
-  const allTags = ['Orbit AI','Web Analyser','Alaada Sheets','FastAPI','OpenAI','India','Tally','SEO','Solo Build','AI Accounting','Python SDK','Voice AI','Builder'];
+  const allTags = ['Orbit AI','Web Analyser','Alaada Sheets', 'Excel', 'FastAPI','OpenAI','India','Tally','SEO','Solo Build','AI Accounting','Python SDK','Voice AI','Builder'];
 
   const topHTML = top.length ? top.map((p, i) => {
     const c = cat(p.category);
