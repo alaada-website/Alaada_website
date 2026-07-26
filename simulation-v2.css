@@ -1,0 +1,11 @@
+.sim-v2-section{margin-top:10px;border:1px solid var(--wire);border-radius:8px;background:var(--ui-surface)}
+.sim-v2-section>summary{padding:9px 10px;cursor:pointer;color:var(--ui-text-muted);font-size:10px;font-weight:700}
+.sim-v2-fields{display:grid;gap:8px;padding:0 10px 10px;font-size:10px;color:var(--ui-text-muted)}
+.sim-v2-tabs{display:flex;gap:5px;overflow:auto;padding:4px 0 10px;scrollbar-width:thin}
+.sim-v2-tabs button{white-space:nowrap;border:1px solid var(--wire);background:var(--ui-surface);color:var(--ui-text-muted);border-radius:7px;padding:7px 9px;font-size:9.5px}
+.sim-v2-tabs button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.sim-v2-result{border:1px solid var(--wire);border-radius:9px;padding:12px;background:var(--ui-surface-raised);overflow:auto}
+.sim-v2-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px}.sim-v2-card{border:1px solid var(--wire);border-radius:8px;padding:10px;background:var(--ui-surface)}
+.sim-v2-card b{display:block;font-size:14px;margin-top:4px}.sim-v2-warning{border-left:3px solid var(--amber,#e7a93b);padding:8px 10px;background:color-mix(in srgb,var(--amber,#e7a93b) 10%,transparent);margin:6px 0}
+.sim-bound-mode{min-width:110px}
+@media(max-width:700px){#simulateModal>div{width:100%!important;max-height:100vh!important;border-radius:0!important}.sim-builder-grid{grid-template-columns:1fr!important}.sim-v2-grid{grid-template-columns:1fr}.sim-v2-tabs{position:sticky;top:0;background:var(--ink2);z-index:2}}
