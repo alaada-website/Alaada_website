@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/accounts-enterprise.css"/>
 <style>
 /* ============================================================
    ALAADA ACCOUNTS — design tokens (shared with alaada.com)
@@ -102,10 +103,12 @@ button{font-family:inherit;}
 .dot.down{background:var(--red);}
 
 /* ---------- sidebar ---------- */
+.hamburger-btn{display:none;flex-shrink:0;width:34px;height:34px;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--borderM);background:var(--white);cursor:pointer;color:var(--ink2);}
 #sidebar{
   position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--sidebar-w);
   background:var(--white);border-right:1px solid var(--border);
   padding:18px 12px;overflow-y:auto;z-index:100;
+  transition:transform .22s ease;
 }
 .side-group{margin-bottom:18px;}
 .side-label{font-size:.65rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink3);padding:0 10px;margin-bottom:6px;}
@@ -120,14 +123,19 @@ button{font-family:inherit;}
 .side-sub{margin-left:14px;border-left:1px solid var(--border);padding-left:4px;display:none;}
 .side-sub.open{display:block;}
 .side-sub .side-link{font-size:.79rem;padding:6px 10px;}
+#sidebar-backdrop{position:fixed;inset:0;top:var(--topbar-h);background:rgba(18,17,16,.4);z-index:99;display:none;}
+#sidebar-backdrop.open{display:block;}
 
 /* ---------- main ---------- */
 #main{margin-left:var(--sidebar-w);margin-top:var(--topbar-h);flex:1;padding:26px 30px 60px;max-width:1180px;}
 @media(max-width:900px){
-  :root{--sidebar-w:0px;}
-  #sidebar{display:none;}
-  #main{padding:20px 16px 50px;}
+  :root{--sidebar-w:280px;}
+  .hamburger-btn{display:flex;}
+  #sidebar{width:var(--sidebar-w);max-width:84vw;transform:translateX(-100%);box-shadow:var(--sh-md);}
+  #sidebar.open{transform:translateX(0);}
+  #main{margin-left:0;padding:20px 16px 50px;}
 }
+
 
 .view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
 .view-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;}
@@ -228,17 +236,37 @@ select{cursor:pointer;}
 .empty p{font-size:.82rem;max-width:340px;margin:0 auto 18px;}
 
 /* modal */
-.modal-backdrop{position:fixed;inset:0;background:rgba(18,17,16,.45);backdrop-filter:blur(3px);z-index:400;display:none;align-items:flex-start;justify-content:center;padding:60px 16px;overflow-y:auto;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(18,17,16,.45);backdrop-filter:blur(3px);z-index:400;display:none;align-items:center;justify-content:center;padding:16px;overflow:hidden;}
 .modal-backdrop.open{display:flex;}
-.modal{background:var(--white);border-radius:var(--r-lg);box-shadow:var(--sh-md);width:100%;max-width:560px;overflow:hidden;animation:modalIn .18s ease;}
+.modal{background:var(--white);border-radius:var(--r-lg);box-shadow:var(--sh-md);width:100%;max-width:560px;max-height:calc(100vh - 32px);overflow:hidden;animation:modalIn .18s ease;display:flex;flex-direction:column;}
 .modal.wide{max-width:760px;}
 @keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
-.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .modal-head h3{font-family:'Syne';font-weight:800;font-size:1.02rem;letter-spacing:-.3px;}
 .modal-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--bg);color:var(--ink2);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;}
 .modal-close:hover{background:var(--bg2);}
-.modal-body{padding:22px;max-height:70vh;overflow-y:auto;}
-.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:16px 22px;border-top:1px solid var(--border);background:var(--bg);}
+.modal-body{padding:22px;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
+.modal-ai-tools{display:none;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#fbfdff,#f6f8fb);padding:12px 22px;gap:10px;align-items:flex-start;}
+.modal-ai-tools.open{display:grid;grid-template-columns:minmax(180px,1fr) auto;}
+.modal-ai-main{display:flex;gap:8px;align-items:flex-start;min-width:0;}
+.modal-ai-main textarea{min-height:38px;max-height:88px;resize:vertical;padding:8px 10px;font-size:.8rem;}
+.modal-ai-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;}
+.modal-ai-result{grid-column:1/-1;display:none;border:1px solid var(--border);background:var(--white);border-radius:var(--r-sm);padding:10px 12px;font-size:.78rem;color:var(--ink2);max-height:170px;overflow:auto;}
+.modal-ai-result.open{display:block;}
+.modal-ai-result pre{white-space:pre-wrap;font-size:.72rem;}
+@media(max-width:760px){.modal-ai-tools.open{grid-template-columns:1fr}.modal-ai-main,.modal-ai-actions{flex-direction:column;align-items:stretch}.modal-ai-actions .btn{width:100%;}}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:16px 22px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0;}
+@media(max-width:640px){
+  .modal-backdrop{padding:0;align-items:flex-end;}
+  .modal{max-width:100%;width:100%;border-radius:var(--r-lg) var(--r-lg) 0 0;max-height:92vh;animation:modalInMobile .2s ease;}
+  .modal.wide{max-width:100%;}
+  .modal-head{padding:16px 16px;}
+  .modal-body{padding:16px;}
+  .modal-foot{padding:12px 16px;flex-wrap:wrap;}
+  .modal-foot .btn{flex:1 1 auto;justify-content:center;}
+  .modal-ai-tools{padding:10px 16px;}
+}
+@keyframes modalInMobile{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:none;}}
 
 /* toasts */
 #toasts{position:fixed;bottom:22px;right:22px;z-index:600;display:flex;flex-direction:column;gap:8px;max-width:340px;}
@@ -249,7 +277,7 @@ select{cursor:pointer;}
 
 /* local backup reminder */
 #backup-reminder{
-  position:fixed;right:22px;bottom:22px;z-index:590;width:min(380px,calc(100vw - 32px));
+  position:fixed;right:22px;bottom:22px;z-index:350;width:min(380px,calc(100vw - 32px));
   background:var(--white);border:1px solid rgba(212,147,10,.36);border-left:4px solid var(--gold);
   border-radius:var(--r-md);box-shadow:var(--sh-md);padding:13px 14px;display:none;gap:12px;align-items:flex-start;
 }
@@ -347,18 +375,21 @@ select{cursor:pointer;}
     <div class="gate-logo">A</div>
     <h2>Connect to Alaada Accounts</h2>
     <p>Point this dashboard at your Accounts Engine API — running locally, or deployed on Render.</p>
-    <div class="form-row">
-      <label for="gate-url">API base URL</label>
-      <input type="text" id="gate-url" placeholder="http://127.0.0.1:8000" value="https://accounts-0o52.onrender.com"/>
-      <div class="help-text">Saved in this browser only. Change it any time from the status dot in the top bar.</div>
+    <div class="form-row" id="gate-url-row">
+      <label for="gate-url">Accounts server address</label>
+      <input type="text" id="gate-url" placeholder="http://127.0.0.1:8000"/>
+      <div class="help-text">Saved in this browser only. Most people never need to touch this.</div>
     </div>
-    <div class="form-row">
+    <div class="form-row dev-only" id="gate-api-key-row" style="display:none;">
       <label for="gate-api-key">API key <span style="font-weight:500;color:var(--ink3);">(optional unless backend auth is enforced)</span></label>
       <input type="password" id="gate-api-key" placeholder="alaada_…" autocomplete="off"/>
-      <div class="help-text">Sent as <span class="mono">X-Alaada-API-Key</span> for company-scoped endpoints. Stored only in this browser.</div>
+      <div class="help-text">Sent as <span class="mono">X-Alaada-API-Key</span>. Kept in memory for this browser tab only — never saved to disk, cleared on reload.</div>
     </div>
     <button class="btn btn-blue" id="gate-connect" style="width:100%;justify-content:center;">Connect →</button>
     <div class="gate-status" id="gate-status"></div>
+    <div style="margin-top:14px;text-align:center;">
+      <button type="button" class="btn btn-ghost btn-sm" id="gate-dev-toggle" style="font-size:.72rem;color:var(--ink3);" onclick="setDeveloperMode(!DEVELOPER_MODE); document.getElementById('gate-dev-toggle').textContent = DEVELOPER_MODE ? 'Hide developer options' : 'Developer options';">Developer options</button>
+    </div>
   </div>
 </div>
 
@@ -366,6 +397,9 @@ select{cursor:pointer;}
 
   <!-- ============== TOPBAR ============== -->
   <header id="topbar">
+    <button id="hamburger-btn" class="hamburger-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="brand">
       <div class="brand-mark">A</div>
       <div>Accounts<small>by Alaada</small></div>
@@ -408,11 +442,16 @@ select{cursor:pointer;}
   </header>
 
   <!-- ============== SIDEBAR ============== -->
+  <div id="sidebar-backdrop"></div>
   <nav id="sidebar">
     <div class="side-group">
       <div class="side-link active" data-view="dashboard">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
         Dashboard
+      </div>
+      <div class="side-link" data-view="ai-accounting">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="m5.6 5.6 2.1 2.1"/><path d="m16.3 16.3 2.1 2.1"/><path d="m18.4 5.6-2.1 2.1"/><path d="m7.7 16.3-2.1 2.1"/><circle cx="12" cy="12" r="4"/></svg>
+        AI Accounting
       </div>
     </div>
 
@@ -433,6 +472,14 @@ select{cursor:pointer;}
       <div class="side-link" data-view="payments">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
         Payments
+      </div>
+      <div class="side-link" data-view="bill-settlements">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7h12"/><path d="M8 12h12"/><path d="M8 17h12"/><path d="m3 7 1 1 2-2"/><path d="m3 12 1 1 2-2"/><path d="m3 17 1 1 2-2"/></svg>
+        Bill Settlement
+      </div>
+      <div class="side-link" data-view="multi-currency">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/><path d="M12 6v12"/><path d="M16 8c-1.3-1-6.7-1-8 0M8 16c1.3 1 6.7 1 8 0"/></svg>
+        Multi-Currency
       </div>
     </div>
 
@@ -558,10 +605,34 @@ select{cursor:pointer;}
 
     <div class="side-group">
       <div class="side-label">Enterprise</div>
+      <div class="side-link" data-view="ai-assistant">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg>
+        AI Assistant
+      </div>
+      <div class="side-link" data-view="approvals">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-5"/><path d="M21 12a9 9 0 1 1-6.2-8.56"/><path d="M16 3h5v5"/></svg>
+        Approvals
+      </div>
+      <div class="side-link" data-view="notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Notifications
+      </div>
+      <div class="side-link" data-view="automation">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 4 14h7l-1 8 10-13h-7z"/><path d="M4 21h16"/></svg>
+        Automation
+      </div>
+      <div class="side-link" data-view="import-center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/><path d="M5 5h4"/><path d="M15 5h4"/></svg>
+        Import Center
+      </div>
+      <div class="side-link" data-view="internal-api">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/><path d="M18 16l2 2-2 2"/></svg>
+        Internal API
+      </div>
       <div class="side-link" data-view="backend-features">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/><path d="M10 7h4M7 10v4M17 10v4M10 17h4"/></svg>
         Backend Features
-        <span class="api-count-badge" id="api-op-count">336</span>
+        <span class="api-count-badge" id="api-op-count">458</span>
       </div>
     </div>
 
@@ -608,6 +679,18 @@ select{cursor:pointer;}
       <h3 id="modal-title">Title</h3>
       <button class="modal-close" id="modal-close">✕</button>
     </div>
+    <div class="modal-ai-tools" id="modal-ai-tools">
+      <div class="modal-ai-main">
+        <textarea id="modal-ai-prompt" rows="1" placeholder="Ask AI about this form, dictate into a field, or describe a voucher to draft"></textarea>
+      </div>
+      <div class="modal-ai-actions">
+        <button class="btn btn-ghost btn-sm" type="button" id="modal-ai-voice-btn" onclick="toggleModalVoice()">Voice</button>
+        <button class="btn btn-ghost btn-sm" type="button" id="modal-ai-assist-btn" onclick="runModalAi('assist')">Ask AI</button>
+        <button class="btn btn-ghost btn-sm" type="button" id="modal-ai-field-btn" onclick="runModalAi('field')">Suggest field</button>
+        <button class="btn btn-blue btn-sm" type="button" id="modal-ai-voucher-btn" onclick="runModalAi('voucher')">Draft voucher</button>
+      </div>
+      <div class="modal-ai-result" id="modal-ai-result"></div>
+    </div>
     <div class="modal-body" id="modal-body"></div>
     <div class="modal-foot" id="modal-foot"></div>
   </div>
@@ -620,14 +703,51 @@ select{cursor:pointer;}
    ============================================================ */
 const LS = {
   api: 'alaada_acc_api',
-  apiKey: 'alaada_acc_api_key',
+  devMode: 'alaada_acc_dev_mode', // UI preference only — never a credential
   company: 'alaada_acc_company',
   dirtyBackup: 'alaada_acc_backup_dirty_',
   backupReminderDismissed: 'alaada_acc_backup_reminder_dismissed_',
 };
-const DEFAULT_API = 'https://accounts-0o52.onrender.com';
-let API_BASE = localStorage.getItem(LS.api) || DEFAULT_API;
-let API_KEY = localStorage.getItem(LS.apiKey) || '';
+
+/* ============================================================
+   DEVELOPER MODE
+   A UI preference (not a security boundary — this is a client-side
+   app, so a technical user can always flip it). It exists to keep
+   backend/API-shaped concepts (raw URLs, API keys, OpenAPI explorer,
+   internal endpoint browser) out of the way of everyday business
+   users, who should never need to see them.
+   ============================================================ */
+let DEVELOPER_MODE = localStorage.getItem(LS.devMode) === '1';
+function setDeveloperMode(on){
+  DEVELOPER_MODE = !!on;
+  if (DEVELOPER_MODE) localStorage.setItem(LS.devMode, '1'); else localStorage.removeItem(LS.devMode);
+  applyDeveloperModeVisibility();
+}
+
+/* ============================================================
+   API BASE URL RESOLUTION
+   Single source of truth, resolved in this order:
+     1. window.ALAADA_CONFIG.apiBase   (runtime/deploy-time config)
+     2. <meta name="alaada-api-base">  (static hosting config)
+     3. a URL the user has explicitly connected to before (this browser)
+     4. the public Alaada Accounts backend, as a last-resort fallback
+   No other part of this file should hardcode a backend URL.
+   ============================================================ */
+const FALLBACK_API = 'https://accounts-0o52.onrender.com';
+function resolveApiBase(){
+  if (window.ALAADA_CONFIG && window.ALAADA_CONFIG.apiBase) return window.ALAADA_CONFIG.apiBase.replace(/\/$/,'');
+  const meta = document.querySelector('meta[name="alaada-api-base"]');
+  if (meta && meta.content) return meta.content.trim().replace(/\/$/,'');
+  const stored = localStorage.getItem(LS.api);
+  if (stored) return stored.replace(/\/$/,'');
+  return FALLBACK_API;
+}
+let API_BASE = resolveApiBase();
+// API key lives in memory only for the current page session. It is never
+// written to localStorage/sessionStorage — closing or reloading the tab
+// clears it, by design. Only relevant when self-hosting with
+// ALAADA_ENFORCE_API_AUTH=true; the public deployment does not require it.
+let API_KEY = '';
 let STATE = {
   companies: [],
   companyId: localStorage.getItem(LS.company) || null,
@@ -896,6 +1016,14 @@ function toast(msg, type='') {
   setTimeout(() => el.remove(), 4200);
 }
 function errToast(e){ toast(e.message || 'Something went wrong', 'err'); console.error(e); }
+async function copyText(text){
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Copied', 'ok');
+  } catch(e) {
+    toast(text, 'ok');
+  }
+}
 
 /* ============================================================
    FORMAT HELPERS
@@ -915,17 +1043,213 @@ function el(html){ const t = document.createElement('template'); t.innerHTML = h
    MODAL
    ============================================================ */
 const modalBackdrop = document.getElementById('modal-backdrop');
-function openModal({title, bodyHtml, footHtml, wide=false, onMount=null}) {
+let modalVoiceRecognizer = null;
+let modalVoiceTargetId = null;
+
+// Default AI context: full toolbar, assumes the modal belongs to the
+// current company (true for the large majority of forms: vouchers,
+// customers, invoices, bills, etc.)
+const DEFAULT_MODAL_AI = {enabled:true, allowVoice:true, allowAssistant:true, allowFieldSuggestion:true, allowDraftTransaction:true, requiresCompany:true};
+let currentModalAi = DEFAULT_MODAL_AI;
+
+let modalLastFocused = null;
+function openModal({title, bodyHtml, footHtml, wide=false, onMount=null, ai=null}) {
+  modalLastFocused = document.activeElement;
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-body').innerHTML = bodyHtml;
   document.getElementById('modal-foot').innerHTML = footHtml || '';
   document.getElementById('modal').classList.toggle('wide', wide);
+  currentModalAi = {...DEFAULT_MODAL_AI, ...(ai || {})};
+  resetModalAiTools();
+  applyModalAiConfig();
   modalBackdrop.classList.add('open');
   if (onMount) onMount();
+  requestAnimationFrame(() => {
+    const first = document.querySelector('#modal-body input:not([type=hidden]):not([disabled]), #modal-body select:not([disabled]), #modal-body textarea:not([disabled])');
+    (first || document.getElementById('modal-close')).focus();
+  });
 }
-function closeModal(){ modalBackdrop.classList.remove('open'); }
+function applyModalAiConfig(){
+  const cfg = currentModalAi;
+  const tools = document.getElementById('modal-ai-tools');
+  if (!tools) return;
+  if (!cfg.enabled) { tools.style.display = 'none'; return; }
+  tools.style.display = '';
+  const noCompanyYet = cfg.requiresCompany && !STATE.companyId;
+  const setBtn = (id, allowed, disabledReason) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    if (!allowed) { btn.style.display = 'none'; return; }
+    btn.style.display = '';
+    const disabled = noCompanyYet && id !== 'modal-ai-voice-btn';
+    btn.disabled = disabled;
+    btn.title = disabled ? (disabledReason || 'AI assistance is not available for this form yet') : '';
+  };
+  setBtn('modal-ai-voice-btn', cfg.allowVoice);
+  setBtn('modal-ai-assist-btn', cfg.allowAssistant, 'Create or select a company first to use Ask AI.');
+  setBtn('modal-ai-field-btn', cfg.allowFieldSuggestion, 'Create or select a company first to use field suggestions.');
+  setBtn('modal-ai-voucher-btn', cfg.allowDraftTransaction, 'Create or select a company first to draft a transaction.');
+  const promptEl = document.getElementById('modal-ai-prompt');
+  if (promptEl) {
+    promptEl.placeholder = cfg.allowDraftTransaction
+      ? 'Ask AI about this form, dictate into a field, or describe a voucher to draft'
+      : 'Ask AI about this form, or dictate into a field';
+  }
+}
+function closeModal(){
+  if (modalVoiceRecognizer) { modalVoiceRecognizer.stop(); modalVoiceRecognizer = null; }
+  modalBackdrop.classList.remove('open');
+  if (modalLastFocused && document.contains(modalLastFocused)) modalLastFocused.focus();
+  modalLastFocused = null;
+}
 document.getElementById('modal-close').onclick = closeModal;
 modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) closeModal(); });
+document.addEventListener('keydown', e => {
+  if (!modalBackdrop.classList.contains('open')) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+  if (e.key === 'Tab') {
+    const modalEl = document.getElementById('modal');
+    const focusable = Array.from(modalEl.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      .filter(el => !el.disabled && el.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+
+function resetModalAiTools(){
+  const tools = document.getElementById('modal-ai-tools');
+  const prompt = document.getElementById('modal-ai-prompt');
+  const result = document.getElementById('modal-ai-result');
+  const voiceBtn = document.getElementById('modal-ai-voice-btn');
+  if (tools) tools.classList.add('open');
+  if (prompt) prompt.value = '';
+  if (result) { result.className = 'modal-ai-result'; result.innerHTML = ''; }
+  if (voiceBtn) voiceBtn.textContent = 'Voice';
+  modalVoiceTargetId = null;
+}
+
+function modalFocusableFields(){
+  return Array.from(document.querySelectorAll('#modal-body input:not([type=hidden]):not([type=button]):not([type=submit]), #modal-body textarea, #modal-body select'))
+    .filter(el => !el.disabled && el.offsetParent !== null);
+}
+
+function modalFieldLabel(field){
+  const row = field.closest('.form-row');
+  const label = row && row.querySelector('label');
+  return (label ? label.textContent : (field.placeholder || field.id || field.name || field.tagName)).replace(/\s+/g,' ').trim();
+}
+
+function modalFormSnapshot(){
+  return modalFocusableFields().map(field => ({
+    id: field.id || field.name || '',
+    label: modalFieldLabel(field),
+    type: field.tagName === 'SELECT' ? 'select' : (field.type || field.tagName).toLowerCase(),
+    value: field.type === 'checkbox' ? field.checked : field.value
+  }));
+}
+
+function modalActiveTextField(){
+  const active = document.activeElement;
+  if (active && active.closest && active.closest('#modal-body') && ['INPUT','TEXTAREA'].includes(active.tagName) && active.type !== 'checkbox') {
+    if (!active.id) active.id = `modal-field-${Date.now()}`;
+    modalVoiceTargetId = active.id;
+    return active;
+  }
+  if (modalVoiceTargetId) return document.getElementById(modalVoiceTargetId);
+  return null;
+}
+
+function setModalAiResult(html){
+  const result = document.getElementById('modal-ai-result');
+  if (!result) return;
+  result.classList.add('open');
+  result.innerHTML = html;
+}
+
+function modalAiResponseHtml(data){
+  if (!data) return '<div class="help-text">No AI response.</div>';
+  const answer = data.answer || data.assistant_message || data.message || '';
+  const result = data.result || data;
+  return `<div style="font-weight:800;margin-bottom:6px;">AI tools</div>
+    ${answer ? `<div class="help-text" style="margin-bottom:8px;">${esc(answer)}</div>` : ''}
+    <pre>${esc(JSON.stringify(result,null,2))}</pre>`;
+}
+
+async function runModalAi(mode){
+  const cfg = currentModalAi;
+  if (mode !== 'field' && mode !== 'assist' && !cfg.allowDraftTransaction) return;
+  if (cfg.requiresCompany && !STATE.companyId) {
+    setModalAiResult(`<div class="help-text">Create or select a company first — AI tools need a company to work with.</div>`);
+    return;
+  }
+  const promptEl = document.getElementById('modal-ai-prompt');
+  const prompt = (promptEl && promptEl.value.trim()) || '';
+  const title = document.getElementById('modal-title').textContent || 'Modal';
+  const fields = modalFormSnapshot();
+  if (mode !== 'field' && !prompt) return toast('Enter a prompt or use voice first.','err');
+  setModalAiResult(`<span class="spin"></span> AI is working…`);
+  try {
+    if (mode === 'voucher') {
+      const result = await api(`/companies/${STATE.companyId}/ai/natural-language-accounting`, {
+        method:'POST',
+        body:{text:prompt, language:'auto', create_draft:true, source_modal:title, form_context:fields}
+      });
+      setModalAiResult(aiAccountingResultHtml(result));
+      await Promise.all([loadLedgers(), loadVoucherTypes(), loadFinancialYears()]);
+      refreshBalanceBeam();
+      toast('AI draft voucher created for review','ok');
+      return;
+    }
+    const focused = modalActiveTextField();
+    const message = mode === 'field'
+      ? `Suggest a concise value for the focused field in modal "${title}". Focused field: ${focused ? modalFieldLabel(focused) : 'none'}. Current form fields: ${JSON.stringify(fields)}. User prompt: ${prompt || 'Use the form context.'}`
+      : `Assist with modal "${title}". User prompt: ${prompt}. Current form fields: ${JSON.stringify(fields)}. Provide practical accounting, GST, data-entry, validation, or workflow guidance.`;
+    const data = await api(`/companies/${STATE.companyId}/ai/conversation`, {method:'POST', body:{message, intent:'business_advisor', limit:10}});
+    setModalAiResult(modalAiResponseHtml(data));
+  } catch(e) {
+    setModalAiResult(`<div class="help-text">AI request failed: ${esc(e.message)}</div>`);
+    errToast(e);
+  }
+}
+
+function writeModalVoiceTranscript(transcript){
+  const target = modalActiveTextField();
+  const prompt = document.getElementById('modal-ai-prompt');
+  if (target && document.activeElement === target) {
+    target.value = transcript;
+    target.dispatchEvent(new Event('input', {bubbles:true}));
+    target.dispatchEvent(new Event('change', {bubbles:true}));
+  } else if (prompt) {
+    prompt.value = transcript;
+  }
+}
+
+function toggleModalVoice(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return toast('Voice input is not supported in this browser.','err');
+  const button = document.getElementById('modal-ai-voice-btn');
+  if (modalVoiceRecognizer) {
+    modalVoiceRecognizer.stop();
+    modalVoiceRecognizer = null;
+    if (button) button.textContent = 'Voice';
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-IN';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.onstart = () => { if (button) button.textContent = 'Listening…'; };
+  recognition.onresult = event => {
+    const transcript = Array.from(event.results).map(r => r[0].transcript).join(' ').trim();
+    if (transcript) writeModalVoiceTranscript(transcript);
+  };
+  recognition.onerror = event => toast(event.error || 'Voice input failed', 'err');
+  recognition.onend = () => { modalVoiceRecognizer = null; if (button) button.textContent = 'Voice'; };
+  modalVoiceRecognizer = recognition;
+  recognition.start();
+}
 
 /* ============================================================
    API GATE
@@ -933,13 +1257,13 @@ modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) c
 const gate = document.getElementById('gate');
 const gateUrl = document.getElementById('gate-url');
 const gateApiKey = document.getElementById('gate-api-key');
-gateApiKey.value = API_KEY;
 const gateStatus = document.getElementById('gate-status');
+gateUrl.value = API_BASE;
 
 async function tryConnect(url, {silent=false} = {}) {
-  API_BASE = url.trim().replace(/\/$/,'');
-  API_KEY = gateApiKey.value.trim();
-  if (API_KEY) localStorage.setItem(LS.apiKey, API_KEY); else localStorage.removeItem(LS.apiKey);
+  API_BASE = (url || '').trim().replace(/\/$/,'') || FALLBACK_API;
+  // API key is intentionally read but never persisted — see API_KEY declaration above.
+  API_KEY = DEVELOPER_MODE ? gateApiKey.value.trim() : API_KEY;
   if (!silent) { gateStatus.innerHTML = '<span class="spin"></span> Connecting…'; }
   try {
     const res = await fetch(API_BASE + '/health');
@@ -951,7 +1275,7 @@ async function tryConnect(url, {silent=false} = {}) {
     return true;
   } catch(e) {
     setApiStatus('down');
-    if (!silent) gateStatus.innerHTML = '⚠ Could not connect to <span class="mono">'+esc(API_BASE)+'</span>. Check the URL, CORS settings, and that the server is running.';
+    if (!silent) gateStatus.innerHTML = '⚠ Could not connect to <span class="mono">'+esc(API_BASE)+'</span>. Check the address and that the server is running.';
     return false;
   }
 }
@@ -965,11 +1289,32 @@ function setApiStatus(state){
   label.textContent = state==='up' ? (API_KEY ? 'Connected · secured' : 'Connected') : (state==='connecting' ? 'Connecting…' : 'Offline');
 }
 document.getElementById('api-status').onclick = () => {
-  gateUrl.value = API_BASE || DEFAULT_API;
-  gateApiKey.value = API_KEY;
+  gateUrl.value = API_BASE || FALLBACK_API;
+  if (DEVELOPER_MODE) gateApiKey.value = API_KEY;
   gate.style.display = 'flex';
   gateStatus.textContent = '';
 };
+
+/* ============================================================
+   DEVELOPER MODE — show/hide gate
+   Toggled from the "Developer options" link on the connect screen,
+   or from Settings once connected. Purely a visibility switch for
+   backend/API-shaped UI; never gates data access.
+   ============================================================ */
+function applyDeveloperModeVisibility(){
+  const urlRow = document.getElementById('gate-url-row');
+  const keyRow = document.getElementById('gate-api-key-row');
+  if (urlRow) urlRow.style.display = DEVELOPER_MODE ? '' : 'none';
+  if (keyRow) keyRow.style.display = DEVELOPER_MODE ? '' : 'none';
+  const toggleBtn = document.getElementById('gate-dev-toggle');
+  if (toggleBtn) toggleBtn.textContent = DEVELOPER_MODE ? 'Hide developer options' : 'Developer options';
+  document.querySelectorAll('.side-link[data-view="backend-features"], .side-link[data-view="internal-api"]')
+    .forEach(el => { el.style.display = DEVELOPER_MODE ? '' : 'none'; });
+  if (!DEVELOPER_MODE && ['backend-features','internal-api'].includes(STATE.currentView)) {
+    navigate('dashboard');
+  }
+}
+applyDeveloperModeVisibility();
 
 /* ============================================================
    BOOTSTRAP
@@ -992,20 +1337,33 @@ async function pollHealth(){
    take up to ~60s to wake from sleep), showing a friendly inline
    state in the main view instead of a full-screen prompt.
    ============================================================ */
+function technicalDetails(rows){
+  if (!DEVELOPER_MODE) return '';
+  const items = rows.filter(r => r && r[1] != null && r[1] !== '');
+  if (!items.length) return '';
+  return `<details style="margin-top:14px;text-align:left;max-width:420px;margin-left:auto;margin-right:auto;">
+    <summary style="cursor:pointer;font-size:.76rem;color:var(--ink3);">Technical details</summary>
+    <div class="card card-pad" style="margin-top:8px;font-size:.76rem;">
+      ${items.map(([k,v]) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v mono">${esc(String(v))}</span></div>`).join('')}
+    </div>
+  </details>`;
+}
 function renderConnectingView(attempt){
   view().innerHTML = `<div class="empty" style="padding-top:80px;">
     <div class="empty-icon"><span class="spin" style="width:26px;height:26px;border-width:3px;"></span></div>
-    <h4>${attempt>1 ? 'Still waking things up…' : 'Connecting to your Accounts Engine…'}</h4>
+    <h4>${attempt>1 ? 'Still starting up…' : 'Alaada Accounts is starting…'}</h4>
     <p>${attempt>1
-        ? `Free-tier services on Render can take up to a minute to wake from sleep. Retrying automatically (attempt ${attempt}).`
-        : `Reaching <span class="mono">${esc(API_BASE)}</span>`}</p>
+        ? `This can take up to a minute the first time. Retrying automatically.`
+        : `Setting things up for you.`}</p>
+    ${technicalDetails([['Endpoint', API_BASE], ['Attempt', attempt]])}
   </div>`;
 }
 function renderOfflineView(){
-  view().innerHTML = emptyState('⚠','Could not connect',
-    `Couldn't reach <span class="mono">${esc(API_BASE)}</span>. It may be asleep, unreachable, or blocking this origin (CORS).`,
+  view().innerHTML = emptyState('⚠','We could not connect to Accounts',
+    `The connection couldn't be completed. Check your internet connection and try again.`,
     `<button class="btn btn-blue" onclick="startAutoConnect()">Retry now</button>
-     <button class="btn btn-ghost" onclick="document.getElementById('api-status').click()" style="margin-left:8px;">Change API URL</button>`);
+     <button class="btn btn-ghost" onclick="document.getElementById('api-status').click()" style="margin-left:8px;">Connection settings</button>`
+    + technicalDetails([['Endpoint', API_BASE]]));
 }
 async function renderOfflineBackupView(){
   let backup = null;
@@ -1017,7 +1375,7 @@ async function renderOfflineBackupView(){
     view().innerHTML = `
       <div class="empty" style="padding-top:58px;max-width:820px;margin:0 auto;">
         <div class="empty-icon">!</div>
-        <h4>Cloud database unavailable</h4>
+        <h4>The server is online, but the database isn't ready yet</h4>
         <p>Opened the latest local backup for <strong>${esc(backup.companyName)}</strong> from this device (${saved}).</p>
         <div class="stat-grid" style="margin-top:18px;text-align:left;">
           ${summary.map(item => `<div class="stat"><span>${esc(item.label)}</span><strong>${esc(item.value)}</strong></div>`).join('')}
@@ -1028,6 +1386,7 @@ async function renderOfflineBackupView(){
           <button class="btn btn-teal" onclick="restoreOfflineBackup()" style="margin-left:8px;">Restore after reconnect</button>
           <button class="btn btn-ghost" onclick="downloadOfflineBackup()" style="margin-left:8px;">Download backup</button>
         </div>
+        ${technicalDetails([['Endpoint', API_BASE]])}
       </div>`;
     return;
   }
@@ -1072,8 +1431,13 @@ async function loadCompanies() {
     const page = await api('/companies', {qs:{page:1, page_size:100}});
     STATE.companies = page.items || [];
   } catch(e) { STATE.companies = []; errToast(e); }
+  const selectedStillExists = STATE.companies.some(company => company.id === STATE.companyId);
+  if (!selectedStillExists) {
+    STATE.companyId = STATE.companies[0]?.id || null;
+    if (STATE.companyId) localStorage.setItem(LS.company, STATE.companyId);
+    else localStorage.removeItem(LS.company);
+  }
   renderCompanyMenu();
-  if (!STATE.companyId && STATE.companies.length) STATE.companyId = STATE.companies[0].id;
   if (STATE.companyId) await selectCompany(STATE.companyId, {silentNav:true});
   else { STATE.company = null; document.getElementById('co-current').textContent = 'No company'; updateBackupReminder(); }
 }
@@ -1190,12 +1554,32 @@ document.getElementById('balance-beam').onclick = () => navigate('report-trial-b
 function view(){ return document.getElementById('view'); }
 function renderSidebarRouting(){
   document.querySelectorAll('.side-link[data-view]').forEach(l => {
-    l.onclick = () => navigate(l.dataset.view);
+    l.onclick = () => { navigate(l.dataset.view); closeSidebarDrawer(); };
   });
 }
 const VIEW_RENDERERS = {}; // filled below
 
+/* ---------- mobile nav drawer ---------- */
+function openSidebarDrawer(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-backdrop').classList.add('open');
+  document.getElementById('hamburger-btn').setAttribute('aria-expanded','true');
+}
+function closeSidebarDrawer(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('open');
+  document.getElementById('hamburger-btn').setAttribute('aria-expanded','false');
+}
+document.getElementById('hamburger-btn').onclick = () => {
+  document.getElementById('sidebar').classList.contains('open') ? closeSidebarDrawer() : openSidebarDrawer();
+};
+document.getElementById('sidebar-backdrop').onclick = closeSidebarDrawer;
+window.addEventListener('resize', () => { if (window.innerWidth > 900) closeSidebarDrawer(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebarDrawer(); });
+
+const DEV_ONLY_VIEWS = ['backend-features', 'internal-api'];
 function navigate(v){
+  if (DEV_ONLY_VIEWS.includes(v) && !DEVELOPER_MODE) v = 'dashboard';
   STATE.currentView = v;
   document.querySelectorAll('.side-link[data-view]').forEach(l => l.classList.toggle('active', l.dataset.view===v));
   const fn = VIEW_RENDERERS[v] || renderDashboard;
@@ -1606,7 +1990,7 @@ async function submitVoucherForm(){
 }
 
 async function openVoucherDetail(id){
-  openModal({title:'Voucher', wide:true, bodyHtml:`<div id="vd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  openModal({title:'Voucher', wide:true, ai:{enabled:false}, bodyHtml:`<div id="vd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   try {
     const v = await api(`/companies/${STATE.companyId}/vouchers/${id}`);
     const cur = STATE.company.base_currency;
@@ -1742,6 +2126,372 @@ async function submitPaymentForm(){
     toast('Payment recorded ✓','ok'); closeModal(); refreshBalanceBeam();
     if (STATE.currentView==='payments') loadPaymentTable();
   } catch(e){ errToast(e); }
+}
+
+/* ============================================================
+   BILL-WISE SETTLEMENTS
+   ============================================================ */
+async function renderBillSettlements(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Bill Settlement', 'Bill-wise receivables, payables, advances, excess credits, note adjustments and write-offs.',
+    `<button class="btn btn-ghost btn-sm" onclick="openSettlementForm()">Allocate</button>
+     <button class="btn btn-blue btn-sm" onclick="openWriteOffForm()">Write off</button>`) +
+    `<div id="settlement-body"></div>`;
+  loadBillSettlements();
+}
+VIEW_RENDERERS['bill-settlements'] = renderBillSettlements;
+
+async function loadBillSettlements(){
+  const body = document.getElementById('settlement-body');
+  body.innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading bill-wise settlements...</td></tr></tbody></table></div>`;
+  try {
+    const [settlements, receivableCredits, payableCredits] = await Promise.all([
+      api(`/companies/${STATE.companyId}/credit-control/settlements`, {qs:{page_size:100}}),
+      api(`/companies/${STATE.companyId}/credit-control/unallocated-credits`, {qs:{settlement_kind:'RECEIVABLE'}}),
+      api(`/companies/${STATE.companyId}/credit-control/unallocated-credits`, {qs:{settlement_kind:'PAYABLE'}}),
+    ]);
+    const cur = STATE.company.base_currency;
+    const rows = settlements.items || [];
+    body.innerHTML = `
+      <div class="grid grid-3" style="margin-bottom:16px;">
+        <div class="stat-card c-blue"><div class="stat-label">Allocations</div><div class="stat-value">${settlements.meta.total}</div></div>
+        <div class="stat-card ${receivableCredits.length?'c-gold':'c-teal'}"><div class="stat-label">Receivable Credits</div><div class="stat-value">${money(receivableCredits.reduce((s,r)=>s+Number(r.unallocated_amount||0),0),cur)}</div></div>
+        <div class="stat-card ${payableCredits.length?'c-gold':'c-teal'}"><div class="stat-label">Payable Credits</div><div class="stat-value">${money(payableCredits.reduce((s,r)=>s+Number(r.unallocated_amount||0),0),cur)}</div></div>
+      </div>
+      <div class="grid grid-2" style="margin-bottom:16px;">
+        ${settlementCreditCardHtml('Receivable advances / excess', receivableCredits, cur)}
+        ${settlementCreditCardHtml('Payable advances / excess', payableCredits, cur)}
+      </div>
+      <div class="card card-pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <div style="font-weight:800;">Settlement register</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="openSettlementForm()">Allocate</button><button class="btn btn-ghost btn-sm" onclick="openWriteOffForm()">Write off</button></div>
+        </div>
+        ${rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Kind</th><th>Target</th><th>Source</th><th class="num">Amount</th><th>Voucher</th></tr></thead><tbody>${rows.map(r=>`<tr>
+          <td>${fmtDate(r.allocation_date)}</td>
+          <td><span class="badge badge-${r.settlement_kind==='RECEIVABLE'?'active':'draft'}">${esc(r.settlement_kind)}</span></td>
+          <td><span class="mono">${esc(r.target_document_type)}</span><div style="font-size:.68rem;color:var(--ink3);">${esc(r.target_document_id.slice(0,12))}...</div></td>
+          <td><span class="mono">${esc(r.source_document_type)}</span><div style="font-size:.68rem;color:var(--ink3);">${esc(r.source_document_id.slice(0,12))}...</div></td>
+          <td class="num">${money(r.amount,cur)}</td>
+          <td class="mono">${r.voucher_id ? esc(r.voucher_id.slice(0,10))+'...' : '-'}</td>
+        </tr>`).join('')}</tbody></table></div>` : emptyState('✓','No explicit settlements yet','Allocations will appear here after receipts, payments, notes or write-offs are matched to bills.')}
+      </div>`;
+  } catch(e){ body.innerHTML = emptyState('⚠','Could not load bill settlements', esc(e.message)); }
+}
+
+function settlementCreditCardHtml(title, credits, cur){
+  return `<div class="card card-pad">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-weight:800;">${esc(title)}</div><span class="pill">${credits.length}</span></div>
+    ${credits.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Source</th><th>Party</th><th class="num">Open</th></tr></thead><tbody>${credits.slice(0,8).map(r=>`<tr><td>${fmtDate(r.source_date)}</td><td><span class="mono">${esc(r.source_document_type)}</span><div style="font-size:.68rem;color:var(--ink3);">${esc(r.source_number||r.source_document_id.slice(0,10))}</div></td><td>${esc(r.party_name)}</td><td class="num">${money(r.unallocated_amount,cur)}</td></tr>`).join('')}</tbody></table></div>` : '<div style="font-size:.8rem;color:var(--ink3);">No unallocated credits.</div>'}
+  </div>`;
+}
+
+function openSettlementForm(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'Allocate bill settlement',
+    wide:true,
+    bodyHtml:`<div class="form-grid">
+      <div class="form-row"><label>Kind</label><select id="bs-kind"><option>RECEIVABLE</option><option>PAYABLE</option></select></div>
+      <div class="form-row"><label>Target type</label><select id="bs-target-type"><option>SALES_INVOICE</option><option>PURCHASE_BILL</option></select></div>
+      <div class="form-row"><label>Target document id</label><input id="bs-target-id"></div>
+      <div class="form-row"><label>Source type</label><select id="bs-source-type"><option>PAYMENT</option><option>CREDIT_NOTE</option><option>DEBIT_NOTE</option></select></div>
+      <div class="form-row"><label>Source document id</label><input id="bs-source-id"></div>
+      <div class="form-row"><label>Amount</label><input id="bs-amount" type="number" step="0.01"></div>
+      <div class="form-row"><label>Date</label><input id="bs-date" type="date" value="${todayStr()}"></div>
+    </div>
+    <div class="form-row"><label>Notes</label><input id="bs-notes"></div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="bs-save">Allocate</button>`
+  });
+  document.getElementById('bs-save').onclick = async () => {
+    try {
+      await api(`/companies/${STATE.companyId}/credit-control/settlements`, {method:'POST', body:{
+        settlement_kind: document.getElementById('bs-kind').value,
+        target_document_type: document.getElementById('bs-target-type').value,
+        target_document_id: document.getElementById('bs-target-id').value.trim(),
+        source_document_type: document.getElementById('bs-source-type').value,
+        source_document_id: document.getElementById('bs-source-id').value.trim(),
+        amount: document.getElementById('bs-amount').value || '0',
+        allocation_date: document.getElementById('bs-date').value,
+        notes: document.getElementById('bs-notes').value.trim() || null,
+      }});
+      toast('Settlement allocated ✓','ok'); closeModal(); loadBillSettlements();
+    } catch(e){ errToast(e); }
+  };
+}
+
+function openWriteOffForm(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'Write off bill balance',
+    wide:true,
+    bodyHtml:`<div class="form-grid">
+      <div class="form-row"><label>Kind</label><select id="wo-kind"><option>RECEIVABLE</option><option>PAYABLE</option></select></div>
+      <div class="form-row"><label>Target type</label><select id="wo-target-type"><option>SALES_INVOICE</option><option>PURCHASE_BILL</option></select></div>
+      <div class="form-row"><label>Target document id</label><input id="wo-target-id"></div>
+      <div class="form-row"><label>Write-off ledger</label><select id="wo-ledger">${ledgerOptionsHtml()}</select></div>
+      <div class="form-row"><label>Amount</label><input id="wo-amount" type="number" step="0.01"></div>
+      <div class="form-row"><label>Date</label><input id="wo-date" type="date" value="${todayStr()}"></div>
+    </div>
+    <div class="form-row"><label>Notes</label><input id="wo-notes"></div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="wo-save">Post write-off</button>`
+  });
+  document.getElementById('wo-save').onclick = async () => {
+    try {
+      await api(`/companies/${STATE.companyId}/credit-control/write-offs`, {method:'POST', body:{
+        settlement_kind: document.getElementById('wo-kind').value,
+        target_document_type: document.getElementById('wo-target-type').value,
+        target_document_id: document.getElementById('wo-target-id').value.trim(),
+        writeoff_ledger_id: document.getElementById('wo-ledger').value,
+        amount: document.getElementById('wo-amount').value || '0',
+        writeoff_date: document.getElementById('wo-date').value,
+        notes: document.getElementById('wo-notes').value.trim() || null,
+      }});
+      toast('Write-off posted ✓','ok'); closeModal(); refreshBalanceBeam(); loadBillSettlements();
+    } catch(e){ errToast(e); }
+  };
+}
+
+/* ============================================================
+   MULTI-CURRENCY
+   ============================================================ */
+async function renderMultiCurrency(){
+  if (!requireCompany()) return;
+  const today = todayStr();
+  view().innerHTML = viewHead('Multi-Currency', `Exchange rates, foreign invoices, foreign payments and unrealized revaluation in ${esc(STATE.company.base_currency||'INR')}.`,
+    `<button class="btn btn-ghost btn-sm" onclick="openExchangeRateForm()">Add rate</button>
+     <button class="btn btn-ghost btn-sm" onclick="openFxSettlementForm()">Realize FX</button>
+     <button class="btn btn-blue btn-sm" onclick="openFxDocumentForm()">Track document</button>`) +
+    `<div class="card card-pad" style="margin-bottom:16px;">
+      <div class="toolbar-row">
+        <div class="form-row" style="margin-bottom:0;max-width:180px;"><label>Currency</label><input id="fx-currency-filter" maxlength="3" placeholder="USD"></div>
+        <div class="form-row" style="margin-bottom:0;max-width:190px;"><label>Revalue as of</label><input id="fx-asof" type="date" value="${today}"></div>
+        <button class="btn btn-ghost btn-sm" onclick="loadMultiCurrency()">Refresh</button>
+      </div>
+    </div>
+    <div id="fx-root"><div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading multi-currency...</td></tr></tbody></table></div></div>`;
+  loadMultiCurrency();
+}
+VIEW_RENDERERS['multi-currency'] = renderMultiCurrency;
+
+async function loadMultiCurrency(){
+  const root = document.getElementById('fx-root');
+  if (!root) return;
+  const code = (document.getElementById('fx-currency-filter')?.value || '').trim().toUpperCase();
+  const asOf = document.getElementById('fx-asof')?.value || todayStr();
+  root.innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading multi-currency...</td></tr></tbody></table></div>`;
+  try {
+    const [rates, docs, reval, settlements] = await Promise.all([
+      api(`/companies/${STATE.companyId}/fx/rates`, {qs:{page_size:100, currency_code: code || undefined}}),
+      api(`/companies/${STATE.companyId}/fx/documents`, {qs:{page_size:100, currency_code: code || undefined}}),
+      api(`/companies/${STATE.companyId}/fx/revaluation`, {qs:{as_of:asOf}}),
+      api(`/companies/${STATE.companyId}/fx/settlements`, {qs:{page_size:100}}),
+    ]);
+    const base = STATE.company.base_currency || 'INR';
+    const latestByCurrency = {};
+    (rates.items || []).forEach(r => { if (!latestByCurrency[r.currency_code]) latestByCurrency[r.currency_code] = r; });
+    const settlementItems = settlements.items || [];
+    const realizedTotal = settlementItems.reduce((sum, s) => sum + Number(s.realized_gain_loss || 0), 0);
+    root.innerHTML = `
+      <div class="grid grid-4" style="margin-bottom:16px;">
+        <div class="stat-card c-blue"><div class="stat-label">Tracked Documents</div><div class="stat-value">${docs.meta.total}</div></div>
+        <div class="stat-card c-teal"><div class="stat-label">Currencies</div><div class="stat-value">${Object.keys(latestByCurrency).length}</div></div>
+        <div class="stat-card ${Number(reval.total_unrealized_gain_loss||0) >= 0 ? 'c-gold' : 'c-red'}"><div class="stat-label">Unrealized FX</div><div class="stat-value">${money(reval.total_unrealized_gain_loss, base)}</div></div>
+        <div class="stat-card ${realizedTotal >= 0 ? 'c-green' : 'c-red'}"><div class="stat-label">Realized FX</div><div class="stat-value">${money(realizedTotal, base)}</div></div>
+      </div>
+      <div class="grid grid-2" style="margin-bottom:16px;">
+        <div class="card card-pad">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+            <div style="font-weight:800;">Exchange rates</div>
+            <button class="btn btn-ghost btn-sm" onclick="openExchangeRateForm()">Add rate</button>
+          </div>
+          ${(rates.items||[]).length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Currency</th><th class="num">Rate to ${esc(base)}</th><th>Source</th></tr></thead><tbody>${rates.items.map(r=>`<tr>
+            <td>${fmtDate(r.rate_date)}</td><td><span class="pill">${esc(r.currency_code)}</span></td><td class="num">${Number(r.rate_to_base||0).toLocaleString('en-IN',{minimumFractionDigits:6, maximumFractionDigits:6})}</td><td>${esc(r.source||'MANUAL')}</td>
+          </tr>`).join('')}</tbody></table></div>` : emptyState('₹','No exchange rates','Add historical rates before tracking foreign-currency documents.',`<button class="btn btn-blue" onclick="openExchangeRateForm()">Add rate</button>`)}
+        </div>
+        <div class="card card-pad">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+            <div style="font-weight:800;">Revaluation</div>
+            <span class="pill">${fmtDate(reval.as_of)}</span>
+          </div>
+          ${(reval.rows||[]).length ? `<div class="table-wrap"><table><thead><tr><th>Document</th><th>Currency</th><th class="num">Foreign</th><th class="num">FX</th></tr></thead><tbody>${reval.rows.slice(0,10).map(r=>`<tr>
+            <td><span class="mono">${esc(r.document_type)}</span><div style="font-size:.68rem;color:var(--ink3);">${esc(String(r.document_id).slice(0,12))}...</div></td>
+            <td>${esc(r.currency_code)}</td>
+            <td class="num">${money(r.foreign_amount, r.currency_code)}</td>
+            <td class="num">${money(r.unrealized_gain_loss, base)}</td>
+          </tr>`).join('')}</tbody></table></div>` : '<div style="font-size:.8rem;color:var(--ink3);">No foreign documents to revalue for this date.</div>'}
+        </div>
+      </div>
+      <div class="card card-pad">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+            <div style="font-weight:800;">Foreign document register</div>
+            <button class="btn btn-ghost btn-sm" onclick="openFxDocumentForm()">Track document</button>
+          </div>
+        ${(docs.items||[]).length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Document</th><th>Currency</th><th class="num">Foreign</th><th class="num">Base</th><th class="num">Realized</th><th class="num">Unrealized</th><th></th></tr></thead><tbody>${docs.items.map(d=>`<tr>
+          <td>${fmtDate(d.document_date)}</td>
+          <td><span class="mono">${esc(d.document_type)}</span></td>
+          <td class="mono">${esc(String(d.document_id).slice(0,12))}...</td>
+          <td><span class="pill">${esc(d.currency_code)}</span></td>
+          <td class="num">${money(d.foreign_amount, d.currency_code)}</td>
+          <td class="num">${money(d.base_amount, base)}</td>
+          <td class="num">${money(d.realized_gain_loss, base)}</td>
+          <td class="num">${money(d.unrealized_gain_loss, base)}</td>
+          <td>${['SALES_INVOICE','PURCHASE_BILL'].includes(d.document_type) ? `<button class="btn btn-ghost btn-sm" onclick="openFxSettlementForm('${d.id}')">Realize</button>` : ''}</td>
+        </tr>`).join('')}</tbody></table></div>` : emptyState('₹','No foreign documents tracked','Attach currency metadata to a posted invoice, bill, or payment.',`<button class="btn btn-blue" onclick="openFxDocumentForm()">Track document</button>`)}
+      </div>
+      <div class="card card-pad" style="margin-top:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+          <div style="font-weight:800;">Realized FX settlements</div>
+          <button class="btn btn-ghost btn-sm" onclick="openFxSettlementForm()">Realize FX</button>
+        </div>
+        ${settlementItems.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>FX Document</th><th class="num">Foreign</th><th class="num">Settlement Rate</th><th class="num">Realized</th><th>Voucher</th></tr></thead><tbody>${settlementItems.map(s=>`<tr>
+          <td>${fmtDate(s.settlement_date)}</td>
+          <td class="mono">${esc(String(s.fx_document_id).slice(0,12))}...</td>
+          <td class="num">${Number(s.foreign_amount||0).toLocaleString('en-IN',{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+          <td class="num">${Number(s.settlement_rate||0).toLocaleString('en-IN',{minimumFractionDigits:6, maximumFractionDigits:6})}</td>
+          <td class="num">${money(s.realized_gain_loss, base)}</td>
+          <td class="mono">${esc(String(s.voucher_id).slice(0,12))}...</td>
+        </tr>`).join('')}</tbody></table></div>` : emptyState('₹','No realized FX settlements','Realized exchange gains and losses will appear after settlement vouchers are posted.',`<button class="btn btn-blue" onclick="openFxSettlementForm()">Realize FX</button>`)}
+      </div>`;
+  } catch(e){ root.innerHTML = emptyState('⚠','Could not load multi-currency', esc(e.message)); }
+}
+
+function openExchangeRateForm(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'Add exchange rate',
+    bodyHtml:`<div class="form-grid">
+      <div class="form-row"><label>Currency</label><input id="fxr-code" maxlength="3" placeholder="USD"></div>
+      <div class="form-row"><label>Date</label><input id="fxr-date" type="date" value="${todayStr()}"></div>
+      <div class="form-row"><label>Rate to ${esc(STATE.company.base_currency||'INR')}</label><input id="fxr-rate" type="number" step="0.000001"></div>
+      <div class="form-row"><label>Source</label><input id="fxr-source" value="MANUAL"></div>
+    </div>
+    <div class="form-row"><label>Notes</label><input id="fxr-notes"></div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="fxr-save">Save rate</button>`
+  });
+  document.getElementById('fxr-save').onclick = async () => {
+    try {
+      await api(`/companies/${STATE.companyId}/fx/rates`, {method:'POST', body:{
+        currency_code: document.getElementById('fxr-code').value.trim().toUpperCase(),
+        rate_date: document.getElementById('fxr-date').value,
+        rate_to_base: document.getElementById('fxr-rate').value || '0',
+        source: document.getElementById('fxr-source').value.trim() || 'MANUAL',
+        notes: document.getElementById('fxr-notes').value.trim() || null,
+      }});
+      toast('Exchange rate saved ✓','ok'); closeModal(); if (STATE.currentView==='multi-currency') loadMultiCurrency();
+    } catch(e){ errToast(e); }
+  };
+}
+
+async function openFxDocumentForm(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'Track foreign document',
+    wide:true,
+    bodyHtml:`<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading document choices...</td></tr></tbody></table></div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="fxd-save" disabled>Track document</button>`
+  });
+  try {
+    const [rates, sales, purchases, payments] = await Promise.all([
+      api(`/companies/${STATE.companyId}/fx/rates`, {qs:{page_size:100}}),
+      api(`/companies/${STATE.companyId}/sales/invoices`, {qs:{page_size:100, status:'POSTED'}}),
+      api(`/companies/${STATE.companyId}/purchase/bills`, {qs:{page_size:100, status:'POSTED'}}),
+      api(`/companies/${STATE.companyId}/payments`, {qs:{page_size:100}}),
+    ]);
+    const docOptions = [
+      ...(sales.items||[]).map(i=>({type:'SALES_INVOICE', id:i.id, label:`Sales ${i.invoice_number} · ${money(i.total_amount, STATE.company.base_currency)}`})),
+      ...(purchases.items||[]).map(b=>({type:'PURCHASE_BILL', id:b.id, label:`Purchase ${b.bill_number} · ${money(b.total_amount, STATE.company.base_currency)}`})),
+      ...(payments.items||[]).map(p=>({type:'PAYMENT', id:p.id, label:`Payment ${p.reference_number||p.payment_kind} · ${money(p.amount, STATE.company.base_currency)}`})),
+    ];
+    document.getElementById('modal-body').innerHTML = `<div class="form-grid">
+      <div class="form-row"><label>Document</label><select id="fxd-doc">${docOptions.map(d=>`<option value="${d.type}|${d.id}">${esc(d.label)}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Currency</label><input id="fxd-code" maxlength="3" placeholder="USD"></div>
+      <div class="form-row"><label>Exchange rate</label><select id="fxd-rate"><option value="">Latest rate on document date</option>${(rates.items||[]).map(r=>`<option value="${r.id}" data-code="${esc(r.currency_code)}">${esc(r.currency_code)} · ${fmtDate(r.rate_date)} · ${Number(r.rate_to_base).toFixed(6)}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Foreign amount</label><input id="fxd-amount" type="number" step="0.01"></div>
+    </div>
+    <div class="form-row"><label>Notes</label><input id="fxd-notes"></div>`;
+    const save = document.getElementById('fxd-save');
+    save.disabled = !docOptions.length;
+    document.getElementById('fxd-rate').onchange = () => {
+      const opt = document.getElementById('fxd-rate').selectedOptions[0];
+      if (opt && opt.dataset.code) document.getElementById('fxd-code').value = opt.dataset.code;
+    };
+    save.onclick = async () => {
+      const [document_type, document_id] = document.getElementById('fxd-doc').value.split('|');
+      try {
+        await api(`/companies/${STATE.companyId}/fx/documents`, {method:'POST', body:{
+          document_type,
+          document_id,
+          currency_code: document.getElementById('fxd-code').value.trim().toUpperCase(),
+          exchange_rate_id: document.getElementById('fxd-rate').value || null,
+          foreign_amount: document.getElementById('fxd-amount').value || '0',
+          notes: document.getElementById('fxd-notes').value.trim() || null,
+        }});
+        toast('Foreign document tracked ✓','ok'); closeModal(); if (STATE.currentView==='multi-currency') loadMultiCurrency();
+      } catch(e){ errToast(e); }
+    };
+  } catch(e){ document.getElementById('modal-body').innerHTML = emptyState('⚠','Could not load document choices', esc(e.message)); }
+}
+
+async function openFxSettlementForm(prefillFxDocumentId=''){
+  if (!requireCompany()) return;
+  openModal({
+    title:'Realize foreign exchange',
+    wide:true,
+    bodyHtml:`<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading settlement choices...</td></tr></tbody></table></div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="fxs-save" disabled>Post settlement</button>`
+  });
+  try {
+    await Promise.all([loadLedgers(), loadVoucherTypes()]);
+    const [docs, payments] = await Promise.all([
+      api(`/companies/${STATE.companyId}/fx/documents`, {qs:{page_size:200}}),
+      api(`/companies/${STATE.companyId}/payments`, {qs:{page_size:200}}),
+    ]);
+    const eligibleDocs = (docs.items||[]).filter(d => ['SALES_INVOICE','PURCHASE_BILL'].includes(d.document_type));
+    const activeLedgers = STATE.ledgers.filter(l => l.status === 'ACTIVE');
+    const docOptions = eligibleDocs.map(d=>`<option value="${d.id}" ${d.id===prefillFxDocumentId?'selected':''}>${esc(d.document_type)} · ${esc(d.currency_code)} · ${money(d.foreign_amount, d.currency_code)} · ${String(d.document_id).slice(0,10)}...</option>`).join('');
+    const ledgerOptions = activeLedgers.map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join('');
+    const voucherOptions = STATE.voucherTypes.map(v=>`<option value="${v.id}" ${/journal/i.test(v.name)?'selected':''}>${esc(v.name)}</option>`).join('');
+    const paymentOptions = `<option value="">No linked payment</option>` + (payments.items||[]).map(p=>`<option value="${p.id}">${esc(p.payment_kind)} · ${esc(p.reference_number||p.id.slice(0,10))} · ${money(p.amount, STATE.company.base_currency)}</option>`).join('');
+    document.getElementById('modal-body').innerHTML = `<div class="form-grid">
+      <div class="form-row"><label>FX document</label><select id="fxs-doc">${docOptions}</select></div>
+      <div class="form-row"><label>Settlement date</label><input id="fxs-date" type="date" value="${todayStr()}"></div>
+      <div class="form-row"><label>Foreign amount settled</label><input id="fxs-foreign" type="number" step="0.01"></div>
+      <div class="form-row"><label>Settlement rate</label><input id="fxs-rate" type="number" step="0.000001"></div>
+      <div class="form-row"><label>Voucher type</label><select id="fxs-voucher-type">${voucherOptions}</select></div>
+      <div class="form-row"><label>Gain ledger</label><select id="fxs-gain-ledger">${ledgerOptions}</select></div>
+      <div class="form-row"><label>Loss ledger</label><select id="fxs-loss-ledger">${ledgerOptions}</select></div>
+      <div class="form-row"><label>Linked payment</label><select id="fxs-payment">${paymentOptions}</select></div>
+    </div>
+    <div class="form-row"><label>Notes</label><input id="fxs-notes" placeholder="Realized FX settlement reference"></div>`;
+    const save = document.getElementById('fxs-save');
+    save.disabled = !(eligibleDocs.length && activeLedgers.length >= 2 && STATE.voucherTypes.length);
+    const selectedDoc = () => eligibleDocs.find(d => d.id === document.getElementById('fxs-doc')?.value);
+    const hydrateDocDefaults = () => {
+      const doc = selectedDoc();
+      if (!doc) return;
+      document.getElementById('fxs-foreign').value = Number(doc.foreign_amount || 0).toFixed(2);
+      document.getElementById('fxs-rate').value = Number(doc.exchange_rate || 0).toFixed(6);
+    };
+    document.getElementById('fxs-doc').onchange = hydrateDocDefaults;
+    hydrateDocDefaults();
+    save.onclick = async () => {
+      try {
+        await api(`/companies/${STATE.companyId}/fx/settlements`, {method:'POST', body:{
+          fx_document_id: document.getElementById('fxs-doc').value,
+          settlement_payment_id: document.getElementById('fxs-payment').value || null,
+          settlement_date: document.getElementById('fxs-date').value,
+          foreign_amount: document.getElementById('fxs-foreign').value || '0',
+          settlement_rate: document.getElementById('fxs-rate').value || '0',
+          gain_ledger_id: document.getElementById('fxs-gain-ledger').value,
+          loss_ledger_id: document.getElementById('fxs-loss-ledger').value,
+          voucher_type_id: document.getElementById('fxs-voucher-type').value,
+          notes: document.getElementById('fxs-notes').value.trim() || null,
+        }});
+        toast('Realized FX posted ✓','ok'); closeModal(); if (STATE.currentView==='multi-currency') loadMultiCurrency();
+      } catch(e){ errToast(e); }
+    };
+  } catch(e){ document.getElementById('modal-body').innerHTML = emptyState('⚠','Could not load settlement choices', esc(e.message)); }
 }
 
 /* ============================================================
@@ -2091,7 +2841,7 @@ async function submitSalesOrderForm(){
   } catch(e){ errToast(e); }
 }
 async function openSalesOrderDetail(id){
-  openModal({title:'Sales order', wide:true, bodyHtml:`<div id="sod-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  openModal({title:'Sales order', wide:true, ai:{enabled:false}, bodyHtml:`<div id="sod-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   try {
     const o = await api(`/companies/${STATE.companyId}/sales/orders/${id}`);
     const cur = STATE.company.base_currency;
@@ -2180,7 +2930,7 @@ async function submitSalesQuotationForm(){
   } catch(e){ errToast(e); }
 }
 async function openSalesQuotationDetail(id){
-  openModal({title:'Sales quotation', wide:true, bodyHtml:`<div id="sqd-body"><span class="spin"></span> Loading...</div>`, footHtml:``});
+  openModal({title:'Sales quotation', wide:true, ai:{enabled:false}, bodyHtml:`<div id="sqd-body"><span class="spin"></span> Loading...</div>`, footHtml:``});
   try {
     const q = await api(`/companies/${STATE.companyId}/sales/quotations/${id}`);
     const cur = STATE.company.base_currency;
@@ -2301,7 +3051,7 @@ async function submitDeliveryNoteForm(){
   } catch(e){ errToast(e); }
 }
 async function openDeliveryNoteDetail(id){
-  openModal({title:'Delivery note', wide:true, bodyHtml:`<div id="dnd-body"><span class="spin"></span> Loading...</div>`, footHtml:``});
+  openModal({title:'Delivery note', wide:true, ai:{enabled:false}, bodyHtml:`<div id="dnd-body"><span class="spin"></span> Loading...</div>`, footHtml:``});
   try {
     const n = await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}`);
     let eway = null;
@@ -2376,7 +3126,7 @@ async function cancelEWayBillAction(id){
   } catch(e){ errToast(e); }
 }
 async function showEWayBillPayload(id){
-  openModal({title:'E-way bill payload', wide:true, bodyHtml:`<div id="eway-body"><span class="spin"></span> Loading...</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
+  openModal({title:'E-way bill payload', wide:true, ai:{enabled:false}, bodyHtml:`<div id="eway-body"><span class="spin"></span> Loading...</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
   try {
     const eway = await api(`/companies/${STATE.companyId}/sales/delivery-notes/${id}/e-way-bill`);
     document.getElementById('eway-body').innerHTML = `
@@ -2486,7 +3236,7 @@ async function submitSalesInvoiceForm(){
   } catch(e){ errToast(e); }
 }
 async function openSalesInvoiceDetail(id){
-  openModal({title:'Sales invoice', wide:true, bodyHtml:`<div id="sid-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  openModal({title:'Sales invoice', wide:true, ai:{enabled:false}, bodyHtml:`<div id="sid-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
   try {
     const inv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}`);
     let einv = null;
@@ -3753,6 +4503,715 @@ async function issueWithholdingCertificateAction(){
 }
 
 /* ============================================================
+   AI ASSISTANT (uses an advanced provider when the workspace has one
+   configured; otherwise falls back to Alaada's built-in accounting
+   assistant automatically — never named to normal users)
+   ============================================================ */
+const AI_ROLE_OPTIONS = [
+  {value:'CFO', label:'CFO — big-picture financial health'},
+  {value:'ACCOUNTANT', label:'Accountant — day-to-day bookkeeping'},
+  {value:'BOOKKEEPER', label:'Bookkeeper — data entry & reconciliation'},
+  {value:'AUDITOR', label:'Auditor — checks & compliance'},
+  {value:'GST_ASSISTANT', label:'GST Assistant — tax filing help'},
+  {value:'TAX_ASSISTANT', label:'Tax Assistant — general tax questions'},
+  {value:'FINANCIAL_ANALYST', label:'Financial Analyst — trends & forecasts'},
+  {value:'INVENTORY_ASSISTANT', label:'Inventory Assistant — stock questions'},
+  {value:'CRM_ASSISTANT', label:'CRM Assistant — customers & leads'},
+  {value:'PAYROLL_ASSISTANT', label:'Payroll Assistant — salary & staff'},
+];
+const AI_LANGUAGE_OPTIONS = ['English','Hindi','Bengali','Tamil','Telugu','Marathi','Gujarati'];
+const AI_CONTEXT_OPTIONS = [
+  {value:'dashboard', label:'Overview', selected:true},
+  {value:'trial_balance', label:'Accounts summary', selected:true},
+  {value:'gst', label:'GST', selected:true},
+  {value:'ageing', label:'Overdue amounts', selected:true},
+  {value:'inventory', label:'Stock', selected:true},
+  {value:'crm', label:'Customers & leads'},
+  {value:'payroll', label:'Payroll'},
+  {value:'projects', label:'Projects'},
+];
+
+// Friendly, backend-agnostic labels — never surface a vendor/provider name to normal users.
+function aiModeLabel(configured){ return configured ? 'Enhanced AI (online)' : 'Standard AI (offline-friendly)'; }
+function aiSourceLabel(provider){
+  const p = (provider||'').toLowerCase();
+  if (p.includes('local') || p.includes('fallback')) return 'Standard';
+  if (!p) return 'Standard';
+  return 'Enhanced';
+}
+
+async function renderAiAssistant(){
+  if (!requireCompany()) return;
+  const fyStart = STATE.company.financial_year_start || `${todayStr().slice(0,4)}-04-01`;
+  view().innerHTML = viewHead('AI Assistant', 'Your AI accountant, CFO, auditor and GST helper for this company.',
+    `<button class="btn btn-ghost btn-sm" onclick="loadAiAssistant()">Refresh</button>
+     <button class="btn btn-blue btn-sm" id="ai-generate-btn" onclick="generateAiInsights()">Generate insights</button>`) +
+    `<div class="grid two" style="margin-bottom:14px;">
+      <div class="card card-pad">
+        <div class="section-title">Ask Alaada AI</div>
+        <div class="grid two">
+          <div class="form-row"><label>Ask as</label><select id="ai-role">${AI_ROLE_OPTIONS.map(r=>`<option value="${r.value}">${esc(r.label)}</option>`).join('')}</select></div>
+          <div class="form-row"><label>Language</label><select id="ai-language">${AI_LANGUAGE_OPTIONS.map(l=>`<option ${l==='English'?'selected':''}>${esc(l)}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-row"><label>What do you want to know?</label><textarea id="ai-prompt" rows="5">Summarize cash, receivables, GST readiness, and closing risks.</textarea></div>
+        <div class="form-row">
+          <label>Look at</label>
+          <div class="check-grid">
+            ${AI_CONTEXT_OPTIONS.map(c => `<label class="check-row"><input type="checkbox" class="ai-context-cb" value="${c.value}" ${c.selected?'checked':''}/> ${esc(c.label)}</label>`).join('')}
+          </div>
+        </div>
+        <label class="check-row" id="ai-enhanced-row" style="margin-bottom:14px;">
+          <input type="checkbox" id="ai-enhanced"/> Use enhanced AI when available
+        </label>
+        <button class="btn btn-blue" id="ai-ask-btn" onclick="askAiAssistant()">Ask</button>
+      </div>
+      <div class="card card-pad" id="ai-status-card">
+        ${emptyState('AI','Checking AI availability','One moment…')}
+      </div>
+    </div>
+    <div class="grid two">
+      <div class="card card-pad"><div class="section-title">Recent questions</div><div id="ai-interactions-body"></div></div>
+      <div class="card card-pad"><div class="section-title">Generated insights</div>
+        <div class="grid two" style="margin-bottom:10px;">
+          <div class="form-row"><label>From</label><input type="date" id="ai-from" value="${fyStart}"/></div>
+          <div class="form-row"><label>To</label><input type="date" id="ai-to" value="${todayStr()}"/></div>
+        </div>
+        <div id="ai-insights-body"></div>
+      </div>
+    </div>`;
+  loadAiAssistant();
+}
+
+async function loadAiAssistant(){
+  if (!requireCompany()) return;
+  const statusCard = document.getElementById('ai-status-card');
+  const interactionsBody = document.getElementById('ai-interactions-body');
+  const insightsBody = document.getElementById('ai-insights-body');
+  try {
+    const [status, interactionsPage, insightsPage] = await Promise.all([
+      api(`/companies/${STATE.companyId}/ai/status`),
+      api(`/companies/${STATE.companyId}/ai/interactions`, {qs:{page_size:10}}),
+      api(`/companies/${STATE.companyId}/ai/insights`, {qs:{page_size:20}}),
+    ]);
+    // Only offer "enhanced" mode when the workspace actually has a provider
+    // configured — otherwise the checkbox would do nothing, which is confusing.
+    const enhancedAvailable = !!status.configured;
+    const enhancedRow = document.getElementById('ai-enhanced-row');
+    const enhancedCb = document.getElementById('ai-enhanced');
+    if (enhancedRow) enhancedRow.style.display = enhancedAvailable ? '' : 'none';
+    if (enhancedCb) enhancedCb.checked = false;
+    const devDetails = DEVELOPER_MODE ? `<details style="margin-top:10px;"><summary class="muted small" style="cursor:pointer;">Developer details</summary>
+        <div class="kv"><span class="k">Provider</span><span class="v mono">${esc(status.provider)}</span></div>
+        <div class="kv"><span class="k">Model</span><span class="v mono">${esc(status.model)}</span></div>
+      </details>` : '';
+    statusCard.innerHTML = `
+      <div class="section-title">AI availability</div>
+      <div class="kv"><span class="k">Mode</span><span class="v">${esc(aiModeLabel(status.configured))}</span></div>
+      <div class="kv"><span class="k">Assistant roles</span><span class="v">${status.supported_roles.length} available</span></div>
+      <div class="muted small" style="margin-top:10px;">${status.configured ? 'Enhanced AI is ready for richer answers.' : 'Enhanced AI isn\u2019t set up yet — Alaada will use its built-in accounting assistant instead.'}</div>
+      ${devDetails}`;
+    const interactions = interactionsPage.items || [];
+    interactionsBody.innerHTML = interactions.length ? `<div class="table-wrap"><table><thead><tr><th>Time</th><th>Role</th><th>Mode</th><th>Status</th><th>Question</th></tr></thead><tbody>${interactions.map(i=>`<tr><td>${new Date(i.created_at).toLocaleString('en-IN')}</td><td>${esc((AI_ROLE_OPTIONS.find(r=>r.value===i.agent_role)||{}).label || i.agent_role)}</td><td>${esc(aiSourceLabel(i.provider))}</td><td><span class="pill">${esc(i.status)}</span></td><td>${esc(i.prompt).slice(0,120)}</td></tr>`).join('')}</tbody></table></div>`
+      : emptyState('AI','No questions yet','Ask Alaada AI something to see it here.');
+    renderAiInsights(insightsPage.items || []);
+  } catch(e) {
+    if (statusCard) statusCard.innerHTML = emptyState('⚠','Could not load AI status', esc(e.message));
+    if (interactionsBody) interactionsBody.innerHTML = '';
+    if (insightsBody) insightsBody.innerHTML = '';
+  }
+}
+
+function renderAiInsights(items){
+  const body = document.getElementById('ai-insights-body');
+  if (!body) return;
+  body.innerHTML = items.length ? `<div class="table-wrap"><table><thead><tr><th>Type</th><th>Severity</th><th>Title</th><th>Recommendation</th></tr></thead><tbody>${items.map(i=>`<tr><td class="mono">${esc(i.insight_type)}</td><td><span class="pill">${esc(i.severity)}</span></td><td><strong>${esc(i.title)}</strong><div class="muted small">${esc(i.summary)}</div></td><td>${esc(i.recommendation || '')}</td></tr>`).join('')}</tbody></table></div>`
+    : emptyState('AI','No AI insights yet','Generate insights from accounting, GST, ageing, and inventory context.');
+}
+
+async function askAiAssistant(){
+  if (!requireCompany()) return;
+  const selected = Array.from(document.querySelectorAll('.ai-context-cb:checked')).map(cb => cb.value);
+  const prompt = document.getElementById('ai-prompt').value.trim();
+  if (!prompt) return toast('Type a question first.', 'err');
+  const btn = document.getElementById('ai-ask-btn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Thinking…';
+  try {
+    const enhancedCb = document.getElementById('ai-enhanced');
+    const interaction = await api(`/companies/${STATE.companyId}/ai/ask`, {method:'POST', body:{
+      agent_role: document.getElementById('ai-role').value,
+      language: document.getElementById('ai-language').value || 'auto',
+      prompt,
+      context_sections: selected,
+      // Wire field name matches the confirmed backend contract; the UI never
+      // names a vendor, only "enhanced" vs "standard" mode.
+      use_openai: enhancedCb ? enhancedCb.checked : false,
+    }});
+    openModal({title:'Alaada AI', wide:true, ai:{enabled:false}, bodyHtml:`<div style="white-space:pre-wrap;line-height:1.55;">${esc(interaction.response_text)}</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
+    toast('Answer ready','ok');
+    loadAiAssistant();
+  } catch(e){ errToast(e); }
+  finally { btn.disabled = false; btn.textContent = originalLabel; }
+}
+
+async function generateAiInsights(){
+  if (!requireCompany()) return;
+  const btn = document.getElementById('ai-generate-btn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Generating…';
+  try {
+    const insights = await api(`/companies/${STATE.companyId}/ai/insights/generate`, {method:'POST', body:{
+      insight_types: ['FINANCIAL_HEALTH','CASH_FLOW','GST_REVIEW','COLLECTION_PRIORITY','INVENTORY_REORDER','DUPLICATE_DETECTION','FRAUD_RISK'],
+      date_from: document.getElementById('ai-from')?.value || null,
+      date_to: document.getElementById('ai-to')?.value || null,
+    }});
+    toast(`${insights.length} AI insight${insights.length===1?'':'s'} generated`,'ok');
+    renderAiInsights(insights);
+  } catch(e){ errToast(e); }
+  finally { btn.disabled = false; btn.textContent = originalLabel; }
+}
+VIEW_RENDERERS['ai-assistant'] = renderAiAssistant;
+
+/* ============================================================
+   APPROVAL WORKFLOW (threshold rules and approval queue)
+   ============================================================ */
+async function renderApprovals(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Approvals', 'Threshold rules, document approval queue, and posting controls.',
+    `<button class="btn btn-ghost btn-sm" onclick="loadApprovals()">Refresh</button>
+     <button class="btn btn-ghost btn-sm" onclick="openApprovalRuleForm()">New rule</button>
+     <button class="btn btn-blue btn-sm" onclick="openApprovalSubmitForm()">Submit document</button>`) +
+    `<div id="approvals-body">${emptyState('✓','Loading approvals','Fetching rules and pending requests.')}</div>`;
+  loadApprovals();
+}
+
+async function loadApprovals(){
+  if (!requireCompany()) return;
+  const body = document.getElementById('approvals-body');
+  if (!body) return;
+  try {
+    const [rulesPage, pendingPage, allPage] = await Promise.all([
+      api(`/companies/${STATE.companyId}/automation/approval-rules`, {qs:{page_size:100}}),
+      api(`/companies/${STATE.companyId}/automation/approval-requests`, {qs:{page_size:100, status:'PENDING'}}),
+      api(`/companies/${STATE.companyId}/automation/approval-requests`, {qs:{page_size:100}}),
+    ]);
+    const cur = STATE.company.base_currency || 'INR';
+    const rules = rulesPage.items || [];
+    const pending = pendingPage.items || [];
+    const all = allPage.items || [];
+    body.innerHTML = `
+      <div class="grid three" style="margin-bottom:14px;">
+        <div class="metric"><div class="muted">Active rules</div><strong>${rules.filter(r=>r.status==='ACTIVE').length}</strong></div>
+        <div class="metric"><div class="muted">Pending requests</div><strong>${pending.length}</strong></div>
+        <div class="metric"><div class="muted">Approved requests</div><strong>${all.filter(r=>r.status==='APPROVED').length}</strong></div>
+      </div>
+      <div class="grid two">
+        <div class="card card-pad">
+          <div class="section-title">Approval rules</div>
+          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Document</th><th class="num">Min amount</th><th>Approvals</th><th>Status</th></tr></thead><tbody>${rules.map(r=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.approver_role || '')}</div></td><td>${esc(r.entity_type)}</td><td class="num">${money(r.min_amount,cur)}</td><td>${r.required_approvals}</td><td><span class="pill">${esc(r.status)}</span></td></tr>`).join('')}</tbody></table></div>`
+            : emptyState('✓','No approval rules','Create a threshold rule to require approval before posting.') }
+        </div>
+        <div class="card card-pad">
+          <div class="section-title">Pending queue</div>
+          ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>Document</th><th class="num">Amount</th><th>Needed</th><th class="num">Actions</th></tr></thead><tbody>${pending.map(r=>`<tr><td><strong>${esc(r.entity_type)}</strong><div class="mono small">${esc(r.entity_number || r.entity_id)}</div></td><td class="num">${money(r.amount,cur)}</td><td>${r.approvals_received} / ${r.required_approvals}</td><td class="num"><button class="btn btn-ghost btn-sm" onclick="decideApproval('${r.id}','approve')">Approve</button><button class="btn btn-ghost btn-sm" onclick="decideApproval('${r.id}','reject')">Reject</button></td></tr>`).join('')}</tbody></table></div>`
+            : emptyState('✓','No pending approvals','Submitted documents that match active rules appear here.') }
+        </div>
+      </div>
+      <div class="card card-pad" style="margin-top:14px;">
+        <div class="section-title">Recent requests</div>
+        ${all.length ? `<div class="table-wrap"><table><thead><tr><th>Requested</th><th>Document</th><th class="num">Amount</th><th>Status</th><th>Requester</th></tr></thead><tbody>${all.map(r=>`<tr><td>${new Date(r.requested_at).toLocaleString('en-IN')}</td><td>${esc(r.entity_type)} <span class="mono">${esc(r.entity_number || '')}</span></td><td class="num">${money(r.amount,cur)}</td><td><span class="pill">${esc(r.status)}</span></td><td>${esc(r.requested_by || '')}</td></tr>`).join('')}</tbody></table></div>`
+          : emptyState('✓','No approval requests','Submit a draft voucher, sales invoice, or purchase bill for approval.') }
+      </div>`;
+  } catch(e) {
+    body.innerHTML = emptyState('⚠','Could not load approvals', esc(e.message));
+  }
+}
+
+function openApprovalRuleForm(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'New approval rule',
+    bodyHtml:`<div class="form-grid">
+      <div class="form-row"><label>Name</label><input id="appr-rule-name" placeholder="Voucher above 50,000"/></div>
+      <div class="form-row"><label>Document type</label><select id="appr-rule-entity"><option>VOUCHER</option><option>SALES_INVOICE</option><option>PURCHASE_BILL</option></select></div>
+      <div class="form-row"><label>Minimum amount</label><input id="appr-rule-min" type="number" step="0.01" value="0"/></div>
+      <div class="form-row"><label>Required approvals</label><input id="appr-rule-count" type="number" min="1" max="10" value="1"/></div>
+      <div class="form-row"><label>Approver role</label><input id="appr-rule-role" placeholder="Finance Manager"/></div>
+      <div class="form-row"><label>Notes</label><textarea id="appr-rule-notes" rows="2"></textarea></div>
+    </div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-rule-save">Create rule</button>`,
+    onMount:() => {
+      document.getElementById('appr-rule-save').onclick = async () => {
+        try {
+          await api(`/companies/${STATE.companyId}/automation/approval-rules`, {method:'POST', body:{
+            name: document.getElementById('appr-rule-name').value,
+            entity_type: document.getElementById('appr-rule-entity').value,
+            min_amount: document.getElementById('appr-rule-min').value || '0',
+            required_approvals: parseInt(document.getElementById('appr-rule-count').value || '1', 10),
+            approver_role: document.getElementById('appr-rule-role').value || null,
+            notes: document.getElementById('appr-rule-notes').value || null,
+          }});
+          closeModal(); toast('Approval rule created','ok'); loadApprovals();
+        } catch(e){ errToast(e); }
+      };
+    }
+  });
+}
+
+function openApprovalSubmitForm(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'Submit document for approval',
+    bodyHtml:`<div class="form-grid">
+      <div class="form-row"><label>Document type</label><select id="appr-submit-entity"><option>VOUCHER</option><option>SALES_INVOICE</option><option>PURCHASE_BILL</option></select></div>
+      <div class="form-row"><label>Document ID</label><input id="appr-submit-id" class="mono" placeholder="32-character id"/></div>
+      <div class="form-row"><label>Requested by</label><input id="appr-submit-by" value="accounts"/></div>
+      <div class="form-row"><label>Note</label><textarea id="appr-submit-note" rows="2"></textarea></div>
+    </div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-submit-save">Submit</button>`,
+    onMount:() => {
+      document.getElementById('appr-submit-save').onclick = async () => {
+        try {
+          await api(`/companies/${STATE.companyId}/automation/approval-requests`, {method:'POST', body:{
+            entity_type: document.getElementById('appr-submit-entity').value,
+            entity_id: document.getElementById('appr-submit-id').value.trim(),
+            requested_by: document.getElementById('appr-submit-by').value || null,
+            requested_note: document.getElementById('appr-submit-note').value || null,
+          }});
+          closeModal(); toast('Approval request submitted','ok'); loadApprovals();
+        } catch(e){ errToast(e); }
+      };
+    }
+  });
+}
+
+async function decideApproval(requestId, action){
+  const decidedBy = window.prompt('Approver name', 'finance.manager@example.com');
+  if (!decidedBy) return;
+  const note = window.prompt('Decision note', action === 'approve' ? 'Approved' : 'Rejected');
+  try {
+    await api(`/companies/${STATE.companyId}/automation/approval-requests/${requestId}/${action}`, {method:'POST', body:{decided_by:decidedBy, note:note || null}});
+    toast(`Approval ${action}d`,'ok');
+    loadApprovals();
+  } catch(e){ errToast(e); }
+}
+VIEW_RENDERERS['approvals'] = renderApprovals;
+
+/* ============================================================
+   NOTIFICATIONS (low cash alerts and event notification queue)
+   ============================================================ */
+async function renderNotifications(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Notifications', 'Low cash alerts, business event notifications, and delivery queue.',
+    `<button class="btn btn-ghost btn-sm" onclick="loadNotifications()">Refresh</button>
+     <button class="btn btn-ghost btn-sm" onclick="runDueNotifications()">Run alerts</button>
+     <button class="btn btn-ghost btn-sm" onclick="deliverPendingNotifications()">Send pending</button>
+     <button class="btn btn-blue btn-sm" onclick="openNotificationRuleForm()">New rule</button>`) +
+    `<div id="notifications-body">${emptyState('•','Loading notifications','Fetching rules and queue.')}</div>`;
+  loadNotifications();
+}
+
+async function loadNotifications(){
+  if (!requireCompany()) return;
+  const body = document.getElementById('notifications-body');
+  if (!body) return;
+  try {
+    const [rulesPage, pendingPage, allPage, attemptsPage] = await Promise.all([
+      api(`/companies/${STATE.companyId}/automation/notification-rules`, {qs:{page_size:100}}),
+      api(`/companies/${STATE.companyId}/automation/notifications`, {qs:{page_size:100, status:'PENDING'}}),
+      api(`/companies/${STATE.companyId}/automation/notifications`, {qs:{page_size:100}}),
+      api(`/companies/${STATE.companyId}/automation/notification-delivery-attempts`, {qs:{page_size:100}}),
+    ]);
+    const cur = STATE.company.base_currency || 'INR';
+    const rules = rulesPage.items || [];
+    const pending = pendingPage.items || [];
+    const all = allPage.items || [];
+    const attempts = attemptsPage.items || [];
+    body.innerHTML = `
+      <div class="grid four" style="margin-bottom:14px;">
+        <div class="metric"><div class="muted">Active rules</div><strong>${rules.filter(r=>r.status==='ACTIVE').length}</strong></div>
+        <div class="metric"><div class="muted">Pending</div><strong>${pending.length}</strong></div>
+        <div class="metric"><div class="muted">Critical</div><strong>${all.filter(n=>n.severity==='CRITICAL').length}</strong></div>
+        <div class="metric"><div class="muted">Sent attempts</div><strong>${attempts.filter(a=>a.status==='SENT').length}</strong></div>
+      </div>
+      <div class="grid two">
+        <div class="card card-pad">
+          <div class="section-title">Notification rules</div>
+          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Channel</th><th class="num">Threshold</th><th>Status</th></tr></thead><tbody>${rules.map(r=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.event_type || r.notes || '')}</div></td><td>${esc(r.rule_type)}</td><td>${esc(r.channel)}</td><td class="num">${r.threshold_amount ? money(r.threshold_amount,cur) : '-'}</td><td><span class="pill">${esc(r.status)}</span></td></tr>`).join('')}</tbody></table></div>`
+            : emptyState('•','No notification rules','Create a low cash or business event rule.') }
+        </div>
+        <div class="card card-pad">
+          <div class="section-title">Pending queue</div>
+          ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>Notification</th><th>Severity</th><th>Channel</th><th class="num">Actions</th></tr></thead><tbody>${pending.map(n=>`<tr><td><strong>${esc(n.title)}</strong><div class="muted small">${esc(n.message)}</div></td><td><span class="pill">${esc(n.severity)}</span></td><td>${esc(n.channel)}</td><td class="num"><button class="btn btn-ghost btn-sm" onclick="deliverNotification('${n.id}')">Send</button><button class="btn btn-ghost btn-sm" onclick="markNotificationRead('${n.id}')">Read</button><button class="btn btn-ghost btn-sm" onclick="dismissNotification('${n.id}')">Dismiss</button></td></tr>`).join('')}</tbody></table></div>`
+            : emptyState('✓','No pending notifications','Run alerts to evaluate active rules.') }
+        </div>
+      </div>
+      <div class="card card-pad" style="margin-top:14px;">
+        <div class="section-title">Recent notifications</div>
+        ${all.length ? `<div class="table-wrap"><table><thead><tr><th>Created</th><th>Title</th><th>Severity</th><th>Status</th><th>Entity</th></tr></thead><tbody>${all.map(n=>`<tr><td>${new Date(n.created_at).toLocaleString('en-IN')}</td><td><strong>${esc(n.title)}</strong><div class="muted small">${esc(n.message)}</div></td><td><span class="pill">${esc(n.severity)}</span></td><td><span class="pill">${esc(n.status)}</span></td><td>${esc(n.entity_type || '')} <span class="mono">${esc(n.entity_id || '')}</span></td></tr>`).join('')}</tbody></table></div>`
+          : emptyState('•','No notifications','Generated alerts and event messages appear here.') }
+      </div>
+      <div class="card card-pad" style="margin-top:14px;">
+        <div class="section-title">Delivery attempts</div>
+        ${attempts.length ? `<div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Channel</th><th>Status</th><th>Provider</th><th>Recipient</th><th>Error</th></tr></thead><tbody>${attempts.map(a=>`<tr><td>${new Date(a.attempted_at).toLocaleString('en-IN')}</td><td>${esc(a.channel)}</td><td><span class="pill">${esc(a.status)}</span></td><td>${esc(a.provider)}</td><td>${esc(a.recipient || '')}</td><td class="muted small">${esc(a.error_message || '')}</td></tr>`).join('')}</tbody></table></div>`
+          : emptyState('•','No delivery attempts','Send pending notifications to create delivery history.') }
+      </div>`;
+  } catch(e) {
+    body.innerHTML = emptyState('⚠','Could not load notifications', esc(e.message));
+  }
+}
+
+function openNotificationRuleForm(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'New notification rule',
+    bodyHtml:`<div class="form-grid">
+      <div class="form-row"><label>Name</label><input id="notif-rule-name" placeholder="Low cash below 1,00,000"/></div>
+      <div class="form-row"><label>Type</label><select id="notif-rule-type"><option>LOW_CASH</option><option>BUSINESS_EVENT</option></select></div>
+      <div class="form-row"><label>Channel</label><select id="notif-rule-channel"><option>IN_APP</option><option>EMAIL</option><option>SMS</option><option>WHATSAPP</option></select></div>
+      <div class="form-row"><label>Severity</label><select id="notif-rule-severity"><option>WARNING</option><option>INFO</option><option>CRITICAL</option></select></div>
+      <div class="form-row"><label>Threshold amount</label><input id="notif-rule-threshold" type="number" step="0.01" value="100000"/></div>
+      <div class="form-row"><label>Business event type</label><input id="notif-rule-event" placeholder="sales_invoice.posted"/></div>
+      <div class="form-row"><label>Recipients</label><input id="notif-rule-recipients" placeholder="finance@example.com"/></div>
+      <div class="form-row"><label>Notes</label><textarea id="notif-rule-notes" rows="2"></textarea></div>
+    </div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="notif-rule-save">Create rule</button>`,
+    onMount:() => {
+      document.getElementById('notif-rule-save').onclick = async () => {
+        try {
+          const type = document.getElementById('notif-rule-type').value;
+          await api(`/companies/${STATE.companyId}/automation/notification-rules`, {method:'POST', body:{
+            name: document.getElementById('notif-rule-name').value,
+            rule_type: type,
+            channel: document.getElementById('notif-rule-channel').value,
+            severity: document.getElementById('notif-rule-severity').value,
+            threshold_amount: type === 'LOW_CASH' ? (document.getElementById('notif-rule-threshold').value || '0') : null,
+            event_type: type === 'BUSINESS_EVENT' ? document.getElementById('notif-rule-event').value.trim() : null,
+            recipients: document.getElementById('notif-rule-recipients').value || null,
+            notes: document.getElementById('notif-rule-notes').value || null,
+          }});
+          closeModal(); toast('Notification rule created','ok'); loadNotifications();
+        } catch(e){ errToast(e); }
+      };
+    }
+  });
+}
+
+async function runDueNotifications(){
+  if (!requireCompany()) return;
+  try {
+    const rows = await api(`/companies/${STATE.companyId}/automation/notifications/run-due`, {method:'POST', body:{as_of:todayStr(), limit:50}});
+    toast(`${rows.length} notification${rows.length===1?'':'s'} generated`,'ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
+}
+
+async function deliverPendingNotifications(){
+  if (!requireCompany()) return;
+  try {
+    const rows = await api(`/companies/${STATE.companyId}/automation/notifications/deliver-pending`, {method:'POST', body:{limit:50}});
+    toast(`${rows.length} delivery attempt${rows.length===1?'':'s'} recorded`,'ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
+}
+
+async function deliverNotification(notificationId){
+  try {
+    const rows = await api(`/companies/${STATE.companyId}/automation/notifications/${notificationId}/deliver`, {method:'POST'});
+    toast(`${rows.length} delivery attempt${rows.length===1?'':'s'} recorded`,'ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
+}
+
+async function markNotificationRead(notificationId){
+  try {
+    await api(`/companies/${STATE.companyId}/automation/notifications/${notificationId}/read`, {method:'POST'});
+    toast('Notification marked read','ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
+}
+
+async function dismissNotification(notificationId){
+  try {
+    await api(`/companies/${STATE.companyId}/automation/notifications/${notificationId}/dismiss`, {method:'POST'});
+    toast('Notification dismissed','ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
+}
+VIEW_RENDERERS['notifications'] = renderNotifications;
+
+/* ============================================================
+   AUTOMATION (recurring journals, invoices and bills)
+   ============================================================ */
+async function renderAutomation(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Automation', 'Recurring journals, sales invoices, purchase bills, and execution history.',
+    `<button class="btn btn-ghost btn-sm" onclick="runDueAutomation()">Run due</button>
+     <button class="btn btn-blue btn-sm" onclick="openRecurringTemplateForm()">New recurring</button>`) +
+    `<div class="card card-pad" style="margin-bottom:14px;">
+      <div class="grid two">
+        <div class="form-row"><label>Run due as of</label><input type="date" id="auto-asof" value="${todayStr()}"/></div>
+        <div class="form-row"><label>Status filter</label><select id="auto-status" onchange="loadAutomation()"><option value="">All templates</option><option>ACTIVE</option><option>PAUSED</option><option>ENDED</option></select></div>
+      </div>
+    </div>
+    <div id="automation-body">${emptyState('↻','Loading automation','Fetching templates and run history.')}</div>`;
+  loadAutomation();
+}
+
+async function loadAutomation(){
+  if (!requireCompany()) return;
+  const body = document.getElementById('automation-body');
+  if (!body) return;
+  try {
+    const status = document.getElementById('auto-status')?.value || '';
+    const [templatesPage, runsPage] = await Promise.all([
+      api(`/companies/${STATE.companyId}/automation/recurring-templates`, {qs:{page_size:100, status}}),
+      api(`/companies/${STATE.companyId}/automation/recurring-runs`, {qs:{page_size:100}}),
+    ]);
+    const templates = templatesPage.items || [];
+    const runs = runsPage.items || [];
+    const templateRows = templates.map(t => `
+      <tr>
+        <td><strong>${esc(t.name)}</strong><div class="muted small mono">${esc(t.id)}</div></td>
+        <td>${esc(t.template_type.replace('_',' '))}</td>
+        <td>${esc(t.frequency)} / ${t.interval_count}</td>
+        <td>${fmtDate(t.next_run_date)}</td>
+        <td>${t.generated_count}${t.max_occurrences ? ` / ${t.max_occurrences}` : ''}</td>
+        <td><span class="pill">${esc(t.status)}</span></td>
+        <td class="num">
+          <button class="btn btn-ghost btn-sm" onclick="openRecurringTemplateDetail('${t.id}')">View</button>
+          ${t.status === 'ACTIVE'
+            ? `<button class="btn btn-ghost btn-sm" onclick="setRecurringTemplateStatus('${t.id}','PAUSED')">Pause</button>`
+            : t.status === 'PAUSED'
+              ? `<button class="btn btn-ghost btn-sm" onclick="setRecurringTemplateStatus('${t.id}','ACTIVE')">Resume</button>`
+              : ''}
+        </td>
+      </tr>`).join('');
+    const runRows = runs.map(r => `
+      <tr>
+        <td>${fmtDate(r.run_date)}</td>
+        <td class="mono">${esc((r.template_id||'').slice(0,12))}</td>
+        <td>${esc(r.generated_entity_type || '—')}</td>
+        <td class="mono">${esc((r.generated_entity_id||'').slice(0,12))}</td>
+        <td><span class="pill">${esc(r.status)}</span></td>
+        <td>${esc(r.error_message || '')}</td>
+      </tr>`).join('');
+    body.innerHTML = `
+      <div class="grid two">
+        <div class="card card-pad">
+          <div class="section-title">Recurring templates</div>
+          ${templates.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Frequency</th><th>Next run</th><th>Generated</th><th>Status</th><th class="num">Actions</th></tr></thead><tbody>${templateRows}</tbody></table></div>`
+            : emptyState('↻','No recurring templates','Create recurring journals, invoices, or purchase bills for repeat transactions.')}
+        </div>
+        <div class="card card-pad">
+          <div class="section-title">Recent runs</div>
+          ${runs.length ? `<div class="table-wrap"><table><thead><tr><th>Run date</th><th>Template</th><th>Generated</th><th>Entity ID</th><th>Status</th><th>Error</th></tr></thead><tbody>${runRows}</tbody></table></div>`
+            : emptyState('⏱','No run history','Run due templates to generate accounting documents.')}
+        </div>
+      </div>`;
+  } catch(e) {
+    body.innerHTML = emptyState('⚠','Could not load automation', esc(e.message));
+  }
+}
+
+function defaultRecurringPayload(templateType){
+  const today = todayStr();
+  if (templateType === 'VOUCHER') {
+    const voucherType = STATE.voucherTypes.find(v => /journal/i.test(v.name)) || STATE.voucherTypes[0] || {};
+    const ledgers = STATE.ledgers.filter(l => l.status === 'ACTIVE').slice(0,2);
+    return {
+      voucher_type_id: voucherType.id || '',
+      date: today,
+      narration: 'Recurring journal generated by automation',
+      lines: [
+        {ledger_id: ledgers[0]?.id || '', debit: 100, credit: 0, remarks: 'Recurring debit'},
+        {ledger_id: ledgers[1]?.id || '', debit: 0, credit: 100, remarks: 'Recurring credit'},
+      ],
+    };
+  }
+  if (templateType === 'SALES_INVOICE') {
+    return {
+      customer_id: STATE.customers[0]?.id || '',
+      customer_ledger_id: STATE.ledgers[0]?.id || '',
+      sales_ledger_id: STATE.ledgers[1]?.id || STATE.ledgers[0]?.id || '',
+      warehouse_id: STATE.warehouses[0]?.id || '',
+      invoice_date: today,
+      place_of_supply: STATE.company?.state || '',
+      gst_treatment: 'B2B',
+      pricing_type: 'EXCLUSIVE',
+      lines: [{item_id: STATE.stockItems[0]?.id || '', quantity: 1, rate: 100, gst_rate: 18}],
+    };
+  }
+  return {
+    supplier_id: STATE.suppliers[0]?.id || '',
+    supplier_ledger_id: STATE.ledgers[0]?.id || '',
+    purchase_ledger_id: STATE.ledgers[1]?.id || STATE.ledgers[0]?.id || '',
+    warehouse_id: STATE.warehouses[0]?.id || '',
+    bill_date: today,
+    place_of_supply: STATE.company?.state || '',
+    gst_treatment: 'B2B',
+    pricing_type: 'EXCLUSIVE',
+    lines: [{item_id: STATE.stockItems[0]?.id || '', quantity: 1, rate: 100, gst_rate: 18}],
+  };
+}
+
+function recurringPayloadHelp(){
+  return `<div class="muted small" style="margin-top:6px;">Stored payload uses the same fields as the normal voucher, sales invoice, or purchase bill APIs. The run date replaces the document date automatically.</div>`;
+}
+
+function openRecurringTemplateForm(){
+  if (!requireCompany()) return;
+  openModal({
+    title:'New recurring template', wide:true,
+    bodyHtml:`
+      <div class="grid two">
+        <div class="form-row"><label>Name</label><input id="rt-name" placeholder="Monthly rent accrual"/></div>
+        <div class="form-row"><label>Type</label><select id="rt-type"><option value="VOUCHER">Journal / voucher</option><option value="SALES_INVOICE">Sales invoice</option><option value="PURCHASE_BILL">Purchase bill</option></select></div>
+        <div class="form-row"><label>Frequency</label><select id="rt-frequency"><option>MONTHLY</option><option>WEEKLY</option><option>DAILY</option><option>YEARLY</option></select></div>
+        <div class="form-row"><label>Interval</label><input type="number" id="rt-interval" min="1" value="1"/></div>
+        <div class="form-row"><label>Start date</label><input type="date" id="rt-start" value="${todayStr()}"/></div>
+        <div class="form-row"><label>End date</label><input type="date" id="rt-end"/></div>
+        <div class="form-row"><label>Max occurrences</label><input type="number" id="rt-max" min="1" placeholder="optional"/></div>
+        <div class="form-row"><label>Posting</label><select id="rt-post"><option value="false">Create draft documents</option><option value="true">Post generated documents</option></select></div>
+      </div>
+      <div class="form-row"><label>Payload JSON</label><textarea id="rt-payload" rows="13" class="mono"></textarea>${recurringPayloadHelp()}</div>
+      <div class="form-row"><label>Notes</label><textarea id="rt-notes" rows="2" placeholder="Optional internal note"></textarea></div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="rt-save">Create template</button>`,
+    onMount:() => {
+      const type = document.getElementById('rt-type');
+      const payload = document.getElementById('rt-payload');
+      const fillPayload = () => { payload.value = JSON.stringify(defaultRecurringPayload(type.value), null, 2); };
+      type.onchange = fillPayload;
+      fillPayload();
+      document.getElementById('rt-save').onclick = submitRecurringTemplateForm;
+    }
+  });
+}
+
+async function submitRecurringTemplateForm(){
+  try {
+    const payloadText = document.getElementById('rt-payload').value;
+    JSON.parse(payloadText);
+    const body = {
+      name: document.getElementById('rt-name').value.trim(),
+      template_type: document.getElementById('rt-type').value,
+      frequency: document.getElementById('rt-frequency').value,
+      interval_count: parseInt(document.getElementById('rt-interval').value || '1', 10),
+      start_date: document.getElementById('rt-start').value,
+      end_date: document.getElementById('rt-end').value || null,
+      max_occurrences: document.getElementById('rt-max').value ? parseInt(document.getElementById('rt-max').value, 10) : null,
+      post_generated: document.getElementById('rt-post').value === 'true',
+      payload_json: payloadText,
+      notes: document.getElementById('rt-notes').value || null,
+    };
+    await api(`/companies/${STATE.companyId}/automation/recurring-templates`, {method:'POST', body});
+    closeModal(); toast('Recurring template created ✓','ok'); loadAutomation();
+  } catch(e) { errToast(e); }
+}
+
+async function openRecurringTemplateDetail(templateId){
+  try {
+    const t = await api(`/companies/${STATE.companyId}/automation/recurring-templates/${templateId}`);
+    openModal({
+      title:t.name, wide:true,
+      bodyHtml:`
+        <div class="grid two">
+          <div class="metric"><div class="muted">Type</div><strong>${esc(t.template_type)}</strong></div>
+          <div class="metric"><div class="muted">Status</div><strong>${esc(t.status)}</strong></div>
+          <div class="metric"><div class="muted">Next run</div><strong>${fmtDate(t.next_run_date)}</strong></div>
+          <div class="metric"><div class="muted">Generated</div><strong>${t.generated_count}${t.max_occurrences ? ` / ${t.max_occurrences}` : ''}</strong></div>
+        </div>
+        <div class="form-row"><label>Payload JSON</label><textarea id="rt-detail-payload" rows="14" class="mono">${esc(JSON.stringify(JSON.parse(t.payload_json || '{}'), null, 2))}</textarea></div>
+        <div class="muted small">Created ${new Date(t.created_at).toLocaleString('en-IN')}</div>`,
+      footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button><button class="btn btn-blue" onclick="saveRecurringPayload('${templateId}')">Save payload</button>`,
+    });
+  } catch(e){ errToast(e); }
+}
+
+async function saveRecurringPayload(templateId){
+  try {
+    const payloadText = document.getElementById('rt-detail-payload').value;
+    JSON.parse(payloadText);
+    await api(`/companies/${STATE.companyId}/automation/recurring-templates/${templateId}`, {method:'PATCH', body:{payload_json:payloadText}});
+    closeModal(); toast('Recurring payload updated ✓','ok'); loadAutomation();
+  } catch(e){ errToast(e); }
+}
+
+async function setRecurringTemplateStatus(templateId, status){
+  try {
+    await api(`/companies/${STATE.companyId}/automation/recurring-templates/${templateId}`, {method:'PATCH', body:{status}});
+    toast(`Template ${status.toLowerCase()} ✓`,'ok'); loadAutomation();
+  } catch(e){ errToast(e); }
+}
+
+async function runDueAutomation(){
+  if (!requireCompany()) return;
+  try {
+    const asOf = document.getElementById('auto-asof')?.value || todayStr();
+    const runs = await api(`/companies/${STATE.companyId}/automation/recurring-templates/run-due`, {method:'POST', body:{as_of:asOf, limit:25}});
+    toast(`${runs.length} recurring run${runs.length===1?'':'s'} processed`,'ok');
+    await Promise.all([loadAutomation(), refreshBalanceBeam()]);
+  } catch(e){ errToast(e); }
+}
+VIEW_RENDERERS['automation'] = renderAutomation;
+
+/* ============================================================
+   INTERNAL API (trusted single-tenant facade)
+   ============================================================ */
+async function renderInternalApi(){
+  view().innerHTML = viewHead('Internal API', 'Trusted single-tenant /api/v1 facade for internal deployments.',
+    `<button class="btn btn-ghost btn-sm" onclick="loadInternalApi()">Refresh</button>`) +
+    `<div id="internal-api-body">${emptyState('API','Loading internal API','Checking /api/v1/company and /api/v1/dashboard.')}</div>`;
+  loadInternalApi();
+}
+
+async function loadInternalApi(){
+  const body = document.getElementById('internal-api-body');
+  if (!body) return;
+  const endpoints = [
+    ['GET','/api/v1/company'],
+    ['GET','/api/v1/dashboard'],
+    ['GET','/api/v1/ledgers'],
+    ['POST','/api/v1/ledgers'],
+    ['GET','/api/v1/vouchers'],
+    ['POST','/api/v1/vouchers'],
+    ['POST','/api/v1/vouchers/{voucher_id}/post'],
+    ['GET','/api/v1/reports/trial-balance'],
+    ['GET','/api/v1/sales/invoices'],
+    ['POST','/api/v1/sales/invoices'],
+    ['GET','/api/v1/purchase/bills'],
+    ['GET','/api/v1/inventory/items'],
+    ['GET','/api/v1/gst/dashboard'],
+    ['GET','/api/v1/automation/recurring-templates'],
+    ['POST','/api/v1/automation/recurring-templates/run-due'],
+  ];
+  try {
+    const [company, dashboard] = await Promise.all([
+      api('/api/v1/company'),
+      api('/api/v1/dashboard'),
+    ]);
+    body.innerHTML = `
+      <div class="grid three" style="margin-bottom:14px;">
+        <div class="metric"><div class="muted">Active internal company</div><strong>${esc(company.name)}</strong><div class="mono small">${esc(company.id)}</div></div>
+        <div class="metric"><div class="muted">Vouchers</div><strong>${dashboard.voucher_count || 0}</strong></div>
+        <div class="metric"><div class="muted">Net profit</div><strong>${money(dashboard.net_profit || 0)}</strong></div>
+      </div>
+      <div class="card card-pad">
+        <div class="section-title">Simplified routes</div>
+        <div class="table-wrap"><table><thead><tr><th>Method</th><th>Path</th><th class="num">Action</th></tr></thead>
+          <tbody>${endpoints.map(([method,path]) => `<tr><td><span class="pill">${method}</span></td><td class="mono">${esc(path)}</td><td class="num"><button class="btn btn-ghost btn-sm" onclick="copyText('${esc(path)}')">Copy</button></td></tr>`).join('')}</tbody></table></div>
+      </div>
+      <div class="card card-pad" style="margin-top:14px;">
+        <div class="section-title">Deployment contract</div>
+        <div class="muted">Set <span class="mono">ALAADA_INTERNAL_COMPANY_ID</span> on the backend to pin this facade to a specific company. If unset, the backend uses the oldest non-deleted company. Existing <span class="mono">/companies/{company_id}</span> APIs remain available for compatibility.</div>
+      </div>`;
+  } catch(e) {
+    body.innerHTML = emptyState('⚠','Internal API unavailable', esc(e.message));
+  }
+}
+VIEW_RENDERERS['internal-api'] = renderInternalApi;
+
+/* ============================================================
    BUSINESS EVENTS (append-only automation/AI-hook log)
    ============================================================ */
 async function renderBusinessEvents(){
@@ -3995,6 +5454,14 @@ async function renderSettings(){
         <button class="btn btn-teal btn-sm" onclick="createBackup()">Create backup</button>
         <button class="btn btn-ghost btn-sm" onclick="restoreBackupFromDevice()">Restore backup JSON</button>
       </div>
+    </div>
+    <div class="card card-pad" style="margin-top:16px;">
+      <div style="font-weight:800;margin-bottom:4px;">Advanced</div>
+      <div style="font-size:.78rem;color:var(--ink3);margin-bottom:10px;">For technical users only. Not needed for everyday bookkeeping.</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;">
+        <input type="checkbox" id="dev-mode-toggle" ${DEVELOPER_MODE?'checked':''} onchange="setDeveloperMode(this.checked)"/>
+        Developer mode — shows the API explorer, internal endpoint list, and connection details
+      </label>
     </div>`;
   renderFyList();
 }
@@ -4075,6 +5542,247 @@ function importLedgersCsv(){
   };
   input.click();
 }
+
+/* ============================================================
+   IMPORT CENTER — TALLY / SHEETS / EXCEL / BULK ERP DATA
+   ============================================================ */
+const IMPORT_TYPES = [
+  {value:'auto', label:'Auto detect'},
+  {value:'tally_xml', label:'Tally XML export'},
+  {value:'tally_ledger_csv', label:'Tally ledger CSV'},
+  {value:'excel_workbook', label:'Excel workbook'},
+  {value:'google_sheets_csv', label:'Sheets / CSV'},
+  {value:'accounts_bulk', label:'Bulk accounts'},
+  {value:'stock_bulk', label:'Bulk stock / inventory'},
+  {value:'crm_bulk', label:'Bulk CRM'},
+  {value:'parties_bulk', label:'Customers / suppliers'},
+  {value:'vouchers_bulk', label:'Vouchers / journals'},
+  {value:'sales_bulk', label:'Sales documents'},
+  {value:'purchase_bulk', label:'Purchase documents'},
+  {value:'banking_bulk', label:'Bank statements'},
+  {value:'gst_bulk', label:'GST / GSTR data'},
+  {value:'erp_bundle', label:'Full ERP bundle'},
+];
+const IMPORT_ENDPOINTS = {
+  tally_xml:['/imports/tally', '/import/tally', '/import/tally.xml', '/imports/bulk'],
+  tally_ledger_csv:['/import/ledgers.csv', '/imports/tally-ledgers', '/imports/bulk'],
+  excel_workbook:['/imports/excel', '/import/excel', '/imports/spreadsheet', '/imports/bulk'],
+  google_sheets_csv:['/imports/sheets', '/import/sheets', '/imports/csv', '/imports/bulk'],
+  accounts_bulk:['/imports/accounts', '/import/accounts', '/imports/bulk'],
+  stock_bulk:['/imports/stocks', '/imports/inventory', '/import/stocks', '/imports/bulk'],
+  crm_bulk:['/imports/crm', '/import/crm', '/imports/bulk'],
+  parties_bulk:['/imports/parties', '/import/parties', '/imports/bulk'],
+  vouchers_bulk:['/imports/vouchers', '/import/vouchers', '/imports/bulk'],
+  sales_bulk:['/imports/sales', '/import/sales', '/imports/bulk'],
+  purchase_bulk:['/imports/purchases', '/import/purchases', '/imports/bulk'],
+  banking_bulk:['/banking/statements/import-csv', '/imports/banking', '/imports/bulk'],
+  gst_bulk:['/gst/gstr-2b/import-csv', '/imports/gst', '/imports/bulk'],
+  erp_bundle:['/import/json', '/imports/erp-bundle', '/imports/bulk'],
+  auto:['/imports/bulk', '/import/bulk', '/imports/auto'],
+};
+let IMPORT_FILE = null;
+let IMPORT_PREVIEW_TEXT = '';
+
+function renderImportCenter(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('Import Center', 'Bring Tally, Sheets, Excel, and bulk ERP data into Alaada with review-first import handling.',
+    `<button class="btn btn-ghost btn-sm" onclick="openImportBackendRoutes()">Find backend import routes</button>
+     <button class="btn btn-blue btn-sm" onclick="runImportUpload({dryRun:true})">Validate import</button>`) +
+    `<div class="grid grid-2">
+      <div class="card card-pad">
+        <div class="form-grid">
+          <div class="form-row"><label>Source format</label><select id="imp-type">${IMPORT_TYPES.map(t=>`<option value="${t.value}">${esc(t.label)}</option>`).join('')}</select></div>
+          <div class="form-row"><label>Target area</label><select id="imp-area">
+            <option value="auto">Auto map</option>
+            <option value="accounts">Accounts / ledgers</option>
+            <option value="stock">Stock / inventory</option>
+            <option value="crm">CRM leads / opportunities</option>
+            <option value="parties">Customers / suppliers</option>
+            <option value="vouchers">Vouchers / journals</option>
+            <option value="sales">Sales</option>
+            <option value="purchases">Purchases</option>
+            <option value="banking">Banking</option>
+            <option value="gst">GST</option>
+          </select></div>
+        </div>
+        <div class="api-file-row" id="import-drop" style="margin:10px 0 14px;">
+          <input type="file" id="import-file" accept=".xml,.csv,.tsv,.txt,.json,.xlsx,.xls,application/json,text/csv,text/xml,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onchange="handleImportFileSelected(this.files && this.files[0])"/>
+          <div class="help-text" style="margin-top:8px;">Accepted: Tally XML, CSV/TSV, Sheets exports, Excel .xlsx/.xls, JSON backup/bulk bundles.</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row"><label>Duplicate handling</label><select id="imp-duplicate"><option value="skip">Skip duplicates</option><option value="update">Update existing</option><option value="create_new">Create new</option><option value="error">Stop on duplicate</option></select></div>
+          <div class="form-row"><label>Date format</label><input id="imp-date-format" value="auto" placeholder="auto, DD-MM-YYYY, YYYY-MM-DD"/></div>
+        </div>
+        <div class="form-row"><label>Import notes</label><textarea id="imp-notes" rows="2" placeholder="Optional mapping notes: sheet names, GST columns, voucher numbering, branch, warehouse, owner, etc."></textarea></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <button class="btn btn-ghost" onclick="previewImportFile()">Preview file</button>
+          <button class="btn btn-ghost" onclick="askAiImportMapper()">AI mapping help</button>
+          <button class="btn btn-blue" onclick="runImportUpload({dryRun:true})">Validate import</button>
+          <button class="btn btn-teal" onclick="runImportUpload({dryRun:false})">Import data</button>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <div style="font-weight:900;margin-bottom:8px;">Bulk import coverage</div>
+        <div class="grid grid-2">
+          ${['Accounts','Stock items','Opening stock','CRM leads','Customers','Suppliers','Vouchers','Sales invoices','Purchase bills','Bank lines','GST data','Full ERP bundle'].map(x=>`<div class="kv"><span class="k">${esc(x)}</span><span class="v">Supported</span></div>`).join('')}
+        </div>
+        <div class="help-text" style="margin-top:12px;">Use Validate import first. Final import should be review-first and backend-controlled so accounting, inventory, GST, and CRM records remain consistent.</div>
+      </div>
+    </div>
+    <div id="import-preview-slot" style="margin-top:16px;">${emptyState('⇩','No import selected','Choose a Tally, Sheets, Excel, CSV, or JSON file to preview and validate.')}</div>`;
+  const drop = document.getElementById('import-drop');
+  drop.ondragover = e => { e.preventDefault(); drop.style.borderColor = 'var(--blue)'; };
+  drop.ondragleave = () => { drop.style.borderColor = ''; };
+  drop.ondrop = e => {
+    e.preventDefault(); drop.style.borderColor = '';
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) {
+      document.getElementById('import-file').files = e.dataTransfer.files;
+      handleImportFileSelected(file);
+    }
+  };
+}
+VIEW_RENDERERS['import-center'] = renderImportCenter;
+
+function detectImportType(file){
+  const name = (file && file.name || '').toLowerCase();
+  if (name.endsWith('.xml')) return 'tally_xml';
+  if (name.endsWith('.xlsx') || name.endsWith('.xls')) return 'excel_workbook';
+  if (name.endsWith('.json')) return 'erp_bundle';
+  if (name.includes('ledger')) return 'tally_ledger_csv';
+  if (name.includes('stock') || name.includes('inventory')) return 'stock_bulk';
+  if (name.includes('crm') || name.includes('lead')) return 'crm_bulk';
+  if (name.includes('bank')) return 'banking_bulk';
+  if (name.includes('gstr') || name.includes('gst')) return 'gst_bulk';
+  if (name.endsWith('.csv') || name.endsWith('.tsv')) return 'google_sheets_csv';
+  return 'auto';
+}
+
+async function handleImportFileSelected(file){
+  IMPORT_FILE = file || null;
+  IMPORT_PREVIEW_TEXT = '';
+  if (!file) return;
+  const type = detectImportType(file);
+  document.getElementById('imp-type').value = type;
+  const slot = document.getElementById('import-preview-slot');
+  slot.innerHTML = `<div class="card card-pad"><div style="font-weight:900;">${esc(file.name)}</div><div class="help-text">${(file.size/1024).toFixed(1)} KB · ${esc(type)}</div></div>`;
+  await previewImportFile();
+}
+
+async function previewImportFile(){
+  const slot = document.getElementById('import-preview-slot');
+  if (!IMPORT_FILE) {
+    const input = document.getElementById('import-file');
+    IMPORT_FILE = input && input.files && input.files[0];
+  }
+  if (!IMPORT_FILE) return toast('Choose an import file first.','err');
+  const isBinary = /\.(xlsx|xls)$/i.test(IMPORT_FILE.name);
+  if (isBinary) {
+    slot.innerHTML = `<div class="card card-pad"><div style="font-weight:900;">Excel workbook ready</div><div class="help-text">${esc(IMPORT_FILE.name)} · ${(IMPORT_FILE.size/1024).toFixed(1)} KB. Workbook parsing happens in the backend import handler.</div></div>`;
+    return;
+  }
+  IMPORT_PREVIEW_TEXT = await IMPORT_FILE.text();
+  const lines = IMPORT_PREVIEW_TEXT.split(/\r?\n/).slice(0,16);
+  const looksJson = IMPORT_PREVIEW_TEXT.trim().startsWith('{') || IMPORT_PREVIEW_TEXT.trim().startsWith('[');
+  const looksXml = IMPORT_PREVIEW_TEXT.trim().startsWith('<');
+  slot.innerHTML = `<div class="card card-pad">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;"><div style="font-weight:900;">Preview: ${esc(IMPORT_FILE.name)}</div><span class="pill">${looksXml?'XML':looksJson?'JSON':'Delimited text'}</span></div>
+    <pre style="white-space:pre-wrap;max-height:260px;overflow:auto;">${esc(lines.join('\n'))}</pre>
+  </div>`;
+}
+
+function importEndpointCandidates(type){
+  return IMPORT_ENDPOINTS[type] || IMPORT_ENDPOINTS.auto;
+}
+
+async function runImportUpload({dryRun=false} = {}){
+  if (!requireCompany()) return;
+  const input = document.getElementById('import-file');
+  const file = IMPORT_FILE || (input && input.files && input.files[0]);
+  if (!file) return toast('Choose an import file first.','err');
+  const type = document.getElementById('imp-type').value || detectImportType(file);
+  const slot = document.getElementById('import-preview-slot');
+  slot.innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> ${dryRun?'Validating':'Importing'} ${esc(file.name)}…</td></tr></tbody></table></div>`;
+  const form = new FormData();
+  form.append('file', file);
+  form.append('import_type', type);
+  form.append('target_area', document.getElementById('imp-area').value || 'auto');
+  form.append('duplicate_strategy', document.getElementById('imp-duplicate').value || 'skip');
+  form.append('date_format', document.getElementById('imp-date-format').value || 'auto');
+  form.append('notes', document.getElementById('imp-notes').value || '');
+  form.append('dry_run', dryRun ? 'true' : 'false');
+  const headers = API_KEY ? {'X-Alaada-API-Key': API_KEY} : {};
+  const candidates = importEndpointCandidates(type);
+  let lastError = null;
+  for (const suffix of candidates) {
+    const url = API_BASE.replace(/\/$/,'') + `/companies/${STATE.companyId}${suffix}${suffix.includes('?')?'&':'?'}dry_run=${dryRun?'true':'false'}`;
+    try {
+      const res = await fetch(url, {method:'POST', headers, body:form});
+      const text = await res.text();
+      let data = null; try { data = text ? JSON.parse(text) : null; } catch(e){ data = text; }
+      if (!res.ok) {
+        lastError = new Error((data && data.error && data.error.message) || `Import endpoint ${suffix} failed (${res.status})`);
+        if (res.status === 404 || res.status === 405) continue;
+        throw lastError;
+      }
+      renderImportResult(data, {dryRun, endpoint:suffix});
+      if (!dryRun) {
+        markBackupNeeded(STATE.companyId);
+        await refreshCoreStateAfterWorkbench();
+      }
+      toast(dryRun ? 'Import validation completed' : 'Import completed', 'ok');
+      return;
+    } catch(e) {
+      lastError = e;
+    }
+  }
+  slot.innerHTML = emptyState('⚠','No compatible import endpoint responded', esc(lastError ? lastError.message : 'Backend import route is not available yet.'), `<button class="btn btn-blue" onclick="openImportBackendRoutes()">Find import routes</button>`);
+}
+
+function renderImportResult(data, {dryRun, endpoint}){
+  const slot = document.getElementById('import-preview-slot');
+  const rows = data && (data.items || data.rows || data.imported || data.errors || data.warnings);
+  slot.innerHTML = `<div class="card card-pad">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+      <div><div style="font-weight:900;">${dryRun?'Validation result':'Import result'}</div><div class="help-text">Endpoint: <span class="mono">${esc(endpoint)}</span></div></div>
+      <span class="pill ok">${dryRun?'Validated':'Imported'}</span>
+    </div>
+    ${Array.isArray(rows) && rows.length ? `<div class="table-wrap"><table><thead><tr>${Object.keys(rows[0]).slice(0,8).map(k=>`<th>${esc(k)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,50).map(r=>`<tr>${Object.keys(rows[0]).slice(0,8).map(k=>`<td>${esc(typeof r[k] === 'object' ? JSON.stringify(r[k]) : r[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : ''}
+    <details style="margin-top:12px;" open><summary style="cursor:pointer;font-size:.75rem;font-weight:800;">Raw response</summary><pre style="margin-top:9px;white-space:pre-wrap;">${esc(JSON.stringify(data,null,2))}</pre></details>
+  </div>`;
+}
+
+async function askAiImportMapper(){
+  if (!requireCompany()) return;
+  if (!IMPORT_FILE) {
+    const input = document.getElementById('import-file');
+    IMPORT_FILE = input && input.files && input.files[0];
+  }
+  const type = document.getElementById('imp-type').value || (IMPORT_FILE ? detectImportType(IMPORT_FILE) : 'auto');
+  const notes = document.getElementById('imp-notes').value || '';
+  const snippet = IMPORT_PREVIEW_TEXT ? IMPORT_PREVIEW_TEXT.slice(0,3000) : '';
+  const slot = document.getElementById('import-preview-slot');
+  slot.innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> AI is preparing import mapping guidance…</td></tr></tbody></table></div>`;
+  try {
+    const data = await api(`/companies/${STATE.companyId}/ai/conversation`, {
+      method:'POST',
+      body:{intent:'data_cleaning', message:`Prepare import mapping guidance for ${type}. Target area: ${document.getElementById('imp-area').value}. Duplicate strategy: ${document.getElementById('imp-duplicate').value}. Notes: ${notes}. File sample: ${snippet}`, limit:25}
+    });
+    slot.innerHTML = `<div class="card card-pad"><div style="font-weight:900;margin-bottom:8px;">AI import mapping guidance</div><div class="help-text">${esc(data.answer || data.assistant_message || 'Review mapping guidance before import.')}</div><pre style="white-space:pre-wrap;margin-top:10px;">${esc(JSON.stringify(data.result || data,null,2))}</pre></div>`;
+  } catch(e) {
+    slot.innerHTML = emptyState('⚠','AI mapping failed', esc(e.message));
+    errToast(e);
+  }
+}
+
+function openImportBackendRoutes(){
+  navigate('backend-features');
+  setTimeout(() => {
+    const search = document.getElementById('api-op-search');
+    if (search) { search.value = 'import tally excel sheets bulk csv stock crm'; filterApiOperations(); }
+  }, 400);
+}
+
 async function createBackup(){
   try {
     const local = await saveLocalCompanyBackup({download:true, silent:true});
@@ -4269,6 +5977,7 @@ async function refreshBackendFeatures(){
 }
 
 function openApiCredentials(){
+  if (!DEVELOPER_MODE) setDeveloperMode(true);
   gateUrl.value = API_BASE;
   gateApiKey.value = API_KEY;
   gate.style.display = 'flex';
@@ -4543,11 +6252,134 @@ async function renderAudit(){
 VIEW_RENDERERS['audit'] = renderAudit;
 
 /* ============================================================
+   AI ACCOUNTING
+   ============================================================ */
+let aiVoiceRecognizer = null;
+
+function aiAccountingSample(text){
+  const input = document.getElementById('ai-accounting-text');
+  if (input) { input.value = text; input.focus(); }
+}
+
+function aiAccountingResultHtml(result){
+  const classification = result.classification || {};
+  const draft = result.draft_voucher || {};
+  const suggested = result.suggested_journal || {};
+  const lines = suggested.lines || classification.lines || [];
+  const summaryRows = [
+    ['Intent', classification.intent || result.intent || '—'],
+    ['Party', classification.party_name || classification.party || '—'],
+    ['Amount', classification.gross_amount || classification.total_amount || suggested.total_debit || '—'],
+    ['Tax mode', classification.tax_mode || classification.gst_mode || '—'],
+    ['Draft voucher', draft.created ? `${draft.voucher_number || draft.voucher_id || 'created'}` : 'Not created'],
+  ];
+  return `
+    <div class="card card-pad" style="margin-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
+        <div>
+          <div style="font-weight:900;">AI classification</div>
+          <div class="help-text">${esc(result.assistant_message || result.answer || 'Review the result before posting any accounting entry.')}</div>
+        </div>
+        <span class="pill ${draft.created ? 'ok' : ''}">${draft.created ? 'Draft created' : 'Review only'}</span>
+      </div>
+      <div class="grid grid-2" style="margin-bottom:14px;">
+        ${summaryRows.map(([k,v])=>`<div class="kv"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')}
+      </div>
+      ${lines.length ? `<div class="table-wrap"><table><thead><tr><th>Ledger</th><th>Type</th><th class="num">Amount</th></tr></thead><tbody>${lines.map(line=>`<tr><td>${esc(line.ledger_name || line.account || line.ledger || '—')}</td><td>${esc(line.entry_type || line.type || '—')}</td><td class="num">${esc(line.amount || '')}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      <details style="margin-top:12px;"><summary style="cursor:pointer;font-size:.75rem;font-weight:800;">Raw AI response</summary><pre style="margin-top:9px;">${esc(JSON.stringify(result,null,2))}</pre></details>
+    </div>`;
+}
+
+async function runAiAccounting({createDraft=false} = {}){
+  if (!requireCompany()) return;
+  const input = document.getElementById('ai-accounting-text');
+  const language = document.getElementById('ai-accounting-language').value.trim() || 'auto';
+  const text = (input && input.value.trim()) || '';
+  const slot = document.getElementById('ai-accounting-result');
+  if (!text) return toast('Enter or dictate an accounting sentence first.','err');
+  slot.innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> AI is classifying the transaction…</td></tr></tbody></table></div>`;
+  try {
+    const result = await api(`/companies/${STATE.companyId}/ai/natural-language-accounting`, {
+      method:'POST',
+      body:{text, language, create_draft:createDraft}
+    });
+    slot.innerHTML = aiAccountingResultHtml(result);
+    if (createDraft) {
+      await Promise.all([loadLedgers(), loadVoucherTypes(), loadFinancialYears()]);
+      refreshBalanceBeam();
+    }
+    toast(createDraft ? 'AI draft prepared for review' : 'AI classification ready', 'ok');
+  } catch(e) {
+    slot.innerHTML = emptyState('⚠','AI accounting failed', esc(e.message));
+    errToast(e);
+  }
+}
+
+function toggleAiAccountingVoice(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return toast('Voice input is not supported in this browser.','err');
+  const button = document.getElementById('ai-voice-btn');
+  if (aiVoiceRecognizer) {
+    aiVoiceRecognizer.stop();
+    aiVoiceRecognizer = null;
+    if (button) button.textContent = 'Start voice';
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  recognition.lang = document.getElementById('ai-accounting-language').value.trim() || 'en-IN';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.onstart = () => { if (button) button.textContent = 'Listening…'; };
+  recognition.onresult = event => {
+    const transcript = Array.from(event.results).map(r => r[0].transcript).join(' ').trim();
+    const input = document.getElementById('ai-accounting-text');
+    if (input && transcript) input.value = transcript;
+  };
+  recognition.onerror = event => toast(event.error || 'Voice input failed', 'err');
+  recognition.onend = () => { aiVoiceRecognizer = null; if (button) button.textContent = 'Start voice'; };
+  aiVoiceRecognizer = recognition;
+  recognition.start();
+}
+
+function renderAiAccounting(){
+  if (!requireCompany()) return;
+  view().innerHTML = viewHead('AI Accounting', 'Type or dictate natural-language transactions and let Alaada classify the accounting entry.',
+    `<button class="btn btn-blue" onclick="runAiAccounting({createDraft:true})">Create draft voucher</button>`) +
+    `<div class="grid grid-2">
+      <div class="card card-pad">
+        <div class="form-row">
+          <label>Natural-language accounting command</label>
+          <textarea id="ai-accounting-text" rows="6" placeholder="I bought 10 chairs for office for ₹1000 each including GST 18% by cash"></textarea>
+        </div>
+        <div class="form-grid">
+          <div class="form-row"><label>Language</label><input id="ai-accounting-language" value="en-IN" placeholder="auto, en-IN, hi-IN"/></div>
+          <div class="form-row"><label>Voice</label><button class="btn btn-ghost" id="ai-voice-btn" type="button" onclick="toggleAiAccountingVoice()">Start voice</button></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <button class="btn btn-ghost" onclick="runAiAccounting()">Classify only</button>
+          <button class="btn btn-blue" onclick="runAiAccounting({createDraft:true})">Create draft voucher</button>
+          <button class="btn btn-ghost" onclick="aiAccountingSample('I bought 10 chairs for office for ₹1000 each including GST 18% by cash')">Use sample</button>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <div style="font-weight:900;margin-bottom:8px;">Review workflow</div>
+        <div class="help-text">AI creates review-first draft accounting. Post only after checking ledger, GST, party, amount, and payment mode.</div>
+        <div class="kv"><span class="k">Purchase example</span><span class="v">Office chairs, GST, cash/bank</span></div>
+        <div class="kv"><span class="k">Sales example</span><span class="v">Customer invoice with GST</span></div>
+        <div class="kv"><span class="k">Payment example</span><span class="v">Vendor/customer settlement</span></div>
+      </div>
+    </div>
+    <div id="ai-accounting-result">${emptyState('✨','No AI result yet','Enter a sentence or use voice input, then classify or create a draft voucher.')}</div>`;
+}
+VIEW_RENDERERS['ai-accounting'] = renderAiAccounting;
+
+/* ============================================================
    COMPANY CREATE FORM
    ============================================================ */
 function openCompanyForm(){
   openModal({
     title:'New company', wide:true,
+    ai:{enabled:true, allowVoice:true, allowAssistant:false, allowFieldSuggestion:false, allowDraftTransaction:false, requiresCompany:false},
     bodyHtml:`
       <div class="form-grid">
         <div class="form-row"><label>Company name *</label><input type="text" id="c-name" placeholder="e.g. Alaada Traders Pvt Ltd"/></div>
@@ -4604,5 +6436,10 @@ window.addEventListener('beforeunload', e => {
   }
 });
 </script>
+<script src="js/accounts-enterprise.js"></script>
+<script src="js/accounts-banking.js"></script>
+<script src="js/accounts-assets.js"></script>
+<script src="js/accounts-close.js"></script>
+<script src="js/accounts-reports.js"></script>
 </body>
 </html>
