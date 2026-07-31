@@ -748,6 +748,97 @@ let API_BASE = resolveApiBase();
 // clears it, by design. Only relevant when self-hosting with
 // ALAADA_ENFORCE_API_AUTH=true; the public deployment does not require it.
 let API_KEY = '';
+
+/* ============================================================
+   APPWRITE USER AUTHENTICATION
+   The browser session lives in Appwrite. Accounts exchanges that session for
+   a short-lived JWT and sends it to the Accounts backend as a Bearer token.
+   The backend independently verifies the JWT and enforces company membership.
+   ============================================================ */
+const APPWRITE_ENDPOINT = ((window.ALAADA_CONFIG && window.ALAADA_CONFIG.appwriteEndpoint) || 'https://sfo.cloud.appwrite.io/v1').replace(/\/$/,'');
+const APPWRITE_PROJECT_ID = (window.ALAADA_CONFIG && window.ALAADA_CONFIG.appwriteProjectId) || '6972444700208a437da1';
+const APPWRITE_AUTH_REQUIRED = !(window.ALAADA_CONFIG && window.ALAADA_CONFIG.requireAppwriteAuth === false);
+let APPWRITE_USER = null;
+let APPWRITE_JWT = '';
+let APPWRITE_JWT_EXPIRES_AT = 0;
+let APPWRITE_JWT_PROMISE = null;
+
+async function fetchWithTimeout(input, init={}, timeoutMs=10000){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const externalSignal = init.signal;
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener('abort', () => controller.abort(), {once:true});
+  }
+  try {
+    return await fetch(input, {...init, signal:controller.signal});
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function appwriteRequest(path, {method='GET', body=null} = {}){
+  const headers = {'X-Appwrite-Project':APPWRITE_PROJECT_ID, 'Accept':'application/json'};
+  const init = {method, headers, credentials:'include'};
+  if (body !== null) {
+    headers['Content-Type'] = 'application/json';
+    init.body = JSON.stringify(body);
+  }
+  return fetchWithTimeout(APPWRITE_ENDPOINT + path, init, 10000);
+}
+
+function appwriteOAuthUrl(){
+  const success = window.location.origin + window.location.pathname;
+  const failure = window.location.origin + '/';
+  return `${APPWRITE_ENDPOINT}/account/sessions/oauth2/google?project=${encodeURIComponent(APPWRITE_PROJECT_ID)}&success=${encodeURIComponent(success)}&failure=${encodeURIComponent(failure)}`;
+}
+
+async function ensureAccountsIdentity({redirect=true} = {}){
+  if (!APPWRITE_AUTH_REQUIRED) return null;
+  if (APPWRITE_USER) return APPWRITE_USER;
+  try {
+    const res = await appwriteRequest('/account');
+    if (!res.ok) throw new Error('not authenticated');
+    APPWRITE_USER = await res.json();
+    return APPWRITE_USER;
+  } catch(e) {
+    APPWRITE_USER = null;
+    APPWRITE_JWT = '';
+    APPWRITE_JWT_EXPIRES_AT = 0;
+    if (redirect) window.location.replace(appwriteOAuthUrl());
+    throw new ApiError('Sign in to access Alaada Accounts.', 401, {});
+  }
+}
+
+async function getAppwriteJwt({force=false} = {}){
+  if (!APPWRITE_AUTH_REQUIRED) return '';
+  if (!force && APPWRITE_JWT && Date.now() < APPWRITE_JWT_EXPIRES_AT - 60000) return APPWRITE_JWT;
+  if (APPWRITE_JWT_PROMISE && !force) return APPWRITE_JWT_PROMISE;
+  APPWRITE_JWT_PROMISE = (async () => {
+    await ensureAccountsIdentity();
+    const res = await appwriteRequest('/account/jwts', {method:'POST', body:{duration:3600}});
+    if (!res.ok) {
+      APPWRITE_USER = null;
+      throw new ApiError('Could not create a secure Accounts session.', res.status, {});
+    }
+    const data = await res.json();
+    APPWRITE_JWT = data.jwt || '';
+    if (!APPWRITE_JWT) throw new ApiError('Appwrite did not return a JWT.', 401, data);
+    APPWRITE_JWT_EXPIRES_AT = Date.now() + 3600 * 1000;
+    return APPWRITE_JWT;
+  })().finally(() => { APPWRITE_JWT_PROMISE = null; });
+  return APPWRITE_JWT_PROMISE;
+}
+
+async function apiAuthHeaders(extra={}){
+  const headers = {...extra};
+  if (APPWRITE_AUTH_REQUIRED && !headers.Authorization) {
+    headers.Authorization = `Bearer ${await getAppwriteJwt()}`;
+  }
+  if (API_KEY && !headers['X-Alaada-API-Key']) headers['X-Alaada-API-Key'] = API_KEY;
+  return headers;
+}
 let STATE = {
   companies: [],
   companyId: localStorage.getItem(LS.company) || null,
@@ -781,9 +872,6 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
     if (params.length) url += '?' + params.map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
   }
   const opts = {method, headers:{...headers}};
-  if (API_KEY && !opts.headers.Authorization && !opts.headers['X-Alaada-API-Key']) {
-    opts.headers['X-Alaada-API-Key'] = API_KEY;
-  }
   if (formData) {
     opts.body = formData;
   } else if (body !== null) {
@@ -791,8 +879,21 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
     opts.body = opts.headers['Content-Type'].includes('application/json') ? JSON.stringify(body) : body;
   }
   let res;
-  try { res = await fetch(url, opts); }
-  catch(e){ throw new ApiError('Could not reach the API. Check the URL and that the server is running.', 0, {}); }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      opts.headers = await apiAuthHeaders(opts.headers);
+      res = await fetchWithTimeout(url, opts, 10000);
+    } catch(e) {
+      if (e && e.name === 'AbortError') throw new ApiError('The Accounts API timed out after 10 seconds.', 0, {});
+      if (e instanceof ApiError) throw e;
+      throw new ApiError('Could not reach the API. Check the URL and that the server is running.', 0, {});
+    }
+    if (res.status !== 401 || attempt === 1 || !APPWRITE_AUTH_REQUIRED) break;
+    APPWRITE_JWT = '';
+    APPWRITE_JWT_EXPIRES_AT = 0;
+    opts.headers = {...headers};
+    await getAppwriteJwt({force:true});
+  }
   if (raw) return res;
   let data = null;
   const text = await res.text();
@@ -1266,7 +1367,7 @@ async function tryConnect(url, {silent=false} = {}) {
   API_KEY = DEVELOPER_MODE ? gateApiKey.value.trim() : API_KEY;
   if (!silent) { gateStatus.innerHTML = '<span class="spin"></span> Connecting…'; }
   try {
-    const res = await fetch(API_BASE + '/health');
+    const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
     if (!res.ok) throw new Error();
     localStorage.setItem(LS.api, API_BASE);
     setApiStatus('up');
@@ -1286,7 +1387,7 @@ function setApiStatus(state){
   // state: 'up' | 'down' | 'connecting'
   const dot = document.getElementById('api-dot'), label = document.getElementById('api-label');
   dot.className = 'dot ' + (state==='up' ? 'up' : (state==='connecting' ? '' : 'down'));
-  label.textContent = state==='up' ? (API_KEY ? 'Connected · secured' : 'Connected') : (state==='connecting' ? 'Connecting…' : 'Offline');
+  label.textContent = state==='up' ? ((APPWRITE_USER || API_KEY) ? 'Connected · secured' : 'Connected') : (state==='connecting' ? 'Connecting…' : 'Offline');
 }
 document.getElementById('api-status').onclick = () => {
   gateUrl.value = API_BASE || FALLBACK_API;
@@ -1319,16 +1420,22 @@ applyDeveloperModeVisibility();
 /* ============================================================
    BOOTSTRAP
    ============================================================ */
+let bootstrapPromise = null;
 async function bootstrap() {
-  await loadCompanies();
-  renderSidebarRouting();
-  navigate(STATE.currentView);
-  pollHealth();
-  loadOpenApiSpec().catch(()=>{});
+  if (bootstrapPromise) return bootstrapPromise;
+  bootstrapPromise = (async () => {
+    await ensureAccountsIdentity();
+    await loadCompanies();
+    renderSidebarRouting();
+    navigate(STATE.currentView);
+    pollHealth();
+    loadOpenApiSpec().catch(()=>{});
+  })().finally(() => { bootstrapPromise = null; });
+  return bootstrapPromise;
 }
 setInterval(() => { if (API_BASE) pollHealth(); }, 20000);
 async function pollHealth(){
-  try { const r = await fetch(API_BASE + '/health'); setApiStatus(r.ok ? 'up' : 'down'); } catch(e){ setApiStatus('down'); }
+  try { const r = await fetchWithTimeout(API_BASE + '/health', {}, 10000); setApiStatus(r.ok ? 'up' : 'down'); } catch(e){ setApiStatus('down'); }
 }
 
 /* ============================================================
@@ -1405,21 +1512,28 @@ async function downloadOfflineBackup(){
   try { await saveBackupFile(STATE.offlineBackup.payload, STATE.offlineBackup.fileName); }
   catch(e){ if (e && e.name !== 'AbortError') errToast(e); }
 }
+let autoConnectPromise = null;
 async function startAutoConnect(){
-  gateUrl.value = API_BASE;
-  setApiStatus('connecting');
-  renderConnectingView(1);
-  const delays = [0, 2000, 3000, 5000, 8000, 8000, 8000, 8000]; // ~40s of gentle retries
-  for (let i = 0; i < delays.length; i++) {
-    if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
-    if (i > 0) renderConnectingView(i+1);
-    try {
-      const res = await fetch(API_BASE + '/health');
-      if (res.ok) { localStorage.setItem(LS.api, API_BASE); setApiStatus('up'); await bootstrap(); return; }
-    } catch(e) { /* keep retrying */ }
-  }
-  setApiStatus('down');
-  await renderOfflineBackupView();
+  if (autoConnectPromise) return autoConnectPromise;
+  autoConnectPromise = (async () => {
+    await ensureAccountsIdentity();
+    gateUrl.value = API_BASE;
+    setApiStatus('connecting');
+    renderConnectingView(1);
+    const delays = [0, 2000, 3000, 5000, 8000, 8000, 8000, 8000]; // ~40s of gentle retries
+    for (let i = 0; i < delays.length; i++) {
+      if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
+      if (i > 0) renderConnectingView(i+1);
+      try {
+        const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
+        if (res.ok) { localStorage.setItem(LS.api, API_BASE); setApiStatus('up'); await bootstrap(); return true; }
+      } catch(e) { /* keep retrying */ }
+    }
+    setApiStatus('down');
+    await renderOfflineBackupView();
+    return false;
+  })().finally(() => { autoConnectPromise = null; });
+  return autoConnectPromise;
 }
 startAutoConnect();
 
@@ -4318,9 +4432,9 @@ function importGstr2bCsv(){
     const form = new FormData();
     form.append('file', file);
     try {
-      const headers = API_KEY ? {'X-Alaada-API-Key': API_KEY} : {};
+      const headers = await apiAuthHeaders();
       const url = API_BASE.replace(/\/$/,'') + `/companies/${STATE.companyId}/gst/gstr-2b/import-csv?period_month=${encodeURIComponent(period)}`;
-      const res = await fetch(url, {method:'POST', headers, body:form});
+      const res = await fetchWithTimeout(url, {method:'POST', headers, body:form}, 10000);
       const text = await res.text();
       let data = null; try { data = text ? JSON.parse(text) : null; } catch(_e) {}
       if (!res.ok) throw new Error((data && data.error && data.error.message) || text || `Import failed (${res.status})`);
@@ -5529,8 +5643,8 @@ function importLedgersCsv(){
     const form = new FormData();
     form.append('file', file);
     try {
-      const importHeaders = API_KEY ? {'X-Alaada-API-Key': API_KEY} : {};
-      const res = await fetch(API_BASE.replace(/\/$/,'') + `/companies/${STATE.companyId}/import/ledgers.csv`, {method:'POST', headers:importHeaders, body:form});
+      const importHeaders = await apiAuthHeaders();
+      const res = await fetchWithTimeout(API_BASE.replace(/\/$/,'') + `/companies/${STATE.companyId}/import/ledgers.csv`, {method:'POST', headers:importHeaders, body:form}, 10000);
       const text = await res.text();
       let data = null; try { data = text ? JSON.parse(text) : null; } catch(e){}
       if (!res.ok) throw new Error((data && data.error && data.error.message) || `Import failed (${res.status})`);
@@ -5711,13 +5825,13 @@ async function runImportUpload({dryRun=false} = {}){
   form.append('date_format', document.getElementById('imp-date-format').value || 'auto');
   form.append('notes', document.getElementById('imp-notes').value || '');
   form.append('dry_run', dryRun ? 'true' : 'false');
-  const headers = API_KEY ? {'X-Alaada-API-Key': API_KEY} : {};
+  const headers = await apiAuthHeaders();
   const candidates = importEndpointCandidates(type);
   let lastError = null;
   for (const suffix of candidates) {
     const url = API_BASE.replace(/\/$/,'') + `/companies/${STATE.companyId}${suffix}${suffix.includes('?')?'&':'?'}dry_run=${dryRun?'true':'false'}`;
     try {
-      const res = await fetch(url, {method:'POST', headers, body:form});
+      const res = await fetchWithTimeout(url, {method:'POST', headers, body:form}, 10000);
       const text = await res.text();
       let data = null; try { data = text ? JSON.parse(text) : null; } catch(e){ data = text; }
       if (!res.ok) {
@@ -5842,8 +5956,8 @@ const API_HTTP_METHODS = ['get','post','put','patch','delete'];
 
 async function loadOpenApiSpec(force=false){
   if (STATE.openapi && !force) return STATE.openapi;
-  const headers = API_KEY ? {'X-Alaada-API-Key':API_KEY} : {};
-  const res = await fetch(API_BASE.replace(/\/$/,'') + '/openapi.json', {headers});
+  const headers = await apiAuthHeaders();
+  const res = await fetchWithTimeout(API_BASE.replace(/\/$/,'') + '/openapi.json', {headers}, 10000);
   if (!res.ok) throw new Error(`Could not load API schema (${res.status})`);
   STATE.openapi = await res.json();
   STATE.openapiOperations = [];
@@ -6159,11 +6273,10 @@ async function executeApiOperation(){
     if (req.op.method==='DELETE' && !confirm(`Delete through ${req.op.path}? This action may be irreversible.`)) return;
     button.disabled=true; button.innerHTML='<span class="spin" style="border-color:rgba(255,255,255,.35);border-top-color:#fff;"></span> Running…';
     slot.innerHTML = `<div class="api-response"><div class="api-response-body"><span class="spin"></span> Calling backend…</div></div>`;
-    const headers = {};
-    if (API_KEY) headers['X-Alaada-API-Key']=API_KEY;
+    const headers = await apiAuthHeaders();
     if (req.contentType==='application/json') headers['Content-Type']='application/json';
     const started = performance.now();
-    const res = await fetch(API_BASE.replace(/\/$/,'') + req.path, {method:req.op.method,headers,body:req.formData || (req.body!==null?JSON.stringify(req.body):undefined)});
+    const res = await fetchWithTimeout(API_BASE.replace(/\/$/,'') + req.path, {method:req.op.method,headers,body:req.formData || (req.body!==null?JSON.stringify(req.body):undefined)}, 10000);
     const elapsed = Math.round(performance.now()-started);
     const contentType = res.headers.get('content-type') || '';
     let data;
