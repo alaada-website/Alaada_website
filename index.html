@@ -154,12 +154,12 @@
 
       {
         "@type": "SoftwareApplication",
-        "@id": "https://accounts-0o52.onrender.com/#app",
+        "@id": "https://www.alaada.com/Accounts.html#app",
         "name": "Alaada Accounts",
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web Browser",
         "description": "AI-assisted accounting and business operations platform with double-entry accounting, sales, purchases, inventory, GST, CRM, reports, automation and bulk imports.",
-        "url": "https://accounts-0o52.onrender.com",
+        "url": "https://www.alaada.com/Accounts.html",
         "featureList": ["Double-entry accounting", "Sales and purchases", "Inventory and GST", "CRM and automation", "AI-assisted workflows"],
         "publisher": { "@id": "https://www.alaada.com/#organization" }
       },
@@ -872,7 +872,7 @@
       </a>
 
       <!-- ALAADA ACCOUNTS -->
-      <a href="Accounts.html" class="po-card po-card-violet reveal rd2" aria-label="Open Alaada Accounts">
+      <a href="#" class="po-card po-card-violet reveal rd2 launch-accounts-btn" aria-label="Sign in and open Alaada Accounts">
         <div class="po-card-inner">
           <div class="po-icon po-icon-violet" aria-hidden="true">📒</div>
           <div>
@@ -1070,7 +1070,7 @@
           <span class="pill" style="background:var(--violet2);color:var(--violet);">CRM &amp; Automation</span>
           <span class="pill" style="background:var(--violet2);color:var(--violet);">AI Assistance</span>
         </div>
-        <a href="Accounts.html" class="btn-accounts">Open Alaada Accounts →</a>
+        <a href="#" class="btn-accounts launch-accounts-btn">Open Alaada Accounts →</a>
         <p style="margin-top:14px;font-size:.78rem;color:var(--ink3);">Live now · Browser-based · Built for Indian businesses and growing teams.</p>
       </div>
 
@@ -1376,7 +1376,7 @@
   <a href="about-us.html">About Us</a>
   <a href="blog.html">Blog</a>
   <a href="developers.html">Developers</a>
-  <a href="Accounts.html">Alaada Accounts</a>
+  <a href="#" class="launch-accounts-btn">Alaada Accounts</a>
 </div>
       <button class="footer-logout" onclick="logout()">Sign out</button>
     </div>
@@ -1583,9 +1583,14 @@ if(ademo){
   const EP="https://sfo.cloud.appwrite.io/v1",PID="6972444700208a437da1";
   const OAUTH=`${EP}/account/sessions/oauth2/google?project=${PID}&success=${encodeURIComponent("https://www.alaada.com")}&failure=${encodeURIComponent("https://www.alaada.com")}`;
   const CK="alaada_auth",IK="alaada_identity",PK="alaada_oauth_pending",AK="alaada_authed",CD=7;
-  const DEST={orbit:"/Orbit.html",sheets:"/Spreadsheets.html"};
-  const cGet=n=>document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(n+'='))?.split('=')[1]||null;
-  const cSet=(n,v,d)=>{const e=new Date(Date.now()+d*864e5).toUTCString();document.cookie=`${n}=${v};path=/;expires=${e};SameSite=Lax;Secure`;};
+  const DEST={orbit:"/Orbit.html",sheets:"/Spreadsheets.html",accounts:"/Accounts.html"};
+  const cGet=n=>{
+    const item=document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(n+'='));
+    if(!item)return null;
+    const raw=item.slice(n.length+1);
+    try{return decodeURIComponent(raw);}catch(_){return raw;}
+  };
+  const cSet=(n,v,d)=>{const e=new Date(Date.now()+d*864e5).toUTCString();document.cookie=`${n}=${encodeURIComponent(v)};path=/;expires=${e};SameSite=Lax;Secure`;};
   const cDel=n=>{document.cookie=`${n}=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT;SameSite=Lax;Secure`;};
   const ssGet=k=>{try{return sessionStorage.getItem(k);}catch{return null;}};
   const ssSet=(k,v)=>{try{sessionStorage.setItem(k,v);}catch(_){}};
@@ -1625,7 +1630,12 @@ if(ademo){
     const pendingDest=pendingGet();if(!pendingDest)return false;
     pendingClear();
     try{await verify();showBadge(iLoad());showSpin('Signing you in…');setTimeout(()=>window.location.href=pendingDest,400);return true;}
-    catch(_){cDel(CK);lsAuthDel();iClear();return false;}
+    catch(_){
+      cDel(CK);lsAuthDel();iClear();
+      showSpin('Google sign-in was not completed. Please try again.');
+      setTimeout(hideSpin,3200);
+      return true;
+    }
   };
   const silentCheck=async()=>{
     if(!hasAuthHint())return;const c=iLoad();if(c)showBadge(c);
@@ -1646,6 +1656,11 @@ if(ademo){
     },2200);
 
     document.querySelectorAll('.launch-orbit-btn').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();launch(DEST.orbit,'Launching Orbit…');}));
+
+    document.querySelectorAll('.launch-accounts-btn').forEach(btn=>btn.addEventListener('click',e=>{
+      e.preventDefault();
+      launch(DEST.accounts,'Launching Alaada Accounts…');
+    }));
 
     const sheetsBtn=document.getElementById('launch-sheets');
     if(sheetsBtn)sheetsBtn.addEventListener('click',e=>{e.preventDefault();launch(DEST.sheets,'Launching Alaada Sheets…');});
