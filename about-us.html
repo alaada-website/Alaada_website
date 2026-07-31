@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="icon" type="image/jpeg" href="images/alaada-logo.jpg"/>
-  <meta name="description" content="Meet the team behind Alaada — an AI business ecosystem built from Kolkata, India. The story, mission, and values behind Orbit AI, Web Analyser, and Alaada Sheets."/>
+  <meta name="description" content="Meet the team behind Alaada — an AI and business technology ecosystem built from Kolkata, India. Discover the story, mission and values behind Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets."/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
   <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -17,7 +17,7 @@
     --border:rgba(0,0,0,0.07);--borderM:rgba(0,0,0,0.13);
     --blue:#1a5fff;--blue2:#e6edff;--blue3:rgba(26,95,255,0.1);
     --teal:#00957a;--teal2:#dcf5ef;--teal3:rgba(0,149,122,0.1);
-    --gold:#d4930a;--gold2:#fdf3d9;--gold3:rgba(212,147,10,0.1);
+    --gold:#d4930a;--gold2:#fdf3d9;--gold3:rgba(212,147,10,0.1);--violet:#7c3aed;--violet2:#f1e9ff;--violet3:rgba(124,58,237,0.11);
     --r-sm:8px;--r-md:14px;--r-lg:20px;--r-xl:28px;
     --sh-sm:0 1px 3px rgba(0,0,0,0.05),0 4px 14px rgba(0,0,0,0.06);
     --sh-md:0 2px 6px rgba(0,0,0,0.05),0 10px 36px rgba(0,0,0,0.09);
@@ -186,20 +186,23 @@
 
   /* PRODUCTS */
   #our-products{background:var(--bg);}
-  .products-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px;}
-  @media(max-width:820px){.products-strip{grid-template-columns:1fr;}}
+  .products-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:40px;}
+  @media(max-width:1050px){.products-strip{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:680px){.products-strip{grid-template-columns:1fr;}}
   .prod-tile{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:26px;box-shadow:var(--sh-sm);text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:14px;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;}
   .prod-tile:hover{transform:translateY(-4px);box-shadow:var(--sh-lg);}
   .prod-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
   .prod-tile.blue::before{background:var(--blue);}
   .prod-tile.teal::before{background:var(--teal);}
   .prod-tile.gold::before{background:var(--gold);}
+  .prod-tile.violet::before{background:linear-gradient(90deg,var(--violet),#d946ef);}
   .prod-emoji{font-size:1.6rem;}
   .prod-name{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:var(--ink);}
   .prod-desc{font-size:.82rem;color:var(--ink2);line-height:1.7;flex:1;}
   .prod-link{font-size:.78rem;font-weight:600;color:var(--blue);display:flex;align-items:center;gap:4px;}
   .prod-link.teal-link{color:var(--teal);}
   .prod-link.gold-link{color:var(--gold);}
+  .prod-link.violet-link{color:var(--violet);}
 
   /* VISION */
   #vision{background:var(--ink);padding:80px 32px;}
@@ -271,9 +274,10 @@
   </a>
   <ul class="nav-links">
     <li><a href="index.html">Home</a></li>
-    <li><a href="about.html" class="active">About</a></li>
+    <li><a href="about-us.html" class="active">About</a></li>
     <li><a href="blog.html">Blog</a></li>
     <li><a href="developers.html">Developers</a></li>
+    <li><a href="https://accounts-0o52.onrender.com">Accounts</a></li>
     <li><a href="index.html#orbit-section" class="nav-cta">Try Orbit →</a></li>
   </ul>
 </nav>
@@ -287,14 +291,14 @@
     <div class="page-hero-left">
       <div class="page-eyebrow"><span class="page-eyebrow-dot"></span>Our Story</div>
       <h1>Built in India.<br>Built for <span class="accent">everyone.</span></h1>
-      <p class="page-hero-sub">Alaada is a one-person AI company from Kolkata — building a focused ecosystem of tools that actually work. No fluff, no bloat. Just software that earns its place in your workflow.</p>
+      <p class="page-hero-sub">Alaada is a one-person AI and business technology company from Kolkata — building a focused ecosystem of tools that actually work. No fluff, no bloat. Just software that earns its place in your workflow.</p>
     </div>
     <div class="page-hero-right">
       <div class="founder-card">
         <div class="founder-avatar-lg">A</div>
         <div class="founder-name-lg">Arzo Das</div>
         <div class="founder-role-lg">Founder & Builder · Kolkata, India</div>
-        <p class="founder-quote">"Most AI products are either overwhelming or underwhelming. Alaada exists to fix that — one focused tool at a time."</p>
+        <p class="founder-quote">"Alaada exists to turn intelligence into practical tools — from reasoning and analysis to spreadsheets, accounting and business operations."</p>
         <div class="founder-tags">
           <span class="tag">Full-Stack</span>
           <span class="tag">Python / FastAPI</span>
@@ -317,7 +321,7 @@
         <div class="section-eyebrow">Mission</div>
         <h2 class="section-title">AI that earns its place in your workflow.</h2>
         <p class="section-body">Alaada was founded on a single belief: that most people don't need 500 features — they need 5 that work flawlessly. Every product we build starts from that constraint.</p>
-        <p class="section-body" style="margin-top:14px;">We're building a complete AI business ecosystem — from thinking (Orbit AI) to analysis (Web Analyser) to numbers (Alaada Sheets) to accounting (coming soon). Tools that talk to each other, built for the way Indian businesses actually work.</p>
+        <p class="section-body" style="margin-top:14px;">We're building a complete AI business ecosystem — from thinking with Orbit AI, to analysis with Web Analyser, to numbers with Alaada Sheets, and accounting and operations with Alaada Accounts. Tools designed to work together for the way Indian businesses actually operate.</p>
         <div class="value-list">
           <div class="value-item">
             <span class="value-icon">🎯</span>
@@ -345,10 +349,10 @@
       <div class="mission-visual reveal rd2">
         <div class="stat-card">
           <div>
-            <div class="stat-card-num blue">3</div>
+            <div class="stat-card-num blue">4</div>
             <div class="stat-card-label">Live Products</div>
           </div>
-          <div class="stat-card-sub" style="margin-left:auto;max-width:160px;text-align:right;">Orbit AI, Web Analyser & Alaada Sheets — all free in your browser.</div>
+          <div class="stat-card-sub" style="margin-left:auto;max-width:160px;text-align:right;">Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets — connected products that work in your browser.</div>
         </div>
         <div class="stat-card">
           <div>
@@ -420,11 +424,20 @@
           </div>
 
           <div class="tl-item">
+            <div class="tl-dot teal"></div>
+            <div class="tl-card">
+              <div class="tl-year">1 August 2026 — Business Platform</div>
+              <div class="tl-title">Alaada Accounts launches</div>
+              <div class="tl-body">A connected accounting and business operations platform goes live with double-entry accounting, sales, purchases, inventory, GST, CRM, reports, automation, bulk imports and AI-assisted workflows.</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
             <div class="tl-dot blue"></div>
             <div class="tl-card">
-              <div class="tl-year">June 2026 — Now</div>
+              <div class="tl-year">2026 — Connected Ecosystem</div>
               <div class="tl-title">Building the ecosystem</div>
-              <div class="tl-body">Merging all products under a unified platform. Adding Tally-like accounts with AI, unifying design language, and building toward the first complete AI business suite from India.</div>
+              <div class="tl-body">Connecting Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets under one platform, with a shared design language and cross-product intelligence.</div>
             </div>
           </div>
 
@@ -466,8 +479,8 @@
   <div class="section-inner">
     <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 12px;">
       <div class="section-eyebrow" style="justify-content:center;">What We Build</div>
-      <h2 class="section-title">Three tools. One mission.</h2>
-      <p class="section-body">Each product solves a distinct problem. Together, they form a complete business intelligence ecosystem.</p>
+      <h2 class="section-title">Four products. One mission.</h2>
+      <p class="section-body">Each product solves a distinct problem. Together, they form a connected intelligence and business operations ecosystem.</p>
     </div>
     <div class="products-strip">
       <a href="index.html#orbit-section" class="prod-tile blue reveal rd1">
@@ -476,13 +489,20 @@
         <p class="prod-desc">Deep-reasoning AI assistant with live web search, file analysis, voice output, and a user-owned memory system. Built on FastAPI.</p>
         <div class="prod-link">Learn more →</div>
       </a>
-      <a href="index.html#analyser-section" class="prod-tile teal reveal rd2">
+
+      <a href="https://accounts-0o52.onrender.com" class="prod-tile violet reveal rd2">
+        <div class="prod-emoji">📒</div>
+        <div class="prod-name">Alaada Accounts</div>
+        <p class="prod-desc">AI-assisted accounting and business operations with ledgers, vouchers, reports, sales, purchases, inventory, GST, CRM, automation and bulk imports.</p>
+        <div class="prod-link violet-link">Open Accounts →</div>
+      </a>
+      <a href="index.html#analyser-section" class="prod-tile teal reveal rd3">
         <div class="prod-emoji">🔍</div>
         <div class="prod-name">Web Analyser</div>
         <p class="prod-desc">Real-time website audit tool. Paste any URL, get full performance, SEO, accessibility and speed data — no sign-in required.</p>
         <div class="prod-link teal-link">Learn more →</div>
       </a>
-      <a href="index.html#sheets-section" class="prod-tile gold reveal rd3">
+      <a href="index.html#sheets-section" class="prod-tile gold reveal rd4">
         <div class="prod-emoji">📊</div>
         <div class="prod-name">Alaada Sheets</div>
         <p class="prod-desc">Browser-based spreadsheet with 50+ formulas, AI NLP commands, and multi-format export including Tally XML — built for Indian businesses. Gated with Google OAuth. Your Data is ALWAYS protected.</p>
@@ -501,7 +521,7 @@
       <div class="reveal">
         <div class="vision-eyebrow">Looking Ahead</div>
         <h2 class="vision-title">The complete AI business ecosystem.</h2>
-        <p class="vision-body">Alaada's roadmap is simple: merge all products, add Tally-like accounts with AI, and become the single platform an Indian business needs to think, analyse, operate, and grow.</p>
+        <p class="vision-body">Alaada's roadmap is to connect Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets into the single platform a business can use to think, analyse, operate and grow.</p>
         <div class="vision-pills">
           <span class="vision-pill">AI Accounting</span>
           <span class="vision-pill">Unified Dashboard</span>
@@ -526,15 +546,15 @@
           </div>
           <div class="roadmap-item">
             <span class="roadmap-status rs-soon">Soon</span>
-            <div class="roadmap-text"><strong>Unified Platform</strong> — All three products under one login & dashboard</div>
+            <div class="roadmap-text"><strong>Unified Platform</strong> — Orbit AI, Accounts, Web Analyser and Sheets under one login and dashboard</div>
           </div>
           <div class="roadmap-item">
-            <span class="roadmap-status rs-soon">Soon</span>
-            <div class="roadmap-text"><strong>Alaada Accounts</strong> — GST-ready AI accounting, Tally-like but smarter</div>
+            <span class="roadmap-status rs-live">Live</span>
+            <div class="roadmap-text"><strong>Alaada Accounts</strong> — Accounting, sales, purchases, inventory, GST, CRM, reports and AI assistance</div>
           </div>
           <div class="roadmap-item">
             <span class="roadmap-status rs-planned">Planned</span>
-            <div class="roadmap-text"><strong>Cross-product Intelligence</strong> — Orbit analyses your Sheets data, Analyser feeds into Accounts</div>
+            <div class="roadmap-text"><strong>Cross-product Intelligence</strong> — Orbit analyses Sheets and Accounts data, while Web Analyser insights connect to business workflows</div>
           </div>
         </div>
       </div>
@@ -563,7 +583,7 @@
       <div class="principle-card reveal rd3">
         <span class="principle-icon">🔐</span>
         <div class="principle-title">User owns their data</div>
-        <div class="principle-body">Memory lives in the browser. No surprise server-side storage. You control what's kept.</div>
+        <div class="principle-body">Data handling should be clear, secure and transparent. Users should understand what is stored, where it is stored and how it is used.</div>
       </div>
       <div class="principle-card reveal rd4">
         <span class="principle-icon">📦</span>
@@ -594,6 +614,7 @@
       <a href="mailto:alaada@alaada.com" class="connect-btn primary">Email Us →</a>
       <a href="https://discord.gg/r4G7dynh" target="_blank" rel="noopener" class="connect-btn ghost">Join Discord</a>
       <a href="https://www.linkedin.com/company/alaada/" target="_blank" rel="noopener" class="connect-btn ghost">LinkedIn</a>
+      <a href="https://accounts-0o52.onrender.com" class="connect-btn ghost">Open Accounts</a>
     </div>
   </div>
 </section>
@@ -615,6 +636,7 @@
         <a href="https://www.linkedin.com/company/alaada/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         <a href="https://www.linkedin.com/in/arzo-das-782539391/" target="_blank" rel="noopener noreferrer">Arzo Das</a>
         <a href="https://www.facebook.com/profile.php?id=61583515497634" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="https://accounts-0o52.onrender.com">Alaada Accounts</a>
       </div>
     </div>
   </div>
