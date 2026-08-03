@@ -27,7 +27,7 @@
   --mono:'JetBrains Mono',monospace;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;}
+html,body{height:100%;max-width:100%;overflow-x:hidden;}
 body{
   font-family:'Figtree',sans-serif;background:var(--bg);color:var(--ink);
   -webkit-font-smoothing:antialiased; font-size:14.5px; line-height:1.5;
@@ -40,7 +40,7 @@ button{font-family:inherit;}
 ::-webkit-scrollbar-track{background:transparent;}
 
 /* ---------- layout shell ---------- */
-#app{display:flex;min-height:100vh;}
+#app{display:flex;min-height:100vh;width:100%;min-width:0;overflow-x:clip;}
 
 /* ---------- topbar ---------- */
 #topbar{
@@ -48,9 +48,11 @@ button{font-family:inherit;}
   background:rgba(245,244,239,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:18px;padding:0 20px 0 18px;
+  min-width:0;
 }
 .brand{display:flex;align-items:center;gap:9px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.02rem;letter-spacing:-.4px;flex-shrink:0;}
-.brand-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Syne';font-weight:800;font-size:.72rem;flex-shrink:0;}
+.brand-mark{width:26px;height:26px;object-fit:contain;flex-shrink:0;background:transparent;}
+.logo-fallback{display:inline-flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;color:var(--ink);}
 .brand small{display:block;font-family:'Figtree';font-weight:600;font-size:.62rem;color:var(--ink3);letter-spacing:.4px;text-transform:uppercase;margin-top:-1px;}
 
 #company-picker{position:relative;flex-shrink:0;}
@@ -127,20 +129,26 @@ button{font-family:inherit;}
 #sidebar-backdrop.open{display:block;}
 
 /* ---------- main ---------- */
-#main{margin-left:var(--sidebar-w);margin-top:var(--topbar-h);flex:1;padding:26px 30px 60px;max-width:1180px;}
+#main{
+  margin-left:var(--sidebar-w);margin-top:var(--topbar-h);flex:1 1 auto;
+  width:min(1180px,calc(100vw - var(--sidebar-w)));max-width:calc(100vw - var(--sidebar-w));
+  min-width:0;padding:26px 30px 60px;overflow-x:clip;
+}
 @media(max-width:900px){
   :root{--sidebar-w:280px;}
   .hamburger-btn{display:flex;}
   #sidebar{width:var(--sidebar-w);max-width:84vw;transform:translateX(-100%);box-shadow:var(--sh-md);}
   #sidebar.open{transform:translateX(0);}
-  #main{margin-left:0;padding:20px 16px 50px;}
+  #main{margin-left:0;width:100%;max-width:100vw;padding:20px 16px 50px;}
 }
+@media(max-width:420px){#main{padding-left:12px;padding-right:12px;}}
 
 
-.view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;min-width:0;}
+.view-head>div:first-child{min-width:0;max-width:100%;}
 .view-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;}
-.view-sub{color:var(--ink3);font-size:.85rem;margin-top:3px;}
-.view-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.view-sub{color:var(--ink3);font-size:.85rem;margin-top:3px;overflow-wrap:anywhere;}
+.view-actions{display:flex;gap:8px;flex-wrap:wrap;min-width:0;}
 
 /* buttons */
 .btn{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:.82rem;font-family:'Figtree';
@@ -162,21 +170,28 @@ button{font-family:inherit;}
 /* cards */
 .card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm);}
 .card-pad{padding:22px;}
-.grid{display:grid;gap:16px;}
-.grid-4{grid-template-columns:repeat(4,1fr);}
-.grid-3{grid-template-columns:repeat(3,1fr);}
-.grid-2{grid-template-columns:repeat(2,1fr);}
+.grid{display:grid;gap:16px;min-width:0;}
+.grid>*{min-width:0;}
+.grid-4{grid-template-columns:repeat(4,minmax(0,1fr));}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr));}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr));}
 @media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-3{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:560px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}}
 
-.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--sh-sm);position:relative;overflow:hidden;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--sh-sm);position:relative;overflow:hidden;min-width:0;}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
 .stat-card.c-blue::before{background:var(--blue);} .stat-card.c-teal::before{background:var(--teal);}
 .stat-card.c-gold::before{background:var(--gold);} .stat-card.c-ink::before{background:var(--ink);}
 .stat-card.c-red::before{background:var(--red);}
-.stat-label{font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;}
-.stat-value{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;}
+.stat-label{font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;overflow-wrap:anywhere;}
+.stat-value{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;overflow-wrap:anywhere;}
 .stat-value.neg{color:var(--red);}
+.dashboard-shell{width:100%;max-width:100%;min-width:0;overflow-x:clip;}
+.dashboard-shell .card,.dashboard-shell .table-wrap{min-width:0;max-width:100%;}
+.dashboard-shell .kv{gap:12px;min-width:0;}
+.dashboard-shell .kv .k,.dashboard-shell .kv .v{min-width:0;overflow-wrap:anywhere;}
+.dashboard-section-head{margin-bottom:12px;min-width:0;}
+.dashboard-section-head .view-title{font-size:1.05rem;overflow-wrap:anywhere;}
 
 /* tables */
 .table-wrap{overflow-x:auto;border-radius:var(--r-lg);border:1px solid var(--border);background:var(--white);box-shadow:var(--sh-sm);}
@@ -301,7 +316,7 @@ select{cursor:pointer;}
 /* welcome / api setup screen */
 #gate{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
 .gate-card{max-width:440px;width:100%;background:var(--white);border:1px solid var(--border);border-radius:var(--r-xl);padding:36px 32px;box-shadow:var(--sh-md);}
-.gate-logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Syne';font-weight:800;margin-bottom:18px;}
+.gate-logo{width:44px;height:44px;object-fit:contain;background:transparent;margin-bottom:18px;}
 .gate-card h2{font-family:'Syne';font-weight:800;font-size:1.35rem;letter-spacing:-.6px;margin-bottom:6px;}
 .gate-card p{color:var(--ink3);font-size:.85rem;margin-bottom:20px;line-height:1.6;}
 .gate-status{display:flex;align-items:center;gap:8px;font-size:.78rem;margin-top:10px;color:var(--ink3);}
@@ -372,9 +387,9 @@ select{cursor:pointer;}
 <!-- ============== API GATE (first run / connection lost) ============== -->
 <div id="gate" style="display:none;">
   <div class="gate-card">
-    <div class="gate-logo">A</div>
+    <img class="gate-logo" src="alaada-logo.jpg" width="44" height="44" alt="Alaada" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'gate-logo logo-fallback',role:'img',ariaLabel:'Alaada',textContent:'Alaada'}))">
     <h2>Connect to Alaada Accounts</h2>
-    <p>Point this dashboard at your Accounts Engine API — running locally, or deployed on Render.</p>
+    <p>We will connect you to the configured Alaada Accounts service.</p>
     <div class="form-row" id="gate-url-row">
       <label for="gate-url">Accounts server address</label>
       <input type="text" id="gate-url" placeholder="http://127.0.0.1:8000"/>
@@ -387,8 +402,8 @@ select{cursor:pointer;}
     </div>
     <button class="btn btn-blue" id="gate-connect" style="width:100%;justify-content:center;">Connect →</button>
     <div class="gate-status" id="gate-status"></div>
-    <div style="margin-top:14px;text-align:center;">
-      <button type="button" class="btn btn-ghost btn-sm" id="gate-dev-toggle" style="font-size:.72rem;color:var(--ink3);" onclick="setDeveloperMode(!DEVELOPER_MODE); document.getElementById('gate-dev-toggle').textContent = DEVELOPER_MODE ? 'Hide developer options' : 'Developer options';">Developer options</button>
+    <div id="gate-dev-shell" style="margin-top:14px;text-align:center;display:none;">
+      <button type="button" class="btn btn-ghost btn-sm" id="gate-dev-toggle" style="font-size:.72rem;color:var(--ink3);">Developer options</button>
     </div>
   </div>
 </div>
@@ -401,7 +416,7 @@ select{cursor:pointer;}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <div class="brand">
-      <div class="brand-mark">A</div>
+      <img class="brand-mark" src="alaada-logo.jpg" width="26" height="26" alt="Alaada" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'brand-mark logo-fallback',role:'img',ariaLabel:'Alaada',textContent:'Alaada'}))">
       <div>Accounts<small>by Alaada</small></div>
     </div>
 
@@ -435,7 +450,7 @@ select{cursor:pointer;}
       <span id="beam-label">—</span>
     </div>
 
-    <div id="api-status" title="Click to change API URL">
+    <div id="api-status" title="Connection status">
       <span class="dot" id="api-dot"></span>
       <span id="api-label">checking…</span>
     </div>
@@ -601,6 +616,10 @@ select{cursor:pointer;}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6"/></svg>
         Bank Book
       </div>
+      <div class="side-link" data-view="report-sheets-exports">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8"/></svg>
+        Sheets Exports
+      </div>
     </div>
 
     <div class="side-group">
@@ -641,6 +660,10 @@ select{cursor:pointer;}
       <div class="side-link" data-view="settings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
         Company &amp; Financial Years
+      </div>
+      <div class="side-link" data-view="recovery-center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/><path d="M12 7v5l3 2"/></svg>
+        Recovery Center
       </div>
       <div class="side-link" data-view="audit">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -711,17 +734,31 @@ const LS = {
 
 /* ============================================================
    DEVELOPER MODE
-   A UI preference (not a security boundary — this is a client-side
-   app, so a technical user can always flip it). It exists to keep
-   backend/API-shaped concepts (raw URLs, API keys, OpenAPI explorer,
-   internal endpoint browser) out of the way of everyday business
-   users, who should never need to see them.
+   A protected UI surface for local development or explicitly configured
+   admin builds. Backend diagnostics still require backend authorization.
    ============================================================ */
-let DEVELOPER_MODE = localStorage.getItem(LS.devMode) === '1';
+const FRONTEND_DEV_HOSTS = new Set(['', 'localhost', '127.0.0.1']);
+
+function isDeveloperFrontend(){
+  return window.location.protocol === 'file:' || FRONTEND_DEV_HOSTS.has(window.location.hostname);
+}
+
+function developerModeAllowed(){
+  return isDeveloperFrontend() || !!(window.ALAADA_CONFIG && window.ALAADA_CONFIG.allowDeveloperMode === true);
+}
+
+let DEVELOPER_MODE = developerModeAllowed() && localStorage.getItem(LS.devMode) === '1';
 function setDeveloperMode(on){
+  if (on && !developerModeAllowed()) {
+    DEVELOPER_MODE = false;
+    localStorage.removeItem(LS.devMode);
+    applyDeveloperModeVisibility();
+    return false;
+  }
   DEVELOPER_MODE = !!on;
   if (DEVELOPER_MODE) localStorage.setItem(LS.devMode, '1'); else localStorage.removeItem(LS.devMode);
   applyDeveloperModeVisibility();
+  return DEVELOPER_MODE;
 }
 
 /* ============================================================
@@ -734,12 +771,41 @@ function setDeveloperMode(on){
    No other part of this file should hardcode a backend URL.
    ============================================================ */
 const FALLBACK_API = 'https://accounts-0o52.onrender.com';
+
+function urlOrigin(value){
+  try { return new URL(value, window.location.href).origin; }
+  catch(e) { return ''; }
+}
+
+function trustedAccountsApiOrigins(){
+  const configured = window.ALAADA_CONFIG || {};
+  const raw = configured.trustedApiOrigins || configured.trustedAccountsApiOrigins || [];
+  const origins = new Set();
+  (Array.isArray(raw) ? raw : String(raw).split(',')).forEach(origin => {
+    const clean = String(origin || '').trim().replace(/\/$/,'');
+    if (clean) origins.add(clean);
+  });
+  origins.add(urlOrigin(FALLBACK_API));
+  if (configured.apiBase) origins.add(urlOrigin(configured.apiBase));
+  if (isDeveloperFrontend()) {
+    origins.add('http://localhost:8000');
+    origins.add('http://127.0.0.1:8000');
+  }
+  return origins;
+}
+
+function isTrustedAccountsApiBase(base){
+  const origin = urlOrigin(base);
+  return !!origin && trustedAccountsApiOrigins().has(origin);
+}
+
 function resolveApiBase(){
   if (window.ALAADA_CONFIG && window.ALAADA_CONFIG.apiBase) return window.ALAADA_CONFIG.apiBase.replace(/\/$/,'');
   const meta = document.querySelector('meta[name="alaada-api-base"]');
   if (meta && meta.content) return meta.content.trim().replace(/\/$/,'');
   const stored = localStorage.getItem(LS.api);
-  if (stored) return stored.replace(/\/$/,'');
+  if (stored && (isDeveloperFrontend() || isTrustedAccountsApiBase(stored))) return stored.replace(/\/$/,'');
+  if (stored && !isTrustedAccountsApiBase(stored)) localStorage.removeItem(LS.api);
   return FALLBACK_API;
 }
 let API_BASE = resolveApiBase();
@@ -834,6 +900,12 @@ async function getAppwriteJwt({force=false} = {}){
 async function apiAuthHeaders(extra={}){
   const headers = {...extra};
   if (APPWRITE_AUTH_REQUIRED && !headers.Authorization) {
+    if (!isTrustedAccountsApiBase(API_BASE)) {
+      throw new ApiError('This Accounts server is not trusted for secure sign-in. Open developer settings or use the configured Alaada Accounts server.', 403, {
+        code:'untrusted_accounts_api_origin',
+        origin:urlOrigin(API_BASE),
+      });
+    }
     headers.Authorization = `Bearer ${await getAppwriteJwt()}`;
   }
   if (API_KEY && !headers['X-Alaada-API-Key']) headers['X-Alaada-API-Key'] = API_KEY;
@@ -857,6 +929,8 @@ let STATE = {
   taxClassifications: [],
   currentView: 'dashboard',
   offlineBackup: null,
+  companyGeneration: 0,
+  loadStates: {},
   openapi: null,
   openapiOperations: [],
   apiExplorerSelected: null,
@@ -884,9 +958,9 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
       opts.headers = await apiAuthHeaders(opts.headers);
       res = await fetchWithTimeout(url, opts, 10000);
     } catch(e) {
-      if (e && e.name === 'AbortError') throw new ApiError('The Accounts API timed out after 10 seconds.', 0, {});
+      if (e && e.name === 'AbortError') throw new ApiError('The Accounts API timed out after 10 seconds.', 0, {code:'REQUEST_TIMEOUT', endpoint:url});
       if (e instanceof ApiError) throw e;
-      throw new ApiError('Could not reach the API. Check the URL and that the server is running.', 0, {});
+      throw new ApiError('Could not reach the API. Check the URL and that the server is running.', 0, {code:'NETWORK_OR_CORS', endpoint:url});
     }
     if (res.status !== 401 || attempt === 1 || !APPWRITE_AUTH_REQUIRED) break;
     APPWRITE_JWT = '';
@@ -916,6 +990,10 @@ class ApiError extends Error { constructor(msg, status, data){ super(msg); this.
    ============================================================ */
 const BACKUP_DB = 'alaada_accounts_backups';
 const BACKUP_STORE = 'company_backups';
+const DRAFT_DB = 'alaada_accounts_secure_drafts';
+const DRAFT_STORE = 'drafts';
+const DRAFT_KEY_STORE = 'device_keys';
+const DRAFT_VERSION = 1;
 
 function markBackupNeeded(companyId){
   localStorage.setItem(LS.dirtyBackup + companyId, '1');
@@ -1096,6 +1174,184 @@ async function ensureLocalBackupForSelectedCompany(){
     if (!existing) await saveLocalCompanyBackup({download:false, silent:true});
   } catch(e){ console.warn(e); }
 }
+
+function arrayBufferToBase64(buffer){
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  bytes.forEach(b => { binary += String.fromCharCode(b); });
+  return btoa(binary);
+}
+function base64ToArrayBuffer(value){
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+async function sha256Text(value){
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return arrayBufferToBase64(digest);
+}
+function secureDraftsSupported(){
+  return !!(window.indexedDB && window.crypto && crypto.subtle && window.TextEncoder && window.TextDecoder);
+}
+function draftUserId(){
+  if (APPWRITE_USER && APPWRITE_USER.$id) return APPWRITE_USER.$id;
+  if (!APPWRITE_AUTH_REQUIRED) return 'local-dev-user';
+  return '';
+}
+function openDraftDb(){
+  if (!secureDraftsSupported()) return Promise.reject(new Error('Secure device draft storage is not available in this browser.'));
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DRAFT_DB, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(DRAFT_STORE)) {
+        const store = db.createObjectStore(DRAFT_STORE, {keyPath:'key'});
+        store.createIndex('scope', ['userId','companyId','formType'], {unique:false});
+      }
+      if (!db.objectStoreNames.contains(DRAFT_KEY_STORE)) db.createObjectStore(DRAFT_KEY_STORE, {keyPath:'userId'});
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function getDraftDeviceKey(db, userId){
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DRAFT_KEY_STORE, 'readwrite');
+    const store = tx.objectStore(DRAFT_KEY_STORE);
+    const req = store.get(userId);
+    req.onsuccess = async () => {
+      try {
+        if (req.result && req.result.key) { resolve(req.result.key); return; }
+        const key = await crypto.subtle.generateKey({name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
+        store.put({userId, key, createdAt:new Date().toISOString()});
+        resolve(key);
+      } catch(e){ reject(e); }
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+async function putSecureDraft({formType, formId='new', payload, expiresInDays=14}){
+  const userId = draftUserId();
+  if (!userId || !STATE.companyId) return null;
+  const db = await openDraftDb();
+  try {
+    const keyMaterial = await getDraftDeviceKey(db, userId);
+    const text = JSON.stringify(payload);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, keyMaterial, new TextEncoder().encode(text));
+    const now = new Date();
+    const record = {
+      key:`${userId}:${STATE.companyId}:${formType}:${formId}`,
+      userId,
+      companyId:STATE.companyId,
+      companyName:STATE.company ? STATE.company.name : '',
+      formType,
+      formId,
+      version:DRAFT_VERSION,
+      checksum:await sha256Text(text),
+      iv:arrayBufferToBase64(iv.buffer),
+      ciphertext:arrayBufferToBase64(ciphertext),
+      savedAt:now.toISOString(),
+      expiresAt:new Date(now.getTime() + expiresInDays*86400000).toISOString(),
+    };
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(DRAFT_STORE, 'readwrite');
+      tx.objectStore(DRAFT_STORE).put(record);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    return record;
+  } finally {
+    db.close();
+  }
+}
+async function getSecureDraft(formType, formId='new'){
+  const userId = draftUserId();
+  if (!userId || !STATE.companyId || !secureDraftsSupported()) return null;
+  const db = await openDraftDb();
+  try {
+    const record = await new Promise((resolve, reject) => {
+      const tx = db.transaction(DRAFT_STORE, 'readonly');
+      const req = tx.objectStore(DRAFT_STORE).get(`${userId}:${STATE.companyId}:${formType}:${formId}`);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+    if (!record) return null;
+    if (record.expiresAt && new Date(record.expiresAt).getTime() < Date.now()) {
+      await deleteSecureDraft(formType, formId);
+      return null;
+    }
+    return record;
+  } finally {
+    db.close();
+  }
+}
+async function decryptSecureDraft(record){
+  if (!record) return null;
+  const db = await openDraftDb();
+  try {
+    const keyMaterial = await getDraftDeviceKey(db, record.userId);
+    const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:new Uint8Array(base64ToArrayBuffer(record.iv))}, keyMaterial, base64ToArrayBuffer(record.ciphertext));
+    const text = new TextDecoder().decode(plain);
+    if (record.checksum && await sha256Text(text) !== record.checksum) throw new Error('Draft checksum did not match.');
+    return JSON.parse(text);
+  } finally {
+    db.close();
+  }
+}
+async function deleteSecureDraft(formType, formId='new'){
+  const userId = draftUserId();
+  if (!userId || !STATE.companyId || !secureDraftsSupported()) return;
+  const db = await openDraftDb();
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(DRAFT_STORE, 'readwrite');
+      tx.objectStore(DRAFT_STORE).delete(`${userId}:${STATE.companyId}:${formType}:${formId}`);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+async function listSecureDrafts({formType=null, companyId=null} = {}){
+  const userId = draftUserId();
+  if (!userId || !secureDraftsSupported()) return [];
+  const db = await openDraftDb();
+  try {
+    const rows = await new Promise((resolve, reject) => {
+      const tx = db.transaction(DRAFT_STORE, 'readonly');
+      const store = tx.objectStore(DRAFT_STORE);
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+    const now = Date.now();
+    return rows
+      .filter(r => r.userId === userId)
+      .filter(r => !companyId || r.companyId === companyId)
+      .filter(r => !formType || r.formType === formType)
+      .filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() >= now)
+      .sort((a,b) => String(b.savedAt).localeCompare(String(a.savedAt)));
+  } finally {
+    db.close();
+  }
+}
+async function deleteSecureDraftRecord(record){
+  if (!record || !record.key || !secureDraftsSupported()) return;
+  const db = await openDraftDb();
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(DRAFT_STORE, 'readwrite');
+      tx.objectStore(DRAFT_STORE).delete(record.key);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
 async function restoreLocalBackupToCloud(record){
   if (!record || !record.payload) return null;
   const restored = await api('/companies/import/json', {method:'POST', body:record.payload});
@@ -1115,6 +1371,7 @@ function toast(msg, type='') {
   el.textContent = msg;
   document.getElementById('toasts').appendChild(el);
   setTimeout(() => el.remove(), 4200);
+  return el;
 }
 function errToast(e){ toast(e.message || 'Something went wrong', 'err'); console.error(e); }
 async function copyText(text){
@@ -1275,7 +1532,13 @@ function modalAiResponseHtml(data){
   const result = data.result || data;
   return `<div style="font-weight:800;margin-bottom:6px;">AI tools</div>
     ${answer ? `<div class="help-text" style="margin-bottom:8px;">${esc(answer)}</div>` : ''}
-    <pre>${esc(JSON.stringify(result,null,2))}</pre>`;
+    ${DEVELOPER_MODE ? `<details style="margin-top:10px;"><summary class="muted small" style="cursor:pointer;">Developer diagnostics</summary><pre>${esc(JSON.stringify(result,null,2))}</pre></details>` : ''}`;
+}
+function aiUserErrorMessage(error){
+  return 'Alaada AI could not complete this request right now. Retry in a moment or use the standard review workflow.';
+}
+function aiDeveloperDetails(error){
+  return DEVELOPER_MODE ? `<details style="margin-top:10px;"><summary class="muted small" style="cursor:pointer;">Developer diagnostics</summary><pre>${esc(JSON.stringify(error?.data || error?.message || error, null, 2))}</pre></details>` : '';
 }
 
 async function runModalAi(mode){
@@ -1310,8 +1573,8 @@ async function runModalAi(mode){
     const data = await api(`/companies/${STATE.companyId}/ai/conversation`, {method:'POST', body:{message, intent:'business_advisor', limit:10}});
     setModalAiResult(modalAiResponseHtml(data));
   } catch(e) {
-    setModalAiResult(`<div class="help-text">AI request failed: ${esc(e.message)}</div>`);
-    errToast(e);
+    setModalAiResult(`<div class="help-text">${esc(aiUserErrorMessage(e))}</div>${aiDeveloperDetails(e)}`);
+    toast(aiUserErrorMessage(e), 'err');
   }
 }
 
@@ -1368,19 +1631,21 @@ async function tryConnect(url, {silent=false} = {}) {
   if (!silent) { gateStatus.innerHTML = '<span class="spin"></span> Connecting…'; }
   try {
     const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
-    if (!res.ok) throw new Error();
-    localStorage.setItem(LS.api, API_BASE);
+    if (!res.ok) throw await healthResponseError(res);
+    if (isDeveloperFrontend() || isTrustedAccountsApiBase(API_BASE)) localStorage.setItem(LS.api, API_BASE);
+    else localStorage.removeItem(LS.api);
     setApiStatus('up');
     gate.style.display = 'none';
     await bootstrap();
     return true;
   } catch(e) {
     setApiStatus('down');
-    if (!silent) gateStatus.innerHTML = '⚠ Could not connect to <span class="mono">'+esc(API_BASE)+'</span>. Check the address and that the server is running.';
+    const classified = classifyAccountsError(normalizeConnectionError(e, API_BASE + '/health'), 'opening Accounts');
+    if (!silent) gateStatus.innerHTML = `<span class="dot down"></span>${esc(classified.title)}. ${esc(classified.message)}`;
     return false;
   }
 }
-document.getElementById('gate-connect').onclick = () => tryConnect(gateUrl.value);
+document.getElementById('gate-connect').onclick = () => tryConnect(DEVELOPER_MODE ? gateUrl.value : API_BASE);
 gateUrl.addEventListener('keydown', e => { if (e.key==='Enter') tryConnect(gateUrl.value); });
 
 function setApiStatus(state){
@@ -1390,11 +1655,16 @@ function setApiStatus(state){
   label.textContent = state==='up' ? ((APPWRITE_USER || API_KEY) ? 'Connected · secured' : 'Connected') : (state==='connecting' ? 'Connecting…' : 'Offline');
 }
 document.getElementById('api-status').onclick = () => {
+  if (!developerModeAllowed()) {
+    toast('Connection details are managed by your administrator.', 'info');
+    return;
+  }
   gateUrl.value = API_BASE || FALLBACK_API;
   if (DEVELOPER_MODE) gateApiKey.value = API_KEY;
   gate.style.display = 'flex';
   gateStatus.textContent = '';
 };
+document.getElementById('gate-dev-toggle').onclick = () => setDeveloperMode(!DEVELOPER_MODE);
 
 /* ============================================================
    DEVELOPER MODE — show/hide gate
@@ -1405,12 +1675,19 @@ document.getElementById('api-status').onclick = () => {
 function applyDeveloperModeVisibility(){
   const urlRow = document.getElementById('gate-url-row');
   const keyRow = document.getElementById('gate-api-key-row');
-  if (urlRow) urlRow.style.display = DEVELOPER_MODE ? '' : 'none';
-  if (keyRow) keyRow.style.display = DEVELOPER_MODE ? '' : 'none';
+  const devAllowed = developerModeAllowed();
+  if (!devAllowed && DEVELOPER_MODE) {
+    DEVELOPER_MODE = false;
+    localStorage.removeItem(LS.devMode);
+  }
+  if (urlRow) urlRow.style.display = devAllowed && DEVELOPER_MODE ? '' : 'none';
+  if (keyRow) keyRow.style.display = devAllowed && DEVELOPER_MODE ? '' : 'none';
+  const shell = document.getElementById('gate-dev-shell');
+  if (shell) shell.style.display = devAllowed ? '' : 'none';
   const toggleBtn = document.getElementById('gate-dev-toggle');
   if (toggleBtn) toggleBtn.textContent = DEVELOPER_MODE ? 'Hide developer options' : 'Developer options';
   document.querySelectorAll('.side-link[data-view="backend-features"], .side-link[data-view="internal-api"]')
-    .forEach(el => { el.style.display = DEVELOPER_MODE ? '' : 'none'; });
+    .forEach(el => { el.style.display = devAllowed && DEVELOPER_MODE ? '' : 'none'; });
   if (!DEVELOPER_MODE && ['backend-features','internal-api'].includes(STATE.currentView)) {
     navigate('dashboard');
   }
@@ -1455,6 +1732,90 @@ function technicalDetails(rows){
     </div>
   </details>`;
 }
+function connectionTechnicalDetails(error){
+  const items = [
+    ['Failure type', error?.kind],
+    ['HTTP status', error?.status],
+    ['Code', error?.code],
+    ['Request ID', error?.requestId],
+    ['Retry', 'Use Retry now after the condition is fixed'],
+  ].filter(r => r && r[1] != null && r[1] !== '');
+  if (!items.length) return '';
+  return `<details style="margin-top:14px;text-align:left;max-width:520px;margin-left:auto;margin-right:auto;">
+    <summary style="cursor:pointer;font-size:.76rem;color:var(--ink3);">View technical details</summary>
+    <div class="card card-pad" style="margin-top:8px;font-size:.76rem;">
+      ${items.map(([k,v]) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v mono">${esc(String(v))}</span></div>`).join('')}
+    </div>
+  </details>`;
+}
+async function healthResponseError(res){
+  let data = null;
+  const text = await res.text().catch(() => '');
+  try { data = text ? JSON.parse(text) : null; } catch(e) { data = text ? {code:'MALFORMED_RESPONSE', detail:text.slice(0,240)} : null; }
+  const message = data?.error?.message || data?.detail?.message || data?.message || `Health check failed (${res.status})`;
+  return new ApiError(message, res.status, data || {code:`HTTP_${res.status}`});
+}
+function normalizeConnectionError(error, endpoint){
+  if (error instanceof ApiError) return error;
+  if (error && error.name === 'AbortError') return new ApiError('The Accounts service timed out while opening.', 0, {code:'REQUEST_TIMEOUT', endpoint});
+  return new ApiError('The Accounts service could not be reached from this browser.', 0, {code:'NETWORK_OR_CORS', endpoint});
+}
+function requestIdFromError(error){
+  const data = error && error.data;
+  return data?.error?.request_id || data?.request_id || data?.details?.request_id || '';
+}
+function errorCodeFromError(error){
+  const data = error && error.data;
+  return data?.error?.code || data?.error?.type || data?.code || data?.detail?.code || (error?.status ? `HTTP_${error.status}` : 'NETWORK_ERROR');
+}
+function classifyAccountsError(error, phase){
+  const status = Number(error?.status || 0);
+  const code = errorCodeFromError(error);
+  let title = 'The operation could not be completed';
+  let message = error?.message || 'Try again after checking the connection.';
+  let kind = 'server_error';
+  if (status === 0) {
+    kind = code === 'REQUEST_TIMEOUT' ? 'timeout' : 'network_or_cors';
+    title = code === 'REQUEST_TIMEOUT' ? 'Accounts is taking too long to respond' : 'Accounts server could not be reached';
+    message = code === 'REQUEST_TIMEOUT'
+      ? 'The service may still be waking up. Retry after a few seconds.'
+      : 'Check your internet connection. If this started after a deployment, the browser may also be blocking the request because of CORS.';
+  } else if (status === 401) {
+    kind = 'authentication_expired';
+    title = 'Your sign-in needs attention';
+    message = 'Sign in again, then retry the operation.';
+  } else if (status === 403) {
+    kind = 'access_denied';
+    title = 'You do not have permission for this action';
+    message = 'Ask an owner or administrator for access.';
+    if (String(code).toLowerCase().includes('company')) {
+      kind = 'company_access_denied';
+      title = 'You do not have access to this company';
+      message = 'Ask an owner to add you to the company or switch to a company you can access.';
+    }
+  } else if (status === 404) {
+    kind = 'company_or_route_missing';
+    title = 'The selected company or endpoint was not found';
+    message = 'The company may have been removed, access may have changed, or the server route may be unavailable.';
+  } else if (status === 409 || status === 422) {
+    kind = 'validation_or_business_rule';
+    title = 'Accounts rejected the submitted data';
+    message = error?.message || 'Review the details, fix the issue, and retry.';
+  } else if (status === 503) {
+    kind = 'database_or_migrations';
+    title = 'Accounts database is not ready';
+    message = 'The server is reachable, but the database or migrations are not ready yet. Retry after a moment.';
+  } else if (String(code).toUpperCase() === 'MALFORMED_RESPONSE') {
+    kind = 'malformed_response';
+    title = 'Accounts returned an unexpected response';
+    message = 'The server responded, but the browser could not read the health check correctly. Retry after the deployment finishes.';
+  } else if (status >= 500) {
+    kind = 'server_error';
+    title = 'Accounts server error';
+    message = 'The server reported an internal problem. Retry after a moment or contact support with the request ID.';
+  }
+  return {phase, kind, status: status || 'network', code, title, message, requestId: requestIdFromError(error), raw: error?.data || error?.message || ''};
+}
 function renderConnectingView(attempt){
   view().innerHTML = `<div class="empty" style="padding-top:80px;">
     <div class="empty-icon"><span class="spin" style="width:26px;height:26px;border-width:3px;"></span></div>
@@ -1465,14 +1826,19 @@ function renderConnectingView(attempt){
     ${technicalDetails([['Endpoint', API_BASE], ['Attempt', attempt]])}
   </div>`;
 }
-function renderOfflineView(){
-  view().innerHTML = emptyState('⚠','We could not connect to Accounts',
-    `The connection couldn't be completed. Check your internet connection and try again.`,
+function renderOfflineView(error=null){
+  const classified = error || classifyAccountsError(new ApiError('The Accounts service could not be reached from this browser.', 0, {code:'NETWORK_OR_CORS'}), 'opening Accounts');
+  const developerSettings = developerModeAllowed()
+    ? `<button class="btn btn-ghost" onclick="document.getElementById('api-status').click()" style="margin-left:8px;">Developer connection settings</button>`
+    : '';
+  view().innerHTML = emptyState('!', classified.title,
+    classified.message,
     `<button class="btn btn-blue" onclick="startAutoConnect()">Retry now</button>
-     <button class="btn btn-ghost" onclick="document.getElementById('api-status').click()" style="margin-left:8px;">Connection settings</button>`
+     ${developerSettings}`
+    + connectionTechnicalDetails(classified)
     + technicalDetails([['Endpoint', API_BASE]]));
 }
-async function renderOfflineBackupView(){
+async function renderOfflineBackupView(error=null){
   let backup = null;
   try { backup = await latestLocalBackup(); } catch(e) { console.warn(e); }
   STATE.offlineBackup = backup;
@@ -1493,11 +1859,12 @@ async function renderOfflineBackupView(){
           <button class="btn btn-teal" onclick="restoreOfflineBackup()" style="margin-left:8px;">Restore after reconnect</button>
           <button class="btn btn-ghost" onclick="downloadOfflineBackup()" style="margin-left:8px;">Download backup</button>
         </div>
+        ${connectionTechnicalDetails(error)}
         ${technicalDetails([['Endpoint', API_BASE]])}
       </div>`;
     return;
   }
-  renderOfflineView();
+  renderOfflineView(error);
 }
 async function restoreOfflineBackup(){
   if (!STATE.offlineBackup) return toast('No local backup found on this device', 'err');
@@ -1521,16 +1888,18 @@ async function startAutoConnect(){
     setApiStatus('connecting');
     renderConnectingView(1);
     const delays = [0, 2000, 3000, 5000, 8000, 8000, 8000, 8000]; // ~40s of gentle retries
+    let lastError = null;
     for (let i = 0; i < delays.length; i++) {
       if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
       if (i > 0) renderConnectingView(i+1);
       try {
         const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
         if (res.ok) { localStorage.setItem(LS.api, API_BASE); setApiStatus('up'); await bootstrap(); return true; }
-      } catch(e) { /* keep retrying */ }
+        lastError = await healthResponseError(res);
+      } catch(e) { lastError = normalizeConnectionError(e, API_BASE + '/health'); }
     }
     setApiStatus('down');
-    await renderOfflineBackupView();
+    await renderOfflineBackupView(classifyAccountsError(lastError, 'opening Accounts'));
     return false;
   })().finally(() => { autoConnectPromise = null; });
   return autoConnectPromise;
@@ -1541,10 +1910,15 @@ startAutoConnect();
    COMPANY PICKER
    ============================================================ */
 async function loadCompanies() {
+  setLoadState('companies', 'loading');
   try {
     const page = await api('/companies', {qs:{page:1, page_size:100}});
     STATE.companies = page.items || [];
-  } catch(e) { STATE.companies = []; errToast(e); }
+    setLoadState('companies', STATE.companies.length ? 'loaded' : 'loaded_empty');
+  } catch(e) {
+    setLoadState('companies', 'failed', {message:e.message || 'Request failed', status:e.status || 'network', code:errorCodeFromError(e)});
+    errToast(e);
+  }
   const selectedStillExists = STATE.companies.some(company => company.id === STATE.companyId);
   if (!selectedStillExists) {
     STATE.companyId = STATE.companies[0]?.id || null;
@@ -1558,6 +1932,11 @@ async function loadCompanies() {
 
 function renderCompanyMenu(){
   const list = document.getElementById('co-list');
+  const failedCompanies = failedLoadState('companies');
+  if (failedCompanies && !STATE.companies.length) {
+    list.innerHTML = `<div style="padding:16px 14px;font-size:.8rem;color:var(--red);">Could not load companies. Retry the connection before creating a new company.</div>`;
+    return;
+  }
   if (!STATE.companies.length) {
     list.innerHTML = `<div style="padding:16px 14px;font-size:.8rem;color:var(--ink3);">No companies yet — create your first one.</div>`;
     return;
@@ -1578,17 +1957,23 @@ document.addEventListener('click', e => {
 document.getElementById('co-new-btn').onclick = () => { document.getElementById('company-menu').classList.remove('open'); openCompanyForm(); };
 
 async function selectCompany(id, {silentNav=false} = {}) {
+  const generation = ++STATE.companyGeneration;
   STATE.companyId = id;
   localStorage.setItem(LS.company, id);
+  clearCompanyScopedLoadStates();
   try {
-    STATE.company = await api(`/companies/${id}`);
+    const company = await api(`/companies/${id}`);
+    if (!sameCompanyGeneration(id, generation)) return;
+    STATE.company = company;
   } catch(e) {
+    if (!sameCompanyGeneration(id, generation)) return;
     if (e.status === 404) {
       try {
         const backup = await getLocalBackup(id);
         if (backup) {
-          toast('Company missing in cloud database. Restoring latest local backup...', '');
-          await restoreLocalBackupToCloud(backup);
+          STATE.offlineBackup = backup;
+          toast('Company missing in cloud database. Review recovery options before restoring.', 'err');
+          navigate('recovery-center');
           return;
         }
       } catch(inner){ console.warn(inner); }
@@ -1597,11 +1982,15 @@ async function selectCompany(id, {silentNav=false} = {}) {
   }
   document.getElementById('co-current').textContent = STATE.company.name;
   renderCompanyMenu();
-  await Promise.all([
-    loadGroups(), loadLedgers(), loadVoucherTypes(), loadFinancialYears(),
-    loadCustomers(), loadSuppliers(), loadCategories(), loadUoms(),
-    loadWarehouses(), loadStockItems(), loadGstRates(), loadTaxClassifications(),
+  const scopedResults = await Promise.allSettled([
+    loadGroups(generation, id), loadLedgers(generation, id), loadVoucherTypes(generation, id), loadFinancialYears(generation, id),
+    loadCustomers(generation, id), loadSuppliers(generation, id), loadCategories(generation, id), loadUoms(generation, id),
+    loadWarehouses(generation, id), loadStockItems(generation, id), loadGstRates(generation, id), loadTaxClassifications(generation, id),
   ]);
+  if (!sameCompanyGeneration(id, generation)) return;
+  if (scopedResults.some(result => result.status === 'rejected')) {
+    toast('Some company data could not be loaded. Existing data was kept; use Retry loading before creating new records.', 'err');
+  }
   ensureLocalBackupForSelectedCompany();
   refreshBalanceBeam();
   updateBackupReminder();
@@ -1609,18 +1998,62 @@ async function selectCompany(id, {silentNav=false} = {}) {
   else navigate(STATE.currentView);
 }
 
-async function loadGroups(){ if(!STATE.companyId) return; try{ STATE.groups = await api(`/companies/${STATE.companyId}/account-groups`);}catch(e){STATE.groups=[];} }
-async function loadLedgers(){ if(!STATE.companyId) return; try{ const p = await api(`/companies/${STATE.companyId}/ledgers`, {qs:{page_size:500}}); STATE.ledgers = p.items||[]; }catch(e){STATE.ledgers=[];} }
-async function loadVoucherTypes(){ if(!STATE.companyId) return; try{ STATE.voucherTypes = await api(`/companies/${STATE.companyId}/voucher-types`);}catch(e){STATE.voucherTypes=[];} }
-async function loadFinancialYears(){ if(!STATE.companyId) return; try{ STATE.financialYears = await api(`/companies/${STATE.companyId}/financial-years`);}catch(e){STATE.financialYears=[];} }
-async function loadCustomers(){ if(!STATE.companyId) return; try{ const p = await api(`/companies/${STATE.companyId}/customers`, {qs:{page_size:500}}); STATE.customers = p.items||[]; }catch(e){STATE.customers=[];} }
-async function loadSuppliers(){ if(!STATE.companyId) return; try{ const p = await api(`/companies/${STATE.companyId}/suppliers`, {qs:{page_size:500}}); STATE.suppliers = p.items||[]; }catch(e){STATE.suppliers=[];} }
-async function loadCategories(){ if(!STATE.companyId) return; try{ STATE.categories = await api(`/companies/${STATE.companyId}/inventory/categories`);}catch(e){STATE.categories=[];} }
-async function loadUoms(){ if(!STATE.companyId) return; try{ STATE.uoms = await api(`/companies/${STATE.companyId}/inventory/uoms`);}catch(e){STATE.uoms=[];} }
-async function loadWarehouses(){ if(!STATE.companyId) return; try{ STATE.warehouses = await api(`/companies/${STATE.companyId}/inventory/warehouses`);}catch(e){STATE.warehouses=[];} }
-async function loadStockItems(){ if(!STATE.companyId) return; try{ const p = await api(`/companies/${STATE.companyId}/inventory/items`, {qs:{page_size:500}}); STATE.stockItems = p.items||[]; }catch(e){STATE.stockItems=[];} }
-async function loadGstRates(){ if(!STATE.companyId) return; try{ STATE.gstRates = await api(`/companies/${STATE.companyId}/gst/rates`);}catch(e){STATE.gstRates=[];} }
-async function loadTaxClassifications(){ if(!STATE.companyId) return; try{ STATE.taxClassifications = await api(`/companies/${STATE.companyId}/gst/classifications`);}catch(e){STATE.taxClassifications=[];} }
+function sameCompanyGeneration(companyId, generation) {
+  return STATE.companyId === companyId && STATE.companyGeneration === generation;
+}
+function setLoadState(key, status, meta={}) {
+  STATE.loadStates[key] = {...meta, status, updatedAt: new Date().toISOString()};
+}
+function failedLoadState(key) {
+  const state = STATE.loadStates[key];
+  return state && state.status === 'failed' ? state : null;
+}
+function clearCompanyScopedLoadStates() {
+  STATE.loadStates = {};
+}
+function failedLoaderNoticeHtml(keys, retryAction='retryCompanyScopedLoaders()') {
+  const failures = keys.map(key => [key, failedLoadState(key)]).filter(([,state]) => state);
+  if (!failures.length) return '';
+  return `<div class="card card-pad" style="margin-bottom:16px;border-color:rgba(214,58,58,.35);">
+    <div style="font-weight:900;color:var(--red);margin-bottom:6px;">Some company data could not be loaded</div>
+    <div class="help-text">Alaada kept the last available data instead of treating this as empty. Retry before creating new records.</div>
+    <div class="grid grid-2" style="margin-top:12px;">
+      ${failures.map(([key,state]) => `<div class="kv"><span class="k">${esc(key)}</span><span class="v">${esc(state.message || 'Load failed')}</span></div>`).join('')}
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="${retryAction}">Retry loading</button>
+  </div>`;
+}
+async function retryCompanyScopedLoaders(){
+  if (!STATE.companyId) return;
+  await selectCompany(STATE.companyId, {silentNav:false});
+}
+async function loadCompanyScopedState(key, pathBuilder, {items=false, fallback=[]} = {}, generation = STATE.companyGeneration, companyId = STATE.companyId) {
+  if (!companyId) return;
+  setLoadState(key, 'loading', {companyId});
+  try {
+    const data = await api(pathBuilder(companyId));
+    if (!sameCompanyGeneration(companyId, generation)) return;
+    STATE[key] = items ? (data.items || []) : data;
+    setLoadState(key, Array.isArray(STATE[key]) && STATE[key].length === 0 ? 'loaded_empty' : 'loaded', {companyId});
+  } catch(e) {
+    if (!sameCompanyGeneration(companyId, generation)) return;
+    if (STATE[key] === undefined) STATE[key] = fallback;
+    setLoadState(key, 'failed', {companyId, message:e.message || 'Request failed', status:e.status || 'network', code:errorCodeFromError(e)});
+    throw e;
+  }
+}
+async function loadGroups(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('groups', id=>`/companies/${id}/account-groups`, {}, generation, companyId); }
+async function loadLedgers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('ledgers', id=>`/companies/${id}/ledgers?page_size=500`, {items:true}, generation, companyId); }
+async function loadVoucherTypes(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('voucherTypes', id=>`/companies/${id}/voucher-types`, {}, generation, companyId); }
+async function loadFinancialYears(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('financialYears', id=>`/companies/${id}/financial-years`, {}, generation, companyId); }
+async function loadCustomers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('customers', id=>`/companies/${id}/customers?page_size=500`, {items:true}, generation, companyId); }
+async function loadSuppliers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('suppliers', id=>`/companies/${id}/suppliers?page_size=500`, {items:true}, generation, companyId); }
+async function loadCategories(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('categories', id=>`/companies/${id}/inventory/categories`, {}, generation, companyId); }
+async function loadUoms(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('uoms', id=>`/companies/${id}/inventory/uoms`, {}, generation, companyId); }
+async function loadWarehouses(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('warehouses', id=>`/companies/${id}/inventory/warehouses`, {}, generation, companyId); }
+async function loadStockItems(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('stockItems', id=>`/companies/${id}/inventory/items?page_size=500`, {items:true}, generation, companyId); }
+async function loadGstRates(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('gstRates', id=>`/companies/${id}/gst/rates`, {}, generation, companyId); }
+async function loadTaxClassifications(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('taxClassifications', id=>`/companies/${id}/gst/classifications`, {}, generation, companyId); }
 
 /* lookups used across ERP views */
 function customerName(id){ const c = STATE.customers.find(x=>x.id===id); return c ? c.name : '—'; }
@@ -1714,13 +2147,14 @@ function viewHead(title, sub, actionsHtml){
 async function renderDashboard(){
   if (!requireCompany()) return;
   view().innerHTML = viewHead(STATE.company.name, `Fiscal overview · ${esc(STATE.company.base_currency||'INR')} · as of ${fmtDate(todayStr())}`,
-    `<button class="btn btn-ghost btn-sm" onclick="seedDemo()">✦ Seed demo data</button>
+    `<button class="btn btn-ghost btn-sm" data-seed-demo-btn onclick="seedDemo()">✦ Seed demo data</button>
      <button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`) +
-    `<div id="dash-body"><div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading dashboard…</td></tr></tbody></table></div></div>`;
+    `${failedLoaderNoticeHtml(['groups','ledgers','voucherTypes','financialYears','customers','suppliers','categories','uoms','warehouses','stockItems','gstRates','taxClassifications'])}
+    <div id="seed-demo-status"></div><div id="dash-body"><div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading dashboard…</td></tr></tbody></table></div></div>`;
   try {
     const d = await api(`/companies/${STATE.companyId}/dashboard`);
     const cur = STATE.company.base_currency;
-    const body = `
+    const body = `<div class="dashboard-shell">
       <div class="grid grid-4" style="margin-bottom:18px;">
         <div class="stat-card c-blue"><div class="stat-label">Total Assets</div><div class="stat-value">${money(d.total_assets,cur)}</div></div>
         <div class="stat-card c-gold"><div class="stat-label">Total Liabilities</div><div class="stat-value">${money(d.total_liabilities,cur)}</div></div>
@@ -1750,16 +2184,16 @@ async function renderDashboard(){
         </div>
       </div>
       ${(d.low_stock_items&&d.low_stock_items.length) ? `
-      <div class="view-head" style="margin-bottom:12px;"><div class="view-title" style="font-size:1.05rem;">Low stock</div>
+      <div class="view-head dashboard-section-head"><div class="view-title">Low stock</div>
         <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('inventory-stock')">View all stock →</button></div></div>
       <div class="table-wrap" style="margin-bottom:22px;"><table><thead><tr><th>Item</th><th>Warehouse</th><th class="num">Quantity</th><th class="num">Reorder Level</th></tr></thead>
       <tbody>${d.low_stock_items.map(r=>`<tr><td>${esc(r.item_name)}${r.sku?` <span class="pill">${esc(r.sku)}</span>`:''}</td><td>${esc(r.warehouse_name)}</td><td class="num">${r.quantity}</td><td class="num">${r.reorder_level}</td></tr>`).join('')}</tbody></table></div>` : ''}
-      <div class="view-head" style="margin-bottom:12px;"><div class="view-title" style="font-size:1.05rem;">Recent orders &amp; documents</div></div>
+      <div class="view-head dashboard-section-head"><div class="view-title">Recent orders &amp; documents</div></div>
       ${renderRecentOrdersTable(d.recent_orders, cur)}
-      <div class="view-head" style="margin-bottom:12px;margin-top:22px;"><div class="view-title" style="font-size:1.05rem;">Recent activity</div>
+      <div class="view-head dashboard-section-head" style="margin-top:22px;"><div class="view-title">Recent activity</div>
         <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('vouchers')">View all vouchers →</button></div></div>
       ${renderRecentTable(d.recent_transactions, cur)}
-    `;
+    </div>`;
     document.getElementById('dash-body').innerHTML = body;
   } catch(e) {
     document.getElementById('dash-body').innerHTML = emptyState('⚠','Could not load dashboard', esc(e.message), `<button class="btn btn-ghost" onclick="navigate('dashboard')">Retry</button>`);
@@ -1787,15 +2221,81 @@ function renderRecentTable(items, cur){
       <td><span class="badge badge-${v.status.toLowerCase()}">${v.status}</span></td></tr>`).join('')}
     </tbody></table></div>`;
 }
-async function seedDemo(){
+let seedDemoRunning = false;
+function seedDemoIdempotencyKey(){
+  const existing = sessionStorage.getItem('alaada.seedDemo.idempotency');
+  if (existing) return existing;
+  const key = `seed-demo:${Date.now()}:${Math.random().toString(16).slice(2)}`;
+  sessionStorage.setItem('alaada.seedDemo.idempotency', key);
+  return key;
+}
+function setSeedDemoButtons(disabled){
+  document.querySelectorAll('[data-seed-demo-btn]').forEach(btn => {
+    btn.disabled = !!disabled;
+    btn.textContent = disabled ? 'Seeding demo data...' : '✦ Seed demo data';
+  });
+}
+function renderSeedDemoStatus(state){
+  const slot = document.getElementById('seed-demo-status');
+  if (!slot) return;
+  if (!state) { slot.innerHTML = ''; return; }
+  if (state.kind === 'running') {
+    slot.innerHTML = `<div class="card card-pad" style="margin-bottom:16px;"><div class="loading-row"><span class="spin"></span> ${esc(state.message)}</div><div class="help-text">Phase: ${esc(state.phase)}</div></div>`;
+    return;
+  }
+  if (state.kind === 'success') {
+    slot.innerHTML = `<div class="card card-pad" style="margin-bottom:16px;border-color:rgba(34,197,94,.35);"><div style="font-weight:900;">Demo company ready</div><div class="help-text">${esc(state.message)}</div></div>`;
+    return;
+  }
+  const err = state.error || {};
+  slot.innerHTML = `<div class="card card-pad" style="margin-bottom:16px;border-color:rgba(239,68,68,.35);">
+    <div style="font-weight:900;color:var(--red);">${esc(err.title || 'Could not seed demo data')}</div>
+    <div class="help-text">${esc(err.message || 'Retry the operation after checking the details.')}</div>
+    <div class="grid grid-2" style="margin-top:12px;">
+      <div class="kv"><span class="k">Failed phase</span><span class="v">${esc(err.phase || 'unknown')}</span></div>
+      <div class="kv"><span class="k">Failure type</span><span class="v">${esc(err.kind || 'unknown')}</span></div>
+      <div class="kv"><span class="k">Status</span><span class="v">${esc(err.status || 'network')}</span></div>
+      <div class="kv"><span class="k">Code</span><span class="v">${esc(err.code || 'UNKNOWN')}</span></div>
+      <div class="kv"><span class="k">Request ID</span><span class="v">${esc(err.requestId || 'not provided')}</span></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+      <button class="btn btn-blue btn-sm" data-seed-demo-btn onclick="seedDemo({reuseKey:true})">Retry</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.querySelector('#seed-demo-status details')?.setAttribute('open','open')">View technical details</button>
+    </div>
+    <details style="margin-top:10px;"><summary style="cursor:pointer;font-size:.76rem;color:var(--ink3);">Technical details</summary><pre style="white-space:pre-wrap;margin-top:8px;">${esc(JSON.stringify(err.raw || err, null, 2))}</pre></details>
+  </div>`;
+}
+async function seedDemo({reuseKey=false} = {}){
+  if (seedDemoRunning) return;
+  seedDemoRunning = true;
+  setSeedDemoButtons(true);
+  let phase = 'checking connection';
+  const idempotencyKey = reuseKey ? seedDemoIdempotencyKey() : (() => { sessionStorage.removeItem('alaada.seedDemo.idempotency'); return seedDemoIdempotencyKey(); })();
   try {
-    toast('Seeding demo company…');
-    const c = await api('/demo/seed', {method:'POST'});
+    renderSeedDemoStatus({kind:'running', phase, message:'Checking Accounts before seeding demo data...'});
+    const health = await api('/health', {raw:true});
+    if (!health.ok) throw new ApiError(`Health check failed (${health.status})`, health.status, await health.text().catch(()=>''));
+    phase = 'creating demo company';
+    renderSeedDemoStatus({kind:'running', phase, message:'Creating a demo company with safe sample accounting data...'});
+    const c = await api('/demo/seed', {method:'POST', headers:{'Idempotency-Key':idempotencyKey, 'X-Idempotency-Key':idempotencyKey}});
+    phase = 'refreshing company list';
+    renderSeedDemoStatus({kind:'running', phase, message:'Refreshing your company list...'});
     await loadCompanies();
+    phase = 'opening demo company';
+    renderSeedDemoStatus({kind:'running', phase, message:'Opening the demo dashboard...'});
     await selectCompany(c.id);
-    toast('Demo company ready ✓','ok');
+    sessionStorage.removeItem('alaada.seedDemo.idempotency');
+    renderSeedDemoStatus({kind:'success', message:'Sample ledgers, vouchers, reports, GST data, CRM and stock records are ready for review.'});
+    toast('Demo company ready', 'ok');
     navigate('dashboard');
-  } catch(e){ errToast(e); }
+  } catch(e){
+    const classified = classifyAccountsError(e, phase);
+    renderSeedDemoStatus({kind:'error', error:classified});
+    console.error('Seed demo failed', classified, e);
+  } finally {
+    seedDemoRunning = false;
+    setSeedDemoButtons(false);
+  }
 }
 VIEW_RENDERERS['dashboard'] = renderDashboard;
 
@@ -1942,6 +2442,7 @@ async function openLedgerDetail(id){
     title: l.name, wide:true,
     bodyHtml: `<div id="ld-body"><span class="spin"></span> Loading ledger…</div>`,
     footHtml: `<button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      <button class="btn btn-blue" onclick="openReportInAlaadaSheets('general-ledger',{ledger_id:'${l.id}'})">Open in Alaada Sheets</button>
       ${l.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveLedger('${l.id}')">Archive</button>`:''}`,
   });
   try {
@@ -2021,33 +2522,75 @@ function renderVoucherTable(items){
     }).join('')}</tbody></table></div>`;
 }
 
-function openVoucherForm(){
-  if (!STATE.voucherTypes.length) return toast('No voucher types available for this company','err');
-  if (!STATE.ledgers.length) return toast('Create at least one ledger before recording vouchers','err');
+function voucherPrerequisites(){
+  const prerequisiteLoadFailures = ['financialYears','groups','ledgers','voucherTypes'].map(key => [key, failedLoadState(key)]).filter(([,state]) => state);
+  const activeLedgers = STATE.ledgers.filter(l => l.status === 'ACTIVE');
+  const openFinancialYears = STATE.financialYears.filter(fy => fy.status !== 'CLOSED');
+  const missing = [];
+  prerequisiteLoadFailures.forEach(([key,state]) => missing.push({key:`load_${key}`, title:'Retry loading company data', body:`Alaada could not load ${key}. Existing data was kept, so this is not treated as an empty setup. ${state.message || ''}`.trim(), action:'retryCompanyScopedLoaders()'}));
+  if (prerequisiteLoadFailures.length) return {missing, activeLedgers, openFinancialYears};
+  if (!STATE.financialYears.length || !openFinancialYears.length) missing.push({key:'financial_years', title:'Create financial year', body:'A financial year tells Alaada which accounting period this voucher belongs to.', action:'openFinancialYearForm()'});
+  if (!STATE.groups.length) missing.push({key:'groups', title:'Create account categories', body:'Account categories, also called account groups, classify ledgers as assets, liabilities, income, expenses, or equity.', action:'openGroupForm()'});
+  if (activeLedgers.length < 2) missing.push({key:'ledgers', title:'Create required ledgers', body:'A voucher needs at least two active ledgers so Alaada can record debit and credit effects.', action:'openLedgerForm()'});
+  if (!STATE.voucherTypes.length) missing.push({key:'voucher_types', title:'Create or enable voucher types', body:'Voucher types identify whether this accounting record is a journal, receipt, payment, sale, or purchase entry.', action:"closeModal();navigate('settings')"});
+  return {missing, activeLedgers, openFinancialYears};
+}
+function openVoucherSetupGuide(missing){
+  openModal({
+    title:'Set up vouchers',
+    wide:true,
+    ai:{enabled:false},
+    bodyHtml:`<div class="card card-pad" style="margin-bottom:14px;">
+      <div style="font-weight:900;margin-bottom:6px;">Alaada needs a few accounting basics before recording a voucher.</div>
+      <div class="help-text">A voucher means an accounting record. It must have a date, a type, and balanced debit and credit lines.</div>
+    </div>
+    <div class="grid grid-2">
+      ${missing.map(item => `<div class="card card-pad">
+        <div style="font-weight:900;margin-bottom:6px;">${esc(item.title)}</div>
+        <div class="help-text">${esc(item.body)}</div>
+        <button class="btn btn-blue btn-sm" style="margin-top:12px;" onclick="${item.action}">${esc(item.title)}</button>
+      </div>`).join('')}
+    </div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button><button class="btn btn-blue" onclick="closeModal();openVoucherForm()">Check again</button>`
+  });
+}
+async function openVoucherForm(){
+  if (!requireCompany()) return;
+  voucherSaveIdempotencyKey = null;
+  await Promise.all([loadGroups(), loadLedgers(), loadVoucherTypes(), loadFinancialYears()]);
+  const prereq = voucherPrerequisites();
+  if (prereq.missing.length) return openVoucherSetupGuide(prereq.missing);
   const typeOpts = STATE.voucherTypes.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
   openModal({
     title:'New voucher', wide:true,
     bodyHtml:`
-      <div class="form-grid">
-        <div class="form-row"><label>Voucher type</label><select id="vf2-type">${typeOpts}</select></div>
-        <div class="form-row"><label>Date</label><input type="date" id="vf2-date" value="${todayStr()}"/></div>
+      <div class="card card-pad" style="margin-bottom:14px;">
+        <div style="font-weight:900;margin-bottom:6px;">Save a reviewable draft first.</div>
+        <div class="help-text">Debit shows what receives value. Credit shows where value comes from. Alaada will not post this voucher until you open the draft and choose Post voucher.</div>
       </div>
-      <div class="form-row"><label>Narration (optional)</label><input type="text" id="vf2-narr" placeholder="What is this voucher for?"/></div>
+      <div id="voucher-recovery-panel"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>Voucher type <span style="color:var(--red);">*</span></label><select id="vf2-type">${typeOpts}</select><div class="help-text">This is the kind of accounting record.</div></div>
+        <div class="form-row"><label>Date <span style="color:var(--red);">*</span></label><input type="date" id="vf2-date" value="${todayStr()}"/><div class="help-text">Use the actual transaction date.</div></div>
+      </div>
+      <div class="form-row"><label>Narration (optional)</label><input type="text" id="vf2-narr" placeholder="Example: Office chair purchase paid by cash"/></div>
       <div class="form-row">
         <label>Line items</label>
         <table class="lines-table" id="lines-table">
-          <thead><tr><th style="width:38%;">Ledger</th><th class="num" style="width:22%;">Debit</th><th class="num" style="width:22%;">Credit</th><th>Remarks</th><th class="rm"></th></tr></thead>
+          <thead><tr><th style="width:38%;">Ledger</th><th class="num" style="width:22%;">Debit</th><th class="num" style="width:22%;">Credit</th><th>Why this line exists</th><th class="rm"></th></tr></thead>
           <tbody id="lines-body"></tbody>
         </table>
         <button class="btn btn-ghost btn-sm" id="add-line-btn">+ Add line</button>
       </div>
       <div class="totals-row" id="totals-row">Debit: 0.00 &nbsp;|&nbsp; Credit: 0.00</div>
+      <div id="voucher-form-status" class="help-text" style="margin-top:10px;">Draft not saved yet.</div>
     `,
-    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="vf2-save">Save as draft</button>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="vf2-save">Save draft</button>`,
     onMount:() => {
       addVoucherLine(); addVoucherLine();
       document.getElementById('add-line-btn').onclick = addVoucherLine;
       document.getElementById('vf2-save').onclick = submitVoucherForm;
+      initVoucherAutosave();
     }
   });
 }
@@ -2064,10 +2607,13 @@ function addVoucherLine(){
     <td class="rm"><button type="button" class="line-remove">✕</button></td>
   </tr>`);
   row.querySelector('.line-remove').onclick = () => { row.remove(); updateTotals(); };
-  row.querySelector('.ln-debit').oninput = (e) => { if(parseFloat(e.target.value)>0) row.querySelector('.ln-credit').value=''; updateTotals(); };
-  row.querySelector('.ln-credit').oninput = (e) => { if(parseFloat(e.target.value)>0) row.querySelector('.ln-debit').value=''; updateTotals(); };
+  row.querySelector('.ln-debit').oninput = (e) => { if(parseFloat(e.target.value)>0) row.querySelector('.ln-credit').value=''; updateTotals(); queueVoucherAutosave(); };
+  row.querySelector('.ln-credit').oninput = (e) => { if(parseFloat(e.target.value)>0) row.querySelector('.ln-debit').value=''; updateTotals(); queueVoucherAutosave(); };
+  row.querySelector('.ln-ledger').onchange = queueVoucherAutosave;
+  row.querySelector('.ln-remarks').oninput = queueVoucherAutosave;
   tbody.appendChild(row);
   updateTotals();
+  queueVoucherAutosave();
 }
 function updateTotals(){
   const rows = document.querySelectorAll('#lines-body tr');
@@ -2077,30 +2623,155 @@ function updateTotals(){
   const bal = Math.abs(d-c) < 0.005;
   t.className = 'totals-row ' + (bal && d>0 ? 'balanced' : 'unbalanced');
   t.textContent = `Debit: ${d.toFixed(2)}   |   Credit: ${c.toFixed(2)}   ${bal && d>0 ? '✓ balanced' : (d||c ? '✗ not balanced' : '')}`;
+  const status = document.getElementById('voucher-form-status');
+  if (status) status.textContent = bal && d > 0 ? 'Ready to save as a draft. Review before posting.' : 'Debits and credits must match before saving.';
 }
+let voucherAutosaveTimer = null;
+let voucherAutosaveRestoring = false;
+function collectVoucherDraftPayload({includeEmpty=false} = {}){
+  const typeEl = document.getElementById('vf2-type');
+  const dateEl = document.getElementById('vf2-date');
+  if (!typeEl || !dateEl) return null;
+  const rows = Array.from(document.querySelectorAll('#lines-body tr')).map(r => ({
+    ledger_id:r.querySelector('.ln-ledger').value,
+    debit:r.querySelector('.ln-debit').value || '',
+    credit:r.querySelector('.ln-credit').value || '',
+    remarks:r.querySelector('.ln-remarks').value || '',
+  })).filter(l => includeEmpty || l.debit || l.credit || l.remarks);
+  return {
+    voucher_type_id:typeEl.value,
+    date:dateEl.value,
+    narration:document.getElementById('vf2-narr').value || '',
+    lines:rows,
+  };
+}
+function setVoucherDraftStatus(text, cls=''){
+  const status = document.getElementById('voucher-form-status');
+  if (!status) return;
+  status.textContent = text;
+  status.dataset.state = cls;
+}
+async function saveVoucherDeviceDraft(){
+  if (voucherAutosaveRestoring) return;
+  const payload = collectVoucherDraftPayload({includeEmpty:true});
+  if (!payload) return;
+  const hasContent = payload.narration.trim() || payload.lines.some(l => l.debit || l.credit || l.remarks);
+  if (!hasContent) return;
+  try {
+    setVoucherDraftStatus('Saving locally on this device...', 'saving');
+    await putSecureDraft({formType:'voucher', formId:'new', payload});
+    setVoucherDraftStatus(navigator.onLine ? 'Saved locally on this device. Cloud draft is created only when you choose Save draft.' : 'Offline — saved on this device.', 'saved');
+  } catch(e) {
+    setVoucherDraftStatus('Save failed: secure device draft storage is unavailable.', 'failed');
+    console.warn(e);
+  }
+}
+function queueVoucherAutosave(){
+  if (!document.getElementById('vf2-type') || voucherAutosaveRestoring) return;
+  clearTimeout(voucherAutosaveTimer);
+  voucherAutosaveTimer = setTimeout(saveVoucherDeviceDraft, 1000);
+}
+function applyVoucherDraftPayload(payload){
+  if (!payload) return;
+  voucherAutosaveRestoring = true;
+  try {
+    const typeEl = document.getElementById('vf2-type');
+    if (typeEl && payload.voucher_type_id) typeEl.value = payload.voucher_type_id;
+    document.getElementById('vf2-date').value = payload.date || todayStr();
+    document.getElementById('vf2-narr').value = payload.narration || '';
+    const tbody = document.getElementById('lines-body');
+    tbody.innerHTML = '';
+    const rows = payload.lines && payload.lines.length ? payload.lines : [{},{},];
+    rows.forEach(line => {
+      addVoucherLine();
+      const row = tbody.lastElementChild;
+      if (line.ledger_id) row.querySelector('.ln-ledger').value = line.ledger_id;
+      row.querySelector('.ln-debit').value = line.debit || '';
+      row.querySelector('.ln-credit').value = line.credit || '';
+      row.querySelector('.ln-remarks').value = line.remarks || '';
+    });
+    updateTotals();
+    setVoucherDraftStatus('Recovered local draft. Review it before saving to Accounts.', 'recovered');
+  } finally {
+    voucherAutosaveRestoring = false;
+  }
+}
+async function initVoucherAutosave(){
+  ['vf2-type','vf2-date','vf2-narr'].forEach(id => {
+    const node = document.getElementById(id);
+    if (!node) return;
+    node.addEventListener(node.tagName === 'SELECT' ? 'change' : 'input', queueVoucherAutosave);
+  });
+  const panel = document.getElementById('voucher-recovery-panel');
+  if (!panel) return;
+  try {
+    const draft = await getSecureDraft('voucher', 'new');
+    if (!draft) return;
+    panel.innerHTML = `<div class="card card-pad" style="margin-bottom:14px;border-color:rgba(30,64,175,.35);">
+      <div style="font-weight:900;margin-bottom:6px;">Recover unsaved voucher?</div>
+      <div class="help-text">A local encrypted draft from ${fmtDate(draft.savedAt)} is available for this company on this device.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn btn-blue btn-sm" id="voucher-restore-local">Preview and restore</button>
+        <button class="btn btn-ghost btn-sm" id="voucher-delete-local">Delete local draft</button>
+      </div>
+    </div>`;
+    document.getElementById('voucher-restore-local').onclick = async () => {
+      try { applyVoucherDraftPayload(await decryptSecureDraft(draft)); }
+      catch(e){ setVoucherDraftStatus('Could not restore local draft. It may belong to another device session.', 'failed'); console.warn(e); }
+    };
+    document.getElementById('voucher-delete-local').onclick = async () => {
+      await deleteSecureDraft('voucher', 'new');
+      panel.innerHTML = '';
+      setVoucherDraftStatus('Local draft deleted.', 'deleted');
+    };
+  } catch(e){ console.warn(e); }
+}
+let voucherSaveInFlight = false;
+let voucherSaveIdempotencyKey = null;
 async function submitVoucherForm(){
+  if (voucherSaveInFlight) return;
   const rows = document.querySelectorAll('#lines-body tr');
   const lines = [];
+  let totalDebit = 0, totalCredit = 0;
   for (const r of rows) {
     const ledger_id = r.querySelector('.ln-ledger').value;
     const debit = parseFloat(r.querySelector('.ln-debit').value || 0);
     const credit = parseFloat(r.querySelector('.ln-credit').value || 0);
     const remarks = r.querySelector('.ln-remarks').value.trim() || null;
+    if (debit > 0 && credit > 0) return toast('Use either debit or credit on each line, not both.','err');
     if (debit===0 && credit===0) continue;
+    totalDebit += debit;
+    totalCredit += credit;
     lines.push({ledger_id, debit, credit, remarks});
   }
   if (lines.length < 2) return toast('Add at least two line items','err');
+  if (Math.abs(totalDebit - totalCredit) >= 0.005 || totalDebit <= 0) return toast('Debit and credit totals must match before saving.','err');
   const payload = {
     voucher_type_id: document.getElementById('vf2-type').value,
     date: document.getElementById('vf2-date').value,
     narration: document.getElementById('vf2-narr').value.trim() || null,
     lines,
   };
+  const saveBtn = document.getElementById('vf2-save');
+  const status = document.getElementById('voucher-form-status');
+  if (!voucherSaveIdempotencyKey) voucherSaveIdempotencyKey = `voucher-draft:${STATE.companyId}:${Date.now()}:${Math.random().toString(16).slice(2)}`;
+  const idem = voucherSaveIdempotencyKey;
   try {
-    const v = await api(`/companies/${STATE.companyId}/vouchers`, {method:'POST', body:payload});
-    toast('Voucher saved as draft ✓','ok'); closeModal();
+    voucherSaveInFlight = true;
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving draft...'; }
+    if (status) status.textContent = 'Saving draft to Accounts...';
+    const v = await api(`/companies/${STATE.companyId}/vouchers`, {method:'POST', body:payload, headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
+    voucherSaveIdempotencyKey = null;
+    await deleteSecureDraft('voucher', 'new');
+    toast('Voucher saved as draft','ok'); closeModal();
     openVoucherDetail(v.id);
-  } catch(e){ errToast(e); }
+  } catch(e){
+    if (status) status.textContent = `Save failed: ${e.message || 'try again'}`;
+    errToast(e);
+  } finally {
+    voucherSaveInFlight = false;
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save draft'; }
+  }
 }
 
 async function openVoucherDetail(id){
@@ -2122,24 +2793,85 @@ async function openVoucherDetail(id){
     `;
     const foot = document.getElementById('modal-foot');
     let actions = `<button class="btn btn-ghost" onclick="closeModal()">Close</button>`;
-    if (v.status==='DRAFT') actions += `<button class="btn btn-danger" onclick="deleteVoucherAction('${v.id}')">Delete</button><button class="btn btn-teal" onclick="postVoucherAction('${v.id}')">Post voucher</button>`;
+    if (v.status==='DRAFT') actions += `<button class="btn btn-ghost" onclick="openApprovalSubmitForm({entityType:'VOUCHER', entityId:'${v.id}'})">Submit for approval</button><button class="btn btn-danger" onclick="deleteVoucherAction('${v.id}')">Delete</button><button class="btn btn-teal" onclick="postVoucherAction('${v.id}')">Post voucher</button>`;
     if (v.status==='POSTED') actions += `<button class="btn btn-danger" onclick="cancelVoucherAction('${v.id}')">Cancel (reverse)</button>`;
     foot.innerHTML = actions;
   } catch(e){ document.getElementById('vd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
+const voucherActionInFlight = new Set();
+function confirmVoucherAction({title, body, confirmLabel, danger=false, onConfirm}){
+  openModal({
+    title,
+    bodyHtml:`<div class="card card-pad">
+      <div style="font-weight:900;margin-bottom:6px;">${esc(title)}</div>
+      <div class="help-text">${esc(body)}</div>
+    </div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Keep draft</button><button class="btn ${danger?'btn-danger':'btn-blue'}" id="voucher-confirm-action">${esc(confirmLabel)}</button>`,
+    onMount:() => {
+      document.getElementById('voucher-confirm-action').onclick = onConfirm;
+    }
+  });
+}
 async function postVoucherAction(id){
-  try { await api(`/companies/${STATE.companyId}/vouchers/${id}/post`, {method:'POST'}); toast('Voucher posted ✓','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
-  catch(e){ errToast(e); }
+  confirmVoucherAction({
+    title:'Post voucher',
+    body:'Posting makes this draft part of the official books. Review the debit and credit lines first; Alaada will not post it until you confirm here.',
+    confirmLabel:'Post voucher',
+    onConfirm: async () => {
+      const key = `post:${id}`;
+      if (voucherActionInFlight.has(key)) return;
+      const btn = document.getElementById('voucher-confirm-action');
+      const idem = `voucher-post:${STATE.companyId}:${id}`;
+      try {
+        voucherActionInFlight.add(key);
+        if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
+        await api(`/companies/${STATE.companyId}/vouchers/${id}/post`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
+        toast('Voucher posted','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); if(STATE.currentView==='dashboard') renderDashboard();
+      } catch(e){ errToast(e); }
+      finally { voucherActionInFlight.delete(key); if (btn) { btn.disabled = false; btn.textContent = 'Post voucher'; } }
+    }
+  });
 }
 async function cancelVoucherAction(id){
-  if (!confirm('Cancel this posted voucher? A reversal entry will be created — the original stays in the audit trail.')) return;
-  try { await api(`/companies/${STATE.companyId}/vouchers/${id}/cancel`, {method:'POST'}); toast('Voucher cancelled (reversed) ✓','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); }
-  catch(e){ errToast(e); }
+  confirmVoucherAction({
+    title:'Cancel posted voucher',
+    body:'A reversal entry will be created and the original voucher will remain in the audit trail.',
+    confirmLabel:'Cancel and reverse',
+    danger:true,
+    onConfirm: async () => {
+      const key = `cancel:${id}`;
+      if (voucherActionInFlight.has(key)) return;
+      const btn = document.getElementById('voucher-confirm-action');
+      const idem = `voucher-cancel:${STATE.companyId}:${id}`;
+      try {
+        voucherActionInFlight.add(key);
+        if (btn) { btn.disabled = true; btn.textContent = 'Cancelling...'; }
+        await api(`/companies/${STATE.companyId}/vouchers/${id}/cancel`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
+        toast('Voucher cancelled and reversed','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable();
+      } catch(e){ errToast(e); }
+      finally { voucherActionInFlight.delete(key); if (btn) { btn.disabled = false; btn.textContent = 'Cancel and reverse'; } }
+    }
+  });
 }
 async function deleteVoucherAction(id){
-  if (!confirm('Delete this draft voucher? This cannot be undone.')) return;
-  try { await api(`/companies/${STATE.companyId}/vouchers/${id}`, {method:'DELETE'}); toast('Draft deleted','ok'); closeModal(); if(STATE.currentView==='vouchers') loadVoucherTable(); }
-  catch(e){ errToast(e); }
+  confirmVoucherAction({
+    title:'Delete draft voucher',
+    body:'This only deletes the unposted draft. Posted accounting records cannot be deleted from here.',
+    confirmLabel:'Delete draft',
+    danger:true,
+    onConfirm: async () => {
+      const key = `delete:${id}`;
+      if (voucherActionInFlight.has(key)) return;
+      const btn = document.getElementById('voucher-confirm-action');
+      try {
+        voucherActionInFlight.add(key);
+        if (btn) { btn.disabled = true; btn.textContent = 'Deleting...'; }
+        await api(`/companies/${STATE.companyId}/vouchers/${id}`, {method:'DELETE'});
+        toast('Draft deleted','ok'); closeModal(); if(STATE.currentView==='vouchers') loadVoucherTable();
+      } catch(e){ errToast(e); }
+      finally { voucherActionInFlight.delete(key); if (btn) { btn.disabled = false; btn.textContent = 'Delete draft'; } }
+    }
+  });
 }
 
 /* ============================================================
@@ -4725,11 +5457,16 @@ async function loadAiAssistant(){
       <div class="muted small" style="margin-top:10px;">${status.configured ? 'Enhanced AI is ready for richer answers.' : 'Enhanced AI isn\u2019t set up yet — Alaada will use its built-in accounting assistant instead.'}</div>
       ${devDetails}`;
     const interactions = interactionsPage.items || [];
-    interactionsBody.innerHTML = interactions.length ? `<div class="table-wrap"><table><thead><tr><th>Time</th><th>Role</th><th>Mode</th><th>Status</th><th>Question</th></tr></thead><tbody>${interactions.map(i=>`<tr><td>${new Date(i.created_at).toLocaleString('en-IN')}</td><td>${esc((AI_ROLE_OPTIONS.find(r=>r.value===i.agent_role)||{}).label || i.agent_role)}</td><td>${esc(aiSourceLabel(i.provider))}</td><td><span class="pill">${esc(i.status)}</span></td><td>${esc(i.prompt).slice(0,120)}</td></tr>`).join('')}</tbody></table></div>`
+    const interactionRows = interactions.map(i => {
+      const devPrompt = DEVELOPER_MODE ? `<details><summary class="muted small" style="cursor:pointer;">Developer prompt</summary><div class="muted small">${esc(i.prompt || '')}</div></details>` : '';
+      const devMode = DEVELOPER_MODE ? `<div class="muted small">${esc(aiSourceLabel(i.provider))}</div>` : '';
+      return `<tr><td>${new Date(i.created_at).toLocaleString('en-IN')}</td><td>${esc((AI_ROLE_OPTIONS.find(r=>r.value===i.agent_role)||{}).label || i.agent_role)}${devMode}</td><td><span class="pill">${esc(i.status)}</span></td><td>${devPrompt || 'Review kept private'}</td></tr>`;
+    }).join('');
+    interactionsBody.innerHTML = interactions.length ? `<div class="table-wrap"><table><thead><tr><th>Time</th><th>Role</th><th>Status</th><th>Details</th></tr></thead><tbody>${interactionRows}</tbody></table></div>`
       : emptyState('AI','No questions yet','Ask Alaada AI something to see it here.');
     renderAiInsights(insightsPage.items || []);
   } catch(e) {
-    if (statusCard) statusCard.innerHTML = emptyState('⚠','Could not load AI status', esc(e.message));
+    if (statusCard) statusCard.innerHTML = emptyState('⚠','Could not load AI status', esc(aiUserErrorMessage(e)), aiDeveloperDetails(e));
     if (interactionsBody) interactionsBody.innerHTML = '';
     if (insightsBody) insightsBody.innerHTML = '';
   }
@@ -4764,7 +5501,7 @@ async function askAiAssistant(){
     openModal({title:'Alaada AI', wide:true, ai:{enabled:false}, bodyHtml:`<div style="white-space:pre-wrap;line-height:1.55;">${esc(interaction.response_text)}</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
     toast('Answer ready','ok');
     loadAiAssistant();
-  } catch(e){ errToast(e); }
+  } catch(e){ toast(aiUserErrorMessage(e), 'err'); }
   finally { btn.disabled = false; btn.textContent = originalLabel; }
 }
 
@@ -4781,7 +5518,7 @@ async function generateAiInsights(){
     }});
     toast(`${insights.length} AI insight${insights.length===1?'':'s'} generated`,'ok');
     renderAiInsights(insights);
-  } catch(e){ errToast(e); }
+  } catch(e){ toast(aiUserErrorMessage(e), 'err'); }
   finally { btn.disabled = false; btn.textContent = originalLabel; }
 }
 VIEW_RENDERERS['ai-assistant'] = renderAiAssistant;
@@ -4872,28 +5609,37 @@ function openApprovalRuleForm(){
   });
 }
 
-function openApprovalSubmitForm(){
+function openApprovalSubmitForm(opts = {}){
   if (!requireCompany()) return;
+  const entityType = opts.entityType || 'VOUCHER';
+  const entityId = opts.entityId || '';
   openModal({
     title:'Submit document for approval',
     bodyHtml:`<div class="form-grid">
-      <div class="form-row"><label>Document type</label><select id="appr-submit-entity"><option>VOUCHER</option><option>SALES_INVOICE</option><option>PURCHASE_BILL</option></select></div>
-      <div class="form-row"><label>Document ID</label><input id="appr-submit-id" class="mono" placeholder="32-character id"/></div>
+      <div class="form-row"><label>Document type</label><select id="appr-submit-entity"><option value="VOUCHER">Voucher</option><option value="SALES_INVOICE">Sales invoice</option><option value="PURCHASE_BILL">Purchase bill</option></select></div>
+      <div class="form-row"><label>Document ID</label><input id="appr-submit-id" class="mono" placeholder="32-character id" value="${esc(entityId)}"/></div>
       <div class="form-row"><label>Requested by</label><input id="appr-submit-by" value="accounts"/></div>
       <div class="form-row"><label>Note</label><textarea id="appr-submit-note" rows="2"></textarea></div>
     </div>`,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-submit-save">Submit</button>`,
     onMount:() => {
+      document.getElementById('appr-submit-entity').value = entityType;
       document.getElementById('appr-submit-save').onclick = async () => {
+        const submitBtn = document.getElementById('appr-submit-save');
+        const idempotencyKey = `approval-submit:${STATE.companyId}:${document.getElementById('appr-submit-entity').value}:${document.getElementById('appr-submit-id').value.trim()}`;
+        if (!document.getElementById('appr-submit-id').value.trim()) return toast('Select or enter the document ID before submitting.','err');
         try {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Submitting...';
           await api(`/companies/${STATE.companyId}/automation/approval-requests`, {method:'POST', body:{
             entity_type: document.getElementById('appr-submit-entity').value,
             entity_id: document.getElementById('appr-submit-id').value.trim(),
             requested_by: document.getElementById('appr-submit-by').value || null,
             requested_note: document.getElementById('appr-submit-note').value || null,
-          }});
+          }, headers:{'Idempotency-Key':idempotencyKey,'X-Idempotency-Key':idempotencyKey}});
           closeModal(); toast('Approval request submitted','ok'); loadApprovals();
         } catch(e){ errToast(e); }
+        finally { submitBtn.disabled = false; submitBtn.textContent = 'Submit'; }
       };
     }
   });
@@ -4967,7 +5713,7 @@ async function loadNotifications(){
       </div>
       <div class="card card-pad" style="margin-top:14px;">
         <div class="section-title">Delivery attempts</div>
-        ${attempts.length ? `<div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Channel</th><th>Status</th><th>Provider</th><th>Recipient</th><th>Error</th></tr></thead><tbody>${attempts.map(a=>`<tr><td>${new Date(a.attempted_at).toLocaleString('en-IN')}</td><td>${esc(a.channel)}</td><td><span class="pill">${esc(a.status)}</span></td><td>${esc(a.provider)}</td><td>${esc(a.recipient || '')}</td><td class="muted small">${esc(a.error_message || '')}</td></tr>`).join('')}</tbody></table></div>`
+        ${attempts.length ? `<div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Channel</th><th>Status</th><th>Recipient</th><th>Delivery note</th></tr></thead><tbody>${attempts.map(a=>`<tr><td>${new Date(a.attempted_at).toLocaleString('en-IN')}</td><td>${esc(a.channel)}</td><td><span class="pill">${esc(a.status)}</span></td><td>${esc(a.recipient || '')}</td><td class="muted small">${a.status==='FAILED' ? 'Delivery failed. Retry or check channel settings.' : 'Delivery status recorded.'}${DEVELOPER_MODE ? `<details style="margin-top:6px;"><summary style="cursor:pointer;">Developer diagnostics</summary><pre>${esc(JSON.stringify({provider:a.provider,error_message:a.error_message}, null, 2))}</pre></details>` : ''}</td></tr>`).join('')}</tbody></table></div>`
           : emptyState('•','No delivery attempts','Send pending notifications to create delivery history.') }
       </div>`;
   } catch(e) {
@@ -5394,10 +6140,63 @@ async function runGlobalSearch(q){
 /* ============================================================
    REPORTS
    ============================================================ */
+function stableSheetsReportValue(value){
+  if (Array.isArray(value)) return value.map(stableSheetsReportValue);
+  if (value && typeof value === 'object') {
+    return Object.keys(value).sort().reduce((out, key) => {
+      out[key] = stableSheetsReportValue(value[key]);
+      return out;
+    }, {});
+  }
+  return value;
+}
+function sheetsReportIdempotencyKey(reportType, filters={}){
+  return `${STATE.companyId}:${reportType}:${JSON.stringify(stableSheetsReportValue(filters || {}))}`;
+}
+const sheetsReportLinkBusy = new Set();
+async function loadSheetsRbacContext(){
+  if (!STATE.companyId) return null;
+  return api(`/companies/${STATE.companyId}/sheets/rbac-context`);
+}
+async function openReportInAlaadaSheets(reportType, filters={}){
+  if (!requireCompany()) return;
+  const label = String(reportType || 'report').replace(/-/g,' ');
+  const idempotencyKey = sheetsReportIdempotencyKey(reportType, filters);
+  if (sheetsReportLinkBusy.has(idempotencyKey)) {
+    toast(`Preparing ${label} in Alaada Sheets is already running.`, 'inf');
+    return;
+  }
+  sheetsReportLinkBusy.add(idempotencyKey);
+  try {
+    toast(`Preparing ${label} in Alaada Sheets…`, 'inf');
+    const access = await loadSheetsRbacContext();
+    if (access?.actions && access.actions.can_create_report_links === false) {
+      toast('Your Accounts role can view reports but cannot create Alaada Sheets workbooks.', 'err');
+      return;
+    }
+    const response = await api(`/companies/${STATE.companyId}/sheets/report-link`, {
+      method:'POST',
+      body:{
+        report_type:reportType,
+        filters,
+        workspace_id:`accounts-${STATE.companyId}`,
+        idempotency_key:idempotencyKey
+      }
+    });
+    const link = response.link || response;
+    toast(`Alaada Sheets workbook synced · ${fmtDate(link.last_synced_at || new Date().toISOString())}`, 'ok');
+    if (link.workbook_url) window.open(link.workbook_url, '_blank', 'noopener,noreferrer');
+  } catch(e) {
+    errToast(e);
+  } finally {
+    sheetsReportLinkBusy.delete(idempotencyKey);
+  }
+}
+
 async function renderTrialBalance(){
   if (!requireCompany()) return;
   view().innerHTML = viewHead('Trial Balance', 'Every ledger balance, debit and credit side by side.',
-    `<input type="date" id="tb-asof" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadTrialBalance()">Refresh</button>`) +
+    `<input type="date" id="tb-asof" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadTrialBalance()">Refresh</button><button class="btn btn-blue btn-sm" onclick="openReportInAlaadaSheets('trial-balance',{as_of:document.getElementById('tb-asof').value})">Open in Alaada Sheets</button>`) +
     `<div id="tb-body"></div>`;
   document.getElementById('tb-asof').onchange = loadTrialBalance;
   loadTrialBalance();
@@ -5426,7 +6225,7 @@ async function renderPnl(){
   if (!requireCompany()) return;
   const fyStart = STATE.company.financial_year_start || todayStr().slice(0,4)+'-04-01';
   view().innerHTML = viewHead('Profit &amp; Loss', 'Income and expenses for a chosen period.',
-    `<input type="date" id="pnl-from" value="${fyStart}"><input type="date" id="pnl-to" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadPnl()">Run</button>`) +
+    `<input type="date" id="pnl-from" value="${fyStart}"><input type="date" id="pnl-to" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadPnl()">Run</button><button class="btn btn-blue btn-sm" onclick="openReportInAlaadaSheets('profit-and-loss',{date_from:document.getElementById('pnl-from').value,date_to:document.getElementById('pnl-to').value})">Open in Alaada Sheets</button>`) +
     `<div id="pnl-body"></div>`;
   loadPnl();
 }
@@ -5456,7 +6255,7 @@ VIEW_RENDERERS['report-pnl'] = renderPnl;
 async function renderBalanceSheet(){
   if (!requireCompany()) return;
   view().innerHTML = viewHead('Balance Sheet', 'Assets, liabilities and equity — always in balance.',
-    `<input type="date" id="bs-asof" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadBalanceSheet()">Run</button>`) +
+    `<input type="date" id="bs-asof" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadBalanceSheet()">Run</button><button class="btn btn-blue btn-sm" onclick="openReportInAlaadaSheets('balance-sheet',{as_of:document.getElementById('bs-asof').value})">Open in Alaada Sheets</button>`) +
     `<div id="bs-body"></div>`;
   loadBalanceSheet();
 }
@@ -5485,7 +6284,7 @@ VIEW_RENDERERS['report-bs'] = renderBalanceSheet;
 async function renderDayBook(){
   if (!requireCompany()) return;
   view().innerHTML = viewHead('Day Book', 'A chronological log of every posted or cancelled voucher.',
-    `<input type="date" id="db-from"><input type="date" id="db-to" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadDayBook()">Run</button>`) +
+    `<input type="date" id="db-from"><input type="date" id="db-to" value="${todayStr()}"><button class="btn btn-ghost btn-sm" onclick="loadDayBook()">Run</button><button class="btn btn-blue btn-sm" onclick="openReportInAlaadaSheets('day-book',{date_from:document.getElementById('db-from').value,date_to:document.getElementById('db-to').value})">Open in Alaada Sheets</button>`) +
     `<div id="db-body"></div>`;
   loadDayBook();
 }
@@ -5501,6 +6300,89 @@ async function loadDayBook(){
   } catch(e){ document.getElementById('db-body').innerHTML = emptyState('⚠','Could not load report', esc(e.message)); }
 }
 VIEW_RENDERERS['report-daybook'] = renderDayBook;
+
+async function renderSheetsExports(){
+  if (!requireCompany()) return;
+  await loadLedgers();
+  const fyStart = STATE.company.financial_year_start || todayStr().slice(0,4)+'-04-01';
+  const exports = [
+    ['cash-flow','Cash Flow','Operating cash movement for the selected period.'],
+    ['customer-ageing','Customers / Credit Review','Customer master and credit review data.'],
+    ['supplier-ageing','Suppliers / Credit Review','Supplier master and credit period data.'],
+    ['stock-summary','Stock Summary','Item master, HSN/SAC, GST rate and current movement totals.'],
+    ['sales-register','Sales Register','Sales invoices for the selected period.'],
+    ['purchase-register','Purchase Register','Purchase bills for the selected period.'],
+    ['crm-pipeline','CRM Pipeline','Lead pipeline, owner and expected value.'],
+    ['payroll-summary','Payroll Summary','Payroll runs and totals for the selected period.'],
+    ['gst-summary','GST Summary','GSTR-3B style summary for review.']
+  ];
+  view().innerHTML = viewHead('Sheets Exports', 'Open accounting, GST, inventory, CRM and payroll data in Alaada Sheets.',
+    `<input type="date" id="sx-from" value="${fyStart}"><input type="date" id="sx-to" value="${todayStr()}"><select id="sx-ledger">${STATE.ledgers.map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join('')}</select>`) +
+    `<div class="grid grid-3">${exports.map(([type,title,desc])=>`
+      <div class="card card-pad">
+        <div style="font-weight:800;margin-bottom:6px;">${esc(title)}</div>
+        <div style="font-size:.82rem;color:var(--ink3);min-height:38px;">${esc(desc)}</div>
+        <div style="margin-top:12px;"><button class="btn btn-blue btn-sm" onclick="openReportInAlaadaSheets('${type}',{date_from:document.getElementById('sx-from').value,date_to:document.getElementById('sx-to').value,as_of:document.getElementById('sx-to').value})">Open in Alaada Sheets</button></div>
+      </div>`).join('')}</div>`;
+  view().insertAdjacentHTML('beforeend', `<div class="card card-pad" style="margin-top:16px;">
+    <div style="font-weight:800;margin-bottom:6px;">General Ledger</div>
+    <div style="font-size:.82rem;color:var(--ink3);">Selected ledger entries with debit, credit and running balance.</div>
+    <div style="margin-top:12px;"><button class="btn btn-blue btn-sm" onclick="openReportInAlaadaSheets('general-ledger',{ledger_id:document.getElementById('sx-ledger').value,ledger_name:document.getElementById('sx-ledger').selectedOptions[0]?.textContent||'',date_from:document.getElementById('sx-from').value,date_to:document.getElementById('sx-to').value})" ${STATE.ledgers.length?'':'disabled'}>Open in Alaada Sheets</button></div>
+  </div>`);
+  view().insertAdjacentHTML('beforeend', `<div class="section-title" style="margin-top:18px;">Linked workbooks</div><div id="sx-links">${emptyState('↔','Loading links','Checking existing Sheets workbooks.')}</div>`);
+  loadSheetsReportLinks();
+}
+VIEW_RENDERERS['report-sheets-exports'] = renderSheetsExports;
+
+async function loadSheetsReportLinks(){
+  const box = document.getElementById('sx-links');
+  if (!box) return;
+  try {
+    const data = await api(`/companies/${STATE.companyId}/sheets/report-links`);
+    const links = data.links || [];
+    box.innerHTML = links.length ? `<div class="table-wrap"><table><thead><tr><th>Report</th><th>Direction</th><th>Status</th><th>Last sync</th><th>Conflicts</th><th></th></tr></thead><tbody>
+      ${links.map(l => `<tr>
+        <td>${esc((l.report_type||'report').replace(/-/g,' '))}</td>
+        <td>${esc(l.direction || 'accounts_to_sheets')}</td>
+        <td><span class="badge badge-${String(l.status||'linked').toLowerCase()}">${esc(l.status || 'linked')}</span></td>
+        <td>${fmtDate(l.last_synced_at)}</td>
+        <td>${(l.conflicts||[]).length ? esc(l.conflicts.map(c=>c.code).join(', ')) : 'None'}</td>
+        <td style="text-align:right;">
+          ${l.workbook_url ? `<button class="btn btn-ghost btn-sm" onclick="window.open('${esc(l.workbook_url)}','_blank','noopener,noreferrer')">Open</button>` : ''}
+          <button class="btn btn-blue btn-sm" onclick="refreshSheetsReportLink('${l.id}')" ${l.refreshable===false?'disabled':''}>Refresh</button>
+        </td>
+      </tr>`).join('')}
+    </tbody></table></div>` : emptyState('↔','No linked workbooks','Open a report in Alaada Sheets to create the first link.');
+  } catch(e) {
+    box.innerHTML = emptyState('⚠','Could not load linked workbooks', esc(e.message));
+  }
+}
+
+const sheetsReportRefreshIdempotency = {};
+const sheetsReportRefreshBusy = new Set();
+async function refreshSheetsReportLink(linkId){
+  if (sheetsReportRefreshBusy.has(linkId)) {
+    toast('Workbook refresh is already running.', 'inf');
+    return;
+  }
+  if (!sheetsReportRefreshIdempotency[linkId]) sheetsReportRefreshIdempotency[linkId] = `refresh:${STATE.companyId}:${linkId}:${Date.now()}`;
+  const idempotencyKey = sheetsReportRefreshIdempotency[linkId];
+  sheetsReportRefreshBusy.add(linkId);
+  try {
+    const response = await api(`/companies/${STATE.companyId}/sheets/report-links/${encodeURIComponent(linkId)}/refresh`, {
+      method:'POST',
+      body:{reason:'manual', idempotency_key:idempotencyKey}
+    });
+    const link = response.link || response;
+    toast(`Workbook refreshed · ${fmtDate(link.last_synced_at || new Date().toISOString())}`, 'ok');
+    delete sheetsReportRefreshIdempotency[linkId];
+    loadSheetsReportLinks();
+  } catch(e) {
+    errToast(e);
+  } finally {
+    sheetsReportRefreshBusy.delete(linkId);
+  }
+}
 
 function renderCashOrBankBook(kind){
   return async function(){
@@ -5536,6 +6418,15 @@ VIEW_RENDERERS['report-bankbook'] = renderCashOrBankBook('bank');
 async function renderSettings(){
   if (!requireCompany()) return;
   const c = STATE.company;
+  const developerSettingsHtml = developerModeAllowed() ? `
+    <div class="card card-pad" style="margin-top:16px;">
+      <div style="font-weight:800;margin-bottom:4px;">Advanced</div>
+      <div style="font-size:.78rem;color:var(--ink3);margin-bottom:10px;">For technical users only. Not needed for everyday bookkeeping.</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;">
+        <input type="checkbox" id="dev-mode-toggle" ${DEVELOPER_MODE?'checked':''} onchange="setDeveloperMode(this.checked)"/>
+        Developer mode - shows the API explorer, internal endpoint list, and connection details
+      </label>
+    </div>` : '';
   view().innerHTML = viewHead('Company &amp; Financial Years', 'Manage company details and accounting periods.',
     `<button class="btn btn-ghost" onclick="openCompanyForm()">+ New company</button>
      <button class="btn btn-danger" onclick="deleteCurrentCompany()">Delete this company</button>`) +
@@ -5569,17 +6460,100 @@ async function renderSettings(){
         <button class="btn btn-ghost btn-sm" onclick="restoreBackupFromDevice()">Restore backup JSON</button>
       </div>
     </div>
-    <div class="card card-pad" style="margin-top:16px;">
-      <div style="font-weight:800;margin-bottom:4px;">Advanced</div>
-      <div style="font-size:.78rem;color:var(--ink3);margin-bottom:10px;">For technical users only. Not needed for everyday bookkeeping.</div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;">
-        <input type="checkbox" id="dev-mode-toggle" ${DEVELOPER_MODE?'checked':''} onchange="setDeveloperMode(this.checked)"/>
-        Developer mode — shows the API explorer, internal endpoint list, and connection details
-      </label>
-    </div>`;
+    ${developerSettingsHtml}`;
   renderFyList();
 }
 VIEW_RENDERERS['settings'] = renderSettings;
+
+async function renderRecoveryCenter(){
+  const selectedCompanyId = STATE.companyId;
+  const selectedCompanyName = STATE.company ? STATE.company.name : (STATE.offlineBackup ? STATE.offlineBackup.companyName : 'Selected company');
+  view().innerHTML = viewHead('Recovery Center', 'Review local drafts and backups before restoring anything to the cloud.',
+    `<button class="btn btn-ghost btn-sm" onclick="renderRecoveryCenter()">Refresh</button>`) +
+    `<div id="recovery-body">${emptyState('↻','Checking this device','Looking for encrypted drafts and local backups.')}</div>`;
+  const body = document.getElementById('recovery-body');
+  try {
+    const [backup, drafts] = await Promise.all([
+      selectedCompanyId ? getLocalBackup(selectedCompanyId).catch(() => STATE.offlineBackup) : Promise.resolve(STATE.offlineBackup),
+      listSecureDrafts({companyId:selectedCompanyId}).catch(() => []),
+    ]);
+    const backupHtml = backup ? `<div class="card card-pad">
+      <div style="font-weight:900;margin-bottom:6px;">Local company backup</div>
+      <div class="kv"><span class="k">Company</span><span class="v">${esc(backup.companyName || selectedCompanyName)}</span></div>
+      <div class="kv"><span class="k">Saved</span><span class="v">${fmtDate(backup.savedAt)}</span></div>
+      <div class="kv"><span class="k">Source</span><span class="v">${esc(backup.fileName || 'This device')}</span></div>
+      <div class="help-text" style="margin-top:8px;">A missing cloud company is not restored automatically. Preview or download first, then restore only if this is the correct company.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+        <button class="btn btn-ghost btn-sm" onclick="previewLocalBackup()">Preview</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadRecoveryBackup()">Export</button>
+        <button class="btn btn-blue btn-sm" onclick="restoreRecoveryBackup()">Restore to cloud</button>
+      </div>
+    </div>` : `<div class="card card-pad">${emptyState('□','No local company backup','Create a backup from Settings after your next successful connection.')}</div>`;
+    const draftHtml = drafts.length ? `<div class="card card-pad">
+      <div style="font-weight:900;margin-bottom:10px;">Encrypted local drafts</div>
+      <div class="table-wrap"><table><thead><tr><th>Form</th><th>Company</th><th>Saved</th><th>Expires</th><th></th></tr></thead>
+      <tbody>${drafts.map((d,i) => `<tr>
+        <td>${esc(d.formType)}</td>
+        <td>${esc(d.companyName || selectedCompanyName)}</td>
+        <td>${fmtDate(d.savedAt)}</td>
+        <td>${fmtDate(d.expiresAt)}</td>
+        <td style="text-align:right;">
+          ${d.formType === 'voucher' ? `<button class="btn btn-ghost btn-sm" onclick="openVoucherForm()">Open voucher form</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="deleteRecoveryDraft(${i})">Delete</button>
+        </td>
+      </tr>`).join('')}</tbody></table></div>
+    </div>` : `<div class="card card-pad">${emptyState('✓','No encrypted local drafts','Unsaved voucher forms will appear here after autosave.')}</div>`;
+    window.__alaadaRecoveryDrafts = drafts;
+    body.innerHTML = `<div class="grid grid-2">${backupHtml}${draftHtml}</div>`;
+  } catch(e) {
+    body.innerHTML = emptyState('⚠','Could not open Recovery Center', esc(e.message || 'Secure recovery storage is unavailable.'));
+  }
+}
+VIEW_RENDERERS['recovery-center'] = renderRecoveryCenter;
+
+async function previewLocalBackup(){
+  const record = STATE.companyId ? await getLocalBackup(STATE.companyId) : STATE.offlineBackup;
+  if (!record) return toast('No local backup found on this device', 'err');
+  const summary = backupSummary(record).map(x => `<div class="kv"><span class="k">${esc(x.label)}</span><span class="v">${esc(String(x.value))}</span></div>`).join('');
+  openModal({title:'Backup preview', wide:true, bodyHtml:`<div class="card card-pad">${summary}</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
+}
+async function downloadRecoveryBackup(){
+  const record = STATE.companyId ? await getLocalBackup(STATE.companyId) : STATE.offlineBackup;
+  if (!record || !record.payload) return toast('No local backup found on this device', 'err');
+  await saveBackupFile(record.payload, record.fileName || backupFileName(record.companyId || 'company'));
+}
+async function restoreRecoveryBackup(){
+  const record = STATE.companyId ? await getLocalBackup(STATE.companyId) : STATE.offlineBackup;
+  if (!record) return toast('No local backup found on this device', 'err');
+  openModal({
+    title:'Restore backup to cloud',
+    bodyHtml:`<div class="card card-pad">
+      <div style="font-weight:900;margin-bottom:6px;">Restore ${esc(record.companyName || 'this company')}?</div>
+      <div class="help-text">This creates a recovered company from the selected local backup. Review the backup first if you are unsure.</div>
+    </div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="recovery-restore-confirm">Restore</button>`,
+    onMount:() => {
+      document.getElementById('recovery-restore-confirm').onclick = async () => {
+        const btn = document.getElementById('recovery-restore-confirm');
+        try {
+          btn.disabled = true; btn.textContent = 'Restoring...';
+          const restored = await restoreLocalBackupToCloud(record);
+          closeModal();
+          toast(`Restored backup: ${restored.name}`, 'ok');
+          await bootstrap();
+        } catch(e){ errToast(e); }
+        finally { btn.disabled = false; btn.textContent = 'Restore'; }
+      };
+    }
+  });
+}
+async function deleteRecoveryDraft(index){
+  const record = (window.__alaadaRecoveryDrafts || [])[index];
+  if (!record) return;
+  await deleteSecureDraftRecord(record);
+  toast('Local draft deleted', 'ok');
+  renderRecoveryCenter();
+}
 
 function renderFyList(){
   const list = document.getElementById('fy-list');
@@ -5825,6 +6799,7 @@ async function runImportUpload({dryRun=false} = {}){
   form.append('date_format', document.getElementById('imp-date-format').value || 'auto');
   form.append('notes', document.getElementById('imp-notes').value || '');
   form.append('dry_run', dryRun ? 'true' : 'false');
+  form.append('idempotency_key', `import:${STATE.companyId}:${type}:${file.name}:${file.size}:${file.lastModified || 0}:${dryRun ? 'validate' : 'commit'}`);
   const headers = await apiAuthHeaders();
   const candidates = importEndpointCandidates(type);
   let lastError = null;
@@ -5855,7 +6830,7 @@ async function runImportUpload({dryRun=false} = {}){
 
 function renderImportResult(data, {dryRun, endpoint}){
   const slot = document.getElementById('import-preview-slot');
-  const rows = data && (data.items || data.rows || data.imported || data.errors || data.warnings);
+  const rows = data && (data.results || data.items || data.rows || data.imported || data.errors || data.warnings);
   slot.innerHTML = `<div class="card card-pad">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
       <div><div style="font-weight:900;">${dryRun?'Validation result':'Import result'}</div><div class="help-text">Endpoint: <span class="mono">${esc(endpoint)}</span></div></div>
@@ -6377,44 +7352,80 @@ function aiAccountingSample(text){
 function aiAccountingResultHtml(result){
   const classification = result.classification || {};
   const draft = result.draft_voucher || {};
-  const suggested = result.suggested_journal || {};
-  const lines = suggested.lines || classification.lines || [];
+  const review = result.review || {};
+  const understood = review.what_alaada_understood || {};
+  const treatment = review.proposed_accounting_treatment || {};
+  const lines = review.journal_entry_preview || (result.suggested_journal || {}).lines || classification.lines || [];
+  const missing = review.information_still_needed || [];
+  const warnings = review.warnings || [];
+  const voiceAudio = result.voice && result.voice.audio && result.voice.audio.created ? result.voice.audio : null;
   const summaryRows = [
-    ['Intent', classification.intent || result.intent || '—'],
-    ['Party', classification.party_name || classification.party || '—'],
-    ['Amount', classification.gross_amount || classification.total_amount || suggested.total_debit || '—'],
-    ['Tax mode', classification.tax_mode || classification.gst_mode || '—'],
-    ['Draft voucher', draft.created ? `${draft.voucher_number || draft.voucher_id || 'created'}` : 'Not created'],
+    ['Transaction type', understood.transaction_type || classification.intent || result.intent || '—'],
+    ['Item or purpose', understood.item || classification.item || classification.purpose || '—'],
+    ['Quantity', understood.quantity || classification.quantity || '—'],
+    ['Amount', treatment.gross_amount || classification.gross_amount || classification.total_amount || '—'],
+    ['GST', treatment.gst_amount ? `${treatment.gst_amount} at ${classification.gst_rate || 0}%` : 'Not detected'],
+    ['Draft voucher', draft.created ? `${draft.voucher_number || draft.voucher_id || 'created for review'}` : 'Not created'],
   ];
+  const lineRows = lines.map(line => {
+    const debit = line.debit || (String(line.entry_type || line.type || '').toUpperCase() === 'DEBIT' ? line.amount : '');
+    const credit = line.credit || (String(line.entry_type || line.type || '').toUpperCase() === 'CREDIT' ? line.amount : '');
+    return `<tr><td>${esc(line.ledger_name || line.account || line.ledger || '—')}</td><td class="num">${esc(debit || '')}</td><td class="num">${esc(credit || '')}</td><td>${esc(line.reason || line.remarks || '')}</td></tr>`;
+  }).join('');
   return `
     <div class="card card-pad" style="margin-top:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
         <div>
-          <div style="font-weight:900;">AI classification</div>
-          <div class="help-text">${esc(result.assistant_message || result.answer || 'Review the result before posting any accounting entry.')}</div>
+          <div style="font-weight:900;">Alaada AI review</div>
+          <div class="help-text">${esc(review.explanation || result.assistant_message || result.answer || 'Review the suggestion before saving any accounting entry.')}</div>
         </div>
         <span class="pill ${draft.created ? 'ok' : ''}">${draft.created ? 'Draft created' : 'Review only'}</span>
       </div>
       <div class="grid grid-2" style="margin-bottom:14px;">
         ${summaryRows.map(([k,v])=>`<div class="kv"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')}
       </div>
-      ${lines.length ? `<div class="table-wrap"><table><thead><tr><th>Ledger</th><th>Type</th><th class="num">Amount</th></tr></thead><tbody>${lines.map(line=>`<tr><td>${esc(line.ledger_name || line.account || line.ledger || '—')}</td><td>${esc(line.entry_type || line.type || '—')}</td><td class="num">${esc(line.amount || '')}</td></tr>`).join('')}</tbody></table></div>` : ''}
-      <details style="margin-top:12px;"><summary style="cursor:pointer;font-size:.75rem;font-weight:800;">Raw AI response</summary><pre style="margin-top:9px;">${esc(JSON.stringify(result,null,2))}</pre></details>
+      <div class="grid grid-2" style="margin-bottom:14px;">
+        <div class="card card-pad">
+          <div style="font-weight:800;margin-bottom:6px;">What Alaada understood</div>
+          <div class="help-text">Payment or party ledger: ${esc(understood.payment_or_party_ledger || 'Review required')}</div>
+          <div class="help-text">GST pricing: ${esc(understood.gst_pricing || classification.gst_pricing || 'Not detected')}</div>
+        </div>
+        <div class="card card-pad">
+          <div style="font-weight:800;margin-bottom:6px;">Still needed</div>
+          ${missing.length ? `<ul class="help-text" style="margin:0;padding-left:18px;">${missing.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>` : '<div class="help-text">No blocking information detected. Review ledgers and amounts before saving.</div>'}
+        </div>
+      </div>
+      <div class="card card-pad" style="margin-bottom:14px;">
+        <div style="font-weight:800;margin-bottom:8px;">Proposed accounting treatment</div>
+        <div class="grid grid-2">
+          <div class="kv"><span class="k">Debit</span><span class="v">${esc(treatment.debit || classification.debit_ledger_name || '—')}</span></div>
+          <div class="kv"><span class="k">Credit</span><span class="v">${esc(treatment.credit || classification.credit_ledger_name || '—')}</span></div>
+          <div class="kv"><span class="k">Cash/bank effect</span><span class="v">${esc(review.cash_bank_effect || 'Review required')}</span></div>
+          <div class="kv"><span class="k">Profit effect</span><span class="v">${esc(review.profit_effect || 'Review required')}</span></div>
+          <div class="kv"><span class="k">Confidence</span><span class="v">${esc(review.confidence || classification.confidence || 'Review required')}</span></div>
+          <div class="kv"><span class="k">GST effect</span><span class="v">${esc(treatment.gst_effect || classification.itc_treatment || 'Not applicable')}</span></div>
+        </div>
+      </div>
+      ${lines.length ? `<div class="table-wrap"><table><thead><tr><th>Ledger</th><th class="num">Debit</th><th class="num">Credit</th><th>Why</th></tr></thead><tbody>${lineRows}</tbody></table></div>` : ''}
+      ${warnings.length ? `<div class="accounts-warning accounts-danger" style="margin-top:12px;">${warnings.map(w=>esc(w)).join('<br>')}</div>` : ''}
+      ${voiceAudio ? `<audio controls style="width:100%;margin-top:12px;" src="data:${esc(voiceAudio.mime_type || 'audio/mpeg')};base64,${esc(voiceAudio.audio_base64)}"></audio>` : ''}
+      ${DEVELOPER_MODE ? `<details style="margin-top:12px;"><summary style="cursor:pointer;font-size:.75rem;font-weight:800;">Developer diagnostics</summary><pre style="margin-top:9px;">${esc(JSON.stringify(result,null,2))}</pre></details>` : ''}
     </div>`;
 }
 
 async function runAiAccounting({createDraft=false} = {}){
   if (!requireCompany()) return;
   const input = document.getElementById('ai-accounting-text');
-  const language = document.getElementById('ai-accounting-language').value.trim() || 'auto';
+  const language = document.getElementById('ai-accounting-language').value || 'auto';
+  const speak = !!document.getElementById('ai-speak-result')?.checked;
   const text = (input && input.value.trim()) || '';
   const slot = document.getElementById('ai-accounting-result');
   if (!text) return toast('Enter or dictate an accounting sentence first.','err');
-  slot.innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> AI is classifying the transaction…</td></tr></tbody></table></div>`;
+  slot.innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Alaada is preparing a review card…</td></tr></tbody></table></div>`;
   try {
     const result = await api(`/companies/${STATE.companyId}/ai/natural-language-accounting`, {
       method:'POST',
-      body:{text, language, create_draft:createDraft}
+      body:{text, language, create_draft:createDraft, synthesize_voice:speak}
     });
     slot.innerHTML = aiAccountingResultHtml(result);
     if (createDraft) {
@@ -6423,8 +7434,8 @@ async function runAiAccounting({createDraft=false} = {}){
     }
     toast(createDraft ? 'AI draft prepared for review' : 'AI classification ready', 'ok');
   } catch(e) {
-    slot.innerHTML = emptyState('⚠','AI accounting failed', esc(e.message));
-    errToast(e);
+    slot.innerHTML = emptyState('⚠','AI accounting failed', esc(aiUserErrorMessage(e)), aiDeveloperDetails(e));
+    toast(aiUserErrorMessage(e), 'err');
   }
 }
 
@@ -6439,7 +7450,8 @@ function toggleAiAccountingVoice(){
     return;
   }
   const recognition = new SpeechRecognition();
-  recognition.lang = document.getElementById('ai-accounting-language').value.trim() || 'en-IN';
+  const selectedLanguage = document.getElementById('ai-accounting-language').value || 'auto';
+  recognition.lang = selectedLanguage === 'auto' ? 'en-IN' : selectedLanguage;
   recognition.interimResults = true;
   recognition.continuous = false;
   recognition.onstart = () => { if (button) button.textContent = 'Listening…'; };
@@ -6456,33 +7468,38 @@ function toggleAiAccountingVoice(){
 
 function renderAiAccounting(){
   if (!requireCompany()) return;
-  view().innerHTML = viewHead('AI Accounting', 'Type or dictate natural-language transactions and let Alaada classify the accounting entry.',
-    `<button class="btn btn-blue" onclick="runAiAccounting({createDraft:true})">Create draft voucher</button>`) +
-    `<div class="grid grid-2">
+  view().innerHTML = viewHead('Alaada AI', 'Record transactions, ask accounting questions, and review your books with plain-language guidance.') +
+    `<div class="grid grid-3" style="margin-bottom:16px;">
+      <div class="card card-pad"><div style="font-weight:900;">Record a transaction</div><div class="help-text">Turn ordinary business language into a reviewable accounting draft.</div></div>
+      <div class="card card-pad"><div style="font-weight:900;">Ask an accounting question</div><div class="help-text">Use plain language to understand terms, reports, GST, ledgers, and voucher effects.</div></div>
+      <div class="card card-pad"><div style="font-weight:900;">Review my accounts</div><div class="help-text">Use AI review tools to find unusual entries, missing data, and month-end work.</div></div>
+    </div>
+    <div class="grid grid-2">
       <div class="card card-pad">
         <div class="form-row">
-          <label>Natural-language accounting command</label>
+          <label>Describe the transaction</label>
           <textarea id="ai-accounting-text" rows="6" placeholder="I bought 10 chairs for office for ₹1000 each including GST 18% by cash"></textarea>
         </div>
         <div class="form-grid">
-          <div class="form-row"><label>Language</label><input id="ai-accounting-language" value="en-IN" placeholder="auto, en-IN, hi-IN"/></div>
+          <div class="form-row"><label>Language</label><select id="ai-accounting-language"><option value="auto">Auto-detect</option><option value="en-IN">English</option><option value="hi-IN">Hindi</option><option value="bn-IN">Bengali</option></select></div>
           <div class="form-row"><label>Voice</label><button class="btn btn-ghost" id="ai-voice-btn" type="button" onclick="toggleAiAccountingVoice()">Start voice</button></div>
         </div>
+        <label class="check-row" style="margin-top:10px;"><input type="checkbox" id="ai-speak-result"> Read the review aloud when voice is available</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-          <button class="btn btn-ghost" onclick="runAiAccounting()">Classify only</button>
-          <button class="btn btn-blue" onclick="runAiAccounting({createDraft:true})">Create draft voucher</button>
+          <button class="btn btn-ghost" onclick="runAiAccounting()">Review only</button>
+          <button class="btn btn-blue" onclick="runAiAccounting({createDraft:true})">Prepare draft voucher</button>
           <button class="btn btn-ghost" onclick="aiAccountingSample('I bought 10 chairs for office for ₹1000 each including GST 18% by cash')">Use sample</button>
         </div>
       </div>
       <div class="card card-pad">
-        <div style="font-weight:900;margin-bottom:8px;">Review workflow</div>
-        <div class="help-text">AI creates review-first draft accounting. Post only after checking ledger, GST, party, amount, and payment mode.</div>
-        <div class="kv"><span class="k">Purchase example</span><span class="v">Office chairs, GST, cash/bank</span></div>
-        <div class="kv"><span class="k">Sales example</span><span class="v">Customer invoice with GST</span></div>
-        <div class="kv"><span class="k">Payment example</span><span class="v">Vendor/customer settlement</span></div>
+        <div style="font-weight:900;margin-bottom:8px;">Review-first safety</div>
+        <div class="help-text">Alaada can classify, explain, and prepare drafts. It will not post, file GST, pay, delete, approve, or submit anything automatically.</div>
+        <div class="kv"><span class="k">Purchase example</span><span class="v">Office chairs, GST, cash or supplier</span></div>
+        <div class="kv"><span class="k">Sales example</span><span class="v">Customer sale with output GST</span></div>
+        <div class="kv"><span class="k">Payment example</span><span class="v">Receipt, supplier payment, or bank transfer</span></div>
       </div>
     </div>
-    <div id="ai-accounting-result">${emptyState('✨','No AI result yet','Enter a sentence or use voice input, then classify or create a draft voucher.')}</div>`;
+    <div id="ai-accounting-result">${emptyState('✨','No AI result yet','Enter a sentence or use voice input, then review before creating a draft voucher.')}</div>`;
 }
 VIEW_RENDERERS['ai-accounting'] = renderAiAccounting;
 
