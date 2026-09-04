@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>About Us — Alaada | Built in India, Made for the World</title>
+  <title>Our Team — Alaada | Built in India, Made for the World</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="icon" type="image/jpeg" href="images/alaada-logo.jpg"/>
-  <meta name="description" content="Meet the team behind Alaada — an AI and business technology ecosystem built from Kolkata, India. Discover the story, mission and values behind Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets."/>
+  <meta name="description" content="Meet the small team building Alaada — an AI and business technology ecosystem from Kolkata, India, behind Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets."/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
   <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -58,8 +58,7 @@
   .page-hero-right{position:relative;z-index:2;opacity:0;animation:riseUp .8s .5s ease forwards;}
   .founder-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:32px;box-shadow:var(--sh-lg);position:relative;overflow:hidden;}
   .founder-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--teal));}
-  .founder-avatar-lg{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;display:flex;align-items:center;justify-content:center;margin-bottom:18px;flex-shrink:0;overflow:hidden;}
-  .founder-avatar-lg img{width:100%;height:100%;object-fit:cover;}
+  .founder-avatar-lg{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;display:flex;align-items:center;justify-content:center;margin-bottom:18px;flex-shrink:0;}
   .founder-name-lg{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--ink);margin-bottom:3px;}
   .founder-role-lg{font-size:.78rem;color:var(--ink3);font-weight:500;margin-bottom:16px;}
   .founder-quote{font-size:.88rem;color:var(--ink2);line-height:1.75;font-style:italic;margin-bottom:18px;padding-left:14px;border-left:2.5px solid var(--blue2);}
@@ -263,6 +262,35 @@
   .footer-socials a{font-size:.82rem;color:rgba(255,255,255,.45);text-decoration:none;font-weight:500;transition:color .15s;}
   .footer-socials a:hover{color:#fff;}
   .footer-bottom{max-width:1060px;margin:0 auto;padding-top:22px;border-top:1px solid rgba(255,255,255,.07);font-size:.72rem;color:rgba(255,255,255,.2);}
+
+  /* TEAM GRID */
+  #team-grid{background:var(--bg);}
+  .team-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:40px;}
+  @media(max-width:720px){.team-grid{grid-template-columns:1fr;}}
+  .team-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:28px;box-shadow:var(--sh-sm);display:flex;gap:20px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+  .team-card:hover{transform:translateY(-4px);box-shadow:var(--sh-lg);}
+  .team-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+  .team-card.blue::before{background:var(--blue);}
+  .team-card.teal::before{background:var(--teal);}
+  .team-card.gold::before{background:var(--gold);}
+  .team-card.violet::before{background:linear-gradient(90deg,var(--violet),#d946ef);}
+  .team-photo{width:84px;height:84px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid var(--bg2);background:var(--bg2);}
+  .team-info{display:flex;flex-direction:column;min-width:0;}
+  .team-name{font-family:'Syne',sans-serif;font-size:1.08rem;font-weight:800;color:var(--ink);letter-spacing:-.3px;margin-bottom:2px;}
+  .team-role{font-size:.8rem;font-weight:600;margin-bottom:10px;}
+  .team-role.blue{color:var(--blue);}.team-role.teal{color:var(--teal);}.team-role.gold{color:var(--gold);}.team-role.violet{color:var(--violet);}
+  .team-desc{font-size:.83rem;color:var(--ink2);line-height:1.65;margin-bottom:12px;}
+  .team-tags{display:flex;flex-wrap:wrap;gap:6px;}
+
+  /* TEAM STAT CARD (hero right) */
+  .team-stat-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:32px;box-shadow:var(--sh-lg);position:relative;overflow:hidden;}
+  .team-stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--teal),var(--gold));}
+  .team-stat-row{display:flex;gap:22px;margin-bottom:22px;}
+  .team-stat-num{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:-1.5px;color:var(--ink);line-height:1;}
+  .team-stat-label{font-size:.72rem;color:var(--ink3);font-weight:500;margin-top:4px;}
+  .team-avatars{display:flex;margin-bottom:20px;}
+  .team-avatars img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:3px solid var(--white);box-shadow:0 1px 4px rgba(0,0,0,.12);margin-left:-12px;background:var(--bg2);}
+  .team-avatars img:first-child{margin-left:0;}
   </style>
 </head>
 <body>
@@ -275,8 +303,8 @@
   </a>
   <ul class="nav-links">
     <li><a href="index.html">Home</a></li>
-    <li><a href="about-us.html" class="active">About</a></li>
-    <li><a href="team.html">Team</a></li>
+    <li><a href="about-us.html">About</a></li>
+    <li><a href="team.html" class="active">Team</a></li>
     <li><a href="blog.html">Blog</a></li>
     <li><a href="developers.html">Developers</a></li>
     <li><a href="https://accounts-0o52.onrender.com">Accounts</a></li>
@@ -291,29 +319,35 @@
     <div class="hero-blob blob-teal" aria-hidden="true"></div>
     <div class="hero-dots" aria-hidden="true"></div>
     <div class="page-hero-left">
-      <div class="page-eyebrow"><span class="page-eyebrow-dot"></span>Our Story</div>
-      <h1>Built in India.<br>Built for <span class="accent">everyone.</span></h1>
-      <p class="page-hero-sub">Alaada is a small AI and business technology team from Kolkata — building a focused ecosystem of tools that actually work. No fluff, no bloat. Just software that earns its place in your workflow.</p>
+      <div class="page-eyebrow"><span class="page-eyebrow-dot"></span>Meet The Team</div>
+      <h1>The people <span class="accent">building Alaada.</span></h1>
+      <p class="page-hero-sub">A small, focused team working out of Kolkata — writing the code, closing the customers, finding the leads and telling the story. No layers, no bureaucracy. Just people who ship.</p>
     </div>
     <div class="page-hero-right">
-      <div class="founder-card">
-        <a href="team.html" style="text-decoration:none;color:inherit;display:block;">
-          <div class="founder-avatar-lg">
-            <img src="/arzo.png" alt="Arzo Das" onerror="this.parentElement.textContent='A'"/>
-          </div>
-          <div class="founder-name-lg">Arzo Das</div>
-        </a>
-        <div class="founder-role-lg">Founder & Builder · Kolkata, India</div>
-        <p class="founder-quote">"Alaada exists to turn intelligence into practical tools — from reasoning and analysis to spreadsheets, accounting and business operations."</p>
-        <div class="founder-tags">
-          <span class="tag">Full-Stack</span>
-          <span class="tag">Python / FastAPI</span>
-          <span class="tag">HTML · CSS · JS</span>
-          <span class="tag">AI Products</span>
-          <span class="tag">Kolkata 🇮🇳</span>
+      <div class="team-stat-card">
+        <div class="team-avatars" aria-hidden="true">
+          <img src="/arzo.png" alt=""/>
+          <img src="/sk.png" alt=""/>
+          <img src="/umir.png" alt=""/>
+          <img src="/shyam.png" alt=""/>
         </div>
-        <div style="margin-top:18px;">
-          <a href="team.html" style="font-size:.78rem;font-weight:600;color:var(--blue);text-decoration:none;">Meet the whole team →</a>
+        <div class="team-stat-row">
+          <div>
+            <div class="team-stat-num">4</div>
+            <div class="team-stat-label">Team Members</div>
+          </div>
+          <div>
+            <div class="team-stat-num">1</div>
+            <div class="team-stat-label">Mission</div>
+          </div>
+        </div>
+        <p class="founder-quote">"We're small on purpose — every person here owns their piece end to end, from product to pipeline."</p>
+        <div class="founder-tags">
+          <span class="tag">Kolkata 🇮🇳</span>
+          <span class="tag">Product</span>
+          <span class="tag">Sales</span>
+          <span class="tag">Growth</span>
+          <span class="tag">Content</span>
         </div>
       </div>
     </div>
@@ -322,287 +356,108 @@
 
 <div class="divider"></div>
 
-<!-- MISSION -->
-<section id="mission">
-  <div class="section-inner">
-    <div class="mission-grid">
-      <div class="mission-text reveal">
-        <div class="section-eyebrow">Mission</div>
-        <h2 class="section-title">AI that earns its place in your workflow.</h2>
-        <p class="section-body">Alaada was founded on a single belief: that most people don't need 500 features — they need 5 that work flawlessly. Every product we build starts from that constraint.</p>
-        <p class="section-body" style="margin-top:14px;">We're building a complete AI business ecosystem — from thinking with Orbit AI, to analysis with Web Analyser, to numbers with Alaada Sheets, and accounting and operations with Alaada Accounts. Tools designed to work together for the way Indian businesses actually operate.</p>
-        <div class="value-list">
-          <div class="value-item">
-            <span class="value-icon">🎯</span>
-            <div>
-              <div class="value-title">Ruthless focus</div>
-              <div class="value-desc">Each product does one thing. We resist scope creep like a discipline.</div>
-            </div>
-          </div>
-          <div class="value-item">
-            <span class="value-icon">⚡</span>
-            <div>
-              <div class="value-title">Speed as respect</div>
-              <div class="value-desc">Your time is precious. We ship fast, iterate faster, and never waste a click.</div>
-            </div>
-          </div>
-          <div class="value-item">
-            <span class="value-icon">🔍</span>
-            <div>
-              <div class="value-title">Evidence over opinion</div>
-              <div class="value-desc">Orbit reasons before answering. Analyser shows data before advising. We build tools that think.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="mission-visual reveal rd2">
-        <div class="stat-card">
-          <div>
-            <div class="stat-card-num blue">4</div>
-            <div class="stat-card-label">Live Products</div>
-          </div>
-          <div class="stat-card-sub" style="margin-left:auto;max-width:160px;text-align:right;">Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets — connected products that work in your browser.</div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-card-num teal">4</div>
-            <div class="stat-card-label">Focused Team</div>
-          </div>
-          <div class="stat-card-sub" style="margin-left:auto;max-width:160px;text-align:right;">Product, sales, growth and content — one small team, one purpose.</div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-card-num gold">∞</div>
-            <div class="stat-card-label">Problems to Solve</div>
-          </div>
-          <div class="stat-card-sub" style="margin-left:auto;max-width:160px;text-align:right;">The roadmap has no end. There's always a better version waiting.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<!-- STORY — timeline fixed -->
-<section id="story">
-  <div class="section-inner">
-    <div class="story-grid">
-
-      <!-- LEFT: timeline -->
-      <div class="reveal">
-        <div class="section-eyebrow">The Journey</div>
-        <h2 class="section-title">From idea to ecosystem.</h2>
-
-        <div class="timeline">
-
-          <div class="tl-item">
-            <div class="tl-dot blue"></div>
-            <div class="tl-card">
-              <div class="tl-year">November 2025 — Founded</div>
-              <div class="tl-title">Alaada is born in Kolkata</div>
-              <div class="tl-body">Started as a solo experiment: could one developer build a focused AI product from India that competes globally? The answer became Alaada.</div>
-            </div>
-          </div>
-
-          <div class="tl-item">
-            <div class="tl-dot teal"></div>
-            <div class="tl-card">
-              <div class="tl-year">November 2025 — First Product</div>
-              <div class="tl-title">Web Analyser launches</div>
-              <div class="tl-body">Shipped as a fully real audit tool — no fake metrics, no paywalled results. Paste a URL, get the truth.</div>
-            </div>
-          </div>
-
-          <div class="tl-item">
-            <div class="tl-dot gold"></div>
-            <div class="tl-card">
-              <div class="tl-year">1 January 2026 — Growing Suite</div>
-              <div class="tl-title">Orbit AI launches</div>
-              <div class="tl-body">Deep-reasoning AI with live web search, file analysis, voice output, and a memory system powered by the browser itself. No Supabase, no server state — pure user ownership.</div>
-            </div>
-          </div>
-
-          <div class="tl-item">
-            <div class="tl-dot ink"></div>
-            <div class="tl-card">
-              <div class="tl-year">March 2026 — Sheets</div>
-              <div class="tl-title">Alaada Sheets launches</div>
-              <div class="tl-body">20+ formulas, AI NLP commands, and exports to Excel, SQL, JSON, and Tally XML. Built for Indian businesses from day one.</div>
-            </div>
-          </div>
-
-          <div class="tl-item">
-            <div class="tl-dot teal"></div>
-            <div class="tl-card">
-              <div class="tl-year">1 August 2026 — Business Platform</div>
-              <div class="tl-title">Alaada Accounts launches</div>
-              <div class="tl-body">A connected accounting and business operations platform goes live with double-entry accounting, sales, purchases, inventory, GST, CRM, reports, automation, bulk imports and AI-assisted workflows.</div>
-            </div>
-          </div>
-
-          <div class="tl-item">
-            <div class="tl-dot blue"></div>
-            <div class="tl-card">
-              <div class="tl-year">2026 — Connected Ecosystem</div>
-              <div class="tl-title">Building the ecosystem</div>
-              <div class="tl-body">Connecting Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets under one platform, with a shared design language and cross-product intelligence.</div>
-            </div>
-          </div>
-
-        </div><!-- /timeline -->
-      </div><!-- /left col -->
-
-      <!-- RIGHT: aside -->
-      <div class="story-aside reveal rd2" style="margin-top:60px;">
-        <div class="story-aside-card">
-          <p class="story-aside-text">"Where Perfection meets Possibility."</p>
-          <div class="story-aside-name">— The Alaada tagline, and the only KPI that matters</div>
-        </div>
-        <div style="background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:28px;box-shadow:var(--sh-sm);">
-          <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:14px;">Tech stack</div>
-          <div style="display:flex;flex-wrap:wrap;gap:7px;">
-            <span style="font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:100px;background:var(--blue2);color:var(--blue);">FastAPI</span>
-            <span style="font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:100px;background:var(--blue2);color:var(--blue);">Python</span>
-            <span style="font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:100px;background:var(--teal2);color:var(--teal);">HTML/CSS/JS</span>
-            <span style="font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:100px;background:var(--teal2);color:var(--teal);">Render</span>
-            <span style="font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:100px;background:var(--gold2);color:var(--gold);">Appwrite</span>
-            <span style="font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:100px;background:var(--bg2);color:var(--ink3);">Razorpay</span>
-            <span style="font-size:.72rem;font-weight:600;padding:4px 11px;border-radius:100px;background:var(--bg2);color:var(--ink3);">WebSockets</span>
-          </div>
-        </div>
-        <div style="background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:28px;box-shadow:var(--sh-sm);">
-          <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:14px;">Location</div>
-          <div style="font-size:.84rem;color:var(--ink2);line-height:1.7;">🇮🇳 Kolkata, West Bengal, India<br><span style="color:var(--ink3);">Building for the world from the City of Joy.</span></div>
-        </div>
-      </div><!-- /aside -->
-
-    </div><!-- /story-grid -->
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<!-- OUR PRODUCTS -->
-<section id="our-products">
+<!-- TEAM GRID -->
+<section id="team-grid">
   <div class="section-inner">
     <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 12px;">
-      <div class="section-eyebrow" style="justify-content:center;">What We Build</div>
-      <h2 class="section-title">Four products. One mission.</h2>
-      <p class="section-body">Each product solves a distinct problem. Together, they form a connected intelligence and business operations ecosystem.</p>
+      <div class="section-eyebrow" style="justify-content:center;">The People</div>
+      <h2 class="section-title">Four people. One mission.</h2>
+      <p class="section-body">Everyone here wears more than one hat, but each person owns a lane — product, sales, growth or content — end to end.</p>
     </div>
-    <div class="products-strip">
-      <a href="index.html#orbit-section" class="prod-tile blue reveal rd1">
-        <div class="prod-emoji">🧠</div>
-        <div class="prod-name">Orbit AI</div>
-        <p class="prod-desc">Deep-reasoning AI assistant with live web search, file analysis, voice output, and a user-owned memory system. Built on FastAPI.</p>
-        <div class="prod-link">Learn more →</div>
-      </a>
+    <div class="team-grid">
 
-      <a href="Accounts.html" class="prod-tile violet reveal rd2">
-        <div class="prod-emoji">📒</div>
-        <div class="prod-name">Alaada Accounts</div>
-        <p class="prod-desc">AI-assisted accounting and business operations with ledgers, vouchers, reports, sales, purchases, inventory, GST, CRM, automation and bulk imports.</p>
-        <div class="prod-link violet-link">Open Accounts →</div>
-      </a>
-      <a href="index.html#analyser-section" class="prod-tile teal reveal rd3">
-        <div class="prod-emoji">🔍</div>
-        <div class="prod-name">Web Analyser</div>
-        <p class="prod-desc">Real-time website audit tool. Paste any URL, get full performance, SEO, accessibility and speed data — no sign-in required.</p>
-        <div class="prod-link teal-link">Learn more →</div>
-      </a>
-      <a href="index.html#sheets-section" class="prod-tile gold reveal rd4">
-        <div class="prod-emoji">📊</div>
-        <div class="prod-name">Alaada Sheets</div>
-        <p class="prod-desc">Browser-based spreadsheet with 50+ formulas, AI NLP commands, and multi-format export including Tally XML — built for Indian businesses. Gated with Google OAuth. Your Data is ALWAYS protected.</p>
-        <div class="prod-link gold-link">Learn more →</div>
-      </a>
+      <div class="team-card blue reveal rd1">
+        <img class="team-photo" src="/arzo.png" alt="Arzo Das"/>
+        <div class="team-info">
+          <div class="team-name">Arzo Das</div>
+          <div class="team-role blue">Founder &amp; Technical Lead</div>
+          <p class="team-desc">Founder of Alaada. Builds and ships the full stack — frontend, backend and product strategy — across Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets.</p>
+          <div class="team-tags">
+            <span class="tag">Full-Stack</span>
+            <span class="tag">Python / FastAPI</span>
+            <span class="tag">Product</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="team-card teal reveal rd2">
+        <img class="team-photo" src="/sk.png" alt="Shanmugasundaram S K"/>
+        <div class="team-info">
+          <div class="team-name">Shanmugasundaram S K</div>
+          <div class="team-role teal">Sales, Alaada</div>
+          <p class="team-desc">Drives sales for Alaada — talking to customers, understanding what businesses need, and turning conversations into people who actually use the product.</p>
+          <div class="team-tags">
+            <span class="tag">Sales</span>
+            <span class="tag">Customer Success</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="team-card gold reveal rd3">
+        <img class="team-photo" src="/umir.png" alt="Umair"/>
+        <div class="team-info">
+          <div class="team-name">Umair</div>
+          <div class="team-role gold">Intern, Lead Generation</div>
+          <p class="team-desc">Interning at Alaada on lead generation — finding and qualifying the businesses and freelancers who could benefit from the platform.</p>
+          <div class="team-tags">
+            <span class="tag">Lead Gen</span>
+            <span class="tag">Intern</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="team-card violet reveal rd4">
+        <img class="team-photo" src="/shyam.png" alt="Shyam Lal"/>
+        <div class="team-info">
+          <div class="team-name">Shyam Lal</div>
+          <div class="team-role violet">Video Maker, Alaada</div>
+          <p class="team-desc">Makes the videos that show Alaada's products in action — demos, social content and everything that helps people see the product before they try it.</p>
+          <div class="team-tags">
+            <span class="tag">Video</span>
+            <span class="tag">Content</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
 
 <div class="divider"></div>
 
-<!-- VISION -->
-<section id="vision">
-  <div class="vision-inner">
-    <div class="vision-grid">
-      <div class="reveal">
-        <div class="vision-eyebrow">Looking Ahead</div>
-        <h2 class="vision-title">The complete AI business ecosystem.</h2>
-        <p class="vision-body">Alaada's roadmap is to connect Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets into the single platform a business can use to think, analyse, operate and grow.</p>
-        <div class="vision-pills">
-          <span class="vision-pill">AI Accounting</span>
-          <span class="vision-pill">Unified Dashboard</span>
-          <span class="vision-pill">Cross-product Intelligence</span>
-          <span class="vision-pill">Tally Integration</span>
-          <span class="vision-pill">WhatsApp Alerts</span>
-        </div>
-      </div>
-      <div class="reveal rd2">
-        <div class="roadmap-list">
-          <div class="roadmap-item">
-            <span class="roadmap-status rs-live">Live</span>
-            <div class="roadmap-text"><strong>Orbit AI</strong> — Deep reasoning AI with web search, file analysis & voice</div>
-          </div>
-          <div class="roadmap-item">
-            <span class="roadmap-status rs-live">Live</span>
-            <div class="roadmap-text"><strong>Web Analyser</strong> — Real-time site performance & SEO audits</div>
-          </div>
-          <div class="roadmap-item">
-            <span class="roadmap-status rs-live">Live</span>
-            <div class="roadmap-text"><strong>Alaada Sheets</strong> — AI-powered browser spreadsheets with Tally XML export</div>
-          </div>
-          <div class="roadmap-item">
-            <span class="roadmap-status rs-soon">Soon</span>
-            <div class="roadmap-text"><strong>Unified Platform</strong> — Orbit AI, Accounts, Web Analyser and Sheets under one login and dashboard</div>
-          </div>
-          <div class="roadmap-item">
-            <span class="roadmap-status rs-live">Live</span>
-            <div class="roadmap-text"><strong>Alaada Accounts</strong> — Accounting, sales, purchases, inventory, GST, CRM, reports and AI assistance</div>
-          </div>
-          <div class="roadmap-item">
-            <span class="roadmap-status rs-planned">Planned</span>
-            <div class="roadmap-text"><strong>Cross-product Intelligence</strong> — Orbit analyses Sheets and Accounts data, while Web Analyser insights connect to business workflows</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- PRINCIPLES -->
 <section id="principles">
   <div class="section-inner">
     <div class="reveal" style="text-align:center;max-width:520px;margin:0 auto;">
-      <div class="section-eyebrow" style="justify-content:center;">How We Build</div>
-      <h2 class="section-title">Design principles we refuse to compromise on.</h2>
+      <div class="section-eyebrow" style="justify-content:center;">How We Work</div>
+      <h2 class="section-title">Small team, no layers.</h2>
     </div>
     <div class="principles-grid">
       <div class="principle-card reveal rd1">
-        <span class="principle-icon">🧱</span>
-        <div class="principle-title">One job, done right</div>
-        <div class="principle-body">No feature overload. If it doesn't make the core job better, it doesn't ship.</div>
+        <span class="principle-icon">🎯</span>
+        <div class="principle-title">Own your lane</div>
+        <div class="principle-body">Product, sales, growth, content — each person runs their piece end to end, with no hand-off gaps.</div>
       </div>
       <div class="principle-card reveal rd2">
-        <span class="principle-icon">🌐</span>
-        <div class="principle-title">Browser-first</div>
-        <div class="principle-body">No installs. No app stores. Works anywhere with a browser — because that's everywhere.</div>
+        <span class="principle-icon">⚡</span>
+        <div class="principle-title">Talk directly</div>
+        <div class="principle-body">No account managers, no ticket queues. You'll talk to the person actually doing the work.</div>
       </div>
       <div class="principle-card reveal rd3">
-        <span class="principle-icon">🔐</span>
-        <div class="principle-title">User owns their data</div>
-        <div class="principle-body">Data handling should be clear, secure and transparent. Users should understand what is stored, where it is stored and how it is used.</div>
-      </div>
-      <div class="principle-card reveal rd4">
         <span class="principle-icon">📦</span>
         <div class="principle-title">Ship, then perfect</div>
         <div class="principle-body">A real tool in the world beats a perfect tool on a whiteboard. We iterate in public.</div>
       </div>
+      <div class="principle-card reveal rd4">
+        <span class="principle-icon">🌱</span>
+        <div class="principle-title">Room to grow</div>
+        <div class="principle-body">We started with one founder. Every person who joins gets real ownership from day one, not busywork.</div>
+      </div>
       <div class="principle-card reveal rd1">
         <span class="principle-icon">💬</span>
         <div class="principle-title">Plain language, always</div>
-        <div class="principle-body">No jargon walls. Every result, score, and suggestion is written for a human, not a spec sheet.</div>
+        <div class="principle-body">No jargon walls internally or externally. Everyone can explain what they're building and why.</div>
       </div>
       <div class="principle-card reveal rd2">
         <span class="principle-icon">🇮🇳</span>
@@ -618,7 +473,7 @@
   <div class="connect-inner reveal">
     <div class="section-eyebrow" style="justify-content:center;">Get in Touch</div>
     <h2 class="section-title">Let's build something together.</h2>
-    <p class="section-body">Whether you're a user, a developer, an investor, or just curious — reach out. We're a small team, so you'll always talk directly to the people building Alaada.</p>
+    <p class="section-body">Whether you're a user, a developer, an investor, or just curious — reach out. We're a small team, so you'll always talk directly to someone who can actually help.</p>
     <div class="connect-links">
       <a href="mailto:alaada@alaada.com" class="connect-btn primary">Email Us →</a>
       <a href="https://discord.gg/r4G7dynh" target="_blank" rel="noopener" class="connect-btn ghost">Join Discord</a>
@@ -645,7 +500,7 @@
         <a href="https://www.linkedin.com/company/alaada/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         <a href="https://www.linkedin.com/in/arzo-das-782539391/" target="_blank" rel="noopener noreferrer">Arzo Das</a>
         <a href="https://www.facebook.com/profile.php?id=61583515497634" target="_blank" rel="noopener noreferrer">Facebook</a>
-        <a href="team.html">Team</a>
+        <a href="about-us.html">About Us</a>
         <a href="Accounts.html">Alaada Accounts</a>
       </div>
     </div>
