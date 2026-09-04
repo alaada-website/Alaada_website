@@ -22,13 +22,7 @@
   >
 
   <style>
-    /* =========================================================
-       RESET
-    ========================================================= */
-
-    *,
-    *::before,
-    *::after {
+    * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -50,13 +44,8 @@
       --blue2: #e6edff;
 
       --teal: #00957a;
-      --teal2: #dcf5ef;
-
       --gold: #d4930a;
-      --gold2: #fdf3d9;
-
       --violet: #7c3aed;
-      --violet2: #f1e9ff;
 
       --r-sm: 8px;
       --r-md: 14px;
@@ -84,8 +73,8 @@
       font-family: "Figtree", sans-serif;
       background: var(--bg);
       color: var(--ink);
-      overflow-x: hidden;
       line-height: 1.65;
+      overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -98,10 +87,7 @@
       color: inherit;
     }
 
-
-    /* =========================================================
-       NAVIGATION
-    ========================================================= */
+    /* ================= NAV ================= */
 
     nav {
       position: fixed;
@@ -112,17 +98,17 @@
 
       height: 60px;
 
-      background: rgba(245, 244, 239, 0.92);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-
-      border-bottom: 1px solid var(--border);
-
       display: flex;
       align-items: center;
       justify-content: space-between;
 
       padding: 0 40px;
+
+      background: rgba(245, 244, 239, 0.92);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+
+      border-bottom: 1px solid var(--border);
     }
 
     .nav-logo {
@@ -135,8 +121,6 @@
       font-family: "Syne", sans-serif;
       font-weight: 800;
       font-size: 1.18rem;
-
-      color: var(--ink);
       letter-spacing: -0.4px;
     }
 
@@ -146,27 +130,28 @@
 
       border-radius: 7px;
       object-fit: cover;
-
-      flex-shrink: 0;
     }
 
     .nav-links {
       display: flex;
       align-items: center;
       gap: 4px;
-
       list-style: none;
     }
 
     .nav-links a {
-      font-size: 0.875rem;
-      font-weight: 500;
-
-      color: var(--ink2);
-      text-decoration: none;
+      display: block;
 
       padding: 6px 13px;
+
       border-radius: var(--r-sm);
+
+      color: var(--ink2);
+
+      text-decoration: none;
+
+      font-size: 0.875rem;
+      font-weight: 500;
 
       transition:
         background 0.15s ease,
@@ -182,11 +167,7 @@
     .nav-links .nav-cta {
       background: var(--blue);
       color: white;
-
       font-weight: 600;
-
-      box-shadow:
-        0 2px 10px rgba(26, 95, 255, 0.28);
     }
 
     .nav-links .nav-cta:hover {
@@ -194,20 +175,15 @@
       color: white;
     }
 
-
-    /* =========================================================
-       HERO
-    ========================================================= */
+    /* ================= HERO ================= */
 
     .page-hero {
       position: relative;
-      overflow: hidden;
 
       max-width: 1200px;
-      margin: 0 auto;
-
       min-height: 620px;
 
+      margin: 0 auto;
       padding: 130px 80px 80px;
 
       display: grid;
@@ -215,6 +191,8 @@
       gap: 64px;
 
       align-items: center;
+
+      overflow: hidden;
     }
 
     .hero-background {
@@ -227,7 +205,9 @@
 
     .hero-blob {
       position: absolute;
+
       border-radius: 50%;
+
       filter: blur(80px);
     }
 
@@ -293,21 +273,19 @@
       align-items: center;
       gap: 8px;
 
+      margin-bottom: 28px;
+      padding: 5px 14px;
+
+      background: var(--white);
+
+      border: 1px solid var(--borderM);
+      border-radius: 100px;
+
       font-size: 0.72rem;
       font-weight: 600;
 
       letter-spacing: 1.5px;
       text-transform: uppercase;
-
-      color: var(--ink2);
-
-      background: var(--white);
-      border: 1px solid var(--borderM);
-
-      padding: 5px 14px;
-      border-radius: 100px;
-
-      margin-bottom: 28px;
 
       box-shadow: var(--sh-sm);
     }
@@ -322,61 +300,54 @@
     }
 
     .page-hero h1 {
-      font-family: "Syne", sans-serif;
-
-      font-size: clamp(2.4rem, 4vw, 3.8rem);
-
-      font-weight: 800;
-      line-height: 1.06;
-
-      letter-spacing: -2px;
-
-      color: var(--ink);
-
       margin-bottom: 20px;
+
+      font-family: "Syne", sans-serif;
+      font-size: clamp(2.4rem, 4vw, 3.8rem);
+      font-weight: 800;
+
+      line-height: 1.06;
+      letter-spacing: -2px;
     }
 
     .page-hero h1 .accent {
       background:
         linear-gradient(
           110deg,
-          var(--blue) 0%,
-          #4d8bff 50%,
-          var(--teal) 100%
+          var(--blue),
+          #4d8bff,
+          var(--teal)
         );
 
       -webkit-background-clip: text;
       background-clip: text;
-
       -webkit-text-fill-color: transparent;
     }
 
     .page-hero-sub {
       max-width: 500px;
 
-      font-size: 1.02rem;
       color: var(--ink2);
 
+      font-size: 1.02rem;
       line-height: 1.8;
     }
 
-
-    /* =========================================================
-       HERO TEAM CARD
-    ========================================================= */
+    /* ================= HERO TEAM CARD ================= */
 
     .team-stat-card {
       position: relative;
-      overflow: hidden;
+
+      padding: 32px;
 
       background: var(--white);
 
       border: 1px solid var(--borderM);
       border-radius: var(--r-xl);
 
-      padding: 32px;
-
       box-shadow: var(--sh-lg);
+
+      overflow: hidden;
     }
 
     .team-stat-card::before {
@@ -410,18 +381,17 @@
       width: 52px;
       height: 52px;
 
-      border-radius: 50%;
-
-      object-fit: cover;
+      margin-left: -12px;
 
       border: 3px solid var(--white);
+      border-radius: 50%;
 
       background: var(--bg2);
 
+      object-fit: cover;
+
       box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.12);
-
-      margin-left: -12px;
     }
 
     .team-avatars img:first-child {
@@ -441,37 +411,31 @@
       font-size: 2.2rem;
       font-weight: 800;
 
-      letter-spacing: -1.5px;
-
-      color: var(--ink);
-
       line-height: 1;
+      letter-spacing: -1.5px;
     }
 
     .team-stat-label {
-      font-size: 0.72rem;
+      margin-top: 5px;
 
       color: var(--ink3);
 
+      font-size: 0.72rem;
       font-weight: 500;
-
-      margin-top: 5px;
     }
 
     .founder-quote {
-      font-size: 0.88rem;
-
-      color: var(--ink2);
-
-      line-height: 1.75;
-
-      font-style: italic;
-
       margin-bottom: 18px;
-
       padding-left: 14px;
 
       border-left: 2.5px solid var(--blue2);
+
+      color: var(--ink2);
+
+      font-size: 0.88rem;
+      font-style: italic;
+
+      line-height: 1.75;
     }
 
     .founder-tags,
@@ -484,21 +448,18 @@
     .tag {
       display: inline-block;
 
-      font-size: 0.67rem;
-      font-weight: 600;
-
       padding: 4px 10px;
 
       border-radius: 100px;
 
       background: var(--bg2);
       color: var(--ink3);
+
+      font-size: 0.67rem;
+      font-weight: 600;
     }
 
-
-    /* =========================================================
-       GENERAL SECTIONS
-    ========================================================= */
+    /* ================= SECTIONS ================= */
 
     section {
       padding: 80px 32px;
@@ -514,15 +475,15 @@
       align-items: center;
       gap: 10px;
 
+      margin-bottom: 14px;
+
+      color: var(--blue);
+
       font-size: 0.68rem;
       font-weight: 600;
 
       letter-spacing: 2.5px;
       text-transform: uppercase;
-
-      color: var(--blue);
-
-      margin-bottom: 14px;
     }
 
     .section-eyebrow::before {
@@ -532,31 +493,24 @@
       height: 1.5px;
 
       background: var(--blue);
-
-      flex-shrink: 0;
     }
 
     .section-title {
+      margin-bottom: 16px;
+
       font-family: "Syne", sans-serif;
 
       font-size: clamp(1.8rem, 3vw, 2.6rem);
-
       font-weight: 800;
 
-      letter-spacing: -1.2px;
-
       line-height: 1.1;
-
-      color: var(--ink);
-
-      margin-bottom: 16px;
+      letter-spacing: -1.2px;
     }
 
     .section-body {
-      font-size: 0.96rem;
-
       color: var(--ink2);
 
+      font-size: 0.96rem;
       line-height: 1.8;
     }
 
@@ -564,7 +518,6 @@
       height: 1px;
 
       max-width: 1060px;
-
       margin: 0 auto;
 
       background:
@@ -576,10 +529,7 @@
         );
     }
 
-
-    /* =========================================================
-       TEAM GRID
-    ========================================================= */
+    /* ================= TEAM GRID ================= */
 
     #team-grid {
       background: var(--bg);
@@ -597,22 +547,21 @@
 
     .team-card {
       position: relative;
-      overflow: hidden;
 
       display: flex;
       align-items: flex-start;
-
       gap: 20px;
+
+      padding: 28px;
 
       background: var(--white);
 
       border: 1px solid var(--borderM);
-
       border-radius: var(--r-xl);
 
-      padding: 28px;
-
       box-shadow: var(--sh-sm);
+
+      overflow: hidden;
 
       transition:
         transform 0.2s ease,
@@ -621,7 +570,6 @@
 
     .team-card:hover {
       transform: translateY(-4px);
-
       box-shadow: var(--sh-lg);
     }
 
@@ -660,8 +608,7 @@
 
     /*
       IMPORTANT:
-      No opacity:0 here.
-      The team cards are always visible even if JavaScript fails.
+      These images are NOT hidden behind JavaScript.
     */
 
     .team-photo {
@@ -670,44 +617,38 @@
 
       min-width: 84px;
 
+      border: 3px solid var(--bg2);
       border-radius: 50%;
+
+      background: var(--bg2);
 
       object-fit: cover;
 
       flex-shrink: 0;
-
-      border: 3px solid var(--bg2);
-
-      background: var(--bg2);
     }
 
     .team-info {
       min-width: 0;
-
-      display: flex;
-      flex-direction: column;
     }
 
     .team-name {
+      margin-bottom: 2px;
+
       font-family: "Syne", sans-serif;
-
-      font-size: 1.08rem;
-
-      font-weight: 800;
 
       color: var(--ink);
 
-      letter-spacing: -0.3px;
+      font-size: 1.08rem;
+      font-weight: 800;
 
-      margin-bottom: 2px;
+      letter-spacing: -0.3px;
     }
 
     .team-role {
-      font-size: 0.8rem;
-
-      font-weight: 600;
-
       margin-bottom: 10px;
+
+      font-size: 0.8rem;
+      font-weight: 600;
     }
 
     .team-role.blue {
@@ -727,19 +668,16 @@
     }
 
     .team-desc {
-      font-size: 0.83rem;
+      margin-bottom: 12px;
 
       color: var(--ink2);
 
-      line-height: 1.65;
+      font-size: 0.83rem;
 
-      margin-bottom: 12px;
+      line-height: 1.65;
     }
 
-
-    /* =========================================================
-       PRINCIPLES
-    ========================================================= */
+    /* ================= PRINCIPLES ================= */
 
     #principles {
       background: var(--bg);
@@ -757,13 +695,12 @@
     }
 
     .principle-card {
+      padding: 26px;
+
       background: var(--white);
 
       border: 1px solid var(--borderM);
-
       border-radius: var(--r-lg);
-
-      padding: 26px;
 
       box-shadow: var(--sh-sm);
 
@@ -774,52 +711,43 @@
 
     .principle-card:hover {
       transform: translateY(-3px);
-
       box-shadow: var(--sh-md);
     }
 
     .principle-icon {
       display: block;
 
-      font-size: 1.4rem;
-
       margin-bottom: 14px;
+
+      font-size: 1.4rem;
     }
 
     .principle-title {
+      margin-bottom: 7px;
+
       font-family: "Syne", sans-serif;
 
       font-size: 0.95rem;
-
       font-weight: 700;
-
-      color: var(--ink);
-
-      margin-bottom: 7px;
     }
 
     .principle-body {
-      font-size: 0.82rem;
-
       color: var(--ink2);
 
+      font-size: 0.82rem;
       line-height: 1.7;
     }
 
-
-    /* =========================================================
-       CONNECT
-    ========================================================= */
+    /* ================= CONNECT ================= */
 
     #connect {
-      background: var(--white);
-
       padding: 72px 32px;
+
+      background: var(--white);
     }
 
     .connect-inner {
       max-width: 680px;
-
       margin: 0 auto;
 
       text-align: center;
@@ -841,10 +769,9 @@
       display: flex;
 
       justify-content: center;
+      flex-wrap: wrap;
 
       gap: 12px;
-
-      flex-wrap: wrap;
     }
 
     .connect-btn {
@@ -853,14 +780,11 @@
       align-items: center;
       justify-content: center;
 
-      gap: 8px;
-
       padding: 11px 22px;
 
       border-radius: var(--r-sm);
 
       font-size: 0.86rem;
-
       font-weight: 600;
 
       text-decoration: none;
@@ -876,16 +800,10 @@
 
     .connect-btn.primary {
       background: var(--blue);
-
       color: white;
 
       box-shadow:
         0 3px 14px rgba(26, 95, 255, 0.28);
-    }
-
-    .connect-btn.primary:hover {
-      box-shadow:
-        0 6px 26px rgba(26, 95, 255, 0.4);
     }
 
     .connect-btn.ghost {
@@ -896,23 +814,14 @@
       color: var(--ink2);
     }
 
-    .connect-btn.ghost:hover {
-      border-color: rgba(0, 0, 0, 0.22);
-
-      color: var(--ink);
-    }
-
-
-    /* =========================================================
-       FOOTER
-    ========================================================= */
+    /* ================= FOOTER ================= */
 
     footer {
+      padding: 52px 40px 36px;
+
       background: #0d0c0b;
 
       color: rgba(255, 255, 255, 0.6);
-
-      padding: 52px 40px 36px;
     }
 
     .footer-inner {
@@ -921,7 +830,6 @@
       margin: 0 auto 36px;
 
       display: grid;
-
       grid-template-columns: 1fr auto;
 
       gap: 48px;
@@ -929,22 +837,16 @@
 
     .footer-brand {
       display: flex;
-
       align-items: center;
-
       gap: 8px;
 
-      font-family: "Syne", sans-serif;
-
-      font-size: 1.15rem;
-
-      font-weight: 800;
+      margin-bottom: 6px;
 
       color: white;
 
-      letter-spacing: -0.4px;
-
-      margin-bottom: 6px;
+      font-family: "Syne", sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
     }
 
     .footer-brand img {
@@ -954,58 +856,40 @@
       border-radius: 5px;
 
       object-fit: cover;
-
-      opacity: 0.85;
     }
 
     .footer-sub {
-      font-size: 0.82rem;
+      margin-bottom: 10px;
 
       color: rgba(255, 255, 255, 0.35);
 
-      margin-bottom: 10px;
+      font-size: 0.82rem;
     }
 
     .footer-email a {
-      font-size: 0.82rem;
-
       color: rgba(255, 255, 255, 0.5);
 
+      font-size: 0.82rem;
+
       text-decoration: none;
-    }
-
-    .footer-email a:hover {
-      color: white;
-    }
-
-    .footer-nav {
-      display: flex;
-
-      align-items: flex-end;
-
-      flex-direction: column;
     }
 
     .footer-socials {
       display: flex;
 
-      gap: 18px;
-
+      justify-content: flex-end;
       flex-wrap: wrap;
 
-      justify-content: flex-end;
+      gap: 18px;
     }
 
     .footer-socials a {
-      font-size: 0.82rem;
-
       color: rgba(255, 255, 255, 0.45);
 
-      text-decoration: none;
-
+      font-size: 0.82rem;
       font-weight: 500;
 
-      transition: color 0.15s ease;
+      text-decoration: none;
     }
 
     .footer-socials a:hover {
@@ -1022,15 +906,12 @@
       border-top:
         1px solid rgba(255, 255, 255, 0.07);
 
-      font-size: 0.72rem;
-
       color: rgba(255, 255, 255, 0.2);
+
+      font-size: 0.72rem;
     }
 
-
-    /* =========================================================
-       RESPONSIVE
-    ========================================================= */
+    /* ================= RESPONSIVE ================= */
 
     @media (max-width: 900px) {
 
@@ -1038,15 +919,9 @@
         grid-template-columns: 1fr;
 
         padding:
-          105px
-          28px
-          60px;
+          105px 28px 60px;
 
         gap: 36px;
-      }
-
-      .page-hero-right {
-        width: 100%;
       }
 
     }
@@ -1059,7 +934,6 @@
 
       .team-card {
         padding: 22px;
-
         gap: 16px;
       }
 
@@ -1086,17 +960,8 @@
         padding-right: 22px;
       }
 
-      .page-hero h1 {
-        letter-spacing: -1.5px;
-      }
-
-      .team-stat-card {
-        padding: 24px;
-      }
-
       section {
-        padding:
-          64px 20px;
+        padding: 64px 20px;
       }
 
     }
@@ -1123,12 +988,7 @@
 
       .footer-inner {
         grid-template-columns: 1fr;
-
         gap: 24px;
-      }
-
-      .footer-nav {
-        align-items: flex-start;
       }
 
       .footer-socials {
@@ -1139,14 +999,12 @@
   </style>
 </head>
 
-
 <body>
 
-  <!-- =======================================================
-       NAVIGATION
-  ======================================================== -->
+  <!-- ================= NAVIGATION ================= -->
 
   <nav>
+
     <a
       href="index.html"
       class="nav-logo"
@@ -1210,14 +1068,13 @@
       </li>
 
     </ul>
+
   </nav>
 
 
-  <!-- =======================================================
-       HERO
-  ======================================================== -->
+  <!-- ================= HERO ================= -->
 
-  <div style="background: var(--bg);">
+  <div style="background:var(--bg);">
 
     <div class="page-hero">
 
@@ -1256,36 +1113,37 @@
 
         <div class="team-stat-card">
 
-          <!-- TEAM AVATARS -->
+          <div class="team-avatars">
 
-          <div
-            class="team-avatars"
-            aria-label="Alaada team members"
-          >
+            <!--
+              IMPORTANT:
+              Relative paths work regardless of
+              alaada.com vs www.alaada.com.
+            -->
 
             <img
-              src="/arzo.png"
+              src="arzo.png"
               alt="Arzo Das"
               width="52"
               height="52"
             >
 
             <img
-              src="/sk.png"
+              src="sk.png"
               alt="Shanmugasundaram S K"
               width="52"
               height="52"
             >
 
             <img
-              src="/umir.png"
+              src="umir.png"
               alt="Umair"
               width="52"
               height="52"
             >
 
             <img
-              src="/shyam.png"
+              src="shyam.png"
               alt="Shyam Lal"
               width="52"
               height="52"
@@ -1329,25 +1187,11 @@
 
           <div class="founder-tags">
 
-            <span class="tag">
-              Kolkata 🇮🇳
-            </span>
-
-            <span class="tag">
-              Product
-            </span>
-
-            <span class="tag">
-              Sales
-            </span>
-
-            <span class="tag">
-              Growth
-            </span>
-
-            <span class="tag">
-              Content
-            </span>
+            <span class="tag">Kolkata 🇮🇳</span>
+            <span class="tag">Product</span>
+            <span class="tag">Sales</span>
+            <span class="tag">Growth</span>
+            <span class="tag">Content</span>
 
           </div>
 
@@ -1363,9 +1207,7 @@
   <div class="divider"></div>
 
 
-  <!-- =======================================================
-       TEAM
-  ======================================================== -->
+  <!-- ================= TEAM ================= -->
 
   <section id="team-grid">
 
@@ -1402,15 +1244,13 @@
       <div class="team-grid">
 
 
-        <!-- =================================================
-             ARZO
-        ================================================== -->
+        <!-- ================= ARZO ================= -->
 
         <article class="team-card blue">
 
           <img
             class="team-photo"
-            src="/arzo.png"
+            src="arzo.png"
             alt="Arzo Das"
             width="84"
             height="84"
@@ -1436,19 +1276,9 @@
             </p>
 
             <div class="team-tags">
-
-              <span class="tag">
-                Full-Stack
-              </span>
-
-              <span class="tag">
-                Python / FastAPI
-              </span>
-
-              <span class="tag">
-                Product
-              </span>
-
+              <span class="tag">Full-Stack</span>
+              <span class="tag">Python / FastAPI</span>
+              <span class="tag">Product</span>
             </div>
 
           </div>
@@ -1456,15 +1286,13 @@
         </article>
 
 
-        <!-- =================================================
-             SHANMUGASUNDARAM
-        ================================================== -->
+        <!-- ================= SHANMUGASUNDARAM ================= -->
 
         <article class="team-card teal">
 
           <img
             class="team-photo"
-            src="/sk.png"
+            src="sk.png"
             alt="Shanmugasundaram S K"
             width="84"
             height="84"
@@ -1489,15 +1317,8 @@
             </p>
 
             <div class="team-tags">
-
-              <span class="tag">
-                Sales
-              </span>
-
-              <span class="tag">
-                Customer Success
-              </span>
-
+              <span class="tag">Sales</span>
+              <span class="tag">Customer Success</span>
             </div>
 
           </div>
@@ -1505,15 +1326,13 @@
         </article>
 
 
-        <!-- =================================================
-             UMAIR
-        ================================================== -->
+        <!-- ================= UMAIR ================= -->
 
         <article class="team-card gold">
 
           <img
             class="team-photo"
-            src="/umir.png"
+            src="umir.png"
             alt="Umair"
             width="84"
             height="84"
@@ -1538,15 +1357,8 @@
             </p>
 
             <div class="team-tags">
-
-              <span class="tag">
-                Lead Gen
-              </span>
-
-              <span class="tag">
-                Intern
-              </span>
-
+              <span class="tag">Lead Gen</span>
+              <span class="tag">Intern</span>
             </div>
 
           </div>
@@ -1554,15 +1366,13 @@
         </article>
 
 
-        <!-- =================================================
-             SHYAM
-        ================================================== -->
+        <!-- ================= SHYAM ================= -->
 
         <article class="team-card violet">
 
           <img
             class="team-photo"
-            src="/shyam.png"
+            src="shyam.png"
             alt="Shyam Lal"
             width="84"
             height="84"
@@ -1588,15 +1398,8 @@
             </p>
 
             <div class="team-tags">
-
-              <span class="tag">
-                Video
-              </span>
-
-              <span class="tag">
-                Content
-              </span>
-
+              <span class="tag">Video</span>
+              <span class="tag">Content</span>
             </div>
 
           </div>
@@ -1613,9 +1416,7 @@
   <div class="divider"></div>
 
 
-  <!-- =======================================================
-       PRINCIPLES
-  ======================================================== -->
+  <!-- ================= PRINCIPLES ================= -->
 
   <section id="principles">
 
@@ -1645,12 +1446,8 @@
 
       <div class="principles-grid">
 
-
         <div class="principle-card">
-
-          <span class="principle-icon">
-            🎯
-          </span>
+          <span class="principle-icon">🎯</span>
 
           <div class="principle-title">
             Own your lane
@@ -1661,15 +1458,11 @@
             each person runs their piece end to
             end, with no hand-off gaps.
           </div>
-
         </div>
 
 
         <div class="principle-card">
-
-          <span class="principle-icon">
-            ⚡
-          </span>
+          <span class="principle-icon">⚡</span>
 
           <div class="principle-title">
             Talk directly
@@ -1680,15 +1473,11 @@
             You'll talk to the person actually doing
             the work.
           </div>
-
         </div>
 
 
         <div class="principle-card">
-
-          <span class="principle-icon">
-            📦
-          </span>
+          <span class="principle-icon">📦</span>
 
           <div class="principle-title">
             Ship, then perfect
@@ -1698,15 +1487,11 @@
             A real tool in the world beats a perfect
             tool on a whiteboard. We iterate in public.
           </div>
-
         </div>
 
 
         <div class="principle-card">
-
-          <span class="principle-icon">
-            🌱
-          </span>
+          <span class="principle-icon">🌱</span>
 
           <div class="principle-title">
             Room to grow
@@ -1717,15 +1502,11 @@
             person who joins gets real ownership
             from day one, not busywork.
           </div>
-
         </div>
 
 
         <div class="principle-card">
-
-          <span class="principle-icon">
-            💬
-          </span>
+          <span class="principle-icon">💬</span>
 
           <div class="principle-title">
             Plain language, always
@@ -1736,15 +1517,11 @@
             Everyone can explain what they're
             building and why.
           </div>
-
         </div>
 
 
         <div class="principle-card">
-
-          <span class="principle-icon">
-            🇮🇳
-          </span>
+          <span class="principle-icon">🇮🇳</span>
 
           <div class="principle-title">
             Proudly Indian
@@ -1755,9 +1532,7 @@
             Designed for the world. Local trust,
             global ambition.
           </div>
-
         </div>
-
 
       </div>
 
@@ -1766,9 +1541,7 @@
   </section>
 
 
-  <!-- =======================================================
-       CONNECT
-  ======================================================== -->
+  <!-- ================= CONNECT ================= -->
 
   <section id="connect">
 
@@ -1834,9 +1607,7 @@
   </section>
 
 
-  <!-- =======================================================
-       FOOTER
-  ======================================================== -->
+  <!-- ================= FOOTER ================= -->
 
   <footer>
 
@@ -1870,7 +1641,7 @@
       </div>
 
 
-      <div class="footer-nav">
+      <div>
 
         <div class="footer-socials">
 
@@ -1927,7 +1698,6 @@
     </div>
 
   </footer>
-
 
 </body>
 </html>
