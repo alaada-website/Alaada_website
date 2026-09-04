@@ -4,3 +4,8 @@ dist/*.exe filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.jpeg filter=lfs diff=lfs merge=lfs -text
 *.gif filter=lfs diff=lfs merge=lfs -text
+
+arzo.png -filter -diff -merge
+sk.png -filter -diff -merge
+umir.png -filter -diff -merge
+shyam.png -filter -diff -merge
