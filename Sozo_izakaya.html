@@ -1,742 +1,933 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sōzō Izakaya | Authentic Japanese Experience</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --wood: #8B5E3C;
-      --charcoal: #2C2C2C;
-      --cream: #F8F4EF;
-      --sakura: #E8B4B8;
-      --gold: #C9A86C;
-      --soft-shadow: 0 8px 30px rgba(0,0,0,0.08);
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1730">
+<title>Sōzō Izakaya | Ramen, sushi, baogers and dumplings, delivered</title>
+<meta name="description" content="Order ramen, sushi, baogers, gyozas and dimsums for delivery from Sōzō Izakaya. Open every day, 12 PM to 11:45 PM.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Restaurant","name":"Sōzō Izakaya","servesCuisine":"Japanese","hasMenu":"#menu","openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"12:00","closes":"23:45"}]}
+</script>
+<style>
+/* ---------- Tokens ---------- */
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+  --bg:#F4EFE3; --surface:#FCF9F1; --raise:#EBE4D2;
+  --text:#17233B; --muted:#55607A;
+  --line:rgba(23,35,59,.18); --rule:rgba(23,35,59,.34);
+  --accent:#C23F27; --accent-ink:#FFF8EE; --accent-text:#B23A23;
+  --focus:#17233B; --plate:#EFE7D3; --error:#B3261E;
+  --serif:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho',Georgia,serif;
+  --sans:'Zen Kaku Gothic New','Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121A2E; --surface:#1A2544; --raise:#243459;
+    --text:#F2ECDC; --muted:#AAB1C6;
+    --line:rgba(242,236,220,.16); --rule:rgba(242,236,220,.3);
+    --accent:#F2A65A; --accent-ink:#2A1606; --accent-text:#F2A65A;
+    --focus:#FFD08F; --error:#FF9A8F;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121A2E; --surface:#1A2544; --raise:#243459;
+  --text:#F2ECDC; --muted:#AAB1C6;
+  --line:rgba(242,236,220,.16); --rule:rgba(242,236,220,.3);
+  --accent:#F2A65A; --accent-ink:#2A1606; --accent-text:#F2A65A;
+  --focus:#FFD08F; --error:#FF9A8F;
+}
+/* Night areas (header, hero, footer) always use the dark palette */
+.night{
+  --text:#F2ECDC; --muted:#AAB1C6;
+  --line:rgba(242,236,220,.16); --rule:rgba(242,236,220,.3);
+  --accent:#F2A65A; --accent-ink:#2A1606; --accent-text:#F2A65A;
+  --focus:#FFD08F;
+  color:var(--text);
+}
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+/* ---------- Base ---------- */
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{
+  scroll-behavior:smooth;
+  scroll-padding-top:calc(env(safe-area-inset-top,0px) + 56px + 56px + 8px);
+  -webkit-text-size-adjust:100%;
+}
+html.lock{overflow:hidden}
+body{margin:0;background:var(--bg);color:var(--text);font:400 1rem/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:700;line-height:1.15;margin:0}
+p{margin:0}
+ul{list-style:none;margin:0;padding:0}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      background: var(--cream);
-      color: var(--charcoal);
-      line-height: 1.6;
-      overflow-x: hidden;
-    }
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border-radius:999px;border:1.5px solid transparent;font:600 1rem/1 var(--sans);text-decoration:none;cursor:pointer;transition:transform .15s ease,background-color .15s ease}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;border-color:currentColor}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
 
-    /* Header */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background: rgba(248, 244, 239, 0.95);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(139, 94, 60, 0.15);
-      padding: 1rem 5%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+/* ---------- Header ---------- */
+.site-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:#0F1730;border-bottom:1px solid var(--line)}
+.site-header .wrap{height:56px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font:700 1.25rem/1 var(--serif);text-decoration:none;letter-spacing:.01em}
+.nav{display:none;gap:28px}
+.nav a{text-decoration:none;font-weight:500;padding:8px 2px}
+.nav a:hover{color:var(--accent-text)}
+@media (min-width:720px){.nav{display:flex}}
+.cart-btn{position:relative;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:transparent;display:grid;place-items:center}
+.cart-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.badge{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font:700 .75rem/20px var(--sans);text-align:center}
 
-    .logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.8rem;
-      font-weight: 600;
-      color: var(--wood);
-      letter-spacing: 1px;
-    }
+/* ---------- Hero ---------- */
+.hero{position:relative;overflow:hidden;background:radial-gradient(70% 55% at 50% 0%,rgba(242,166,90,.15),transparent 70%),#0F1730;padding-bottom:64px}
+.lanterns{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:6px;max-width:760px;margin:0 auto;padding:15px 20px 0}
+.lanterns::before{content:"";position:absolute;top:14px;left:50%;width:100vw;transform:translateX(-50%);height:3px;background:repeating-linear-gradient(90deg,#7A6446 0 6px,#5C4A32 6px 12px)}
+.lantern{display:block;text-decoration:none;transform-origin:50% 0;transition:transform .5s cubic-bezier(.3,1.4,.5,1);--w:clamp(66px,19vw,98px)}
+.lantern:hover,.lantern:focus-visible{transform:rotate(-3.5deg)}
+.swing{display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;animation:sway 3.6s ease-out both;animation-delay:calc(var(--i) * .18s);filter:drop-shadow(0 0 16px rgba(255,150,70,.4))}
+.cord{width:2px;height:var(--cord);background:#7A6446}
+.cap{width:calc(var(--w) * .5);height:7px;background:#2A1A12;border-radius:2px}
+.body{position:relative;display:grid;place-items:center;width:var(--w);min-height:calc(var(--w) * 1.12);padding:6px;text-align:center;font:700 clamp(12px,3.4vw,15px)/1.2 var(--serif);color:#FFF6E4;border-radius:50% / 22%;background:repeating-linear-gradient(to bottom,transparent 0 11px,rgba(60,10,5,.3) 11px 12px),radial-gradient(ellipse at 50% 45%,#D4402E 0%,#B6301F 60%,#8F241A 100%)}
+.tassel{width:2px;height:16px;background:#E8B76A}
+@keyframes sway{0%{transform:rotate(-6deg)}35%{transform:rotate(4deg)}65%{transform:rotate(-2deg)}100%{transform:rotate(0)}}
+.lantern-hint{max-width:760px;margin:18px auto 0;padding:0 20px;font-size:.875rem;color:var(--muted)}
 
-    .logo span {
-      color: var(--charcoal);
-      font-weight: 400;
-      font-size: 0.9rem;
-      display: block;
-      letter-spacing: 3px;
-      margin-top: -4px;
-    }
+.hero-copy{padding-top:36px;position:relative}
+.hero h1{font-size:clamp(3.2rem,12vw,6.6rem);letter-spacing:-.01em}
+.hero .lede{font-size:1.15rem;max-width:34ch;margin-top:18px;color:var(--muted)}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.status{display:flex;align-items:center;gap:10px;margin-top:26px;font-size:.95rem}
+.dot{flex:none;width:10px;height:10px;border-radius:50%;background:#6FCF97;box-shadow:0 0 0 4px rgba(111,207,151,.2)}
+.is-closed .dot{background:#F2A65A;box-shadow:0 0 0 4px rgba(242,166,90,.2)}
+.hero .social{margin-top:22px}
+.vert{display:none;position:absolute;right:20px;bottom:0;writing-mode:vertical-rl;font:700 clamp(80px,11vw,150px)/1 var(--serif);color:transparent;-webkit-text-stroke:1px rgba(242,236,220,.2);letter-spacing:.08em;pointer-events:none;user-select:none}
+@media (min-width:900px){.vert{display:block}}
 
-    nav a {
-      margin-left: 1.8rem;
-      text-decoration: none;
-      color: var(--charcoal);
-      font-weight: 500;
-      font-size: 0.95rem;
-      transition: color 0.3s;
-    }
+.social{display:flex;flex-wrap:wrap;gap:12px}
+.social a{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;text-decoration:none;transition:border-color .15s,color .15s}
+.social a:hover{border-color:var(--accent-text);color:var(--accent-text)}
+.social svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-    nav a:hover {
-      color: var(--wood);
-    }
+/* ---------- Sections ---------- */
+.section{padding:64px 0 24px}
+.section h2{font-size:clamp(1.85rem,5vw,2.6rem)}
+.sub{color:var(--muted);margin-top:8px;max-width:52ch}
 
-    .menu-toggle {
-      display: none;
-      background: none;
-      border: none;
-      font-size: 1.6rem;
-      cursor: pointer;
-      color: var(--charcoal);
-    }
+.plate{flex:none;width:56px;height:56px;border-radius:50%;background:var(--plate);display:grid;place-items:center;box-shadow:inset 0 0 0 2px rgba(23,35,59,.08)}
+.plate svg{width:72%;height:72%}
 
-    /* Hero */
-    .hero {
-      height: 85vh;
-      background: linear-gradient(rgba(44,44,44,0.45), rgba(44,44,44,0.55)),
-                  url('https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: white;
-      position: relative;
-    }
+.sig-list{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,44%);gap:22px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:20px;margin:28px -20px 0;padding:4px 20px 20px;scrollbar-width:thin}
+.sig{scroll-snap-align:start;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.sig .plate{width:104px;height:104px;margin-bottom:6px}
+.sig h3{font-size:1.1rem}
+.sig .price{font-weight:700}
+@media (min-width:900px){
+  .sig-list{grid-auto-flow:row;grid-template-columns:repeat(5,1fr);grid-auto-columns:auto;overflow:visible;margin:32px 0 0;padding:0}
+}
 
-    .hero-content h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(2.8rem, 7vw, 4.5rem);
-      margin-bottom: 0.5rem;
-      letter-spacing: 2px;
-    }
+.price{font-variant-numeric:tabular-nums;font-weight:700}
+.add{min-height:40px;padding:0 20px;border-radius:999px;border:1.5px solid var(--accent-text);background:transparent;color:var(--accent-text);font-weight:700}
+.add:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--accent-text);border-radius:999px;overflow:hidden}
+.stepper button{width:40px;height:40px;border:0;background:transparent;font-size:1.25rem;font-weight:700;color:var(--accent-text)}
+.stepper button:hover{background:var(--raise)}
+.stepper output{min-width:28px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
 
-    .hero-content p {
-      font-size: 1.25rem;
-      margin-bottom: 2rem;
-      opacity: 0.95;
-    }
+/* Menu */
+.menu-head{padding-bottom:8px}
+.tabs{position:sticky;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:30;background:var(--bg);border-bottom:1px solid var(--line);margin-top:20px}
+.tabs .wrap{display:flex;gap:8px;overflow-x:auto;padding-top:8px;padding-bottom:8px;scrollbar-width:none}
+.tabs .wrap::-webkit-scrollbar{display:none}
+.tab{flex:none;min-height:40px;padding:0 18px;border-radius:999px;border:1.5px solid var(--line);text-decoration:none;display:inline-flex;align-items:center;font-weight:500;white-space:nowrap}
+.tab:hover{border-color:var(--rule)}
+.tab[aria-current="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.cat{padding-top:44px}
+.cat h3{font-size:clamp(1.5rem,4vw,1.9rem)}
+.items{margin-top:6px}
+.item{display:grid;grid-template-columns:56px 1fr;gap:6px 16px;padding:18px 0;border-bottom:1.5px dotted var(--rule)}
+.item .plate{grid-row:1 / span 2}
+.item .info{grid-column:2}
+.item h4{font-size:1.1rem;line-height:1.3}
+.item .desc{color:var(--muted);font-size:.95rem;margin-top:2px;max-width:46ch}
+.item .buy{grid-column:2;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px}
+.tag{display:inline-block;margin-left:8px;padding:0 8px;border:1px solid var(--accent-text);color:var(--accent-text);border-radius:4px;font:500 .75rem/1.6 var(--sans);vertical-align:middle;white-space:nowrap}
+@media (min-width:640px){
+  .item{grid-template-columns:56px 1fr auto;align-items:center}
+  .item .plate{grid-row:auto}
+  .item .buy{grid-column:3;flex-direction:column;align-items:flex-end;margin-top:0}
+}
+@media (min-width:1000px){
+  .items{display:grid;grid-template-columns:1fr 1fr;column-gap:56px}
+}
 
-    .btn {
-      display: inline-block;
-      padding: 0.9rem 2.2rem;
-      background: var(--wood);
-      color: white;
-      text-decoration: none;
-      border-radius: 50px;
-      font-weight: 500;
-      transition: all 0.3s;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-    }
+/* Hours */
+.hours-grid{display:grid;gap:32px;margin-top:8px}
+@media (min-width:800px){.hours-grid{grid-template-columns:1fr 1fr;gap:64px;align-items:start}}
+.hours-big{font:700 clamp(1.6rem,4.6vw,2.3rem)/1.2 var(--serif);margin-top:12px}
+.hours-list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1.5px dotted var(--rule)}
+.hours-list li.today{background:var(--raise);border-radius:8px;border-bottom-color:transparent;font-weight:700}
+.pill{margin-left:8px;padding:0 8px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:700 .75rem/1.7 var(--sans)}
+.hours-status{display:flex;align-items:center;gap:10px;margin-top:16px}
+.hours-status .dot{background:#2E9D62;box-shadow:0 0 0 4px rgba(46,157,98,.2)}
+.hours-status.is-closed .dot{background:#D9822B;box-shadow:0 0 0 4px rgba(217,130,43,.2)}
 
-    .btn:hover {
-      background: #6d4a2f;
-      transform: translateY(-2px);
-      box-shadow: var(--soft-shadow);
-    }
+/* Footer */
+.site-footer{margin-top:72px;background:#0F1730;padding:48px 0 40px}
+.site-footer .wrap{display:grid;gap:28px}
+.site-footer .brand{font-size:1.6rem}
+.site-footer p{color:var(--muted)}
+body.has-cart .site-footer{padding-bottom:110px}
 
-    /* Sections */
-    section {
-      padding: 5rem 5%;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+/* ---------- Cart bar ---------- */
+.cartbar{position:fixed;left:0;right:0;bottom:0;z-index:45;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
+.cartbar-btn{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;max-width:560px;margin:0 auto;min-height:52px;padding:0 22px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:700}
+.cartbar-btn small{font:500 .875rem var(--sans);margin-left:8px;opacity:.85}
 
-    h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 2.4rem;
-      text-align: center;
-      margin-bottom: 0.5rem;
-      color: var(--wood);
-    }
+/* ---------- Drawer ---------- */
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(8,12,24,.62);opacity:0;visibility:hidden;transition:opacity .25s,visibility 0s .25s}
+.drawer{position:fixed;z-index:60;left:0;right:0;bottom:0;display:flex;flex-direction:column;max-height:92dvh;background:var(--surface);color:var(--text);border-radius:22px 22px 0 0;transform:translateY(100%);visibility:hidden;transition:transform .3s ease,visibility 0s .3s}
+.drawer-open .scrim{opacity:1;visibility:visible;transition-delay:0s}
+.drawer-open .drawer{transform:none;visibility:visible;transition-delay:0s}
+@media (min-width:800px){
+  .drawer{left:auto;top:0;bottom:0;width:460px;max-height:none;border-radius:0;transform:translateX(100%)}
+}
+.d-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 12px;border-bottom:1px solid var(--line)}
+.d-head h2{font-size:1.5rem}
+.d-head h2:focus{outline:none}
+.icon-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:transparent;display:grid;place-items:center}
+.icon-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.step{display:flex;flex-direction:column;flex:1;min-height:0}
+.step .scroll{flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch}
+.step .actions{display:flex;flex-direction:column;gap:10px;padding:14px 20px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface)}
+.lines li{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:14px 0;border-bottom:1.5px dotted var(--rule)}
+.lines .ln{font-weight:700}
+.lines .lp{color:var(--muted);font-size:.9rem}
+.lines .lt{grid-column:2;grid-row:1;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.lines .stepper{justify-self:start}
+.totals{margin-top:16px;display:grid;gap:6px}
+.totals div{display:flex;justify-content:space-between}
+.totals .grand{font-size:1.15rem;font-weight:700;padding-top:10px;margin-top:4px;border-top:1px solid var(--line)}
+.note{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--raise);font-size:.925rem}
+.note.warn{border-left:4px solid var(--accent-text)}
+.empty{padding:40px 0;text-align:center;display:grid;gap:16px;justify-items:center;color:var(--muted)}
 
-    .section-subtitle {
-      text-align: center;
-      color: #666;
-      margin-bottom: 3rem;
-      font-size: 1.05rem;
-    }
+.field{display:grid;gap:6px;margin-bottom:16px}
+.field label{font-weight:700;font-size:.95rem}
+.field .hint{font-weight:400;color:var(--muted)}
+.field input,.field textarea{width:100%;font:400 1rem/1.4 var(--sans);color:var(--text);background:var(--bg);border:1.5px solid var(--rule);border-radius:10px;padding:12px 14px;min-height:48px}
+.field textarea{resize:vertical}
+.field input[aria-invalid="true"],.field textarea[aria-invalid="true"]{border-color:var(--error)}
+.err{color:var(--error);font-size:.875rem;min-height:0}
+.form-error{padding:12px 14px;border-radius:10px;border:1.5px solid var(--error);color:var(--error);margin-bottom:12px;font-size:.95rem}
 
-    /* Hours */
-    .hours-box {
-      background: white;
-      border-radius: 16px;
-      padding: 2rem;
-      text-align: center;
-      box-shadow: var(--soft-shadow);
-      max-width: 420px;
-      margin: 0 auto 4rem;
-      border: 1px solid rgba(139,94,60,0.1);
-    }
+.done-head{display:grid;gap:10px;justify-items:start}
+.done-head svg{width:52px;height:52px;stroke:var(--accent-text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.done-head h3{font-size:1.6rem}
+.msg{margin-top:16px;padding:14px 16px;border-radius:12px;background:var(--raise);white-space:pre-wrap}
+.done-lines{margin-top:16px}
+.done-lines li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1.5px dotted var(--rule)}
 
-    .hours-box h3 {
-      color: var(--wood);
-      margin-bottom: 0.5rem;
-    }
-
-    .hours-box p {
-      font-size: 1.3rem;
-      font-weight: 500;
-    }
-
-    /* Menu */
-    .menu-tabs {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 0.8rem;
-      margin-bottom: 2.5rem;
-    }
-
-    .tab-btn {
-      padding: 0.7rem 1.6rem;
-      border: 2px solid var(--wood);
-      background: transparent;
-      color: var(--wood);
-      border-radius: 50px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.3s;
-    }
-
-    .tab-btn.active,
-    .tab-btn:hover {
-      background: var(--wood);
-      color: white;
-    }
-
-    .menu-grid {
-      display: none;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.8rem;
-    }
-
-    .menu-grid.active {
-      display: grid;
-    }
-
-    .menu-item {
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: var(--soft-shadow);
-      transition: transform 0.3s;
-      border: 1px solid rgba(0,0,0,0.04);
-    }
-
-    .menu-item:hover {
-      transform: translateY(-6px);
-    }
-
-    .menu-item img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-    }
-
-    .menu-item-content {
-      padding: 1.3rem;
-    }
-
-    .menu-item h3 {
-      font-size: 1.15rem;
-      margin-bottom: 0.4rem;
-      color: var(--charcoal);
-    }
-
-    .menu-item .signature {
-      display: inline-block;
-      background: var(--sakura);
-      color: #5a2a2e;
-      font-size: 0.7rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 20px;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
-
-    .menu-item p {
-      font-size: 0.9rem;
-      color: #666;
-      margin-bottom: 1rem;
-    }
-
-    .price-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .price {
-      font-weight: 600;
-      color: var(--wood);
-      font-size: 1.1rem;
-    }
-
-    .add-btn {
-      background: var(--charcoal);
-      color: white;
-      border: none;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 1.2rem;
-      transition: background 0.3s;
-    }
-
-    .add-btn:hover {
-      background: var(--wood);
-    }
-
-    /* Order Section */
-    .order-section {
-      background: white;
-      border-radius: 20px;
-      padding: 2.5rem;
-      box-shadow: var(--soft-shadow);
-      margin-top: 3rem;
-    }
-
-    .order-form {
-      display: grid;
-      gap: 1.2rem;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.2rem;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.4rem;
-      font-weight: 500;
-      font-size: 0.95rem;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 0.85rem 1rem;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: 1rem;
-      background: #fafafa;
-      transition: border 0.3s;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--wood);
-    }
-
-    .cart-summary {
-      background: #f9f5f0;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-top: 1.5rem;
-    }
-
-    .cart-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.5rem 0;
-      border-bottom: 1px dashed #ddd;
-    }
-
-    .total {
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin-top: 1rem;
-      text-align: right;
-      color: var(--wood);
-    }
-
-    /* Footer */
-    footer {
-      background: var(--charcoal);
-      color: #eee;
-      padding: 3.5rem 5% 2rem;
-      text-align: center;
-    }
-
-    .social-icons {
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      margin: 1.5rem 0 2rem;
-    }
-
-    .social-icons a {
-      color: white;
-      font-size: 1.6rem;
-      transition: color 0.3s, transform 0.3s;
-      text-decoration: none;
-    }
-
-    .social-icons a:hover {
-      color: var(--gold);
-      transform: translateY(-3px);
-    }
-
-    .footer-info {
-      font-size: 0.95rem;
-      opacity: 0.85;
-      margin-bottom: 1.5rem;
-    }
-
-    .copyright {
-      font-size: 0.85rem;
-      opacity: 0.6;
-      margin-top: 2rem;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      padding-top: 1.5rem;
-    }
-
-    /* Modal / Confirmation */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-
-    .modal-content {
-      background: white;
-      border-radius: 20px;
-      padding: 2.5rem;
-      max-width: 420px;
-      width: 100%;
-      text-align: center;
-      animation: fadeIn 0.4s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .modal h3 {
-      color: var(--wood);
-      margin-bottom: 1rem;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      nav {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        flex-direction: column;
-        padding: 1.5rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      }
-
-      nav.open {
-        display: flex;
-      }
-
-      nav a {
-        margin: 0.8rem 0;
-      }
-
-      .menu-toggle {
-        display: block;
-      }
-
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-
-      .hero {
-        height: 70vh;
-      }
-    }
-  </style>
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .swing{animation:none}
+  .lantern,.drawer,.scrim,.btn{transition:none}
+}
+</style>
 </head>
 <body>
 
-  <!-- Header -->
-  <header>
-    <div class="logo">
-      Sōzō
-      <span>IZAKAYA</span>
+<!-- Dish icons -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-maki" viewBox="0 0 64 64"><circle cx="32" cy="32" r="22" fill="#1E2A33"/><circle cx="32" cy="32" r="17.5" fill="#FBF7EC"/><circle cx="32" cy="32" r="9" fill="#6E9A4B"/><circle cx="32" cy="32" r="4.5" fill="#C8DA8F"/></symbol>
+  <symbol id="i-maki-veg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="22" fill="#1E2A33"/><circle cx="32" cy="32" r="17.5" fill="#FBF7EC"/><circle cx="26.5" cy="29" r="4.6" fill="#E58A3C"/><circle cx="37.5" cy="29" r="4.6" fill="#6E9A4B"/><circle cx="32" cy="38" r="4.6" fill="#8E5A9B"/></symbol>
+  <symbol id="i-ramen" viewBox="0 0 64 64"><path d="M9 30h46a23 23 0 0 1-46 0z" fill="#B8412F"/><path d="M7 30h50" stroke="#7E2618" stroke-width="3" stroke-linecap="round"/><path d="M13 28c4-7 8 2 12-5s8 2 12-5 8 2 14-2" stroke="#E7C36A" stroke-width="2.8" fill="none" stroke-linecap="round"/><ellipse cx="41" cy="25" rx="6" ry="4.5" fill="#FBF7EC"/><circle cx="41" cy="25" r="2.4" fill="#F2A65A"/><rect x="17" y="14" width="8" height="12" rx="1" fill="#1E2A33" transform="rotate(-12 21 20)"/></symbol>
+  <symbol id="i-bao" viewBox="0 0 64 64"><path d="M9 31a23 16 0 0 1 46 0z" fill="#FBF7EC" stroke="#D8CDB0" stroke-width="1.5"/><path d="M11 32.5h42" stroke="#6E9A4B" stroke-width="5" stroke-linecap="round"/><path d="M9 35h46a23 13 0 0 1-46 0z" fill="#F4EBD6" stroke="#D8CDB0" stroke-width="1.5"/><circle cx="26" cy="21" r="1.2" fill="#5A3B22"/><circle cx="33" cy="18" r="1.2" fill="#5A3B22"/><circle cx="40" cy="21.5" r="1.2" fill="#5A3B22"/></symbol>
+  <symbol id="i-gyoza" viewBox="0 0 64 64"><path d="M7 40C9 24 21 17 32 17s23 7 25 23c-9 6-41 6-50 0z" fill="#EFD9A8"/><path d="M8 40c9 6 39 6 48 0" stroke="#B97A2E" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M20 24l2 9M27 21v11M34 21v11M41 24l-2 9" stroke="#C8A462" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-dimsum" viewBox="0 0 64 64"><rect x="8" y="38" width="48" height="13" rx="3" fill="#B98B5B"/><path d="M8 44.5h48" stroke="#8E6A42" stroke-width="1.5"/><path d="M18 38c0-9 6-15 14-15s14 6 14 15z" fill="#FBF7EC" stroke="#D8CDB0" stroke-width="1.5"/><path d="M32 23l-3 5M32 23l3 5M32 23v6" stroke="#D8CDB0" stroke-width="1.5" stroke-linecap="round"/><path d="M22 14c-2 2 2 3 0 5M32 10c-2 2 2 3 0 5M42 14c-2 2 2 3 0 5" stroke="#9AA3B5" stroke-width="1.6" fill="none" stroke-linecap="round"/></symbol>
+</svg>
+
+<div id="page">
+  <header class="site-header night">
+    <div class="wrap">
+      <a class="brand" href="#top" aria-label="Sōzō Izakaya, back to top">Sōzō Izakaya</a>
+      <nav class="nav" aria-label="Main">
+        <a href="#signatures">Signatures</a>
+        <a href="#menu">Menu</a>
+        <a href="#hours">Hours</a>
+      </nav>
+      <button class="cart-btn" id="headCart" type="button" aria-label="Open your order">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="badge" id="headBadge" hidden>0</span>
+      </button>
     </div>
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-    <nav id="nav">
-      <a href="#menu">Menu</a>
-      <a href="#hours">Hours</a>
-      <a href="#order">Order Online</a>
-      <a href="#contact">Contact</a>
-    </nav>
   </header>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Sōzō Izakaya</h1>
-      <p>Modern Japanese comfort food in a cozy atmosphere</p>
-      <a href="#order" class="btn">Order Now</a>
-    </div>
-  </section>
+  <main id="top">
+    <!-- Hero: the lanterns are the menu navigation -->
+    <section class="hero night" id="hero" aria-labelledby="hero-title">
+      <nav class="lanterns" aria-label="Menu categories">
+        <a class="lantern" href="#cat-sushi" style="--cord:20px;--i:0"><span class="swing"><i class="cord"></i><i class="cap"></i><span class="body">Sushi</span><i class="cap"></i><i class="tassel"></i></span></a>
+        <a class="lantern" href="#cat-ramen" style="--cord:52px;--i:1"><span class="swing"><i class="cord"></i><i class="cap"></i><span class="body">Ramen</span><i class="cap"></i><i class="tassel"></i></span></a>
+        <a class="lantern" href="#cat-baogers" style="--cord:30px;--i:2"><span class="swing"><i class="cord"></i><i class="cap"></i><span class="body">Baogers</span><i class="cap"></i><i class="tassel"></i></span></a>
+        <a class="lantern" href="#cat-gyozas-dimsums" style="--cord:64px;--i:3"><span class="swing"><i class="cord"></i><i class="cap"></i><span class="body">Gyozas &amp; Dimsums</span><i class="cap"></i><i class="tassel"></i></span></a>
+      </nav>
+      <p class="lantern-hint">Tap a lantern to jump to that part of the menu.</p>
 
-  <!-- Hours -->
-  <section id="hours">
-    <div class="hours-box">
-      <h3>Daily Operating Hours</h3>
-      <p>12:00 PM – 11:45 PM</p>
-      <small>Open every day</small>
-    </div>
-  </section>
-
-  <!-- Menu -->
-  <section id="menu">
-    <h2>Our Menu</h2>
-    <p class="section-subtitle">Freshly prepared with the finest ingredients</p>
-
-    <div class="menu-tabs">
-      <button class="tab-btn active" onclick="showCategory('sushi')">Sushi</button>
-      <button class="tab-btn" onclick="showCategory('ramen')">Ramen</button>
-      <button class="tab-btn" onclick="showCategory('burgers')">Burgers</button>
-      <button class="tab-btn" onclick="showCategory('gyoza')">Gyozas & Dimsums</button>
-    </div>
-
-    <!-- Sushi -->
-    <div id="sushi" class="menu-grid active">
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80" alt="Avocado Maki">
-        <div class="menu-item-content">
-          <span class="signature">Signature</span>
-          <h3>Avocado Maki Sushi</h3>
-          <p>Creamy avocado rolled with seasoned rice and nori</p>
-          <div class="price-row">
-            <span class="price">₹320</span>
-            <button class="add-btn" onclick="addToCart('Avocado Maki Sushi', 320)">+</button>
-          </div>
+      <div class="wrap hero-copy">
+        <h1 id="hero-title">Sōzō Izakaya</h1>
+        <p class="lede">Ramen, sushi, baogers and dumplings, brought to your door until 11:45 PM.</p>
+        <div class="cta">
+          <a class="btn primary" href="#menu">Order for delivery</a>
+          <a class="btn ghost" href="#signatures">See signature dishes</a>
         </div>
+        <p class="status" id="heroStatus"><span class="dot" aria-hidden="true"></span><span id="heroStatusText">Open every day, 12 PM to 11:45 PM</span></p>
+        <div class="social" data-social aria-label="Social media"></div>
+        <div class="vert" aria-hidden="true">そうぞう</div>
       </div>
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?auto=format&fit=crop&w=600&q=80" alt="Sozo Veg Maki">
-        <div class="menu-item-content">
-          <span class="signature">Signature</span>
-          <h3>Sozo Veg Maki Sushi</h3>
-          <p>House special vegetable maki with seasonal produce</p>
-          <div class="price-row">
-            <span class="price">₹350</span>
-            <button class="add-btn" onclick="addToCart('Sozo Veg Maki Sushi', 350)">+</button>
-          </div>
-        </div>
-      </div>
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=600&q=80" alt="Salmon Nigiri">
-        <div class="menu-item-content">
-          <h3>Salmon Nigiri (2 pcs)</h3>
-          <p>Fresh salmon over perfectly seasoned sushi rice</p>
-          <div class="price-row">
-            <span class="price">₹280</span>
-            <button class="add-btn" onclick="addToCart('Salmon Nigiri', 280)">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    </section>
 
-    <!-- Ramen -->
-    <div id="ramen" class="menu-grid">
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80" alt="Sapporo Spicy Miso Ramen">
-        <div class="menu-item-content">
-          <span class="signature">Signature</span>
-          <h3>Sapporo Spicy Miso Ramen</h3>
-          <p>Rich miso broth with chili oil, corn, and soft-boiled egg</p>
-          <div class="price-row">
-            <span class="price">₹480</span>
-            <button class="add-btn" onclick="addToCart('Sapporo Spicy Miso Ramen', 480)">+</button>
-          </div>
-        </div>
+    <!-- Signatures -->
+    <section class="section" id="signatures" aria-labelledby="sig-title">
+      <div class="wrap">
+        <h2 id="sig-title">Signature dishes</h2>
+        <p class="sub">Five plates to start with. Add them straight to your order.</p>
+        <ul class="sig-list" id="sigList"></ul>
       </div>
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1617093727343-374698b1b08d?auto=format&fit=crop&w=600&q=80" alt="Shoyu Ramen">
-        <div class="menu-item-content">
-          <h3>Classic Shoyu Ramen</h3>
-          <p>Light soy-based broth with chashu and bamboo shoots</p>
-          <div class="price-row">
-            <span class="price">₹420</span>
-            <button class="add-btn" onclick="addToCart('Classic Shoyu Ramen', 420)">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    </section>
 
-    <!-- Burgers -->
-    <div id="burgers" class="menu-grid">
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80" alt="Japanese Burger">
-        <div class="menu-item-content">
-          <h3>Teriyaki Chicken Burger</h3>
-          <p>Juicy chicken glazed with homemade teriyaki sauce</p>
-          <div class="price-row">
-            <span class="price">₹390</span>
-            <button class="add-btn" onclick="addToCart('Teriyaki Chicken Burger', 390)">+</button>
-          </div>
-        </div>
+    <!-- Menu -->
+    <section class="section" id="menu" aria-labelledby="menu-title" style="padding-bottom:0">
+      <div class="wrap menu-head">
+        <h2 id="menu-title">Menu</h2>
+        <p class="sub">Prices are in rupees. Everything is made to order, so delivery takes a little while.</p>
       </div>
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80" alt="Veg Burger">
-        <div class="menu-item-content">
-          <h3>Mushroom Umami Burger</h3>
-          <p>Grilled portobello with wasabi mayo and pickled veggies</p>
-          <div class="price-row">
-            <span class="price">₹360</span>
-            <button class="add-btn" onclick="addToCart('Mushroom Umami Burger', 360)">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
+      <div class="tabs" id="tabs"><div class="wrap" id="tabsInner" role="navigation" aria-label="Jump to a menu category"></div></div>
+      <div class="wrap" id="menuBody"></div>
+    </section>
 
-    <!-- Gyozas & Dimsums -->
-    <div id="gyoza" class="menu-grid">
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=600&q=80" alt="Pan-seared Mushroom Gyoza">
-        <div class="menu-item-content">
-          <span class="signature">Signature</span>
-          <h3>Pan-seared Mushroom & Cheese Gyoza</h3>
-          <p>Crispy bottom, juicy mushroom-cheese filling (6 pcs)</p>
-          <div class="price-row">
-            <span class="price">₹340</span>
-            <button class="add-btn" onclick="addToCart('Pan-seared Mushroom & Cheese Gyoza', 340)">+</button>
-          </div>
-        </div>
-      </div>
-      <div class="menu-item">
-        <img src="https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=600&q=80" alt="Truffle Edamame Dimsum">
-        <div class="menu-item-content">
-          <span class="signature">Signature</span>
-          <h3>Steamed Truffle Edamame Dimsum</h3>
-          <p>Delicate dumplings filled with edamame & black truffle (6 pcs)</p>
-          <div class="price-row">
-            <span class="price">₹380</span>
-            <button class="add-btn" onclick="addToCart('Steamed Truffle Edamame Dimsum', 380)">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Order Online -->
-  <section id="order">
-    <h2>Order Online</h2>
-    <p class="section-subtitle">Delivery available • Instant confirmation</p>
-
-    <div class="order-section">
-      <form class="order-form" id="orderForm" onsubmit="placeOrder(event)">
-        <div class="form-row">
-          <div>
-            <label>Full Name *</label>
-            <input type="text" id="customerName" required placeholder="Your name">
-          </div>
-          <div>
-            <label>Phone Number *</label>
-            <input type="tel" id="customerPhone" required placeholder="+91 98765 43210">
-          </div>
-        </div>
-
+    <!-- Hours -->
+    <section class="section" id="hours" aria-labelledby="hours-title">
+      <div class="wrap hours-grid">
         <div>
-          <label>Delivery Address *</label>
-          <textarea id="customerAddress" rows="3" required placeholder="Full address including landmark"></textarea>
+          <h2 id="hours-title">Hours</h2>
+          <p class="hours-big" id="hoursBig">Every day, 12 PM to 11:45 PM</p>
+          <p class="hours-status" id="hoursStatus"><span class="dot" aria-hidden="true"></span><span id="hoursStatusText"></span></p>
+          <p class="sub">Delivery runs for the same hours. Orders placed after we close are queued for the next day.</p>
         </div>
+        <ul class="hours-list" id="hoursList" aria-label="Opening hours by day"></ul>
+      </div>
+    </section>
+  </main>
 
-        <div class="form-row">
-          <div>
-            <label>Delivery Preference</label>
-            <select id="deliveryType">
-              <option value="Delivery">Delivery</option>
-              <option value="Pickup">Pickup</option>
-            </select>
-          </div>
-          <div>
-            <label>Special Instructions</label>
-            <input type="text" id="specialNotes" placeholder="Allergies, spice level, etc.">
-          </div>
-        </div>
-
-        <div class="cart-summary" id="cartSummary">
-          <h4 style="margin-bottom:1rem; color:var(--wood);">Your Order</h4>
-          <div id="cartItems">
-            <p style="color:#888; font-size:0.95rem;">No items added yet. Browse the menu above.</p>
-          </div>
-          <div class="total" id="cartTotal">Total: ₹0</div>
-        </div>
-
-        <button type="submit" class="btn" style="width:100%; margin-top:1.5rem; padding:1.1rem;">
-          Place Order
-        </button>
-      </form>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer id="contact">
-    <div class="logo" style="color:white; margin-bottom:0.5rem;">Sōzō Izakaya</div>
-    <div class="footer-info">
-      Modern Japanese Izakaya<br>
-      Open daily 12:00 PM – 11:45 PM
-    </div>
-
-    <div class="social-icons">
-      <!-- Replace # with your actual links -->
-      <a href="https://instagram.com/" target="_blank" title="Instagram" aria-label="Instagram">📷</a>
-      <a href="https://facebook.com/" target="_blank" title="Facebook" aria-label="Facebook">📘</a>
-      <a href="https://x.com/" target="_blank" title="X / Twitter" aria-label="X">𝕏</a>
-      <a href="https://maps.google.com/" target="_blank" title="Google Maps" aria-label="Location">📍</a>
-    </div>
-
-    <div class="footer-info">
-      For reservations or large orders: +91 98765 43210<br>
-      hello@sozoizakaya.com
-    </div>
-
-    <div class="copyright">
-      © 2025 Sōzō Izakaya. All rights reserved.
+  <footer class="site-footer night">
+    <div class="wrap">
+      <span class="brand">Sōzō Izakaya</span>
+      <div class="social" data-social aria-label="Social media"></div>
+      <div id="contactBlock"></div>
+      <p>&copy; 2026 Sōzō Izakaya</p>
     </div>
   </footer>
 
-  <!-- Confirmation Modal -->
-  <div class="modal" id="confirmationModal">
-    <div class="modal-content">
-      <h3>Order Confirmed! 🎉</h3>
-      <p id="confirmMessage"></p>
-      <button class="btn" onclick="closeModal()" style="margin-top:1.5rem;">Close</button>
-    </div>
+  <div class="cartbar" id="cartbar" hidden>
+    <button class="cartbar-btn" id="barBtn" type="button"><span>View order<small id="barCount"></small></span><span id="barTotal"></span></button>
+  </div>
+</div>
+
+<!-- Order drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+  <div class="d-head">
+    <h2 id="drawerTitle" tabindex="-1">Your order</h2>
+    <button class="icon-btn" id="closeBtn" type="button" aria-label="Close order"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
 
-  <script>
-    // Mobile menu
-    function toggleMenu() {
-      document.getElementById('nav').classList.toggle('open');
-    }
+  <section class="step" data-step="cart">
+    <div class="scroll">
+      <div class="empty" id="emptyState" hidden>
+        <p>Your order is empty. Add a dish from the menu to get started.</p>
+        <button class="btn primary" type="button" id="browseBtn">Browse the menu</button>
+      </div>
+      <div id="cartFilled">
+        <ul class="lines" id="lines"></ul>
+        <div class="totals" id="totals"></div>
+        <p class="note" id="feeNote" hidden></p>
+      </div>
+    </div>
+    <div class="actions" id="cartActions">
+      <button class="btn primary" type="button" id="toDetails">Continue to delivery details</button>
+    </div>
+  </section>
 
-    // Menu tabs
-    function showCategory(category) {
-      document.querySelectorAll('.menu-grid').forEach(g => g.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(category).classList.add('active');
-      event.target.classList.add('active');
-    }
+  <form class="step" data-step="details" id="orderForm" novalidate hidden>
+    <div class="scroll">
+      <p class="note warn" id="closedNote" hidden></p>
+      <div class="field">
+        <label for="f-name">Your name</label>
+        <input id="f-name" name="name" autocomplete="name" required aria-describedby="e-name">
+        <p class="err" id="e-name" role="alert"></p>
+      </div>
+      <div class="field">
+        <label for="f-phone">Mobile number</label>
+        <input id="f-phone" name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="10-digit number" required aria-describedby="e-phone">
+        <p class="err" id="e-phone" role="alert"></p>
+      </div>
+      <div class="field">
+        <label for="f-email">Email <span class="hint">(optional, for your confirmation)</span></label>
+        <input id="f-email" name="email" type="email" inputmode="email" autocomplete="email" aria-describedby="e-email">
+        <p class="err" id="e-email" role="alert"></p>
+      </div>
+      <div class="field">
+        <label for="f-address">Delivery address</label>
+        <textarea id="f-address" name="address" rows="3" autocomplete="street-address" placeholder="House or flat number, street, area, landmark" required aria-describedby="e-address"></textarea>
+        <p class="err" id="e-address" role="alert"></p>
+      </div>
+      <div class="field">
+        <label for="f-notes">Notes <span class="hint">(optional)</span></label>
+        <textarea id="f-notes" name="notes" rows="2" placeholder="Allergies, spice level, gate code"></textarea>
+      </div>
+      <p class="note">You pay when your order arrives, in cash or by UPI.</p>
+      <div class="totals" id="detailTotals" style="margin-top:14px"></div>
+    </div>
+    <div class="actions">
+      <div class="form-error" id="formError" role="alert" hidden></div>
+      <button class="btn primary" type="submit" id="placeBtn">Place order</button>
+      <button class="btn ghost" type="button" id="backBtn">Back to your order</button>
+    </div>
+  </form>
 
-    // Cart
-    let cart = [];
+  <section class="step" data-step="done" hidden>
+    <div class="scroll">
+      <div class="done-head">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12.5 3 3 5-6"/></svg>
+        <h3 id="doneTitle">Order placed</h3>
+        <p id="doneId" class="price"></p>
+      </div>
+      <p class="msg" id="doneMsg"></p>
+      <p class="note" id="doneNote"></p>
+      <ul class="done-lines" id="doneLines"></ul>
+    </div>
+    <div class="actions">
+      <a class="btn primary" id="waBtn" href="#" target="_blank" rel="noopener" hidden>Send your order on WhatsApp</a>
+      <button class="btn ghost" type="button" id="doneBtn">Back to the menu</button>
+    </div>
+  </section>
+</aside>
 
-    function addToCart(name, price) {
-      const existing = cart.find(item => item.name === name);
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        cart.push({ name, price, qty: 1 });
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   CONFIG: everything the restaurant needs to edit lives here.
+   ===================================================================== */
+const CONFIG = {
+  name: 'Sōzō Izakaya',
+  timezone: 'Asia/Kolkata',            // hours are checked in the restaurant's time zone
+  hours: { open: '12:00', close: '23:45' },
+  delivery: { fee: 40, freeAbove: 799, minOrder: 199, eta: '40 to 55 minutes' },
+
+  // Where orders are sent. Point this at your order service, for example
+  // 'https://orders.yourdomain.com/api/orders'. The service alerts the manager
+  // and messages the customer. While this is empty the site runs in preview mode.
+  orderEndpoint: '',
+
+  // Optional fallback: manager's WhatsApp number with country code, digits only.
+  // Adds a "Send your order on WhatsApp" button after checkout.
+  managerWhatsApp: '',
+
+  phone: '',                           // shown in the footer when set
+  address: '',                         // shown in the footer when set
+  social: {
+    instagram: 'https://www.instagram.com/',   // replace with your profile link
+    facebook:  'https://www.facebook.com/',    // replace with your page link
+    whatsapp:  '',                             // defaults to managerWhatsApp
+    maps:      ''                              // Google Maps link to the restaurant
+  }
+};
+
+/* ---------- Menu (prices in INR; edit freely) ---------- */
+const MENU = [
+  { id:'sushi', name:'Sushi', items:[
+    { id:'avocado-maki', name:'Avocado Maki Sushi', desc:'Avocado rolled in seasoned rice and nori.', price:389, sig:true, icon:'i-maki' },
+    { id:'sozo-veg-maki', name:'Sozo Veg Maki Sushi', desc:'Our house maki, packed with crisp vegetables.', price:399, sig:true, icon:'i-maki-veg' },
+    { id:'kappa-maki', name:'Cucumber Kappa Maki', desc:'Cool cucumber roll with a touch of wasabi.', price:329, icon:'i-maki' }
+  ]},
+  { id:'ramen', name:'Ramen', items:[
+    { id:'sapporo-spicy-miso-ramen', name:'Sapporo Spicy Miso Ramen', desc:'Sapporo-style miso broth with a spicy kick.', price:499, sig:true, icon:'i-ramen' },
+    { id:'shoyu-ramen', name:'Shoyu Ramen', desc:'Clear soy broth with springy noodles.', price:449, icon:'i-ramen' }
+  ]},
+  { id:'baogers', name:'Baogers', items:[
+    { id:'crispy-mushroom-baoger', name:'Crispy Mushroom Baoger', desc:'Crisp-fried mushroom in a soft steamed bao.', price:279, icon:'i-bao' },
+    { id:'teriyaki-tofu-baoger', name:'Teriyaki Tofu Baoger', desc:'Glazed tofu, crunchy slaw, soft bao.', price:289, icon:'i-bao' }
+  ]},
+  { id:'gyozas-dimsums', name:'Gyozas & Dimsums', items:[
+    { id:'mushroom-cheese-gyoza', name:'Pan-seared Mushroom and Cheese Gyoza', desc:'Seared until crisp underneath, filled with mushroom and cheese.', price:319, sig:true, icon:'i-gyoza' },
+    { id:'truffle-edamame-dimsum', name:'Steamed Truffle Edamame Dimsum', desc:'Edamame and truffle in a thin steamed wrapper.', price:349, sig:true, icon:'i-dimsum' },
+    { id:'spinach-chestnut-dimsum', name:'Spinach and Water Chestnut Dimsum', desc:'Steamed dumplings with a crunchy centre.', price:299, icon:'i-dimsum' }
+  ]}
+];
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => '₹' + Number(n).toLocaleString('en-IN');
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const ITEMS = new Map();
+MENU.forEach(c => c.items.forEach(i => ITEMS.set(i.id, i)));
+
+/* ---------- Opening hours ---------- */
+const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60 + m; };
+const label12 = t => {
+  const [h,m] = t.split(':').map(Number);
+  const hh = ((h + 11) % 12) + 1;
+  return hh + (m ? ':' + String(m).padStart(2,'0') : '') + (h >= 12 ? ' PM' : ' AM');
+};
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function hoursState(){
+  const openMin = toMin(CONFIG.hours.open), closeMin = toMin(CONFIG.hours.close);
+  let minutes, weekday;
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: CONFIG.timezone, weekday:'short', hour:'numeric', minute:'numeric', hourCycle:'h23' }).formatToParts(new Date());
+    const get = t => parts.find(p => p.type === t).value;
+    minutes = Number(get('hour'))*60 + Number(get('minute'));
+    weekday = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(get('weekday'));
+  } catch(e){
+    const d = new Date(); minutes = d.getHours()*60 + d.getMinutes(); weekday = d.getDay();
+  }
+  return { open: minutes >= openMin && minutes < closeMin, weekday, openMin, closeMin };
+}
+
+/* =====================================================================
+   Rendering: static parts
+   ===================================================================== */
+const ICONS = {
+  instagram:'<rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>',
+  facebook:'<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>',
+  whatsapp:'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/><path d="M9 9.5c.4 2.3 2.3 4.6 5 5.5l1.6-1.6-2-1.2-1 .7c-.9-.4-1.7-1.2-2.1-2.1l.7-1-1.2-2z"/>',
+  maps:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>'
+};
+function socialLinks(){
+  const s = CONFIG.social, wa = s.whatsapp || (CONFIG.managerWhatsApp ? 'https://wa.me/' + CONFIG.managerWhatsApp : '');
+  return [
+    { key:'instagram', url:s.instagram, label:'Sōzō Izakaya on Instagram' },
+    { key:'facebook',  url:s.facebook,  label:'Sōzō Izakaya on Facebook' },
+    { key:'whatsapp',  url:wa,          label:'Message us on WhatsApp' },
+    { key:'maps',      url:s.maps,      label:'Find us on Google Maps' }
+  ].filter(l => l.url);
+}
+function renderSocial(){
+  const html = socialLinks().map(l =>
+    `<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(l.label)}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[l.key]}</svg></a>`).join('');
+  $$('[data-social]').forEach(el => el.innerHTML = html);
+}
+function renderContact(){
+  const bits = [];
+  if (CONFIG.address) bits.push(`<p>${esc(CONFIG.address)}</p>`);
+  if (CONFIG.phone) bits.push(`<p><a href="tel:${esc(CONFIG.phone.replace(/[^\d+]/g,''))}">${esc(CONFIG.phone)}</a></p>`);
+  $('#contactBlock').innerHTML = bits.join('');
+}
+
+function ctlHTML(id){
+  const q = cart[id] || 0, name = esc(ITEMS.get(id).name);
+  if (!q) return `<button class="add" type="button" data-add="${id}" aria-label="Add ${name} to your order">Add</button>`;
+  return `<div class="stepper" role="group" aria-label="${name} quantity"><button type="button" data-dec="${id}" aria-label="Remove one ${name}">&minus;</button><output aria-live="polite">${q}</output><button type="button" data-inc="${id}" aria-label="Add one ${name}">+</button></div>`;
+}
+function plateHTML(icon){ return `<span class="plate"><svg aria-hidden="true"><use href="#${icon}"/></svg></span>`; }
+
+function renderMenu(){
+  $('#tabsInner').innerHTML = MENU.map(c => `<a class="tab" href="#cat-${c.id}" data-tab="${c.id}">${esc(c.name)}</a>`).join('');
+  $('#menuBody').innerHTML = MENU.map(c => `
+    <section class="cat" id="cat-${c.id}" data-cat="${c.id}" aria-labelledby="h-${c.id}">
+      <h3 id="h-${c.id}">${esc(c.name)}</h3>
+      <ul class="items">${c.items.map(i => `
+        <li class="item">
+          ${plateHTML(i.icon)}
+          <div class="info">
+            <h4>${esc(i.name)}${i.sig ? '<span class="tag">Signature</span>' : ''}</h4>
+            <p class="desc">${esc(i.desc)}</p>
+          </div>
+          <div class="buy"><span class="price">${fmt(i.price)}</span><span class="ctl" data-ctl="${i.id}"></span></div>
+        </li>`).join('')}
+      </ul>
+    </section>`).join('');
+  const sigs = [];
+  MENU.forEach(c => c.items.forEach(i => { if (i.sig) sigs.push(i); }));
+  $('#sigList').innerHTML = sigs.map(i => `
+    <li class="sig">
+      <span class="plate"><svg aria-hidden="true"><use href="#${i.icon}"/></svg></span>
+      <h3>${esc(i.name)}</h3>
+      <span class="price">${fmt(i.price)}</span>
+      <span class="ctl" data-ctl="${i.id}"></span>
+    </li>`).join('');
+}
+
+function renderHours(){
+  const st = hoursState();
+  const range = label12(CONFIG.hours.open) + ' to ' + label12(CONFIG.hours.close);
+  $('#hoursBig').textContent = 'Every day, ' + range;
+  $('#hoursList').innerHTML = [1,2,3,4,5,6,0].map(d =>
+    `<li class="${d === st.weekday ? 'today' : ''}"><span>${DAYS[d]}${d === st.weekday ? '<span class="pill">Today</span>' : ''}</span><span>${range}</span></li>`).join('');
+  const text = st.open
+    ? 'Open now. The kitchen closes at ' + label12(CONFIG.hours.close) + '.'
+    : 'Closed right now. We open at ' + label12(CONFIG.hours.open) + '.';
+  $('#hoursStatusText').textContent = text;
+  $('#heroStatusText').textContent = text;
+  $('#hoursStatus').classList.toggle('is-closed', !st.open);
+  $('#heroStatus').classList.toggle('is-closed', !st.open);
+}
+
+/* =====================================================================
+   Cart
+   ===================================================================== */
+let cart = {};
+(function loadCart(){
+  const saved = store.get('sozo.cart.v1');
+  if (saved && typeof saved === 'object') {
+    Object.keys(saved).forEach(id => {
+      const q = parseInt(saved[id], 10);
+      if (ITEMS.has(id) && q > 0) cart[id] = Math.min(q, 20);
+    });
+  }
+})();
+
+function totals(){
+  let sub = 0, count = 0;
+  Object.keys(cart).forEach(id => { sub += ITEMS.get(id).price * cart[id]; count += cart[id]; });
+  const fee = count === 0 ? 0 : (sub >= CONFIG.delivery.freeAbove ? 0 : CONFIG.delivery.fee);
+  return { sub, count, fee, total: sub + fee };
+}
+
+function refreshCtl(id){ $$(`[data-ctl="${id}"]`).forEach(el => { el.innerHTML = ctlHTML(id); }); }
+
+function change(id, delta, origin){
+  const q = Math.max(0, Math.min(20, (cart[id] || 0) + delta));
+  if (q) cart[id] = q; else delete cart[id];
+  store.set('sozo.cart.v1', cart);
+  const host = origin && origin.closest('[data-ctl]');
+  const inDrawer = origin && origin.closest('#drawer');
+  refreshCtl(id);
+  renderCart();
+  // Keep keyboard focus on a sensible control after the DOM is re-rendered
+  if (host && document.body.contains(host)) {
+    const t = (delta < 0 && host.querySelector('[data-dec]')) || host.querySelector('[data-inc]') || host.querySelector('[data-add]');
+    if (t) t.focus();
+  } else if (inDrawer) {
+    const t = $(`#lines [data-inc="${id}"]`) || $('#lines [data-inc]') || $('#browseBtn');
+    if (t && t.offsetParent !== null) t.focus();
+  }
+}
+
+function renderCart(){
+  const t = totals();
+  // Floating bar and header badge
+  $('#cartbar').hidden = t.count === 0 || drawerOpen;
+  $('#barCount').textContent = t.count ? t.count + (t.count === 1 ? ' item' : ' items') : '';
+  $('#barTotal').textContent = fmt(t.total);
+  $('#headBadge').hidden = t.count === 0;
+  $('#headBadge').textContent = t.count;
+  $('#headCart').setAttribute('aria-label', t.count ? `Open your order, ${t.count} ${t.count === 1 ? 'item' : 'items'}` : 'Open your order');
+  document.body.classList.toggle('has-cart', t.count > 0);
+
+  // Drawer: cart step
+  $('#emptyState').hidden = t.count > 0;
+  $('#cartFilled').hidden = t.count === 0;
+  $('#cartActions').hidden = t.count === 0;
+  $('#lines').innerHTML = Object.keys(cart).map(id => {
+    const i = ITEMS.get(id);
+    return `<li><div><p class="ln">${esc(i.name)}</p><p class="lp">${fmt(i.price)} each</p></div><p class="lt">${fmt(i.price * cart[id])}</p><span data-ctl="${id}">${ctlHTML(id)}</span></li>`;
+  }).join('');
+  const rows = `
+    <div><span>Subtotal</span><span>${fmt(t.sub)}</span></div>
+    <div><span>Delivery</span><span>${t.fee ? fmt(t.fee) : 'Free'}</span></div>
+    <div class="grand"><span>Total</span><span>${fmt(t.total)}</span></div>`;
+  $('#totals').innerHTML = rows;
+  $('#detailTotals').innerHTML = rows;
+
+  const note = $('#feeNote'), toDetails = $('#toDetails');
+  if (t.count && t.sub < CONFIG.delivery.minOrder) {
+    note.hidden = false;
+    note.textContent = `The minimum order for delivery is ${fmt(CONFIG.delivery.minOrder)}. Add ${fmt(CONFIG.delivery.minOrder - t.sub)} more to continue.`;
+    toDetails.disabled = true;
+  } else if (t.count && t.sub < CONFIG.delivery.freeAbove) {
+    note.hidden = false;
+    note.textContent = `Add ${fmt(CONFIG.delivery.freeAbove - t.sub)} more for free delivery.`;
+    toDetails.disabled = false;
+  } else {
+    note.hidden = true;
+    toDetails.disabled = false;
+  }
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.add) change(b.dataset.add, 1, b);
+  else if (b.dataset.inc) change(b.dataset.inc, 1, b);
+  else if (b.dataset.dec) change(b.dataset.dec, -1, b);
+});
+
+/* =====================================================================
+   Drawer (cart, details, confirmation)
+   ===================================================================== */
+let drawerOpen = false, step = 'cart', lastFocus = null, busy = false;
+const root = document.documentElement;
+const TITLES = { cart:'Your order', details:'Delivery details', done:'Order confirmation' };
+
+function setStep(s){
+  step = s;
+  $$('[data-step]').forEach(el => { el.hidden = el.dataset.step !== s; });
+  $('#drawerTitle').textContent = TITLES[s];
+  if (s === 'details') prepareDetails();
+  if (drawerOpen) $('#drawerTitle').focus();
+}
+function openDrawer(s){
+  lastFocus = document.activeElement;
+  drawerOpen = true;
+  setStep(s || 'cart');
+  document.body.classList.add('drawer-open');
+  root.classList.add('lock');
+  $('#page').inert = true;
+  renderCart();
+  $('#drawerTitle').focus();
+}
+function closeDrawer(){
+  drawerOpen = false;
+  document.body.classList.remove('drawer-open');
+  root.classList.remove('lock');
+  $('#page').inert = false;
+  renderCart();
+  if (lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
+}
+$('#headCart').addEventListener('click', () => openDrawer('cart'));
+$('#barBtn').addEventListener('click', () => openDrawer('cart'));
+$('#closeBtn').addEventListener('click', closeDrawer);
+$('#scrim').addEventListener('click', closeDrawer);
+$('#browseBtn').addEventListener('click', () => { closeDrawer(); location.hash = '#menu'; });
+$('#toDetails').addEventListener('click', () => setStep('details'));
+$('#backBtn').addEventListener('click', () => setStep('cart'));
+$('#doneBtn').addEventListener('click', () => { closeDrawer(); location.hash = '#menu'; });
+
+document.addEventListener('keydown', e => {
+  if (!drawerOpen) return;
+  if (e.key === 'Escape') { closeDrawer(); return; }
+  if (e.key === 'Tab') {
+    const f = $$('button, input, textarea, a[href], [tabindex]:not([tabindex="-1"])', $('#drawer'))
+      .filter(el => !el.disabled && el.getClientRects().length > 0);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+
+/* ---------- Details form ---------- */
+const FIELDS = { name:'#f-name', phone:'#f-phone', email:'#f-email', address:'#f-address' };
+function prepareDetails(){
+  const saved = store.get('sozo.customer.v1') || {};
+  [['name','#f-name'],['phone','#f-phone'],['email','#f-email'],['address','#f-address']].forEach(([k,sel]) => {
+    const el = $(sel); if (!el.value && saved[k]) el.value = saved[k];
+  });
+  const st = hoursState(), note = $('#closedNote');
+  note.hidden = st.open;
+  if (!st.open) note.textContent = `We're closed right now. You can still place your order and we'll start on it when we open at ${label12(CONFIG.hours.open)}.`;
+  $('#formError').hidden = true;
+}
+function setErr(key, msg){
+  const input = $(FIELDS[key]);
+  $('#e-' + key).textContent = msg || '';
+  input.setAttribute('aria-invalid', msg ? 'true' : 'false');
+}
+Object.keys(FIELDS).forEach(k => $(FIELDS[k]).addEventListener('input', () => setErr(k, '')));
+
+function normalisePhone(v){
+  let d = v.replace(/\D/g, '');
+  if (d.length === 12 && d.startsWith('91')) d = d.slice(2);
+  if (d.length === 11 && d.startsWith('0')) d = d.slice(1);
+  return d;
+}
+function readForm(){
+  return {
+    name: $('#f-name').value.trim(),
+    phone: normalisePhone($('#f-phone').value),
+    email: $('#f-email').value.trim(),
+    address: $('#f-address').value.trim(),
+    notes: $('#f-notes').value.trim()
+  };
+}
+function validate(d){
+  const errors = {};
+  if (d.name.length < 2) errors.name = 'Enter your name so the rider knows who to look for.';
+  if (!/^[6-9]\d{9}$/.test(d.phone)) errors.phone = 'Enter a 10-digit mobile number so we can reach you about your order.';
+  if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) errors.email = 'This email address looks incomplete. Check it or leave it blank.';
+  if (d.address.length < 10) errors.address = 'Enter the full address, including the area or a nearby landmark.';
+  Object.keys(FIELDS).forEach(k => setErr(k, errors[k]));
+  const firstBad = Object.keys(FIELDS).find(k => errors[k]);
+  if (firstBad) $(FIELDS[firstBad]).focus();
+  return !firstBad;
+}
+
+/* ---------- Order submission ---------- */
+function newOrderId(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = 'SZ-';
+  for (let i = 0; i < 5; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+function confirmationText(order){
+  const first = order.customer.name.split(/\s+/)[0];
+  const base = `Hi ${first}, your ${CONFIG.name} order ${order.orderId} is confirmed. Total ${fmt(order.total)}, pay on delivery.`;
+  return order.preorder
+    ? `${base} We're closed right now and will start on your order when we open at ${label12(CONFIG.hours.open)}.`
+    : `${base} We'll deliver in about ${CONFIG.delivery.eta}.`;
+}
+function managerText(order){
+  return [
+    `New order ${order.orderId}${order.preorder ? ' (queued for opening)' : ''}`,
+    `${order.customer.name}, ${order.customer.phone}`,
+    order.address,
+    '',
+    ...order.items.map(i => `${i.qty} x ${i.name}`),
+    '',
+    `Total ${fmt(order.total)}, pay on delivery`,
+    order.notes ? `Notes: ${order.notes}` : ''
+  ].filter((l, i, a) => l !== '' || (a[i-1] !== '' && i !== a.length - 1)).join('\n');
+}
+
+async function submitOrder(order){
+  if (!CONFIG.orderEndpoint) return { mode:'preview' };
+  const res = await fetch(CONFIG.orderEndpoint, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(order)
+  });
+  if (!res.ok) throw new Error('Server responded ' + res.status);
+  const data = await res.json().catch(() => ({}));
+  return { mode:'server', data };
+}
+
+$('#orderForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (busy) return;
+  const d = readForm();
+  if (!validate(d)) return;
+  const t = totals();
+  if (!t.count || t.sub < CONFIG.delivery.minOrder) { setStep('cart'); return; }
+
+  const st = hoursState();
+  const order = {
+    orderId: newOrderId(),
+    createdAt: new Date().toISOString(),
+    preorder: !st.open,
+    customer: { name: d.name, phone: d.phone, email: d.email },
+    address: d.address,
+    notes: d.notes,
+    items: Object.keys(cart).map(id => ({ id, name: ITEMS.get(id).name, qty: cart[id], price: ITEMS.get(id).price })),
+    subtotal: t.sub, deliveryFee: t.fee, total: t.total,
+    currency: 'INR', payment: 'pay_on_delivery'
+  };
+  order.confirmation = confirmationText(order);
+
+  const btn = $('#placeBtn');
+  busy = true; btn.disabled = true; btn.textContent = 'Placing order...';
+  $('#formError').hidden = true;
+  try {
+    const result = await submitOrder(order);
+    store.set('sozo.customer.v1', { name:d.name, phone:d.phone, email:d.email, address:d.address });
+    showDone(order, result);
+    cart = {}; store.set('sozo.cart.v1', cart);
+    $$('[data-ctl]').forEach(el => { if (!el.closest('#lines')) refreshCtl(el.dataset.ctl); });
+    renderCart();
+  } catch (err) {
+    const fe = $('#formError');
+    fe.hidden = false;
+    fe.textContent = 'We could not send your order. Check your connection and try again' + (CONFIG.phone ? ', or call us on ' + CONFIG.phone + '.' : '.');
+  } finally {
+    busy = false; btn.disabled = false; btn.textContent = 'Place order';
+  }
+});
+
+function showDone(order, result){
+  const server = result.mode === 'server';
+  const serverData = (server && result.data) || {};
+  const id = serverData.orderId || order.orderId;
+  order.orderId = id;
+  const message = serverData.confirmation || order.confirmation;
+  const customerChannels = (serverData.notified && serverData.notified.customer) || [];
+
+  $('#doneTitle').textContent = server ? 'Order placed' : 'Order placed in preview mode';
+  $('#doneId').textContent = 'Order ' + id;
+  $('#doneMsg').textContent = message;
+  $('#doneNote').textContent = server
+    ? (customerChannels.length
+        ? 'The kitchen has your order. We also sent this confirmation to you by ' + customerChannels.join(' and ') + '.'
+        : 'The kitchen has your order. Keep this order number handy in case you need to reach us.')
+    : 'This preview is not connected to the restaurant yet, so no alert or message was sent.';
+  $('#doneLines').innerHTML = order.items.map(i => `<li><span>${i.qty} &times; ${esc(i.name)}</span><span>${fmt(i.qty * i.price)}</span></li>`).join('')
+    + `<li><strong>Total</strong><strong>${fmt(order.total)}</strong></li>`;
+
+  const wa = $('#waBtn');
+  if (CONFIG.managerWhatsApp && !server) {
+    wa.hidden = false;
+    wa.href = 'https://wa.me/' + CONFIG.managerWhatsApp + '?text=' + encodeURIComponent(managerText(order));
+  } else {
+    wa.hidden = true;
+  }
+  setStep('done');
+}
+
+/* =====================================================================
+   Scroll-spy for the category tabs
+   ===================================================================== */
+function initSpy(){
+  const tabs = $$('.tab'), bar = $('#tabsInner');
+  const setActive = id => {
+    tabs.forEach(t => {
+      const on = t.dataset.tab === id;
+      if (on) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current');
+      if (on) {
+        const left = t.offsetLeft - (bar.clientWidth - t.offsetWidth) / 2;
+        bar.scrollTo({ left: Math.max(0, left), behavior: 'auto' });
       }
-      updateCartUI();
-      // Subtle feedback
-      e
+    });
+  };
+  if (!('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => { if (en.isIntersecting) setActive(en.target.dataset.cat); });
+  }, { rootMargin: '-35% 0px -60% 0px' });
+  $$('.cat').forEach(c => io.observe(c));
+}
+
+/* =====================================================================
+   Init
+   ===================================================================== */
+renderSocial();
+renderContact();
+renderMenu();
+renderHours();
+$$('[data-ctl]').forEach(el => refreshCtl(el.dataset.ctl));
+renderCart();
+initSpy();
+setInterval(renderHours, 60000);
+})();
+</script>
+</body>
+</html>
