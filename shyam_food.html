@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sōzō Izakaya | Authentic Japanese Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --wood: #8B5E3C;
+      --charcoal: #2C2C2C;
+      --cream: #F8F4EF;
+      --sakura: #E8B4B8;
+      --gold: #C9A86C;
+      --soft-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(248, 244, 239, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(139, 94, 60, 0.15);
+      padding: 1rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--wood);
+      letter-spacing: 1px;
+    }
+
+    .logo span {
+      color: var(--charcoal);
+      font-weight: 400;
+      font-size: 0.9rem;
+      display: block;
+      letter-spacing: 3px;
+      margin-top: -4px;
+    }
+
+    nav a {
+      margin-left: 1.8rem;
+      text-decoration: none;
+      color: var(--charcoal);
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.3s;
+    }
+
+    nav a:hover {
+      color: var(--wood);
+    }
+
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.6rem;
+      cursor: pointer;
+      color: var(--charcoal);
+    }
+
+    /* Hero */
+    .hero {
+      height: 85vh;
+      background: linear-gradient(rgba(44,44,44,0.45), rgba(44,44,44,0.55)),
+                  url('https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+      position: relative;
+    }
+
+    .hero-content h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 7vw, 4.5rem);
+      margin-bottom: 0.5rem;
+      letter-spacing: 2px;
+    }
+
+    .hero-content p {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      opacity: 0.95;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 2.2rem;
+      background: var(--wood);
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 500;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .btn:hover {
+      background: #6d4a2f;
+      transform: translateY(-2px);
+      box-shadow: var(--soft-shadow);
+    }
+
+    /* Sections */
+    section {
+      padding: 5rem 5%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.4rem;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      color: var(--wood);
+    }
+
+    .section-subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 3rem;
+      font-size: 1.05rem;
+    }
+
+    /* Hours */
+    .hours-box {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: var(--soft-shadow);
+      max-width: 420px;
+      margin: 0 auto 4rem;
+      border: 1px solid rgba(139,94,60,0.1);
+    }
+
+    .hours-box h3 {
+      color: var(--wood);
+      margin-bottom: 0.5rem;
+    }
+
+    .hours-box p {
+      font-size: 1.3rem;
+      font-weight: 500;
+    }
+
+    /* Menu */
+    .menu-tabs {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .tab-btn {
+      padding: 0.7rem 1.6rem;
+      border: 2px solid var(--wood);
+      background: transparent;
+      color: var(--wood);
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active,
+    .tab-btn:hover {
+      background: var(--wood);
+      color: white;
+    }
+
+    .menu-grid {
+      display: none;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.8rem;
+    }
+
+    .menu-grid.active {
+      display: grid;
+    }
+
+    .menu-item {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--soft-shadow);
+      transition: transform 0.3s;
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .menu-item:hover {
+      transform: translateY(-6px);
+    }
+
+    .menu-item img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .menu-item-content {
+      padding: 1.3rem;
+    }
+
+    .menu-item h3 {
+      font-size: 1.15rem;
+      margin-bottom: 0.4rem;
+      color: var(--charcoal);
+    }
+
+    .menu-item .signature {
+      display: inline-block;
+      background: var(--sakura);
+      color: #5a2a2e;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .menu-item p {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .price {
+      font-weight: 600;
+      color: var(--wood);
+      font-size: 1.1rem;
+    }
+
+    .add-btn {
+      background: var(--charcoal);
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: background 0.3s;
+    }
+
+    .add-btn:hover {
+      background: var(--wood);
+    }
+
+    /* Order Section */
+    .order-section {
+      background: white;
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: var(--soft-shadow);
+      margin-top: 3rem;
+    }
+
+    .order-form {
+      display: grid;
+      gap: 1.2rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 1rem;
+      background: #fafafa;
+      transition: border 0.3s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--wood);
+    }
+
+    .cart-summary {
+      background: #f9f5f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px dashed #ddd;
+    }
+
+    .total {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      text-align: right;
+      color: var(--wood);
+    }
+
+    /* Footer */
+    footer {
+      background: var(--charcoal);
+      color: #eee;
+      padding: 3.5rem 5% 2rem;
+      text-align: center;
+    }
+
+    .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin: 1.5rem 0 2rem;
+    }
+
+    .social-icons a {
+      color: white;
+      font-size: 1.6rem;
+      transition: color 0.3s, transform 0.3s;
+      text-decoration: none;
+    }
+
+    .social-icons a:hover {
+      color: var(--gold);
+      transform: translateY(-3px);
+    }
+
+    .footer-info {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      margin-bottom: 1.5rem;
+    }
+
+    .copyright {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      margin-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 1.5rem;
+    }
+
+    /* Modal / Confirmation */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal h3 {
+      color: var(--wood);
+      margin-bottom: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        flex-direction: column;
+        padding: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      }
+
+      nav.open {
+        display: flex;
+      }
+
+      nav a {
+        margin: 0.8rem 0;
+      }
+
+      .menu-toggle {
+        display: block;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        height: 70vh;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      Sōzō
+      <span>IZAKAYA</span>
+    </div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <nav id="nav">
+      <a href="#menu">Menu</a>
+      <a href="#hours">Hours</a>
+      <a href="#order">Order Online</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Sōzō Izakaya</h1>
+      <p>Modern Japanese comfort food in a cozy atmosphere</p>
+      <a href="#order" class="btn">Order Now</a>
+    </div>
+  </section>
+
+  <!-- Hours -->
+  <section id="hours">
+    <div class="hours-box">
+      <h3>Daily Operating Hours</h3>
+      <p>12:00 PM – 11:45 PM</p>
+      <small>Open every day</small>
+    </div>
+  </section>
+
+  <!-- Menu -->
+  <section id="menu">
+    <h2>Our Menu</h2>
+    <p class="section-subtitle">Freshly prepared with the finest ingredients</p>
+
+    <div class="menu-tabs">
+      <button class="tab-btn active" onclick="showCategory('sushi')">Sushi</button>
+      <button class="tab-btn" onclick="showCategory('ramen')">Ramen</button>
+      <button class="tab-btn" onclick="showCategory('burgers')">Burgers</button>
+      <button class="tab-btn" onclick="showCategory('gyoza')">Gyozas & Dimsums</button>
+    </div>
+
+    <!-- Sushi -->
+    <div id="sushi" class="menu-grid active">
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80" alt="Avocado Maki">
+        <div class="menu-item-content">
+          <span class="signature">Signature</span>
+          <h3>Avocado Maki Sushi</h3>
+          <p>Creamy avocado rolled with seasoned rice and nori</p>
+          <div class="price-row">
+            <span class="price">₹320</span>
+            <button class="add-btn" onclick="addToCart('Avocado Maki Sushi', 320)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?auto=format&fit=crop&w=600&q=80" alt="Sozo Veg Maki">
+        <div class="menu-item-content">
+          <span class="signature">Signature</span>
+          <h3>Sozo Veg Maki Sushi</h3>
+          <p>House special vegetable maki with seasonal produce</p>
+          <div class="price-row">
+            <span class="price">₹350</span>
+            <button class="add-btn" onclick="addToCart('Sozo Veg Maki Sushi', 350)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=600&q=80" alt="Salmon Nigiri">
+        <div class="menu-item-content">
+          <h3>Salmon Nigiri (2 pcs)</h3>
+          <p>Fresh salmon over perfectly seasoned sushi rice</p>
+          <div class="price-row">
+            <span class="price">₹280</span>
+            <button class="add-btn" onclick="addToCart('Salmon Nigiri', 280)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ramen -->
+    <div id="ramen" class="menu-grid">
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80" alt="Sapporo Spicy Miso Ramen">
+        <div class="menu-item-content">
+          <span class="signature">Signature</span>
+          <h3>Sapporo Spicy Miso Ramen</h3>
+          <p>Rich miso broth with chili oil, corn, and soft-boiled egg</p>
+          <div class="price-row">
+            <span class="price">₹480</span>
+            <button class="add-btn" onclick="addToCart('Sapporo Spicy Miso Ramen', 480)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1617093727343-374698b1b08d?auto=format&fit=crop&w=600&q=80" alt="Shoyu Ramen">
+        <div class="menu-item-content">
+          <h3>Classic Shoyu Ramen</h3>
+          <p>Light soy-based broth with chashu and bamboo shoots</p>
+          <div class="price-row">
+            <span class="price">₹420</span>
+            <button class="add-btn" onclick="addToCart('Classic Shoyu Ramen', 420)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Burgers -->
+    <div id="burgers" class="menu-grid">
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80" alt="Japanese Burger">
+        <div class="menu-item-content">
+          <h3>Teriyaki Chicken Burger</h3>
+          <p>Juicy chicken glazed with homemade teriyaki sauce</p>
+          <div class="price-row">
+            <span class="price">₹390</span>
+            <button class="add-btn" onclick="addToCart('Teriyaki Chicken Burger', 390)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80" alt="Veg Burger">
+        <div class="menu-item-content">
+          <h3>Mushroom Umami Burger</h3>
+          <p>Grilled portobello with wasabi mayo and pickled veggies</p>
+          <div class="price-row">
+            <span class="price">₹360</span>
+            <button class="add-btn" onclick="addToCart('Mushroom Umami Burger', 360)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gyozas & Dimsums -->
+    <div id="gyoza" class="menu-grid">
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=600&q=80" alt="Pan-seared Mushroom Gyoza">
+        <div class="menu-item-content">
+          <span class="signature">Signature</span>
+          <h3>Pan-seared Mushroom & Cheese Gyoza</h3>
+          <p>Crispy bottom, juicy mushroom-cheese filling (6 pcs)</p>
+          <div class="price-row">
+            <span class="price">₹340</span>
+            <button class="add-btn" onclick="addToCart('Pan-seared Mushroom & Cheese Gyoza', 340)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-item">
+        <img src="https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=600&q=80" alt="Truffle Edamame Dimsum">
+        <div class="menu-item-content">
+          <span class="signature">Signature</span>
+          <h3>Steamed Truffle Edamame Dimsum</h3>
+          <p>Delicate dumplings filled with edamame & black truffle (6 pcs)</p>
+          <div class="price-row">
+            <span class="price">₹380</span>
+            <button class="add-btn" onclick="addToCart('Steamed Truffle Edamame Dimsum', 380)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Order Online -->
+  <section id="order">
+    <h2>Order Online</h2>
+    <p class="section-subtitle">Delivery available • Instant confirmation</p>
+
+    <div class="order-section">
+      <form class="order-form" id="orderForm" onsubmit="placeOrder(event)">
+        <div class="form-row">
+          <div>
+            <label>Full Name *</label>
+            <input type="text" id="customerName" required placeholder="Your name">
+          </div>
+          <div>
+            <label>Phone Number *</label>
+            <input type="tel" id="customerPhone" required placeholder="+91 98765 43210">
+          </div>
+        </div>
+
+        <div>
+          <label>Delivery Address *</label>
+          <textarea id="customerAddress" rows="3" required placeholder="Full address including landmark"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Delivery Preference</label>
+            <select id="deliveryType">
+              <option value="Delivery">Delivery</option>
+              <option value="Pickup">Pickup</option>
+            </select>
+          </div>
+          <div>
+            <label>Special Instructions</label>
+            <input type="text" id="specialNotes" placeholder="Allergies, spice level, etc.">
+          </div>
+        </div>
+
+        <div class="cart-summary" id="cartSummary">
+          <h4 style="margin-bottom:1rem; color:var(--wood);">Your Order</h4>
+          <div id="cartItems">
+            <p style="color:#888; font-size:0.95rem;">No items added yet. Browse the menu above.</p>
+          </div>
+          <div class="total" id="cartTotal">Total: ₹0</div>
+        </div>
+
+        <button type="submit" class="btn" style="width:100%; margin-top:1.5rem; padding:1.1rem;">
+          Place Order
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <div class="logo" style="color:white; margin-bottom:0.5rem;">Sōzō Izakaya</div>
+    <div class="footer-info">
+      Modern Japanese Izakaya<br>
+      Open daily 12:00 PM – 11:45 PM
+    </div>
+
+    <div class="social-icons">
+      <!-- Replace # with your actual links -->
+      <a href="https://instagram.com/" target="_blank" title="Instagram" aria-label="Instagram">📷</a>
+      <a href="https://facebook.com/" target="_blank" title="Facebook" aria-label="Facebook">📘</a>
+      <a href="https://x.com/" target="_blank" title="X / Twitter" aria-label="X">𝕏</a>
+      <a href="https://maps.google.com/" target="_blank" title="Google Maps" aria-label="Location">📍</a>
+    </div>
+
+    <div class="footer-info">
+      For reservations or large orders: +91 98765 43210<br>
+      hello@sozoizakaya.com
+    </div>
+
+    <div class="copyright">
+      © 2025 Sōzō Izakaya. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- Confirmation Modal -->
+  <div class="modal" id="confirmationModal">
+    <div class="modal-content">
+      <h3>Order Confirmed! 🎉</h3>
+      <p id="confirmMessage"></p>
+      <button class="btn" onclick="closeModal()" style="margin-top:1.5rem;">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // Mobile menu
+    function toggleMenu() {
+      document.getElementById('nav').classList.toggle('open');
+    }
+
+    // Menu tabs
+    function showCategory(category) {
+      document.querySelectorAll('.menu-grid').forEach(g => g.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(category).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Cart
+    let cart = [];
+
+    function addToCart(name, price) {
+      const existing = cart.find(item => item.name === name);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ name, price, qty: 1 });
+      }
+      updateCartUI();
+      // Subtle feedback
+      e
