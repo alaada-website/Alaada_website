@@ -1,670 +1,463 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Web Analyser — Alaada</title>
-  <meta name="description" content="Analyse any website instantly. Performance, SEO, Security, Accessibility and more."/>
-  <link rel="icon" href="images/alaada-icon.png" type="image/png"/>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Alaada — Website Analyzer</title>
+<meta name="description" content="Alaada Website Analyzer — fast, practical AI-powered website diagnostics and actionable suggestions." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23ff7f50'/%3E%3Ctext x='50' y='57' font-size='48' text-anchor='middle' fill='%23081018' font-family='Inter,Segoe UI,Roboto' font-weight='700'%3EA%3C/text%3E%3C/svg%3E">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8528400701607693"
+     crossorigin="anonymous"></script>
+<style>
+  /* ---------- Base & Brand ---------- */
   :root{
-    --bg:#f5f4ef;--bg2:#eceae3;--white:#ffffff;
-    --ink:#121110;--ink2:#46443f;--ink3:#97948d;
-    --border:rgba(0,0,0,0.07);--borderM:rgba(0,0,0,0.13);
-    --blue:#1a5fff;--blue2:#e6edff;--blue3:rgba(26,95,255,0.1);
-    --teal:#00957a;--teal2:#dcf5ef;--teal3:rgba(0,149,122,0.1);
-    --gold:#d4930a;--gold2:#fdf3d9;
-    --red:#e03333;--red2:#fff0f0;
-    --green:#16a34a;--green2:#dcfce7;
-    --r-sm:8px;--r-md:14px;--r-lg:20px;--r-xl:28px;
-    --sh-sm:0 1px 3px rgba(0,0,0,0.05),0 4px 14px rgba(0,0,0,0.06);
-    --sh-md:0 2px 6px rgba(0,0,0,0.05),0 10px 36px rgba(0,0,0,0.09);
-    --sh-lg:0 4px 12px rgba(0,0,0,0.05),0 24px 64px rgba(0,0,0,0.12);
+    --bg:#090d14;
+    --card:#0f1721;
+    --muted:#9aa6b2;
+    --accent:#ff7f50;
+    --glass: rgba(255,255,255,0.04);
+    --radius:14px;
+    --maxw:980px;
   }
-  html{scroll-behavior:smooth;}
-  body{font-family:'Figtree',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;line-height:1.65;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  *{box-sizing:border-box;}
+  html, body{height:100%; margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto; background:radial-gradient(1200px 600px at 10% 10%, rgba(18,24,36,0.6), transparent), linear-gradient(180deg,#04101a 0%, var(--bg) 60%); color:#e6eef6; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; padding:28px 16px; display:flex; flex-direction:column; align-items:center; }
 
-  /* ── NAV ── */
-  nav{
-    position:fixed;top:0;left:0;right:0;z-index:300;height:60px;
-    background:rgba(245,244,239,0.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-    border-bottom:1px solid var(--border);
-    display:flex;align-items:center;justify-content:space-between;
-    padding:0 40px;
-  }
-  .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:'Syne',sans-serif;font-weight:800;font-size:1.18rem;color:var(--ink);letter-spacing:-0.4px;}
-  .nav-logo-text{display:inline;}
-  .nav-back{
-    display:inline-flex;align-items:center;gap:6px;
-    font-size:.83rem;font-weight:500;color:var(--ink2);text-decoration:none;
-    padding:6px 13px;border-radius:var(--r-sm);border:1px solid var(--border);
-    background:var(--white);transition:border-color .15s,color .15s,transform .15s;
-    white-space:nowrap;
-  }
-  .nav-back:hover{border-color:var(--borderM);color:var(--ink);transform:translateY(-1px);}
+  /* ---------- NAV ---------- */
+  nav{ width:100%; background:#0f172a; border-bottom:1px solid rgba(255,255,255,0.06); position:sticky; top:0; z-index:1200 }
+  .nav-container{ max-width:1400px; margin:auto; padding:12px 20px; display:flex; gap:12px; align-items:center; justify-content:space-between }
+  .logo{ display:flex; gap:12px; align-items:center }
+  .logo .mark{ width:44px; height:44px; border-radius:9px; background:linear-gradient(135deg,var(--accent),#ffb28f); display:flex; align-items:center; justify-content:center; font-weight:800; color:#081018 }
+  .logo h1{ color:white; font-size:18px; margin:0 }
+  .nav-links{ list-style:none; display:flex; gap:18px; align-items:center; margin:0 }
+  .nav-links a{ color:#cbd5e1; text-decoration:none; padding:6px 10px; border-radius:8px }
+  .nav-links a:hover{ background:rgba(255,255,255,0.04); color:#fff }
+  .nav-links a.active{ background:rgba(255,255,255,0.08); color:#fff; font-weight:600 }
+  .menu-toggle{ display:none; font-size:22px; background:transparent; border:none; color:#fff }
 
-  @media(max-width:640px){
-    nav{padding:0 16px;}
-    .nav-logo{font-size:1rem;gap:7px;}
-    .nav-back{font-size:.75rem;padding:5px 10px;gap:4px;}
+  @media (max-width:880px){
+    .menu-toggle{ display:block }
+    .nav-links{ position:absolute; top:64px; right:0; left:0; background:#0f172a; flex-direction:column; display:none; padding:12px 12px }
+    .nav-links.show{ display:flex }
+    .nav-links a{ display:block; width:100%; text-align:center; padding:12px 0 }
   }
 
-  /* ── PAGE HEADER ── */
-  .page-header{
-    padding:96px 24px 0;
-    text-align:center;
-    position:relative;overflow:hidden;
-  }
-  .page-header::before{
-    content:'';position:absolute;inset:0;
-    background-image:radial-gradient(circle,rgba(0,0,0,.08) 1px,transparent 1px);
-    background-size:28px 28px;opacity:.4;pointer-events:none;
-  }
-  .page-header::after{
-    content:'';position:absolute;inset:0;
-    background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(0,149,122,.07),transparent 70%),
-               radial-gradient(ellipse 50% 40% at 20% 80%,rgba(26,95,255,.05),transparent 70%);
-    pointer-events:none;
-  }
-  .page-header-inner{position:relative;z-index:2;max-width:640px;margin:0 auto;padding-bottom:52px;}
-  .page-eyebrow{
-    display:inline-flex;align-items:center;gap:8px;
-    font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
-    color:var(--teal);background:var(--teal2);padding:5px 14px;border-radius:100px;
-    margin-bottom:20px;
-  }
-  .page-title{
-    font-family:'Syne',sans-serif;
-    font-size:clamp(1.9rem,7vw,3.4rem);
-    font-weight:800;letter-spacing:-1.8px;line-height:1.07;
-    color:var(--ink);margin-bottom:14px;
-  }
-  .page-title span{
-    background:linear-gradient(110deg,var(--teal) 0%,#00c89a 100%);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  }
-  .page-sub{font-size:.95rem;color:var(--ink2);font-weight:400;line-height:1.7;}
+  /* ---------- Main Content ---------- */
+  .wrap{ width:100%; max-width:var(--maxw); }
+  header{ display:flex; gap:12px; align-items:center; margin:18px 0 }
+  .brand h2{ margin:0; font-size:18px }
+  .brand p{ margin:2px 0 0; font-size:13px; color:var(--muted) }
 
-  @media(max-width:480px){
-    .page-header{padding-top:84px;}
-    .page-header-inner{padding-bottom:44px;}
-    .page-title{letter-spacing:-1px;}
-    .page-sub{font-size:.88rem;}
+  .card{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:var(--radius); padding:18px; box-shadow:0 6px 30px rgba(4,8,12,0.6); border:1px solid rgba(255,255,255,0.03) }
+
+  .hero-row{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap }
+  .left{ flex:1 1 520px; min-width:260px }
+  .right{ flex:0 0 280px; min-width:220px }
+
+  label{ display:block; font-size:13px; color:var(--muted); margin-bottom:8px }
+  input#urlInput{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:#08111a; color:#e8f2ff; font-size:15px }
+  input#urlInput:focus{ box-shadow:0 8px 30px rgba(0,0,0,0.6), 0 0 0 6px rgba(255,127,80,0.04); outline:none }
+
+  .controls{ display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap }
+  .btn{ display:inline-flex; align-items:center; gap:8px; background: linear-gradient(180deg,var(--accent), #ff9c74); color:#081018; padding:10px 14px; border-radius:10px; font-weight:700; border:none; cursor:pointer }
+  .btn.ghost{ background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03) }
+  .btn:disabled{ opacity:0.55; cursor:not-allowed }
+
+  .muted{ color:var(--muted); font-size:13px }
+  pre{ white-space:pre-wrap; font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Roboto Mono,monospace; font-size:13px }
+
+  /* Sidebar */
+  .sidebar{ position:sticky; top:26px; align-self:start }
+
+  @media (max-width:900px){ 
+    .right{ order:2; width:100%; display:flex; justify-content:flex-end } 
+    #results{ grid-template-columns:1fr } 
+    .sidebar{ position:relative; top:0 } 
   }
 
-  /* ── SEARCH BOX ── */
-  .search-wrap{
-    max-width:720px;margin:0 auto;padding:0 16px;
-    position:relative;z-index:10;transform:translateY(-24px);
-  }
-  .search-card{
-    background:var(--white);border:1px solid var(--borderM);
-    border-radius:var(--r-xl);padding:22px 20px 18px;box-shadow:var(--sh-lg);
-  }
-  .search-row{display:flex;gap:8px;align-items:stretch;}
-  .url-input-wrap{
-    flex:1;display:flex;align-items:center;gap:8px;
-    background:var(--bg);border:1.5px solid var(--border);
-    border-radius:var(--r-md);padding:0 14px;
-    transition:border-color .2s,box-shadow .2s;
-    min-width:0;/* prevents flex overflow */
-  }
-  .url-input-wrap:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal3);}
-  .url-input-icon{color:var(--ink3);flex-shrink:0;font-size:.95rem;}
-  #urlInput{
-    flex:1;background:none;border:none;outline:none;
-    font-family:'Figtree',sans-serif;font-size:.95rem;font-weight:500;
-    color:var(--ink);padding:13px 0;
-    min-width:0;
-  }
-  #urlInput::placeholder{color:var(--ink3);}
-  .analyze-btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:7px;
-    background:var(--teal);color:#fff;
-    font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;
-    padding:13px 20px;border-radius:var(--r-md);border:none;cursor:pointer;
-    box-shadow:0 3px 12px rgba(0,149,122,.3);
-    transition:transform .18s,box-shadow .18s,background .18s;
-    white-space:nowrap;flex-shrink:0;
-  }
-  .analyze-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,149,122,.4);background:#008068;}
-  .analyze-btn:disabled{background:var(--ink3);box-shadow:none;transform:none;cursor:not-allowed;}
-  .btn-label{display:inline;}
-  .search-hint{
-    margin-top:10px;font-size:.72rem;color:var(--ink3);
-    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-  }
-  .hint-item{display:flex;align-items:center;gap:4px;}
-
-  /* On very small screens: stack input + button */
-  @media(max-width:420px){
-    .search-row{flex-direction:column;}
-    .analyze-btn{width:100%;padding:13px;}
-    .search-hint{gap:8px;}
-    .hint-item:last-child{display:none;} /* hide "Press Enter" on mobile */
-  }
-  @media(max-width:360px){
-    .search-card{padding:16px 14px 14px;}
-  }
-
-  /* ── LOADING STATE ── */
-  #loading-state{display:none;max-width:720px;margin:0 auto 36px;padding:0 16px;}
-  .loading-card{
-    background:var(--white);border:1px solid var(--borderM);
-    border-radius:var(--r-xl);padding:32px 24px;box-shadow:var(--sh-md);text-align:center;
-  }
-  .loading-spinner{
-    width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--teal);
-    border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;
-  }
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .loading-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--ink);margin-bottom:5px;}
-  .loading-status{font-size:.8rem;color:var(--ink3);transition:all .3s;}
-  .loading-bar-track{height:4px;background:var(--bg2);border-radius:100px;overflow:hidden;margin-top:18px;}
-  .loading-bar-fill{height:100%;background:linear-gradient(to right,var(--teal),#00c89a);border-radius:100px;width:0%;transition:width .6s ease;}
-
-  /* ── RESULTS ── */
-  #results{display:none;max-width:960px;margin:0 auto 80px;padding:0 16px;}
-
-  /* Score Overview */
-  .scores-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-  @media(max-width:640px){.scores-row{grid-template-columns:repeat(2,1fr);gap:10px;}}
-  @media(max-width:340px){.scores-row{grid-template-columns:repeat(2,1fr);gap:8px;}}
-
-  .score-card{
-    background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-lg);
-    padding:18px 12px;text-align:center;box-shadow:var(--sh-sm);
-    transition:transform .2s,box-shadow .2s;
-  }
-  .score-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);}
-  .score-ring-wrap{width:60px;height:60px;margin:0 auto 8px;position:relative;}
-  .score-ring-wrap svg{transform:rotate(-90deg);}
-  .score-ring-track{fill:none;stroke:var(--bg2);stroke-width:5;}
-  .score-ring-fill{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:163;stroke-dashoffset:163;transition:stroke-dashoffset 1.4s cubic-bezier(.22,.61,.36,1);}
-  .score-num-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.88rem;font-weight:800;color:var(--ink);}
-  .score-name{font-size:.65rem;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-  .score-tag{font-size:.65rem;font-weight:600;padding:2px 7px;border-radius:100px;}
-  .tag-good{background:var(--green2);color:var(--green);}
-  .tag-mid{background:var(--gold2);color:var(--gold);}
-  .tag-bad{background:var(--red2);color:var(--red);}
-
-  /* AI Summary */
-  .ai-summary-card{
-    background:linear-gradient(135deg,rgba(26,95,255,.04),rgba(0,149,122,.04));
-    border:1px solid rgba(0,149,122,.2);border-radius:var(--r-xl);
-    padding:24px 22px;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:var(--sh-sm);
-  }
-  .ai-summary-card::before{
-    content:'';position:absolute;top:-30px;right:-30px;
-    width:160px;height:160px;border-radius:50%;
-    background:radial-gradient(circle,rgba(0,149,122,.07),transparent 70%);
-  }
-  .ai-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
-  .ai-badge{
-    display:inline-flex;align-items:center;gap:6px;
-    font-size:.68rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-    color:var(--teal);background:var(--teal2);padding:4px 12px;border-radius:100px;
-  }
-  .ai-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite;}
-  @keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(0,149,122,.2);}50%{box-shadow:0 0 0 5px rgba(0,149,122,.08);}}
-  .ai-summary-text{font-size:.9rem;color:var(--ink2);line-height:1.8;white-space:pre-wrap;}
-
-  /* Detail grid */
-  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  @media(max-width:600px){.detail-grid{grid-template-columns:1fr;gap:12px;}}
-
-  .detail-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-lg);padding:20px;box-shadow:var(--sh-sm);transition:transform .2s,box-shadow .2s;}
-  .detail-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);}
-  .detail-card.full{grid-column:1/-1;}
-
-  .detail-header{display:flex;align-items:center;gap:9px;margin-bottom:14px;padding-bottom:11px;border-bottom:1px solid var(--border);}
-  .detail-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
-  .detail-icon.blue{background:var(--blue2);}
-  .detail-icon.teal{background:var(--teal2);}
-  .detail-icon.gold{background:var(--gold2);}
-  .detail-icon.green{background:var(--green2);}
-  .detail-icon.red{background:var(--red2);}
-  .detail-icon.purple{background:#f3e8ff;}
-  .detail-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;color:var(--ink);}
-  .detail-score{margin-left:auto;flex-shrink:0;}
-
-  .detail-rows{display:flex;flex-direction:column;gap:8px;}
-  .detail-row{display:flex;align-items:flex-start;gap:8px;font-size:.8rem;line-height:1.5;}
-  .dr-label{color:var(--ink3);font-weight:500;min-width:110px;flex-shrink:0;}
-  .dr-value{color:var(--ink2);font-weight:400;word-break:break-word;}
-  .dr-value.good{color:var(--green);font-weight:600;}
-  .dr-value.bad{color:var(--red);font-weight:600;}
-  .dr-value.mid{color:var(--gold);font-weight:600;}
-
-  /* Tighten label on narrow screens */
-  @media(max-width:380px){
-    .dr-label{min-width:90px;font-size:.75rem;}
-    .dr-value{font-size:.75rem;}
-  }
-
-  /* Issues list */
-  .issues-list{display:flex;flex-direction:column;gap:5px;margin-top:4px;}
-  .issue-item{display:flex;align-items:flex-start;gap:7px;font-size:.78rem;padding:6px 9px;border-radius:7px;background:var(--red2);color:#9b2020;line-height:1.5;}
-  .issue-item.warn{background:var(--gold2);color:#7a4f0a;}
-  .issue-item.ok{background:var(--green2);color:#155a2a;}
-
-  /* Tech stack */
-  .tech-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
-  .tech-pill{font-size:.73rem;font-weight:500;padding:4px 11px;border-radius:100px;background:var(--blue2);color:var(--blue);}
-
-  /* Page overview stats */
-  .overview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
-  @media(max-width:480px){.overview-grid{grid-template-columns:repeat(2,1fr);gap:8px;}}
-  .overview-stat{background:var(--bg);border-radius:var(--r-md);padding:10px 12px;text-align:center;}
-  .overview-stat strong{display:block;font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;letter-spacing:-.5px;color:var(--ink);margin-bottom:2px;}
-  .overview-stat span{font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);font-weight:500;}
-
-  /* Error state */
-  .error-card{
-    background:var(--red2);border:1px solid rgba(224,51,51,.2);border-radius:var(--r-lg);
-    padding:20px;max-width:720px;margin:0 auto 36px;
-    display:flex;align-items:flex-start;gap:12px;
-  }
-  .error-icon{font-size:1.3rem;flex-shrink:0;}
-  .error-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;color:var(--red);margin-bottom:4px;}
-  .error-msg{font-size:.82rem;color:#7a2020;line-height:1.6;}
-
-  /* Empty state */
-  .empty-state{text-align:center;padding:48px 24px;max-width:480px;margin:0 auto;}
-  .empty-icon{font-size:2.6rem;margin-bottom:14px;display:block;}
-  .empty-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--ink);margin-bottom:7px;}
-  .empty-sub{font-size:.85rem;color:var(--ink3);line-height:1.7;}
-
-  /* ── SAFE TAP TARGET SIZE ── */
-  @media(max-width:480px){
-    .analyze-btn{min-height:48px;}
-    #urlInput{font-size:16px;} /* prevents iOS zoom on focus */
-  }
-  </style>
+  /* Footer */
+  footer{ margin-top:28px; text-align:center; color:var(--muted); font-size:13px }
+</style>
 </head>
-<body>
-
-<!-- NAV -->
+<body data-alaada-product="analyser">
+<script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
+<script src="/api/workspaces/client.js" data-product="analyser"></script>
+<script>if(!window.AlaadaWorkspace)document.addEventListener('DOMContentLoaded',()=>{const gate=document.createElement('div');gate.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui';gate.textContent='The private workspace service is unavailable. Reload when the service is connected.';document.body.append(gate);});</script>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BJGLCGLMK5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-BJGLCGLMK5');
+</script>
 <nav>
-  <a href="/" class="nav-logo">
-    <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-      <circle cx="14" cy="14" r="12.5" stroke="#1a5fff" stroke-width="1.4" fill="none" opacity=".2"/>
-      <circle cx="14" cy="14" r="7.5" stroke="#1a5fff" stroke-width="1.4" fill="none" opacity=".45"/>
-      <circle cx="14" cy="14" r="2.8" fill="#1a5fff"/>
-      <circle cx="22.5" cy="9" r="2" fill="#00957a">
-        <animateTransform attributeName="transform" type="rotate" from="0 14 14" to="360 14 14" dur="5s" repeatCount="indefinite"/>
-      </circle>
-    </svg>
-    <span class="nav-logo-text">Alaada</span>
-  </a>
-  <a href="/" class="nav-back">← Home</a>
+  <div class="nav-container">
+    <div class="nav-container">
+  <div class="logo">
+    <a href="/" aria-label="Alaada home" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+      <img src="images/alaada-logo.jpg" alt="Alaada Logo" style="height:40px; width:auto;">
+    </a>
+  </div>
+</div>
+
+    <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="mainNav">☰</button>
+
+    <ul class="nav-links" id="mainNav">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="alaada-os.html">Alaada OS</a></li>
+      <li><a href="alaada-universe.html">Universe</a></li>
+      <li><a href="alaada-lab.html">Lab</a></li>
+      <li><a href="prove-hosting.html">Prove Hosting</a></li>
+      <li><a href="website-analyzer.html" class="active">Website Analyser</a></li>
+    </ul>
+  </div>
 </nav>
 
-<!-- PAGE HEADER -->
-<div class="page-header">
-  <div class="page-header-inner">
-    <div class="page-eyebrow"><span>✦</span> Web Intelligence</div>
-    <h1 class="page-title">Analyse any website.<br><span>Instantly.</span></h1>
-    <p class="page-sub">Performance, SEO, Security, Accessibility and more — all in one clear report. Free, no sign-in required.</p>
-  </div>
-</div>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h2>Alaada Website Analyzer</h2>
+      <p>AI-powered site diagnostics with helpful, prioritized recommendations.</p>
+    </div>
+  </header>
 
-<!-- SEARCH BOX -->
-<div class="search-wrap">
-  <div class="search-card">
-    <div class="search-row">
-      <div class="url-input-wrap">
-        <span class="url-input-icon">🌐</span>
-        <input
-          type="url"
-          id="urlInput"
-          placeholder="https://yourwebsite.com"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="none"
-          spellcheck="false"
-          inputmode="url"
-        />
+  <main class="card" role="main" aria-labelledby="pageTitle">
+    <div class="hero-row">
+      <div class="left">
+        <label for="urlInput">Enter a website URL to analyze</label>
+        <input id="urlInput" inputmode="url" placeholder="https://example.com" aria-label="Website URL" autocomplete="off">
+
+        <div class="controls">
+          <button id="analyzeBtn" class="btn" aria-label="Analyze website">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M3 12h18M12 3v18" stroke="#081018" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Analyze
+          </button>
+
+          <button id="sampleBtn" class="btn ghost" title="Try example">Try example</button>
+
+          <div class="meta">
+            <div class="badge" id="planBadge">Checking workspace plan…</div>
+            <div class="muted" id="usesNote">You have 3 free analyses today.</div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px" class="muted">Tip: paste any public URL. The server fetches and analyzes the HTML. If you host locally, ensure the server can reach it.</div>
+
+        <div id="output" class="result-card" role="region" aria-live="polite" style="margin-top:18px">
+          <div class="muted">Enter a URL and click <strong>Analyze</strong> to begin.</div>
+        </div>
+
       </div>
-      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span class="btn-label">Analyse</span>
-      </button>
+
+      <aside class="right">
+        <div class="card result-card sidebar">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div class="muted">Alaada Score</div>
+              <div class="score" id="scoreDisplay">—</div>
+            </div>
+            <div style="text-align:right">
+              <div class="muted">Plan</div>
+              <div id="planSummary" style="font-weight:800;margin-top:6px">—</div>
+            </div>
+          </div>
+
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+          <div class="muted" id="timeNote">—</div>
+          <div style="margin-top:10px">
+            <div class="tools">
+              <button id="exportJson" class="btn ghost" title="Download JSON report">Download JSON</button>
+              <button id="copyReport" class="btn ghost" title="Copy summary to clipboard">Copy Summary</button>
+            </div>
+          </div>
+          <div style="margin-top:12px">
+            <button id="upgradeBtn" class="btn" style="width:100%">Manage personal subscription</button>
+          </div>
+        </div>
+      </aside>
     </div>
-    <div class="search-hint">
-      <span class="hint-item">⚡ ~10 seconds</span>
-      <span class="hint-item">🔒 Data not stored</span>
-      <span class="hint-item">↵ Press Enter</span>
-    </div>
-  </div>
+
+    <section id="results" aria-hidden="false"></section>
+  </main>
 </div>
 
-<!-- LOADING -->
-<div id="loading-state">
-  <div class="loading-card">
-    <div class="loading-spinner"></div>
-    <div class="loading-title">Analysing your website…</div>
-    <div class="loading-status" id="loading-status">Fetching page content</div>
-    <div class="loading-bar-track"><div class="loading-bar-fill" id="loading-bar"></div></div>
+<!-- simple modal -->
+<div id="modal" class="result-card" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,12,0.6);z-index:9999">
+  <div style="width:min(680px,92%);background:linear-gradient(180deg,#071016,#08111a);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.03)">
+    <h3 style="margin:0 0 8px">Alaada personal subscriptions</h3>
+    <p style="margin:0 0 12px;color:var(--muted)">Manage Free, Pro or Elite in your personal workspace. Changing plans preserves ownership of your existing reports.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="closeModal" class="btn ghost">Close</button>
+      <button id="goPremium" class="btn">Manage subscription</button>
+    </div>
   </div>
-</div>
-
-<!-- RESULTS -->
-<div id="results"></div>
-
-<!-- DEFAULT EMPTY STATE -->
-<div class="empty-state" id="empty-state">
-  <span class="empty-icon">🔍</span>
-  <div class="empty-title">Enter a URL above to get started</div>
-  <div class="empty-sub">We'll check performance, SEO health, security headers, accessibility issues, resource load, DOM quality, and tech stack — then summarise it with Orbit AI.</div>
 </div>
 
 <script>
-/* ── LOADING SIMULATION ─────────────────── */
-const loadingSteps = [
-  [0,  'Fetching page content…'],
-  [20, 'Parsing HTML structure…'],
-  [38, 'Checking SEO tags…'],
-  [52, 'Scanning security headers…'],
-  [65, 'Measuring resource sizes…'],
-  [78, 'Running accessibility audit…'],
-  [88, 'Generating Orbit AI summary…'],
-  [95, 'Finalising report…'],
-];
-let loadingInterval = null;
+(async () => {
+  'use strict';
+  try { await window.AlaadaWorkspace.ready; } catch { return; }
 
-function startLoading() {
-  const bar = document.getElementById('loading-bar');
-  const status = document.getElementById('loading-status');
-  document.getElementById('loading-state').style.display = 'block';
-  document.getElementById('results').style.display = 'none';
-  document.getElementById('empty-state').style.display = 'none';
-  let si = 0;
-  bar.style.width = '0%';
-  loadingInterval = setInterval(() => {
-    if (si < loadingSteps.length) {
-      bar.style.width = loadingSteps[si][0] + '%';
-      status.textContent = loadingSteps[si][1];
-      si++;
+  const API_ORIGIN = 'https://alaada-website-analyser-2.onrender.com/analyze';
+
+  const urlInput = document.getElementById('urlInput');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const output = document.getElementById('output');
+  const planBadge = document.getElementById('planBadge');
+  const usesNote = document.getElementById('usesNote');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const timeNote = document.getElementById('timeNote');
+  const modal = document.getElementById('modal');
+  const upgradeBtn = document.getElementById('upgradeBtn');
+  const closeModal = document.getElementById('closeModal');
+  const goPremium = document.getElementById('goPremium');
+  const sampleBtn = document.getElementById('sampleBtn');
+  const exportJsonBtn = document.getElementById('exportJson');
+  const copyReportBtn = document.getElementById('copyReport');
+  const resultsSection = document.getElementById('results');
+  const menuToggle = document.getElementById('menuToggle');
+  const mainNav = document.getElementById('mainNav');
+  const monitorsPanel=document.createElement('section');
+  monitorsPanel.className='result-card';
+  monitorsPanel.innerHTML='<h3>Saved monitoring targets</h3><p>Targets belong to the active workspace. Runs are manual; automatic scheduling is not enabled.</p><label>Target name <input id="monitorName" maxlength="200" placeholder="My website"></label> <label>Preferred interval (hours) <input id="monitorInterval" type="number" min="1" max="8760" value="24"></label> <button id="saveMonitor" class="btn">Save current URL as a target</button><div id="monitorList"></div><h3>Saved reports</h3><div id="reportHistory"></div>';
+  resultsSection.after(monitorsPanel);
+  let editingMonitor=null,analysisRunning=false;
+  async function monitorAction(action){try{await action();}catch(error){usesNote.textContent=error.message;}}
+  function renderSavedResources(){
+    const list=document.getElementById('monitorList');list.replaceChildren();
+    for(const item of window.AlaadaWorkspace.list('monitor')){
+      const data=item.data;if(!data||typeof data.url!=='string')continue;
+      const row=document.createElement('div'),label=document.createElement('span');label.textContent=(data.name||data.url)+' · '+(data.intervalHours||24)+'h preference · ';
+      row.append(label);
+      for(const [title,action] of [
+        ['Load',async()=>{editingMonitor=item.id;urlInput.value=data.url;document.getElementById('monitorName').value=data.name||'';document.getElementById('monitorInterval').value=data.intervalHours||24;usesNote.textContent='Editing target in '+window.AlaadaWorkspace.active.name;}],
+        ['Run now',async()=>{urlInput.value=data.url;await analyzeWebsite(data.url);} ],
+        ['Delete',async()=>{if(confirm('Delete this monitoring target from '+window.AlaadaWorkspace.active.name+'? Saved reports remain.')){await window.AlaadaWorkspace.remove('monitor',item.id);if(editingMonitor===item.id)editingMonitor=null;renderSavedResources();}}]
+      ]){const button=document.createElement('button');button.className='btn ghost';button.textContent=title;button.onclick=()=>monitorAction(action);row.append(button);}
+      list.append(row);
     }
-  }, 1800);
-}
-
-function stopLoading() {
-  clearInterval(loadingInterval);
-  document.getElementById('loading-bar').style.width = '100%';
-  setTimeout(() => { document.getElementById('loading-state').style.display = 'none'; }, 400);
-}
-
-/* ── SCORE HELPERS ─────────────────────── */
-function scoreColor(s) {
-  return s >= 70 ? '#16a34a' : s >= 40 ? '#d4930a' : '#e03333';
-}
-function scoreTag(s) {
-  if (s === undefined || s === null) return '';
-  const cls = s >= 70 ? 'tag-good' : s >= 40 ? 'tag-mid' : 'tag-bad';
-  const label = s >= 70 ? 'Good' : s >= 40 ? 'Average' : 'Poor';
-  return `<span class="score-tag ${cls}">${s}/100 · ${label}</span>`;
-}
-function ringOffset(score) {
-  const circ = 2 * Math.PI * 26;
-  return circ - (score / 100) * circ;
-}
-function scoreRing(score, color) {
-  const circ = (2 * Math.PI * 26).toFixed(1);
-  return `
-    <div class="score-ring-wrap">
-      <svg width="60" height="60" viewBox="0 0 64 64">
-        <circle class="score-ring-track" cx="32" cy="32" r="26"/>
-        <circle class="score-ring-fill" cx="32" cy="32" r="26"
-          style="stroke:${color};stroke-dasharray:${circ};stroke-dashoffset:${circ}"
-          data-offset="${ringOffset(score)}"/>
-      </svg>
-      <div class="score-num-label">${score}</div>
-    </div>`;
-}
-function drRow(label, value, status) {
-  const cls = status === 'good' ? 'good' : status === 'bad' ? 'bad' : status === 'mid' ? 'mid' : '';
-  return `<div class="detail-row"><span class="dr-label">${label}</span><span class="dr-value ${cls}">${value}</span></div>`;
-}
-function issueItem(text, type) {
-  const cls = type === 'ok' ? 'ok' : type === 'warn' ? 'warn' : '';
-  const icon = type === 'ok' ? '✓' : type === 'warn' ? '⚠' : '✗';
-  return `<div class="issue-item ${cls}"><span style="flex-shrink:0;font-size:.8rem;font-weight:700;">${icon}</span>${text}</div>`;
-}
-
-/* ── RENDER RESULT ─────────────────────── */
-function renderResult(data) {
-  const s = data.summary;
-  let html = '';
-
-  // Score cards row
-  const scoreMap = [
-    { label: 'SEO',           score: s.seo.score,            icon: '🔍' },
-    { label: 'Security',      score: s.security.score,       icon: '🔒' },
-    { label: 'Accessibility', score: s.accessibility.score,  icon: '♿' },
-    { label: 'DOM Health',    score: s.dom.cleanliness_score, icon: '🌳' },
-  ];
-  html += `<div class="scores-row">`;
-  for (const sc of scoreMap) {
-    const color = scoreColor(sc.score);
-    html += `
-      <div class="score-card">
-        <div class="score-name">${sc.icon} ${sc.label}</div>
-        ${scoreRing(sc.score, color)}
-        ${scoreTag(sc.score)}
-      </div>`;
+    if(!list.children.length)list.textContent='No saved targets in this workspace.';
+    const history=document.getElementById('reportHistory');history.replaceChildren();
+    for(const item of window.AlaadaWorkspace.list('report')){
+      const data=item.data;if(!data||!data.result)continue;
+      const button=document.createElement('button');button.className='btn ghost';button.textContent=(data.url||'Report')+' · '+(data.createdAt||'');button.onclick=()=>{lastResult=data.result;resultsSection.innerHTML=renderAnalysisText(data.result.ai_summary||data.result.summary||data.result);timeNote.textContent='Saved report from '+(data.createdAt||'this workspace');};history.append(button);
+    }
+    if(!history.children.length)history.textContent='No saved reports loaded. Reload after an analysis to refresh history.';
   }
-  html += `</div>`;
-
-  // Orbit AI Summary
-  html += `
-    <div class="ai-summary-card">
-      <div class="ai-header">
-        <div class="ai-badge"><span class="ai-dot"></span>Orbit AI Summary</div>
-      </div>
-      <div class="ai-summary-text">${data.ai_summary.replace(/\n/g,'<br>')}</div>
-    </div>`;
-
-  // Detail grid
-  html += `<div class="detail-grid">`;
-
-  // Page Overview
-  const t = s.timings_ms;
-  html += `
-    <div class="detail-card">
-      <div class="detail-header">
-        <div class="detail-icon teal">📄</div>
-        <div class="detail-title">Page Overview</div>
-      </div>
-      <div class="overview-grid">
-        <div class="overview-stat"><strong>${s.html_size_kb} KB</strong><span>HTML Size</span></div>
-        <div class="overview-stat"><strong>${t?.total_ms ?? '—'} ms</strong><span>Load Time</span></div>
-        <div class="overview-stat"><strong>${s.resources.images_count}</strong><span>Images</span></div>
-        <div class="overview-stat"><strong>${s.resources.scripts_count}</strong><span>Scripts</span></div>
-        <div class="overview-stat"><strong>${s.resources.css_count}</strong><span>CSS Files</span></div>
-        <div class="overview-stat"><strong>${s.resources.fonts_count}</strong><span>Fonts</span></div>
-      </div>
-      <div class="detail-rows" style="margin-top:12px;">
-        ${drRow('Title', s.title || '❌ Missing', s.title ? 'good' : 'bad')}
-        ${drRow('URL', s.url)}
-        ${drRow('Est. Image Size', s.resources.images_total_kb_est + ' KB', s.resources.large_images_count > 2 ? 'bad' : 'good')}
-        ${drRow('3rd-party Scripts', s.resources.script_third_party_count)}
-      </div>
-    </div>`;
-
-  // SEO
-  const seoIssues = s.seo.issues || [];
-  html += `
-    <div class="detail-card">
-      <div class="detail-header">
-        <div class="detail-icon blue">🔍</div>
-        <div class="detail-title">SEO</div>
-        <div class="detail-score">${scoreTag(s.seo.score)}</div>
-      </div>
-      <div class="detail-rows">
-        ${drRow('Meta Description', s.seo.meta_description || '❌ Missing', s.seo.meta_description ? 'good' : 'bad')}
-        ${drRow('Canonical Tag', s.seo.canonical || '❌ Missing', s.seo.canonical ? 'good' : 'bad')}
-        ${drRow('H1 Tags', s.seo.h1_count, s.seo.h1_count === 1 ? 'good' : s.seo.h1_count === 0 ? 'bad' : 'mid')}
-      </div>
-      <div class="issues-list" style="margin-top:10px;">
-        ${seoIssues.length ? seoIssues.map(i => issueItem(i, 'bad')).join('') : issueItem('No SEO issues found', 'ok')}
-      </div>
-    </div>`;
-
-  // Security
-  const secIssues = s.security.issues || [];
-  html += `
-    <div class="detail-card">
-      <div class="detail-header">
-        <div class="detail-icon red">🔒</div>
-        <div class="detail-title">Security</div>
-        <div class="detail-score">${scoreTag(s.security.score)}</div>
-      </div>
-      <div class="detail-rows">
-        ${drRow('Forms', s.security.forms_count)}
-        ${drRow('iFrames', s.security.iframes_count, s.security.iframes_count > 0 ? 'warn' : '')}
-        ${drRow('Scripts w/o SRI', s.security.external_scripts_no_sri?.length ?? 0, (s.security.external_scripts_no_sri?.length ?? 0) > 0 ? 'bad' : 'good')}
-      </div>
-      <div class="issues-list" style="margin-top:10px;">
-        ${secIssues.length ? secIssues.map(i => issueItem(i, 'bad')).join('') : issueItem('No security issues detected', 'ok')}
-      </div>
-    </div>`;
-
-  // Accessibility
-  const accIssues = s.accessibility.issues || [];
-  html += `
-    <div class="detail-card">
-      <div class="detail-header">
-        <div class="detail-icon purple">♿</div>
-        <div class="detail-title">Accessibility</div>
-        <div class="detail-score">${scoreTag(s.accessibility.score)}</div>
-      </div>
-      <div class="detail-rows">
-        ${drRow('Images w/o alt', s.accessibility.images_without_alt, s.accessibility.images_without_alt > 0 ? 'bad' : 'good')}
-        ${drRow('Empty buttons', s.accessibility.empty_buttons, s.accessibility.empty_buttons > 0 ? 'bad' : 'good')}
-        ${drRow('Empty links', s.accessibility.empty_links, s.accessibility.empty_links > 0 ? 'bad' : 'good')}
-      </div>
-      <div class="issues-list" style="margin-top:10px;">
-        ${accIssues.length ? accIssues.map(i => issueItem(i, 'bad')).join('') : issueItem('Accessibility looks great', 'ok')}
-      </div>
-    </div>`;
-
-  // DOM
-  const domWarnings = s.dom.repetition_warnings || [];
-  html += `
-    <div class="detail-card">
-      <div class="detail-header">
-        <div class="detail-icon green">🌳</div>
-        <div class="detail-title">DOM Health</div>
-        <div class="detail-score">${scoreTag(s.dom.cleanliness_score)}</div>
-      </div>
-      <div class="detail-rows">
-        ${drRow('DOM Depth', s.dom.dom_depth, s.dom.dom_depth > 15 ? 'mid' : 'good')}
-        ${drRow('Total Nodes', s.dom.total_nodes, s.dom.total_nodes > 1500 ? 'mid' : 'good')}
-        ${drRow('Inline Styles', s.dom.inline_styles_count, s.dom.inline_styles_count > 20 ? 'bad' : 'good')}
-        ${drRow('Empty Tags', s.dom.empty_tags_count, s.dom.empty_tags_count > 10 ? 'mid' : 'good')}
-      </div>
-      <div class="issues-list" style="margin-top:10px;">
-        ${domWarnings.length ? domWarnings.map(i => issueItem(i, 'warn')).join('') : issueItem('DOM structure is clean', 'ok')}
-      </div>
-    </div>`;
-
-  // Tech Stack
-  const techs = s.tech_stack?.detected || [];
-  html += `
-    <div class="detail-card full">
-      <div class="detail-header">
-        <div class="detail-icon gold">⚙️</div>
-        <div class="detail-title">Tech Stack Detected</div>
-      </div>
-      <div class="tech-pills">
-        ${techs.length ? techs.map(t => `<span class="tech-pill">${t}</span>`).join('') : '<span style="font-size:.8rem;color:var(--ink3);">No recognisable tech stack detected</span>'}
-      </div>
-    </div>`;
-
-  html += `</div>`; // close detail-grid
-  return html;
-}
-
-/* ── ANIMATE RINGS ─────────────────────── */
-function animateRings() {
-  document.querySelectorAll('.score-ring-fill').forEach(el => {
-    const offset = parseFloat(el.dataset.offset);
-    requestAnimationFrame(() => {
-      setTimeout(() => { el.style.strokeDashoffset = offset; }, 80);
-    });
+  document.getElementById('saveMonitor').onclick=()=>monitorAction(async()=>{
+    const url=new URL(normalizeUrl(urlInput.value.trim()));
+    if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Enter a public HTTP(S) URL without credentials.');
+    const intervalHours=Number(document.getElementById('monitorInterval').value),name=document.getElementById('monitorName').value.trim()||url.hostname;
+    if(!Number.isInteger(intervalHours)||intervalHours<1||intervalHours>8760)throw Error('Choose an interval from 1 to 8760 hours.');
+    const id=editingMonitor||crypto.randomUUID();
+    await window.AlaadaWorkspace.save('monitor',id,{name,url:url.href,intervalHours,scheduling:'manual'},name);
+    editingMonitor=null;renderSavedResources();usesNote.textContent='Monitoring target saved in '+window.AlaadaWorkspace.active.name+'. Automatic scheduling is not enabled.';
   });
-}
 
-/* ── MAIN ANALYZE ─────────────────────── */
-async function analyze() {
-  const url = document.getElementById('urlInput').value.trim();
-  const btn = document.getElementById('analyzeBtn');
-  const results = document.getElementById('results');
-
-  if (!url) {
-    document.getElementById('urlInput').focus();
-    document.querySelector('.url-input-wrap').style.borderColor = 'var(--red)';
-    setTimeout(() => document.querySelector('.url-input-wrap').style.borderColor = '', 1200);
-    return;
+  // Plans and quotas are server-owned and scoped to the active workspace.
+  async function refreshUsageUI() {
+    analyzeBtn.disabled = true;
+    sampleBtn.disabled = true;
+    try {
+      const policy = await window.AlaadaWorkspace.entitlements();
+      const limit = policy.products.analyser;
+      document.getElementById('planSummary').textContent = policy.plan;
+      planBadge.textContent = `${policy.plan} • ${limit.remaining} saved report writes remaining this month`;
+      usesNote.textContent = limit.execution_available
+        ? `Active workspace: ${window.AlaadaWorkspace.active.name}. Usage is checked by the server.`
+        : 'Analysis is unavailable until the workspace-authorised backend is connected. Existing saved reports remain yours.';
+      analyzeBtn.disabled = !limit.execution_available || limit.remaining <= 0;
+      sampleBtn.disabled = analyzeBtn.disabled;
+    } catch(error) { usesNote.textContent = error.message; }
   }
 
-  btn.disabled = true;
-  startLoading();
+  // ----------------- Utilities -----------------
+  function normalizeUrl(u) {
+    if (!u) return '';
+    if (!/^https?:\/\//i.test(u)) return 'https://' + u;
+    return u;
+  }
 
-  // Dismiss keyboard on mobile after submit
-  document.getElementById('urlInput').blur();
+  function escapeHtml(s) {
+    return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  }
 
-  try {
-    const res = await fetch('https://alaada-website-analyser-2.onrender.com/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
-    });
-    const data = await res.json();
-    stopLoading();
+  const sectionColors = {
+    PROS: '#7ef0b2', CONS: '#ff6b6b', 'UI/UX Suggestions': '#ffa500',
+    'Design Improvements': '#1e90ff', 'SEO Improvements': '#ff7f50',
+    'Performance Improvements': '#9b59b6', 'Accessibility Improvements': '#f39c12',
+    'Final Summary': '#ffffff'
+  };
 
-    if (data.error) {
-      results.innerHTML = `
-        <div class="error-card">
-          <span class="error-icon">⚠️</span>
-          <div>
-            <div class="error-title">Analysis failed</div>
-            <div class="error-msg">${data.error}<br><br>Please check the URL and try again. Make sure it starts with https://</div>
-          </div>
+  const sectionIcons = {
+    PROS: '✅', CONS: '❌', 'UI/UX Suggestions': '💡',
+    'Design Improvements': '🎨', 'SEO Improvements': '🔍',
+    'Performance Improvements': '⚡', 'Accessibility Improvements': '♿',
+    'Final Summary': '📌'
+  };
+
+  function renderObject(obj) {
+    let html = '';
+    for (const key in obj) {
+      const value = obj[key];
+      const title = escapeHtml(key.toUpperCase());
+      const color = sectionColors[key] || '#ff7f50';
+      const icon = sectionIcons[key] || '📌';
+
+      html += `<div class="result-card" style="border-left:4px solid ${color};">
+        <h3>${icon} ${title}</h3>
+        <div class="muted">`;
+
+      if (typeof value === 'string') html += `<div>- ${escapeHtml(value)}</div>`;
+      else if (Array.isArray(value)) value.forEach(v => {
+        html += (typeof v === 'object' && v !== null) ? renderObject(v) : `<div>- ${escapeHtml(v)}</div>`;
+      });
+      else if (typeof value === 'object' && value !== null) html += renderObject(value);
+      else html += `<div>- ${escapeHtml(value)}</div>`;
+
+      html += `</div></div>`;
+    }
+    return html;
+  }
+
+  function renderAnalysisText(data) {
+    if (!data) return `<div class="muted">No analysis returned.</div>`;
+    if (typeof data === 'string') return `<div class="muted">${escapeHtml(data)}</div>`;
+    if (typeof data === 'object') return renderObject(data);
+    return `<div class="muted">No analysis returned.</div>`;
+  }
+
+  function animateScore(n) {
+    let cur = 0;
+    scoreDisplay.textContent = '—';
+    const step = Math.max(1, Math.floor(n / 20));
+    const id = setInterval(() => {
+      cur += step;
+      if (cur >= n) { scoreDisplay.textContent = n; clearInterval(id); return; }
+      scoreDisplay.textContent = cur;
+    }, 18);
+  }
+
+  function showModal() { modal.style.display = 'flex'; }
+  function hideModal() { modal.style.display = 'none'; }
+
+  let lastResult = null;
+
+  // ----------------- Analyze -----------------
+  async function analyzeWebsite(urlRaw) {
+    if(analysisRunning)return;
+    analysisRunning=true;
+    const url = normalizeUrl(urlRaw);
+
+    resultsSection.innerHTML = '';
+    output.innerHTML = `<div class="muted">Preparing analysis for <strong>${escapeHtml(url)}</strong>…</div>`;
+    analyzeBtn.disabled = true;
+
+    output.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <div class="muted">Scanning & analyzing…</div>
+      </div>`;
+
+    try {
+      const resp = await window.AlaadaWorkspace.productFetch(API_ORIGIN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      if (resp.status === 429) {
+        resultsSection.innerHTML = `
+          <div class="result-card">
+            <h3>Workspace usage limit reached</h3>
+            <div class="muted">The active workspace has reached its current plan allowance.</div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn" id="upgradeInline">Upgrade</button>
+              <button class="btn ghost" id="tryLater">Try later</button>
+            </div>
+          </div>`;
+        document.getElementById('upgradeInline').onclick = showModal;
+        document.getElementById('tryLater').onclick = refreshUsageUI;
+        analyzeBtn.disabled = true;
+        return;
+      }
+
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => 'Server error');
+        resultsSection.innerHTML = `<div class="result-card"><h3>Error</h3><div class="muted">${escapeHtml(errText)}</div></div>`;
+        refreshUsageUI();
+        analyzeBtn.disabled = false;
+        return;
+      }
+
+      let data = {};
+      try { data = await resp.json(); } catch { data = { error: 'Invalid JSON from server' }; }
+
+      lastResult = data;
+      // The authenticated gateway persists the report before returning success.
+      if (!resp.headers.get('X-Alaada-Report')) throw new Error('Report persistence was not confirmed.');
+
+      // ✅ Corrected: AI summary > structured summary > fallback
+      const toRender = data.ai_summary || data.summary || data;
+      resultsSection.innerHTML = renderAnalysisText(toRender);
+
+      // Score calculation
+      const rawText = JSON.stringify(toRender).toUpperCase();
+      const pros = (rawText.match(/PROS/g) || []).length;
+      const cons = (rawText.match(/CONS/g) || []).length;
+      const score = Math.max(40, Math.min(96, 80 - cons * 4 + pros * 2));
+      animateScore(score);
+
+      timeNote.textContent = `Last analyzed: ${new Date().toLocaleString()}`;
+      await refreshUsageUI();
+
+    } catch {
+      resultsSection.innerHTML = `
+        <div class="result-card">
+          <h3>Network error</h3>
+          <div class="muted">Failed to contact backend. Possible CORS or server issue.</div>
         </div>`;
-    } else {
-      results.innerHTML = renderResult(data);
-      animateRings();
+    } finally {
+      analysisRunning=false;
+      await refreshUsageUI();
     }
-    results.style.display = 'block';
-    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  } catch (err) {
-    stopLoading();
-    results.innerHTML = `
-      <div class="error-card">
-        <span class="error-icon">⚠️</span>
-        <div>
-          <div class="error-title">Connection error</div>
-          <div class="error-msg">Could not reach the analysis server. Please try again in a moment.<br><small style="opacity:.6">${err.message}</small></div>
-        </div>
-      </div>`;
-    results.style.display = 'block';
-  } finally {
-    btn.disabled = false;
   }
-}
 
-/* ── ENTER KEY ─────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('urlInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') analyze();
-  });
-});
+  // ----------------- Event handlers -----------------
+  analyzeBtn.onclick = () => analyzeWebsite(urlInput.value.trim());
+  sampleBtn.onclick = () => {
+    urlInput.value = "https://example.com";
+    analyzeWebsite("https://example.com");
+  };
+  exportJsonBtn.onclick = () => {
+    if (!lastResult) return;
+    const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "alaada-report.json";
+    a.click();
+  };
+  copyReportBtn.onclick = async () => {
+    if (!lastResult) return;
+    await navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2));
+    copyReportBtn.textContent = "Copied!";
+    setTimeout(() => copyReportBtn.textContent = "Copy Summary", 1400);
+  };
+  menuToggle.onclick = () => mainNav.classList.toggle('show');
+  upgradeBtn.onclick = () => location.href = '/workspaces';
+  closeModal.onclick = hideModal;
+  goPremium.onclick = () => location.href = "/workspaces";
+
+  refreshUsageUI();
+  renderSavedResources();
+})();
 </script>
+
+<footer style="margin-top:28px;text-align:center;color:var(--muted);font-size:13px">
+  <div>&copy; 2025 Alaada. All rights reserved.</div>
+  <div style="margin-top:6px">Contact: <a href="mailto:alaada@alaada.com">alaada@alaada.com</a></div>
+</footer>
 </body>
 </html>

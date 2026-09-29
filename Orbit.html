@@ -1022,7 +1022,10 @@ body {
 }
 </style>
 </head>
-<body>
+<body data-alaada-product="orbit">
+<script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
+<script src="/api/workspaces/client.js" data-product="orbit"></script>
+<script>if(!window.AlaadaWorkspace)document.addEventListener('DOMContentLoaded',()=>{const gate=document.createElement('div');gate.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui';gate.textContent='The private workspace service is unavailable. Reload when the service is connected.';document.body.append(gate);});</script>
 <div id="app">
 
   <!-- SIDEBAR -->
@@ -1221,19 +1224,19 @@ const VOICE_OPTIONS = [
 const MAX_SPEAK_CHARS = 1500;
 
 let voiceConfig = (function() {
-  try { return JSON.parse(localStorage.getItem("orbit_voice") || "null") || { voice:"nova", model:"tts-1", speed:1.0, autoSpeak:false }; }
+  try { return JSON.parse(window.AlaadaWorkspace.storage.getItem("orbit_voice") || "null") || { voice:"nova", model:"tts-1", speed:1.0, autoSpeak:false }; }
   catch { return { voice:"nova", model:"tts-1", speed:1.0, autoSpeak:false }; }
 })();
 
 let voiceAudio = null, voiceSpeaking = false, voiceAbort = null;
-let profile      = JSON.parse(localStorage.getItem("orbit_profile") || "null");
-let threads      = JSON.parse(localStorage.getItem("orbit_threads") || "[]");
-let imageGallery = (JSON.parse(localStorage.getItem("orbit_images") || "[]")).map(img => ({
+let profile      = JSON.parse(window.AlaadaWorkspace.storage.getItem("orbit_profile") || "null");
+let threads      = JSON.parse(window.AlaadaWorkspace.storage.getItem("orbit_threads") || "[]");
+let imageGallery = (JSON.parse(window.AlaadaWorkspace.storage.getItem("orbit_images") || "[]")).map(img => ({
   id: img.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
   url: img.url || img.data || "", prompt: img.prompt || "", timestamp: img.timestamp || Date.now(),
 })).filter(img => img.url);
 
-let userMemory = JSON.parse(localStorage.getItem("orbit_memory") || "{}");
+let userMemory = JSON.parse(window.AlaadaWorkspace.storage.getItem("orbit_memory") || "{}");
 let activeId = null, ws, fileId = null, fileIsImage = false, filePreview = null;
 let recorder = null, chunks = [], busy = false;
 
@@ -1280,7 +1283,13 @@ function parseMathMarkdown(text) {
   return html;
 }
 
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
+  try { await window.AlaadaWorkspace.ready; } catch { return; }
+  profile = JSON.parse(window.AlaadaWorkspace.storage.getItem('orbit_profile') || 'null');
+  threads = JSON.parse(window.AlaadaWorkspace.storage.getItem('orbit_threads') || '[]');
+  userMemory = JSON.parse(window.AlaadaWorkspace.storage.getItem('orbit_memory') || '{}');
+  imageGallery = JSON.parse(window.AlaadaWorkspace.storage.getItem('orbit_images') || '[]');
+  voiceConfig = JSON.parse(window.AlaadaWorkspace.storage.getItem('orbit_voice') || 'null') || voiceConfig;
   autoResizeTA();
   swipeToDismissSheet("profileSheet", "profileModal", () => profile?.name && profile?.email);
   swipeToDismissSheet("voiceSheet",   "voiceModal",   () => true);
@@ -1298,7 +1307,7 @@ window.addEventListener("load", () => {
   vBtn.addEventListener("touchcancel", () => clearTimeout(vpTimer));
   vBtn.addEventListener("touchmove",   () => clearTimeout(vpTimer), { passive: true });
 
-  fetch(`${BACKEND}/health`).then(() => setStatus("Ready")).catch(() => setStatus("Connecting…"));
+  // Workspace readiness is reported by connectWS through verified entitlements.
 });
 
 function prepareTextForSpeech(raw) {
@@ -1316,7 +1325,7 @@ async function speakText(text) {
   setVoiceState("loading");
   try {
     voiceAbort = new AbortController();
-    const res = await fetch(`${BACKEND}/text-to-voice`, {
+    const res = await window.AlaadaWorkspace.productFetch(`${BACKEND}/text-to-voice`, {
       method:"POST", credentials:"include",
       headers:{"Content-Type":"application/json"},
       signal: voiceAbort.signal,
@@ -1389,7 +1398,7 @@ function closeVoiceModal() { document.getElementById("voiceModal").classList.rem
 function saveVoiceSettings() {
   const selCard = document.querySelector("#voiceCards .voice-card.selected");
   voiceConfig = { voice: selCard?selCard.dataset.voice:voiceConfig.voice, speed: parseFloat(document.getElementById("v_speed").value), model: document.getElementById("v_model").value, autoSpeak: document.getElementById("v_autospeak").checked };
-  localStorage.setItem("orbit_voice", JSON.stringify(voiceConfig));
+  window.AlaadaWorkspace.storage.setItem("orbit_voice", JSON.stringify(voiceConfig));
   syncVoiceBtn(); closeVoiceModal(); toast("Voice settings saved ✓");
 }
 
@@ -1432,8 +1441,8 @@ function switchTab(tab) {
 }
 
 function saveImageGallery() {
-  try { if(imageGallery.length>100)imageGallery=imageGallery.slice(-100); localStorage.setItem("orbit_images",JSON.stringify(imageGallery)); }
-  catch(e){ imageGallery=imageGallery.slice(-30); try{localStorage.setItem("orbit_images",JSON.stringify(imageGallery));}catch{} }
+  try { if(imageGallery.length>100)imageGallery=imageGallery.slice(-100); window.AlaadaWorkspace.storage.setItem("orbit_images",JSON.stringify(imageGallery)); }
+  catch(e){ imageGallery=imageGallery.slice(-30); try{window.AlaadaWorkspace.storage.setItem("orbit_images",JSON.stringify(imageGallery));}catch{} }
 }
 
 async function fetchAsBase64(remoteUrl) {
@@ -1502,6 +1511,8 @@ function openSidebar(){document.getElementById("sidebar").classList.add("open");
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("open");}
 
 function connectWS() {
+  window.AlaadaWorkspace.entitlements().then(policy=>setStatus(policy.products.orbit.execution_available?"Workspace text chat ready":"Workspace Orbit backend needs configuration")).catch(error=>setStatus(error.message)); return; // Execution uses the authenticated workspace API.
+
   if(ws&&(ws.readyState===WebSocket.OPEN||ws.readyState===WebSocket.CONNECTING))return;
   ws=new WebSocket(WS_URL);
   ws.onopen=()=>setStatus("Connected");
@@ -1526,22 +1537,27 @@ function profilePayload() {
   return{name:profile.name||"",email:profile.email||"",age:profile.age||"",dob:profile.dob||"",profession:profile.profession||"",hobby:profile.hobby||"",country:profile.country||"",skills:profile.skills||"",style:profile.style||"Professional"};
 }
 
-function setCookie(n,v,d=365){const e=new Date(Date.now()+d*864e5).toUTCString();document.cookie=`${n}=${encodeURIComponent(v)};expires=${e};path=/;SameSite=Lax`;}
 
-function send() {
+async function send() {
   if(busy)return;
   const ta=document.getElementById("inputTextarea");const text=ta.value;
   if(!text.trim()&&!fileId)return;
-  if(!ws||ws.readyState!==WebSocket.OPEN){toast("Not connected — reconnecting…");connectWS();return;}
+  if(fileId){toast("Workspace file execution is not connected yet.");return;}
   const t=activeThread();if(!t)return;
   t.messages.push({role:"user",text:text||"(file sent)",images:(filePreview&&fileIsImage)?[filePreview]:null});
   ta.value="";ta.style.height="auto";
-  const prevFileId=fileId,prevFileIsImage=fileIsImage;
   filePreview=null;fileId=null;fileIsImage=false;hidePreview();
-  t.messages.push({role:"assistant",text:"__TYPING__"});
   saveThreads();renderChat();busy=true;lockInput(true);stopSpeaking();
-  ws.send(JSON.stringify({question:text||"User sent a file.",image_file_id:(prevFileId&&prevFileIsImage)?prevFileId:null,file_id:(prevFileId&&!prevFileIsImage)?prevFileId:null,profile:profilePayload()}));
   closeSidebar();
+  setStatus("Orbit is replying in "+window.AlaadaWorkspace.active.name+"…");
+  try {
+    const updated=await window.AlaadaWorkspace.orbitReply(t.id);
+    t.messages=updated.messages;
+    updateUserMemory(text,t.messages[t.messages.length-1].text);
+    autoTitle();saveThreads();renderChat();
+    setStatus("Saved in "+window.AlaadaWorkspace.active.name);
+  } catch(error) {toast(error.message,7000);setStatus("Reply not completed. Reload to verify the saved conversation.");}
+  finally {busy=false;lockInput(false);}
 }
 
 document.getElementById("inputTextarea").addEventListener("keydown",(e)=>{if(e.key==="Enter"&&!e.shiftKey&&window.innerWidth>=640){e.preventDefault();send();}});
@@ -1619,9 +1635,8 @@ function renderThreads() {
 }
 
 function saveThreads() {
-  const trim=threads.map(t=>({...t,messages:t.messages.slice(-200)}));
-  try{localStorage.setItem("orbit_threads",JSON.stringify(trim));}
-  catch{threads=threads.slice(0,20);localStorage.setItem("orbit_threads",JSON.stringify(threads));}
+  try{window.AlaadaWorkspace.storage.setItem("orbit_threads",JSON.stringify(threads));}
+  catch(error){toast('Conversations were not saved: '+error.message);}
 }
 
 function activeThread(){return threads.find(t=>t.id===activeId);}
@@ -1731,12 +1746,12 @@ function saveProfile() {
   if(!name){toast("Name is required.");return;}if(!email){toast("Email is required.");return;}
   const dob=document.getElementById("p_dob").value;if(dob&&new Date(dob)>=new Date()){toast("DOB must be in the past.");return;}
   profile={name,email,age:document.getElementById("p_age").value.trim(),dob,profession:document.getElementById("p_profession").value.trim(),hobby:document.getElementById("p_hobby").value.trim(),country:document.getElementById("p_country").value.trim(),skills:document.getElementById("p_skills").value.trim(),style:document.getElementById("p_style").value};
-  localStorage.setItem("orbit_profile",JSON.stringify(profile));setCookie("orbit_name",profile.name);setCookie("orbit_email",profile.email);refreshProfileUI();closeSheet();toast("Profile saved ✓");
+  window.AlaadaWorkspace.storage.setItem("orbit_profile",JSON.stringify(profile));refreshProfileUI();closeSheet();toast("Profile saved ✓");
 }
 
 document.getElementById("profileModal").addEventListener("click",(e)=>{if(e.target===document.getElementById("profileModal"))if(profile?.name&&profile?.email)closeSheet();});
 
-function checkBirthday() {if(!profile?.dob)return;const today=new Date().toISOString().slice(0,10);if(profile.dob.slice(5,10)!==today.slice(5,10))return;if(localStorage.getItem("orbit_bday")===today)return;const t=activeThread();if(t){t.messages.push({role:"assistant",text:`🎉 Happy Birthday, **${profile.name}**! Hope it's amazing! 🎂`});saveThreads();renderChat();}localStorage.setItem("orbit_bday",today);}
+function checkBirthday() {if(!profile?.dob)return;const today=new Date().toISOString().slice(0,10);if(profile.dob.slice(5,10)!==today.slice(5,10))return;if(window.AlaadaWorkspace.storage.getItem("orbit_bday")===today)return;const t=activeThread();if(t){t.messages.push({role:"assistant",text:`🎉 Happy Birthday, **${profile.name}**! Hope it's amazing! 🎂`});saveThreads();renderChat();}window.AlaadaWorkspace.storage.setItem("orbit_bday",today);}
 
 let ctxId=null;
 function openCtx(id,e){ctxId=id;const m=document.getElementById("ctxMenu");m.style.transform="";m.style.left=Math.min(e.pageX,window.innerWidth-178)+"px";m.style.top=Math.min(e.pageY,window.innerHeight-155)+"px";m.style.display="block";e.stopPropagation();}
@@ -1798,14 +1813,14 @@ async function toggleMic() {
 function updateUserMemory(userMessage,aiResponse) {
   userMemory.interactions=(userMemory.interactions||0)+1;userMemory.lastActive=Date.now();
   if(userMessage){const q=userMessage.toLowerCase();if(q.includes("how")||q.includes("what")||q.includes("why")){userMemory.commonQuestions=userMemory.commonQuestions||[];userMemory.commonQuestions.push({q:userMessage.substring(0,100),timestamp:Date.now()});if(userMemory.commonQuestions.length>20)userMemory.commonQuestions=userMemory.commonQuestions.slice(-20);}}
-  localStorage.setItem("orbit_memory",JSON.stringify(userMemory));
+  window.AlaadaWorkspace.storage.setItem("orbit_memory",JSON.stringify(userMemory));
 }
 
 function escHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
 function toast(msg,ms=2800){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("show"),ms);}
 
-async function timedFetch(url,opts={},ms=25000){const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),ms);try{const res=await fetch(url,{...opts,signal:ctrl.signal});clearTimeout(timer);return res;}catch(e){clearTimeout(timer);if(e.name==="AbortError")throw new Error("Request timed out — server waking up, please retry");throw e;}}
+async function timedFetch(url,opts={},ms=25000){const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),ms);try{const res=await window.AlaadaWorkspace.productFetch(url,{...opts,signal:ctrl.signal});clearTimeout(timer);return res;}catch(e){clearTimeout(timer);if(e.name==="AbortError")throw new Error("Request timed out — server waking up, please retry");throw e;}}
 </script>
 </body>
 </html>

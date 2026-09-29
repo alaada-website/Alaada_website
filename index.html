@@ -771,6 +771,9 @@
   margin-top:2px;
 }
   </style>
+  <!-- Alaada UMS: Supabase is the canonical identity layer. Configure the two
+       public values before this script in deployment; never expose service keys. -->
+  <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
 </head>
 <body>
 
@@ -802,6 +805,11 @@
   <div id="user-badge">
     <div class="badge-avatar" id="badge-initial">A</div>
     <span id="badge-name">User</span>
+    <a href="/workspaces" title="Appwrite personal and organisation workspaces" style="text-decoration:none;color:inherit;font-size:.72rem;">Workspaces</a>
+    <a href="/account.html" title="Open account center" style="text-decoration:none;color:inherit;font-size:.72rem;">Account</a>
+    <a href="/team.html" title="Manage team" style="text-decoration:none;color:inherit;font-size:.72rem;">Team</a>
+    <a href="/account.html#preferences" title="Settings" style="text-decoration:none;color:inherit;font-size:.72rem;">Settings</a>
+    <a id="admin-link" href="/admin.html" title="Platform admin" style="display:none;text-decoration:none;color:inherit;font-size:.72rem;">Admin</a>
     <button id="badge-logout" onclick="logout()" title="Sign out">✕</button>
   </div>
 </nav>
@@ -1642,6 +1650,7 @@ if(ademo){
 /* AUTH */
 (()=>{
   "use strict";
+  /* Appwrite is the identity authority for all four product workspaces. */
   const EP="https://sfo.cloud.appwrite.io/v1",PID="6972444700208a437da1";
   const OAUTH=`${EP}/account/sessions/oauth2/google?project=${PID}&success=${encodeURIComponent("https://www.alaada.com")}&failure=${encodeURIComponent("https://www.alaada.com")}`;
   const CK="alaada_auth",IK="alaada_identity",PK="alaada_oauth_pending",AK="alaada_authed",CD=7;
