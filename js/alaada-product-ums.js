@@ -1,23 +1,43 @@
-/* Product integration shim: UX guards only; Supabase/RLS remain authoritative. */
+/* Shared Alaada UMS browser*/
 (function () {
-  const product = document.body?.dataset?.alaadaProduct;
-  if (!product || !window.AlaadaUMS) return;
-  const publicProducts = new Set(['analyser']);
-  window.AlaadaProduct = {
-    product,
-    async ready({ permission, feature, optional = false } = {}) {
-      if (publicProducts.has(product) && optional) return true;
-      await window.AlaadaUMS.refresh();
-      if (!AlaadaUMS.user) { if (!optional) location.replace('/auth.html?next=' + encodeURIComponent(location.pathname)); return optional; }
-      if (!AlaadaUMS.activeOrganizationId && !optional) { location.replace('/account.html'); return false; }
-      if (permission && !(await AlaadaUMS.hasPermission(AlaadaUMS.activeOrganizationId, permission))) { if (!optional) document.dispatchEvent(new CustomEvent('alaada:access-denied', { detail: { product, permission } })); return optional; }
-      if (feature) { const { data } = await AlaadaUMS.client.rpc('has_entitlement', { org: AlaadaUMS.activeOrganizationId, feature_key: feature }); if (data !== true) { if (!optional) document.dispatchEvent(new CustomEvent('alaada:feature-unavailable', { detail: { product, feature } })); return optional; } }
-      return true;
-    }
-  };
-  document.dispatchEvent(new CustomEvent('alaada:ums-ready', { detail: window.AlaadaProduct }));
-  if (!publicProducts.has(product)) {
-    const access = { orbit: { permission: 'orbit.use', feature: 'orbit.chat' }, sheets: { permission: 'sheets.read', feature: 'sheets.basic' }, accounts: { permission: 'accounts.read', feature: 'accounts.accounting' } }[product] || {};
-    window.AlaadaProduct.ready(access).catch(() => document.dispatchEvent(new CustomEvent('alaada:access-denied', { detail: { product } })));
-  }
+  const config = window.ALAADA_CONFIG || {};
+  const url = config.supabaseUrl || window.SUPABASE_URL;
+  const key = config.supabaseAnonKey || window.SUPABASE_ANON_KEY;
+  if (!url || !key || !window.supabase?.createClient) return;
+  const client = window.supabase.createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  const UMS = window.AlaadaUMS = { client, user: null, session: null, profile: null, organizations: [], activeOrganizationId: null };
+  UMS.refresh = async function () { const { data } = await client.auth.getSession(); UMS.session = data.session; UMS.user = data.session?.user || null; if (UMS.user) { const profile = await client.from('profiles').select('*').eq('id', UMS.user.id).maybeSingle(); UMS.profile = profile.data || null; const memberships = await client.from('organization_members').select('organization_id,organizations(*)').eq('user_id', UMS.user.id).eq('status', 'active'); UMS.organizations = (memberships.data || []).map(x => x.organizations).filter(Boolean); let hint = null; try { hint = localStorage.getItem('alaada.activeOrganization'); } catch (_) {} UMS.activeOrganizationId = UMS.organizations.some(org => org.id === hint) ? hint : (UMS.organizations[0]?.id || null); } return UMS; };
+  UMS.signIn = (email, password) => client.auth.signInWithPassword({ email, password });
+  UMS.signUp = (email, password, metadata = {}) => client.auth.signUp({ email, password, options: { data: metadata } });
+  UMS.signInWithProvider = provider => { const supported = ['google']; if (!supported.includes(provider)) return Promise.resolve({ data: null, error: new Error('Unsupported sign-in provider.') }); return client.auth.signInWithOAuth({ provider, options: { redirectTo: location.href } }); };
+  UMS.signInWithGoogle = () => UMS.signInWithProvider('google');
+  UMS.sendMagicLink = email => client.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+  UMS.resetPassword = email => client.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/account.html' });
+  UMS.signOut = scope => client.auth.signOut({ scope: scope || 'local' });
+  UMS.updateProfile = values => client.from('profiles').update({ ...values, updated_at: new Date().toISOString() }).eq('id', UMS.user.id).select().single();
+  UMS.updateSettings = values => client.from('user_settings').upsert({ user_id: UMS.user.id, ...values, updated_at: new Date().toISOString() }).select().single();
+  UMS.setActiveOrganization = async function (organizationId) { if (!UMS.organizations.some(org => org.id === organizationId)) throw new Error('You are not a member of that organization.'); UMS.activeOrganizationId = organizationId; try { localStorage.setItem('alaada.activeOrganization', organizationId); } catch (_) {} return organizationId; };
+  UMS.createOrganization = (name, slug) => client.rpc('create_organization', { org_name: name, org_slug: slug });
+  UMS.acceptInvitation = tokenHash => client.rpc('accept_organization_invitation', { invitation_token_hash: tokenHash });
+  UMS.getTeam = async function () { const org = UMS.activeOrganizationId; if (!org) return { members: [], invitations: [], roles: [] }; const [members, invitations, roles] = await Promise.all([client.from('organization_members').select('id,user_id,status,joined_at,profiles(display_name,email),roles(id,name,key)').eq('organization_id', org), client.from('organization_invitations').select('id,email,status,expires_at,created_at,roles(name,key)').eq('organization_id', org).eq('status', 'pending').order('created_at', { ascending: false }), client.from('roles').select('id,name,key').eq('organization_id', org).order('name')]); return { members: members.data || [], invitations: invitations.data || [], roles: roles.data || [], error: members.error || invitations.error || roles.error }; };
+  UMS.createInvitation = (email, roleId, workspaceId = null) => client.rpc('create_organization_invitation', { org: UMS.activeOrganizationId, invite_email: email, invite_role: roleId, invite_workspace: workspaceId });
+  UMS.cancelInvitation = invitationId => client.rpc('cancel_organization_invitation', { invitation_id: invitationId });
+  UMS.requestDataExport = () => client.rpc('request_account_export');
+  UMS.requestAccountDeletion = () => client.rpc('request_account_deletion');
+  UMS.cancelAccountDeletion = () => client.rpc('cancel_account_deletion');
+  UMS.isPlatformAdmin = async function () { if (!UMS.user) return false; const { data } = await client.from('platform_admins').select('role').eq('user_id', UMS.user.id).maybeSingle(); return Boolean(data); };
+  UMS.onAuthStateChange = callback => client.auth.onAuthStateChange(async (event, session) => { UMS.session = session; UMS.user = session?.user || null; await UMS.refresh(); callback(event, UMS); });
+  UMS.hasPermission = async (organizationId, permission) => { const { data } = await client.rpc('has_permission', { org: organizationId, permission_key: permission }); return data === true; };
+  document.addEventListener('DOMContentLoaded', async () => {
+    const form = document.getElementById('settings-form');
+    if (!form) return;
+    await UMS.refresh();
+    const result = await client.from('user_settings').select('email_notifications,product_notifications,marketing_opt_in,security_notifications').eq('user_id', UMS.user?.id || '').maybeSingle();
+    const values = result.data || {};
+    const box = document.createElement('div'); box.className = 'grid'; box.setAttribute('aria-label', 'Notification preferences');
+    [['email_notifications','Email notifications',true],['product_notifications','Product notifications',true],['marketing_opt_in','Product updates and marketing',false],['security_notifications','Security notifications',true]].forEach(([id,label,checked]) => { const field=document.createElement('div'); field.className='field'; field.innerHTML=`<label><input id="${id}" type="checkbox" ${values[id] === undefined ? (checked ? 'checked' : '') : (values[id] ? 'checked' : '')}> ${label}</label>`; box.appendChild(field); });
+    const actions = form.querySelector('.actions'); if (actions) form.insertBefore(box, actions);
+    form.addEventListener('submit', async event => { event.preventDefault(); event.stopImmediatePropagation(); const saved = await UMS.updateSettings({ email_notifications: document.getElementById('email_notifications').checked, product_notifications: document.getElementById('product_notifications').checked, marketing_opt_in: document.getElementById('marketing_opt_in').checked, security_notifications: document.getElementById('security_notifications').checked }); const status=document.getElementById('settings-status'); if(status){status.textContent=saved.error ? saved.error.message : 'Saved'; status.classList.toggle('error', Boolean(saved.error));} }, true);
+  });
+  UMS.refresh();
 })();
