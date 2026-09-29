@@ -240,19 +240,27 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     store = Store(path, limits)
     app.state.store = store
     auth = authenticate or AppwriteIdentity()
+    if sheets_url and not sheets_secret:
+        sheets_url = None
+    if analyser_url and not analyser_secret:
+        analyser_url = None
+    if orbit_url and not orbit_key:
+        orbit_url = None
+    if accounts_url and not accounts_secret:
+        accounts_url = None
     if sheets_url:
         parsed=urlsplit(sheets_url)
         local=parsed.hostname in ('localhost','127.0.0.1','::1')
         if parsed.scheme not in (('http','https') if local else ('https',)) or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment or parsed.path not in ('','/'):
             raise ValueError('Sheets upstream must be a trusted HTTPS origin')
-        if not sheets_secret or len(sheets_secret)<32:raise ValueError('Sheets requires a dedicated gateway secret of at least 32 characters')
+        if len(sheets_secret)<32:raise ValueError('Sheets requires a dedicated gateway secret of at least 32 characters')
         sheets_url=sheets_url.rstrip('/')
     if analyser_url:
         parsed = urlsplit(analyser_url)
         local = parsed.hostname in ('localhost', '127.0.0.1', '::1')
         if parsed.scheme not in (('http', 'https') if local else ('https',)) or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment or parsed.path not in ('', '/'):
             raise ValueError('Analyser upstream must be a trusted HTTPS origin')
-        if not analyser_secret or len(analyser_secret) < 32:
+        if len(analyser_secret) < 32:
             raise ValueError('Analyser gateway requires a dedicated secret of at least 32 characters')
         analyser_url = analyser_url.rstrip('/')
     if orbit_url:
@@ -268,7 +276,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         local = parsed.hostname in ("127.0.0.1", "localhost", "::1")
         if parsed.scheme not in (("http", "https") if local else ("https",)) or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment or parsed.path not in ("", "/"):
             raise ValueError("Accounts upstream must be a trusted HTTPS origin (HTTP loopback allowed for staging)")
-        if not accounts_secret or len(accounts_secret) < 32:
+        if len(accounts_secret) < 32:
             raise ValueError("Accounts gateway requires a dedicated secret of at least 32 characters")
         accounts_url = accounts_url.rstrip("/")
 
