@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: alaada-workspaces
+    runtime: python
+    plan: starter
+    rootDir: .
+    buildCommand: pip install -r workspace-requirements.txt
+    startCommand: python alaada_workspaces.py --db /var/data/workspaces.sqlite3 --host 0.0.0.0 --port $PORT --web-root .
+    healthCheckPath: /health
+    autoDeploy: false
+    disk:
+      name: workspace-data
+      mountPath: /var/data
+      sizeGB: 10
+    envVars:
+      - key: APPWRITE_USERS_READ_KEY
+        sync: false
+      - key: APPWRITE_WEBHOOK_SECRET
+        sync: false
+      - key: APPWRITE_WEBHOOK_URL
+        value: https://alaada-workspaces.onrender.com/api/appwrite/users-created
+      - key: ALAADA_BILLING_ADAPTER_SECRET
+        sync: false
+      - key: ALAADA_ACCOUNTS_UPSTREAM
+        sync: false
+      - key: ALAADA_ACCOUNTS_GATEWAY_SECRET
+        sync: false
+      - key: ALAADA_ORBIT_UPSTREAM
+        sync: false
+      - key: ALAADA_ORBIT_API_KEY
+        sync: false
+      - key: ALAADA_ANALYSER_UPSTREAM
+        sync: false
+      - key: ALAADA_ANALYSER_GATEWAY_SECRET
+        sync: false
+      - key: ALAADA_SHEETS_UPSTREAM
+        sync: false
+      - key: ALAADA_CALCULATION_GATEWAY_SECRET
+        sync: false
