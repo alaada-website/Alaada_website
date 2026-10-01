@@ -72,6 +72,33 @@ workspace service.
 The backfill now retries an individual idempotent user transaction up to five
 times on a conflict or temporary database failure. A regression test confirms
 that retries preserve an existing Pro plan. All 67 local workspace tests pass.
-Existing-user backfill and the signed signup webhook still require completion
-and verification. Billing and product gateway configuration remain incomplete;
-a healthy workspace service alone is not full product production acceptance.
+## Live acceptance on 2026-10-01
+
+Runtime commit `8e5c718` was deployed to Render. The signed `users.*.create`
+webhook is enabled and its configuration is reported by the live health endpoint.
+A disposable real Appwrite user received a personal workspace before its first
+login. A server-issued short-lived Appwrite JWT successfully accessed the API.
+The browser also loaded its existing signed-in user's Personal workspace.
+
+Backfill completed for all 129 existing registered users. A separate paginated
+read verified that every registered user has a personal workspace and subscription
+record. Existing plans are preserved by idempotent provisioning.
+
+Real Appwrite identities, team membership, TablesDB and the deployed Render API
+passed these checks:
+
+- One disposable user sees personal Pro plus an Enterprise organisation.
+- Personal and organisation workbook reads in the wrong workspace return 404.
+- An organisation administrator cannot read the member's personal workbook (403).
+- Removing the Enterprise membership immediately denies organisation access (403)
+  while preserving the personal account, Pro plan and workbook. The administrator
+  can still read the organisation-owned workbook.
+- File upload and download preserve exact bytes in Appwrite Storage with empty
+  file permissions. A mismatched active workspace returns 409. Deleting the test
+  file through the API succeeds.
+
+Test subscriptions were assigned only to disposable test accounts; no payment
+was made. The two disposable users, test team, test workspace records, and test
+storage file were removed after verification. These checks do not verify a payment-provider integration. Billing and
+the four product execution gateway credentials remain incomplete. Workspace
+deployment is verified; full product production acceptance remains outstanding.
