@@ -15,8 +15,8 @@ services:
         value: 6972444700208a437da1
       - key: APPWRITE_USERS_READ_KEY
         sync: false
-      - key: APPWRITE_DATABASE_URL
-        sync: false
+      - key: APPWRITE_DATABASE_ID
+        value: 6abe5c8c00331e943f9e
       - key: APPWRITE_API_KEY
         sync: false
       - key: APPWRITE_STORAGE_BUCKET_ID

@@ -1,6 +1,6 @@
-"""Alaada workspace monolith: API, PostgreSQL schema and embedded workspace UI.
+"""Alaada workspace monolith: API, Appwrite TablesDB schema and embedded workspace UI.
 
-Production: set APPWRITE_DATABASE_URL, APPWRITE_API_KEY,
+Production: set APPWRITE_DATABASE_ID, APPWRITE_API_KEY,
 APPWRITE_STORAGE_BUCKET_ID and run python alaada_workspaces.py --host 0.0.0.0.
 Local development may still pass --db /private/path/workspaces.sqlite3.
 """
@@ -20,7 +20,7 @@ from urllib.parse import quote, urlsplit
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 
 ENDPOINT = os.environ.get("APPWRITE_ENDPOINT", "https://sfo.cloud.appwrite.io/v1").rstrip("/")
 PROJECT = os.environ.get("APPWRITE_PROJECT_ID", "6972444700208a437da1")
@@ -87,6 +87,84 @@ class HybridRow(dict):
         if isinstance(key, int):
             return tuple(self.values())[key]
         return super().__getitem__(key)
+
+
+def tablesdb_schema():
+    """Private, namespaced TablesDB tables for the workspace gateway."""
+    fields = {
+        'workspaces': 'id kind owner? team? name',
+        'subscriptions': 'workspace plan version:int',
+        'resources': 'id workspace product kind title payload:mediumtext version:int created_by storage_file_id?',
+        'folder_membership': 'child parent',
+        'grants': 'resource user permission',
+        'usage': 'workspace product month amount:int',
+        'billing_requests': 'id workspace plan state created:int pending_workspace?',
+        'billing_events': 'id received:int',
+        'audit': 'id:int actor workspace action resource? created:int',
+        'notifications': 'id:int workspace recipient action resource? created:int read_at:int?',
+        'account_preferences': 'user workspace personal_activity:int organisation_activity:int version:int',
+        'accounts_bindings': 'company workspace created_by created:int',
+    }
+    unique = {
+        'workspaces': [('id',), ('owner',), ('team',)],
+        'subscriptions': [('workspace',)], 'resources': [('id',)],
+        'folder_membership': [('child',)], 'grants': [('resource', 'user')],
+        'usage': [('workspace', 'product', 'month')],
+        'billing_requests': [('id',), ('pending_workspace',)], 'billing_events': [('id',)],
+        'audit': [('id',)], 'notifications': [('id',)],
+        'account_preferences': [('user',), ('workspace',)], 'accounts_bindings': [('company',)],
+    }
+    lookup = {
+        'resources': [('workspace', 'title', 'id'), ('workspace', 'product', 'kind'), ('storage_file_id',)],
+        'folder_membership': [('parent',)], 'grants': [('user',)],
+        'billing_requests': [('workspace', 'state')], 'audit': [('workspace', 'created')],
+        'notifications': [('workspace', 'recipient', 'id')],
+        'accounts_bindings': [('workspace', 'created', 'company')],
+    }
+    result = {}
+    for table, spec in fields.items():
+        columns = []
+        for field in (spec + ' guard?').split():
+            required = not field.endswith('?')
+            key, _, kind = field.rstrip('?').partition(':')
+            column = {'key': key, 'type': kind or 'varchar', 'required': required}
+            if kind == 'int':
+                column.update(type='integer', min=0, max=9007199254740991)
+            elif not kind:
+                column['size'] = 255 if key in ('name', 'title', 'action') else 128
+            columns.append(column)
+        indexes = []
+        for index_type, groups in (('unique', unique[table]), ('key', lookup.get(table, []))):
+            for keys in groups:
+                indexes.append({'key': index_type + '_' + str(len(indexes)), 'type': index_type,
+                                'attributes': list(keys), 'orders': ['ASC'] * len(keys)})
+        result['aw_' + table] = {'name': 'Alaada ' + table.replace('_', ' '),
+                                'columns': columns, 'indexes': indexes}
+    return result
+
+
+def provision_tablesdb(database_id, api_key):
+    """Create missing workspace tables; never overwrite existing tables or permissions."""
+    from appwrite.client import Client
+    from appwrite.exception import AppwriteException
+    from appwrite.services.tables_db import TablesDB
+    if not database_id or not api_key:
+        raise ValueError('APPWRITE_DATABASE_ID and APPWRITE_API_KEY are required')
+    service = TablesDB(Client().set_endpoint(ENDPOINT).set_project(PROJECT).set_key(api_key))
+    created = []
+    for table_id, schema in tablesdb_schema().items():
+        try:
+            existing = service.get_table(database_id=database_id, table_id=table_id)
+        except AppwriteException as error:
+            if error.code != 404:
+                raise
+            service.create_table(database_id=database_id, table_id=table_id, permissions=[],
+                                 row_security=True, **schema)
+            created.append(table_id)
+        else:
+            if existing.permissions or not existing.rowsecurity:
+                raise ValueError('Workspace table is not private: ' + table_id)
+    return created
 
 
 def _pg_row(cursor):
@@ -185,13 +263,243 @@ class AppwriteIdentity:
             return Identity(account["$id"], teams)
 
 
+class SqlSession:
+    """Structured repository operations shared by local SQL and TablesDB backends."""
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __getattr__(self, name):
+        # Retained for the migration command and SQL acceptance-test fixtures.
+        return getattr(self.connection, name)
+
+    @staticmethod
+    def identifier(value):
+        if not re.fullmatch(r'[a-z_]+', value):
+            raise ValueError('Invalid repository identifier')
+        return '"' + value + '"'
+
+    def predicates(self, where, less_than=None):
+        clauses, values = [], []
+        for key, value in (where or {}).items():
+            name = self.identifier(key)
+            if value is None:
+                clauses.append(name + ' IS NULL')
+            else:
+                clauses.append(name + '=?')
+                values.append(value)
+        for key, value in (less_than or {}).items():
+            clauses.append(self.identifier(key) + '<?')
+            values.append(value)
+        return ' AND '.join(clauses) or '1=1', values
+
+    def rows(self, table, where=None, columns=None, order=(), limit=None, less_than=None):
+        selected = ','.join(map(self.identifier, columns)) if columns else '*'
+        predicate, values = self.predicates(where, less_than)
+        sql = 'SELECT ' + selected + ' FROM ' + self.identifier(table) + ' WHERE ' + predicate
+        if order:
+            sql += ' ORDER BY ' + ','.join(self.identifier(k.lstrip('-')) + (' DESC' if k.startswith('-') else ' ASC') for k in order)
+        if limit is not None:
+            if type(limit) is not int or limit < 1:
+                raise ValueError('Invalid repository limit')
+            sql += ' LIMIT ?'
+            values.append(limit)
+        return [HybridRow(dict(row)) for row in self.connection.execute(sql, values).fetchall()]
+
+    def one(self, table, where, columns=None):
+        rows = self.rows(table, where, columns, limit=1)
+        return rows[0] if rows else None
+
+    def insert(self, table, data):
+        columns = ','.join(map(self.identifier, data))
+        self.connection.execute('INSERT INTO ' + self.identifier(table) + '(' + columns + ') VALUES(' + ','.join('?' for _ in data) + ')', tuple(data.values()))
+
+    def ensure(self, table, key, data):
+        if self.one(table, key) is None:
+            self.insert(table, data)
+
+    def update(self, table, where, data, increments=None):
+        if not where:
+            raise ValueError('Repository updates require a selector')
+        assignments = [self.identifier(k) + '=?' for k in data]
+        values = list(data.values())
+        for key, amount in (increments or {}).items():
+            name = self.identifier(key)
+            assignments.append(name + '=' + name + '+?')
+            values.append(amount)
+        predicate, filters = self.predicates(where)
+        return self.connection.execute('UPDATE ' + self.identifier(table) + ' SET ' + ','.join(assignments) + ' WHERE ' + predicate, values + filters).rowcount
+
+    def delete(self, table, where):
+        if not where:
+            raise ValueError('Repository deletes require a selector')
+        predicate, values = self.predicates(where)
+        return self.connection.execute('DELETE FROM ' + self.identifier(table) + ' WHERE ' + predicate, values).rowcount
+
+    def file_referenced(self, file_id):
+        return bool(self.connection.execute('SELECT 1 FROM resources WHERE payload LIKE ? OR payload LIKE ? LIMIT 1',
+            ('%"storage_file_id":"' + file_id + '"%', '%"storage_file_id": "' + file_id + '"%')).fetchone())
+
+
+class TablesSession:
+    """Native TablesDB unit of work with optimistic guards before decision reads."""
+    def __init__(self, service, database_id):
+        self.service, self.database_id = service, database_id
+        self.transaction_id = service.create_transaction(ttl=120).id
+        self.protected = set()
+        self.schema = {k[3:]: v for k, v in tablesdb_schema().items()}
+
+    def args(self, table, row_id=None):
+        if table not in self.schema:
+            raise ValueError('Unknown workspace table')
+        result = {'database_id': self.database_id, 'table_id': 'aw_' + table, 'transaction_id': self.transaction_id}
+        if row_id is not None:
+            result['row_id'] = row_id
+        return result
+
+    def row_id(self, table, data):
+        keys = self.schema[table]['indexes'][0]['attributes']
+        value = json.dumps([table] + [data[key] for key in keys], separators=(',', ':'))
+        return hashlib.sha256(value.encode()).hexdigest()[:36]
+
+    @staticmethod
+    def project(row, columns=None):
+        data = row.data if hasattr(row, 'data') else row
+        return HybridRow({k: data.get(k) for k in columns} if columns else {k: v for k, v in data.items() if k != 'guard'})
+
+    def protected_row(self, table, row_id):
+        from appwrite.exception import AppwriteException
+        try:
+            if (table, row_id) not in self.protected:
+                # Reads alone do not establish an Appwrite conflict baseline.
+                self.service.update_row(**self.args(table, row_id), data={'guard': uuid.uuid4().hex})
+                self.protected.add((table, row_id))
+            return self.service.get_row(**self.args(table, row_id))
+        except AppwriteException as error:
+            if error.code == 404:
+                return None
+            raise
+
+    def rows(self, table, where=None, columns=None, order=(), limit=None, less_than=None):
+        from appwrite.query import Query
+        filters = [Query.is_null(k) if v is None else Query.equal(k, v) for k, v in (where or {}).items()]
+        filters += [Query.less_than(k, v) for k, v in (less_than or {}).items()]
+        filters += [Query.order_desc(k[1:]) if k.startswith('-') else Query.order_asc(k) for k in order]
+        if not order:
+            filters.append(Query.order_asc('$id'))
+        result, cursor = [], None
+        while limit is None or len(result) < limit:
+            page_size = min(100, limit - len(result)) if limit else 100
+            queries = filters + [Query.limit(page_size)] + ([Query.cursor_after(cursor)] if cursor else [])
+            page = self.service.list_rows(**self.args(table), queries=queries, total=False, ttl=0)
+            result.extend(self.project(row, columns) for row in page.rows)
+            if len(page.rows) < page_size:
+                break
+            cursor = page.rows[-1].id
+        return result
+
+    def one(self, table, where, columns=None):
+        keys = self.schema[table]['indexes'][0]['attributes']
+        if all(key in where for key in keys):
+            row = self.protected_row(table, self.row_id(table, where))
+            if row is None:
+                return None
+            data = self.project(row)
+        else:
+            found = self.rows(table, where, limit=1)
+            if not found:
+                return None
+            row = self.protected_row(table, self.row_id(table, found[0]))
+            if row is None:
+                return None
+            data = self.project(row)
+        if any(data.get(k) != v for k, v in where.items()):
+            return None
+        return self.project(data, columns)
+
+    def prepare(self, table, data):
+        data = dict(data)
+        defaults = {'subscriptions': {'version': 0}, 'resources': {'version': 1},
+                    'billing_requests': {'state': 'pending'}, 'notifications': {'read_at': None},
+                    'account_preferences': {'personal_activity': 1, 'organisation_activity': 1, 'version': 1}}
+        data = dict(defaults.get(table, {}), **data)
+        if table in ('audit', 'notifications') and 'id' not in data:
+            data['id'] = (time.time_ns() // 1_000_000) * 4096 + (uuid.uuid4().int & 4095)
+        if table == 'billing_requests':
+            data['pending_workspace'] = data['workspace'] if data['state'] == 'pending' else None
+        if table == 'resources':
+            payload = json.loads(data['payload'])
+            data['storage_file_id'] = payload.get('storage_file_id') if isinstance(payload, dict) else None
+        return data
+
+    def insert(self, table, data):
+        data = self.prepare(table, data)
+        row_id = self.row_id(table, data)
+        self.service.create_row(**self.args(table, row_id), data=data, permissions=[])
+        self.protected.add((table, row_id))
+
+    def ensure(self, table, key, data):
+        if self.one(table, key) is None:
+            self.insert(table, data)
+
+    def update(self, table, where, data, increments=None):
+        if not where:
+            raise ValueError('Repository updates require a selector')
+        previous = self.one(table, where)
+        if previous is None:
+            return 0
+        updated = dict(previous, **data)
+        for key, amount in (increments or {}).items():
+            updated[key] += amount
+        if self.row_id(table, updated) != self.row_id(table, previous):
+            raise ValueError('Repository primary keys are immutable')
+        self.service.update_row(**self.args(table, self.row_id(table, previous)), data=self.prepare(table, updated))
+        return 1
+
+    def delete(self, table, where):
+        if not where:
+            raise ValueError('Repository deletes require a selector')
+        rows = self.rows(table, where)
+        for row in rows:
+            row_id = self.row_id(table, row)
+            if self.protected_row(table, row_id) is None:
+                continue
+            if table == 'resources':
+                self.delete('grants', {'resource': row['id']})
+                self.delete('folder_membership', {'child': row['id']})
+                self.delete('folder_membership', {'parent': row['id']})
+            self.service.delete_row(**self.args(table, row_id))
+        return len(rows)
+
+    def file_referenced(self, file_id):
+        return bool(self.rows('resources', {'storage_file_id': file_id}, limit=1))
+
+    def commit(self):
+        result = self.service.update_transaction(transaction_id=self.transaction_id, commit=True)
+        status = getattr(result.status, 'value', result.status)
+        if status != 'committed':
+            raise RuntimeError('Appwrite transaction did not confirm commit')
+
+    def rollback(self):
+        self.service.update_transaction(transaction_id=self.transaction_id, rollback=True)
+
+
 class Store:
-    def __init__(self, path, limits=None):
+    def __init__(self, path, limits=None, api_key=None):
         self.path = str(path)
         self.postgres = self.path.startswith(("postgres://", "postgresql://"))
+        self.tablesdb = self.path.startswith('tablesdb:')
         self.limits = limits or dict(LIMITS)
         if set(self.limits) != set(LIMITS) or any(type(v) is not int or v < 0 for v in self.limits.values()):
             raise ValueError("Limits must define nonnegative integer Free, Pro, Elite, Enterprise quotas")
+        if self.tablesdb:
+            from appwrite.client import Client
+            from appwrite.services.tables_db import TablesDB
+            key = api_key or os.environ.get('APPWRITE_API_KEY')
+            self.database_id = self.path.removeprefix('tablesdb:')
+            if not key or not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}', self.database_id):
+                raise ValueError('A valid Appwrite database ID and server key are required')
+            self.service = TablesDB(Client().set_endpoint(ENDPOINT).set_project(PROJECT).set_key(key))
+            return
         with self.db() as db:
             if not self.postgres:
                 version = db.execute("PRAGMA user_version").fetchone()[0]
@@ -203,6 +511,23 @@ class Store:
 
     @contextmanager
     def db(self):
+        if self.tablesdb:
+            from appwrite.exception import AppwriteException
+            session = None
+            try:
+                session = TablesSession(self.service, self.database_id)
+                yield session
+                session.commit()
+            except Exception as error:
+                if session:
+                    try:
+                        session.rollback()
+                    except Exception:
+                        pass
+                if isinstance(error, AppwriteException):
+                    fail(409 if error.code == 409 else 503, 'Workspace data changed; reload and retry.' if error.code == 409 else 'Appwrite database operation failed; no success was confirmed.')
+                raise
+            return
         if self.postgres:
             db = PostgresConnection(self.path)
             db.execute("BEGIN ISOLATION LEVEL SERIALIZABLE")
@@ -212,7 +537,7 @@ class Store:
             db.execute("PRAGMA foreign_keys=ON")
             db.execute("BEGIN IMMEDIATE")
         try:
-            yield db
+            yield SqlSession(db)
             db.commit()
         except Exception:
             db.rollback()
@@ -222,16 +547,16 @@ class Store:
 
     def personal(self, db, identity):
         wid = "p_" + hashlib.sha256(identity.user.encode()).hexdigest()
-        db.execute("INSERT OR IGNORE INTO workspaces VALUES(?, 'personal', ?, NULL, 'Personal')", (wid, identity.user))
-        db.execute("INSERT OR IGNORE INTO subscriptions(workspace,plan) VALUES(?,'Free')", (wid,))
+        db.ensure('workspaces', {'id': wid}, {'id': wid, 'kind': 'personal', 'owner': identity.user, 'team': None, 'name': 'Personal'})
+        db.ensure('subscriptions', {'workspace': wid}, {'workspace': wid, 'plan': 'Free', 'version': 0})
         return wid
 
     def organisation(self, team, name):
         """Operator-only provisioning; team ID must come from the configured Appwrite project."""
         wid = "o_" + hashlib.sha256(team.encode()).hexdigest()
         with self.db() as db:
-            db.execute("INSERT OR IGNORE INTO workspaces VALUES(?, 'organisation', NULL, ?, ?)", (wid, team, name))
-            db.execute("INSERT OR IGNORE INTO subscriptions(workspace,plan) VALUES(?,'Enterprise')", (wid,))
+            db.ensure('workspaces', {'id': wid}, {'id': wid, 'kind': 'organisation', 'owner': None, 'team': team, 'name': name})
+            db.ensure('subscriptions', {'workspace': wid}, {'workspace': wid, 'plan': 'Enterprise', 'version': 0})
         return wid
 
     def role(self, identity, workspace):
@@ -245,19 +570,19 @@ class Store:
         return "editor" if "editor" in roles else "reader"
 
     def workspace(self, db, identity, wid, write=False):
-        row = db.execute("SELECT * FROM workspaces WHERE id=?", (wid,)).fetchone()
+        row = db.one('workspaces', {'id': wid})
         role = self.role(identity, row) if row else None
         if not role or (write and role not in ("owner", "admin", "editor")):
             fail(403, "Workspace access denied.")
         return row
 
     def resource(self, db, identity, wid, rid, write=False, manage=False):
-        row = db.execute("SELECT * FROM resources WHERE id=? AND workspace=?", (rid, wid)).fetchone()
+        row = db.one('resources', {'id': rid, 'workspace': wid})
         if not row:
             fail(404, "Resource unavailable in this workspace.")
-        workspace = db.execute("SELECT * FROM workspaces WHERE id=?", (wid,)).fetchone()
+        workspace = db.one('workspaces', {'id': wid})
         role = self.role(identity, workspace)
-        grant = db.execute("SELECT permission FROM grants WHERE resource=? AND user=?", (rid, identity.user)).fetchone()
+        grant = db.one('grants', {'resource': rid, 'user': identity.user}, columns=['permission'])
         # Organisation sharing never survives loss of organisation membership.
         if workspace["kind"] == "organisation" and not role:
             fail(403, "Organisation membership required.")
@@ -270,26 +595,29 @@ class Store:
         return row
 
     def quota(self, db, wid, product):
-        plan = db.execute("SELECT plan FROM subscriptions WHERE workspace=?", (wid,)).fetchone()[0]
+        plan = db.one('subscriptions', {'workspace': wid})['plan']
         month = time.strftime("%Y-%m", time.gmtime())
-        row = db.execute("SELECT amount FROM usage WHERE workspace=? AND product=? AND month=?", (wid, product, month)).fetchone()
-        used = row[0] if row else 0
+        key = {'workspace': wid, 'product': product, 'month': month}
+        row = db.one('usage', key)
+        used = row['amount'] if row else 0
         if used >= self.limits[plan]:
             fail(429, "Monthly product write limit reached. Existing resources remain readable.")
-        db.execute("INSERT INTO usage VALUES(?,?,?,1) ON CONFLICT(workspace,product,month) DO UPDATE SET amount=amount+1", (wid, product, month))
+        if row:
+            db.update('usage', key, {'amount': used + 1})
+        else:
+            db.insert('usage', dict(key, amount=1))
         return month
 
     def audit(self, db, identity, wid, action, rid=None):
-        db.execute("INSERT INTO audit(actor,workspace,action,resource,created) VALUES(?,?,?,?,?)", (identity.user, wid, action, rid, int(time.time())))
+        db.insert('audit', {'actor': identity.user, 'workspace': wid, 'action': action, 'resource': rid, 'created': int(time.time())})
         if action.startswith(('share:', 'subscription:', 'copy:', 'move:')) or action in ('file:upload','accounts:create','orbit:reply','analyser:complete'):
-            workspace=db.execute('SELECT owner FROM workspaces WHERE id=?',(wid,)).fetchone()
+            workspace=db.one('workspaces', {'id': wid})
             recipient=workspace['owner'] or identity.user
-            preference=db.execute('SELECT personal_activity,organisation_activity FROM account_preferences WHERE user=?',(recipient,)).fetchone()
+            preference=db.one('account_preferences', {'user': recipient})
             enabled=not preference or preference['personal_activity' if workspace['owner'] else 'organisation_activity']
             if not enabled and not action.startswith(('share:','subscription:','move:','copy:')):
                 return
-            db.execute('INSERT INTO notifications(workspace,recipient,action,resource,created) VALUES(?,?,?,?,?)',
-                       (wid,recipient,action,rid,int(time.time())))
+            db.insert('notifications', {'workspace': wid, 'recipient': recipient, 'action': action, 'resource': rid, 'created': int(time.time())})
 
 
 def create_app(path, authenticate=None, limits=None, billing_secret=None, webhook_secret=None, webhook_url=None, web_root=None,
@@ -297,11 +625,11 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                orbit_url=None, orbit_key=None, orbit_model='simplex1', orbit_transport=None,
                analyser_url=None, analyser_secret=None, analyser_transport=None,
                sheets_url=None, sheets_secret=None, sheets_transport=None,
-               appwrite_api_key=None, appwrite_storage_bucket=None):
+               appwrite_api_key=None, appwrite_storage_bucket=None, appwrite_storage_transport=None):
     app = FastAPI(title="Alaada personal and organisation workspaces", docs_url=None, redoc_url=None)
-    store = Store(path, limits)
-    if store.postgres and (not appwrite_api_key or not appwrite_storage_bucket):
-        raise ValueError("APPWRITE_API_KEY and APPWRITE_STORAGE_BUCKET_ID are required with Appwrite PostgreSQL")
+    store = Store(path, limits, api_key=appwrite_api_key)
+    if (store.postgres or store.tablesdb) and (not appwrite_api_key or not appwrite_storage_bucket):
+        raise ValueError("APPWRITE_API_KEY and APPWRITE_STORAGE_BUCKET_ID are required with Appwrite databases")
     app.state.store = store
     app.state.appwrite_api_key = appwrite_api_key
     app.state.appwrite_storage_bucket = appwrite_storage_bucket
@@ -403,7 +731,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         # Deliberately exposes readiness categories only; never return secrets or
         # upstream URLs. Render uses this endpoint for process health checks.
         return {"ok": True, "service": "alaada-workspaces", "appwrite_project": PROJECT,
-                "workspace_database": "appwrite-postgresql" if store.postgres else "local-sqlite",
+                "workspace_database": "appwrite-tablesdb" if store.tablesdb else ("appwrite-postgresql" if store.postgres else "local-sqlite"),
                 "appwrite_storage": bool(appwrite_api_key and appwrite_storage_bucket),
                 "billing_adapter": bool(billing_secret),
                 "provisioning_webhook": bool(webhook_secret and webhook_url),
@@ -417,13 +745,13 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         if not appwrite_api_key or not appwrite_storage_bucket:
             fail(503, "Appwrite Storage is not configured; no file was accepted.")
         target = ENDPOINT + "/storage/buckets/" + quote(appwrite_storage_bucket, safe="") + "/files"
-        if file_id:
+        if file_id and method != "POST":
             target += "/" + quote(file_id, safe="")
             if method == "GET":
                 target += "/download"
         headers = {"X-Appwrite-Project": PROJECT, "X-Appwrite-Key": appwrite_api_key}
         try:
-            async with httpx.AsyncClient(timeout=45, follow_redirects=False) as client:
+            async with httpx.AsyncClient(timeout=45, follow_redirects=False, transport=appwrite_storage_transport) as client:
                 if method == "POST":
                     response = await client.post(target, headers=headers,
                         data={"fileId": file_id}, files={"file": (name, content, "application/octet-stream")})
@@ -474,15 +802,15 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         payload = json.dumps({"native_key": key, "data": data.get("payload")})
         with store.db() as db:
             store.workspace(db, user, wid, write=True)
-            previous = db.execute("SELECT * FROM resources WHERE id=? AND workspace=?", (rid, wid)).fetchone()
+            previous = db.one('resources', {'id': rid, 'workspace': wid})
             expected = previous["version"] if previous else 0
             if type(data.get("version")) is not int or data["version"] != expected:
                 fail(409, "This record changed in another tab. Reload before saving.")
             store.quota(db, wid, product)
             if previous:
-                db.execute("UPDATE resources SET title=?,payload=?,version=version+1 WHERE id=?", (title, payload, rid))
+                db.update('resources', {'id': rid}, {'title': title, 'payload': payload}, increments={'version': 1})
             else:
-                db.execute("INSERT INTO resources(id,workspace,product,kind,title,payload,created_by) VALUES(?,?,?,?,?,?,?)", (rid, wid, product, kind, title, payload, user.user))
+                db.insert('resources', {'id': rid, 'workspace': wid, 'product': product, 'kind': kind, 'title': title, 'payload': payload, 'created_by': user.user})
             store.audit(db, user, wid, "native:save", rid)
             return output(store.resource(db, user, wid, rid))
 
@@ -506,12 +834,12 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 while cursor:
                     if cursor==rid or cursor in seen:fail(409,'A folder cannot contain itself or one of its ancestors.')
                     seen.add(cursor)
-                    ancestor=db.execute('SELECT parent FROM folder_membership WHERE child=?',(cursor,)).fetchone()
+                    ancestor=db.one('folder_membership', {'child': cursor}, columns=['parent'])
                     cursor=ancestor[0] if ancestor else None
             store.quota(db,wid,'platform')
-            db.execute('DELETE FROM folder_membership WHERE child=?',(rid,))
-            if parent is not None:db.execute('INSERT INTO folder_membership VALUES(?,?)',(rid,parent))
-            db.execute('UPDATE resources SET version=version+1 WHERE id=?',(rid,))
+            db.delete('folder_membership', {'child': rid})
+            if parent is not None:db.insert('folder_membership', {'child': rid, 'parent': parent})
+            db.update('resources', {'id': rid}, {}, increments={'version': 1})
             store.audit(db,user,wid,'folder:place',rid)
             return output(store.resource(db,user,wid,rid))
 
@@ -523,14 +851,15 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             store.workspace(db,user,wid)
             folder=store.resource(db,user,wid,rid)
             if folder['product']!='platform' or folder['kind']!='folder':fail(404,'Folder unavailable.')
-            return [output(row) for row in db.execute('SELECT r.* FROM resources r JOIN folder_membership f ON f.child=r.id WHERE f.parent=? AND r.workspace=? ORDER BY r.title,r.id',(rid,wid))]
+            children = [db.one('resources', {'id': link['child'], 'workspace': wid}) for link in db.rows('folder_membership', {'parent': rid})]
+            return [output(row) for row in sorted((r for r in children if r), key=lambda r: (r['title'], r['id']))]
 
     @app.get('/api/account/preferences')
     async def account_preferences(request: Request):
         user=await identity(request)
         with store.db() as db:
             wid=store.personal(db,user)
-            row=db.execute('SELECT * FROM account_preferences WHERE user=?',(user.user,)).fetchone()
+            row=db.one('account_preferences', {'user': user.user})
             return {'workspace':wid,'version':row['version'] if row else 0,
                     'personal_activity':bool(row['personal_activity']) if row else True,
                     'organisation_activity':bool(row['organisation_activity']) if row else True}
@@ -544,11 +873,15 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         with store.db() as db:
             wid=store.personal(db,user)
             context(request,wid)
-            previous=db.execute('SELECT version FROM account_preferences WHERE user=?',(user.user,)).fetchone()
+            previous=db.one('account_preferences', {'user': user.user}, columns=['version'])
             version=previous['version'] if previous else 0
             if data['version']!=version:fail(409,'Account preferences changed. Reload before saving.')
-            db.execute('INSERT INTO account_preferences(user,workspace,personal_activity,organisation_activity,version) VALUES(?,?,?,?,?) ON CONFLICT(user) DO UPDATE SET personal_activity=excluded.personal_activity,organisation_activity=excluded.organisation_activity,version=excluded.version',
-                       (user.user,wid,int(data['personal_activity']),int(data['organisation_activity']),version+1))
+            preferences = {'user': user.user, 'workspace': wid, 'personal_activity': int(data['personal_activity']),
+                           'organisation_activity': int(data['organisation_activity']), 'version': version + 1}
+            if previous:
+                db.update('account_preferences', {'user': user.user}, preferences)
+            else:
+                db.insert('account_preferences', preferences)
             store.audit(db,user,wid,'account:preferences')
             return {'workspace':wid,'version':version+1,'personal_activity':data['personal_activity'],'organisation_activity':data['organisation_activity']}
 
@@ -558,8 +891,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         if before<0:fail(400,'Invalid notification cursor.')
         with store.db() as db:
             store.workspace(db,user,wid)
-            rows=db.execute('SELECT id,action,resource,created,read_at FROM notifications WHERE workspace=? AND recipient=? AND (?=0 OR id<?) ORDER BY id DESC LIMIT 51',
-                            (wid,user.user,before,before)).fetchall()
+            rows=db.rows('notifications', {'workspace': wid, 'recipient': user.user},
+                         columns=['id', 'action', 'resource', 'created', 'read_at'], order=['-id'],
+                         limit=51, less_than={'id': before} if before else None)
             return {'items':[dict(row) for row in rows[:50]],'next_before':rows[49]['id'] if len(rows)>50 else None}
 
     @app.post('/api/workspaces/{wid}/notifications/{nid}/read')
@@ -568,9 +902,11 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         context(request,wid)
         with store.db() as db:
             store.workspace(db,user,wid)
-            found=db.execute('UPDATE notifications SET read_at=COALESCE(read_at,?) WHERE id=? AND workspace=? AND recipient=?',
-                             (int(time.time()),nid,wid,user.user)).rowcount
+            selector = {'id': nid, 'workspace': wid, 'recipient': user.user}
+            found=db.one('notifications', selector)
             if not found:fail(404,'Notification unavailable.')
+            if found['read_at'] is None:
+                db.update('notifications', selector, {'read_at': int(time.time())})
         return {'read':True}
 
     @app.post('/api/workspaces/{wid}/files')
@@ -596,8 +932,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             with store.db() as db:
                 store.workspace(db,user,wid,write=True)
                 store.quota(db,wid,'platform')
-                db.execute('INSERT INTO resources(id,workspace,product,kind,title,payload,created_by) VALUES(?,?,?,?,?,?,?)',
-                           (rid,wid,'platform','file',name,json.dumps(payload),user.user))
+                db.insert('resources', {'id': rid, 'workspace': wid, 'product': 'platform', 'kind': 'file', 'title': name, 'payload': json.dumps(payload), 'created_by': user.user})
                 store.audit(db,user,wid,'file:upload',rid)
         except Exception:
             try: await appwrite_file_request('DELETE', rid)
@@ -641,12 +976,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             if row["product"] == "platform" and row["kind"] == "file":
                 try: storage_file_id = json.loads(row["payload"]).get("storage_file_id")
                 except (TypeError, ValueError): pass
-            db.execute("DELETE FROM resources WHERE id=?", (rid,))
+            db.delete('resources', {'id': rid})
             store.audit(db, user, wid, "delete", rid)
-            referenced = bool(storage_file_id and db.execute(
-                "SELECT 1 FROM resources WHERE payload LIKE ? OR payload LIKE ? LIMIT 1",
-                ('%"storage_file_id":"' + storage_file_id + '"%',
-                 '%"storage_file_id": "' + storage_file_id + '"%')).fetchone())
+            referenced = bool(storage_file_id and db.file_referenced(storage_file_id))
         if storage_file_id and not referenced:
             try: await appwrite_file_request("DELETE", storage_file_id)
             except HTTPException: pass
@@ -656,26 +988,37 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     async def workspaces(request: Request):
         user = await identity(request)
         with store.db() as db:
-            rows = [dict(row) | {"role": store.role(user, row)} for row in db.execute("SELECT w.*,s.plan FROM workspaces w JOIN subscriptions s ON s.workspace=w.id") if store.role(user, row)]
+            visible = db.rows('workspaces', {'owner': user.user})
+            for team in user.teams:
+                visible.extend(db.rows('workspaces', {'team': team}))
+            rows = [dict(row, role=store.role(user, row), plan=db.one('subscriptions', {'workspace': row['id']})['plan']) for row in visible if store.role(user, row)]
             return {"user": user.user, "workspaces": rows, "kinds": KINDS, "limits": store.limits}
 
     @app.get("/api/shared")
     async def shared(request: Request):
         user = await identity(request)
         with store.db() as db:
-            rows = db.execute("SELECT r.id,r.workspace,r.title,r.product,g.permission,w.kind,w.owner,w.team FROM grants g JOIN resources r ON r.id=g.resource JOIN workspaces w ON w.id=r.workspace WHERE g.user=?", (user.user,))
-            return [dict(row) for row in rows if row["kind"] == "personal" or store.role(user, row)]
+            rows = []
+            for grant in db.rows('grants', {'user': user.user}):
+                resource = db.one('resources', {'id': grant['resource']})
+                if resource is None:
+                    continue
+                workspace = db.one('workspaces', {'id': resource['workspace']})
+                if workspace and (workspace['kind'] == 'personal' or store.role(user, workspace)):
+                    rows.append({**{k: resource[k] for k in ('id', 'workspace', 'title', 'product')},
+                                 **{k: workspace[k] for k in ('kind', 'owner', 'team')}, 'permission': grant['permission']})
+            return rows
 
     @app.get("/api/workspaces/{wid}/resources")
     async def listing(wid: str, request: Request):
         user = await identity(request)
         with store.db() as db:
             store.workspace(db, user, wid)
-            return [output(row) for row in db.execute("SELECT * FROM resources WHERE workspace=? ORDER BY title,id", (wid,))]
+            return [output(row) for row in db.rows('resources', {'workspace': wid}, order=['title', 'id'])]
 
     def resource_view(db,user,wid,rid):
         row=store.resource(db,user,wid,rid)
-        workspace=db.execute('SELECT name,kind FROM workspaces WHERE id=?',(wid,)).fetchone()
+        workspace=db.one('workspaces', {'id': wid}, columns=['name', 'kind'])
         access={'workspace_name':workspace['name'],'workspace_kind':workspace['kind']}
         for permission in ('write','manage'):
             try:
@@ -702,7 +1045,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             store.workspace(db, user, wid, write=True)
             store.quota(db, wid, product)
             rid = uuid.uuid4().hex
-            db.execute("INSERT INTO resources(id,workspace,product,kind,title,payload,created_by) VALUES(?,?,?,?,?,?,?)", (rid, wid, product, kind, title, payload, user.user))
+            db.insert('resources', {'id': rid, 'workspace': wid, 'product': product, 'kind': kind, 'title': title, 'payload': payload, 'created_by': user.user})
             store.audit(db, user, wid, "create", rid)
             return output(store.resource(db, user, wid, rid))
 
@@ -725,7 +1068,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             if old_key != new_key:
                 fail(409, "A product record's identity cannot be changed through resource editing.")
             store.quota(db, wid, row["product"])
-            db.execute("UPDATE resources SET title=?,payload=?,version=version+1 WHERE id=?", (title, json.dumps(data.get("payload", {})), rid))
+            db.update('resources', {'id': rid}, {'title': title, 'payload': json.dumps(data.get('payload', {}))}, increments={'version': 1})
             store.audit(db, user, wid, "update", rid)
             return resource_view(db,user,wid,rid)
 
@@ -735,8 +1078,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         with store.db() as db:
             store.resource(db, user, wid, rid, manage=True)
             return {"resource": rid, "workspace": wid,
-                    "grants": [dict(row) for row in db.execute(
-                        "SELECT user,permission FROM grants WHERE resource=? ORDER BY user", (rid,))],
+                    "grants": [dict(row) for row in db.rows('grants', {'resource': rid}, columns=['user', 'permission'], order=['user'])],
                     "scope": "resource_only"}
 
     @app.post("/api/workspaces/{wid}/resources/{rid}/sharing")
@@ -750,9 +1092,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             fail(400, "Permission must be read, write or revoke.")
         with store.db() as db:
             store.resource(db, user, wid, rid, manage=True)
-            db.execute("DELETE FROM grants WHERE resource=? AND user=?", (rid, target))
+            db.delete('grants', {'resource': rid, 'user': target})
             if permission != "revoke":
-                db.execute("INSERT INTO grants VALUES(?,?,?)", (rid, target, permission))
+                db.insert('grants', {'resource': rid, 'user': target, 'permission': permission})
             store.audit(db, user, wid, "share:" + permission, rid)
         return {"permission": permission}
 
@@ -768,7 +1110,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         with store.db() as db:
             row = store.resource(db, user, wid, rid, manage=True)
             store.workspace(db, user, destination, write=True)
-            if db.execute('SELECT 1 FROM folder_membership WHERE parent=? LIMIT 1',(rid,)).fetchone():
+            if db.one('folder_membership', {'parent': rid}):
                 fail(409,'Transfer folder contents individually with explicit ownership confirmation before transferring the empty folder.')
             if type(data.get("version")) is not int or data["version"] != row["version"]:
                 fail(409, "Resource changed. Review ownership again.")
@@ -777,11 +1119,11 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             native = json.loads(row["payload"])
             if isinstance(native, dict) and isinstance(native.get("native_key"), str):
                 target = hashlib.sha256(json.dumps([destination, row["product"], row["kind"], native["native_key"]]).encode()).hexdigest()
-                if db.execute("SELECT 1 FROM resources WHERE id=?", (target,)).fetchone():
+                if db.one('resources', {'id': target}):
                     fail(409, "A native record with this key already exists in the destination.")
-            db.execute("INSERT INTO resources(id,workspace,product,kind,title,payload,created_by) VALUES(?,?,?,?,?,?,?)", (target, destination, row["product"], row["kind"], row["title"], row["payload"], user.user))
+            db.insert('resources', {'id': target, 'workspace': destination, 'product': row['product'], 'kind': row['kind'], 'title': row['title'], 'payload': row['payload'], 'created_by': user.user})
             if mode == "move":
-                db.execute("DELETE FROM resources WHERE id=?", (rid,))
+                db.delete('resources', {'id': rid})
             store.audit(db, user, wid, mode + ":out", rid)
             store.audit(db, user, destination, mode + ":in", target)
             return output(store.resource(db, user, destination, target))
@@ -793,10 +1135,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             workspace = store.workspace(db, user, wid)
             if store.role(user, workspace) not in ("owner", "admin"):
                 fail(403, "Subscription owner required.")
-            sub = dict(db.execute("SELECT * FROM subscriptions WHERE workspace=?", (wid,)).fetchone())
-            pending = db.execute("SELECT id,plan,state FROM billing_requests WHERE workspace=? AND state='pending'", (wid,)).fetchone()
+            sub = dict(db.one('subscriptions', {'workspace': wid}))
+            pending = db.one('billing_requests', {'workspace': wid, 'state': 'pending'}, columns=['id', 'plan', 'state'])
             sub["pending"] = dict(pending) if pending else None
-            sub["usage"] = [dict(row) for row in db.execute("SELECT product,amount FROM usage WHERE workspace=? AND month=?", (wid, time.strftime("%Y-%m", time.gmtime())))]
+            sub["usage"] = [dict(row) for row in db.rows('usage', {'workspace': wid, 'month': time.strftime('%Y-%m', time.gmtime())}, columns=['product', 'amount'])]
             sub["monthly_product_writes"] = store.limits[sub["plan"]]
             return sub
 
@@ -805,9 +1147,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         user = await identity(request)
         with store.db() as db:
             workspace = store.workspace(db, user, wid)
-            plan = db.execute("SELECT plan FROM subscriptions WHERE workspace=?", (wid,)).fetchone()[0]
+            plan = db.one('subscriptions', {'workspace': wid}, columns=['plan'])[0]
             month = time.strftime("%Y-%m", time.gmtime())
-            used = {row["product"]: row["amount"] for row in db.execute("SELECT product,amount FROM usage WHERE workspace=? AND month=?", (wid, month))}
+            used = {row["product"]: row["amount"] for row in db.rows('usage', {'workspace': wid, 'month': month}, columns=['product', 'amount'])}
             return {"workspace": wid, "plan": plan, "month": month, "role": store.role(user, workspace),
                     "products": {p: {"monthly_writes": store.limits[plan], "used": used.get(p, 0),
                                      "remaining": max(0, store.limits[plan] - used.get(p, 0)),
@@ -910,8 +1252,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         payload={'native_key':key,'data':{'url':url,'result':result,'createdAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}}
         with store.db() as db:
             store.workspace(db,latest,wid,write=True)
-            db.execute('INSERT INTO resources(id,workspace,product,kind,title,payload,created_by) VALUES(?,?,?,?,?,?,?)',
-                       (rid,wid,'analyser','report',url[:200],json.dumps(payload),latest.user))
+            db.insert('resources', {'id': rid, 'workspace': wid, 'product': 'analyser', 'kind': 'report', 'title': url[:200], 'payload': json.dumps(payload), 'created_by': latest.user})
             store.audit(db,latest,wid,'analyser:complete',rid)
         return JSONResponse(result,headers={'X-Alaada-Report':rid})
 
@@ -940,7 +1281,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             fail(403, "Use an explicitly authorised ownership migration for this operation.")
         if company:
             with store.db() as db:
-                binding = db.execute("SELECT workspace FROM accounts_bindings WHERE company=?", (company,)).fetchone()
+                binding = db.one('accounts_bindings', {'company': company}, columns=['workspace'])
                 if not binding or binding[0] != wid:
                     fail(404, "Company unavailable in this workspace.")
         for key in ("workspace_id", "company_id", "organization_id", "organisation_id"):
@@ -1002,7 +1343,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     except ValueError:
                         fail(400, "Invalid company pagination")
                     with store.db() as db:
-                        bindings = db.execute("SELECT company FROM accounts_bindings WHERE workspace=? ORDER BY created,company", (wid,)).fetchall()
+                        bindings = db.rows('accounts_bindings', {'workspace': wid}, columns=['company'], order=['created', 'company'])
                     items = []
                     for row in bindings[(page-1)*size:page*size]:
                         result = await upstream(client, "GET", "/companies/" + quote(row[0], safe=""))
@@ -1024,17 +1365,20 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     fail(502, "Accounts redirects are not permitted.")
                 if write and 400 <= result.status_code < 500:
                     with store.db() as db:
-                        db.execute("UPDATE usage SET amount=max(0,amount-1) WHERE workspace=? AND product='accounts' AND month=?", (wid, quota_month))
+                        key = {'workspace': wid, 'product': 'accounts', 'month': quota_month}
+                        usage = db.one('usage', key)
+                        if usage:
+                            db.update('usage', key, {'amount': max(0, usage['amount'] - 1)})
                 if is_create and 200 <= result.status_code < 300:
                     created = result.json()
                     cid = created.get("id")
                     if not isinstance(cid, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", cid):
                         fail(502, "Accounts returned an invalid company identifier.")
                     with store.db() as db:
-                        existing = db.execute("SELECT workspace FROM accounts_bindings WHERE company=?", (cid,)).fetchone()
+                        existing = db.one('accounts_bindings', {'company': cid}, columns=['workspace'])
                         if existing and existing[0] != wid:
                             fail(409, "Company is already owned by another workspace.")
-                        db.execute("INSERT OR IGNORE INTO accounts_bindings VALUES(?,?,?,?)", (cid, wid, user.user, int(time.time())))
+                        db.ensure('accounts_bindings', {'company': cid}, {'company': cid, 'workspace': wid, 'created_by': user.user, 'created': int(time.time())})
                         store.audit(db, user, wid, "accounts:create", cid)
                 elif write and result.is_success:
                     with store.db() as db:
@@ -1060,14 +1404,14 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             workspace = store.workspace(db, user, wid)
             if workspace["kind"] != "personal" or workspace["owner"] != user.user:
                 fail(403, "Only the personal owner can change this subscription.")
-            pending = db.execute("SELECT id,plan FROM billing_requests WHERE workspace=? AND state='pending'", (wid,)).fetchone()
+            pending = db.one('billing_requests', {'workspace': wid, 'state': 'pending'}, columns=['id', 'plan'])
             if pending:
                 if pending["plan"] != plan:
                     fail(409, "A billing request is already pending.")
                 rid = pending["id"]
             else:
                 rid = uuid.uuid4().hex
-                db.execute("INSERT INTO billing_requests(id,workspace,plan,created) VALUES(?,?,?,?)", (rid, wid, plan, int(time.time())))
+                db.insert('billing_requests', {'id': rid, 'workspace': wid, 'plan': plan, 'created': int(time.time())})
                 store.audit(db, user, wid, "subscription:requested:" + plan)
             return JSONResponse({"id": rid, "state": "pending", "message": "Requested; awaiting payment-provider confirmation. No charge or plan change has occurred."}, status_code=202)
 
@@ -1093,15 +1437,15 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             fail(400, "The signed billing outcome does not match this endpoint.")
         event = text(data, "event")
         with store.db() as db:
-            if db.execute("SELECT 1 FROM billing_events WHERE id=?", (event,)).fetchone():
+            if db.one('billing_events', {'id': event}):
                 return {"duplicate": True}
-            pending = db.execute("SELECT * FROM billing_requests WHERE id=? AND state='pending'", (text(data, "request"),)).fetchone()
+            pending = db.one('billing_requests', {'id': text(data, 'request'), 'state': 'pending'})
             if not pending or data.get("plan") != pending["plan"]:
                 fail(409, "No matching pending subscription request.")
             if outcome == 'confirmed':
-                db.execute("UPDATE subscriptions SET plan=?,version=version+1 WHERE workspace=?", (pending["plan"], pending["workspace"]))
-            db.execute("UPDATE billing_requests SET state=? WHERE id=?", (outcome, pending["id"]))
-            db.execute("INSERT INTO billing_events VALUES(?,?)", (event, int(time.time())))
+                db.update('subscriptions', {'workspace': pending['workspace']}, {'plan': pending['plan']}, increments={'version': 1})
+            db.update('billing_requests', {'id': pending['id']}, {'state': outcome})
+            db.insert('billing_events', {'id': event, 'received': int(time.time())})
             store.audit(db, Identity("billing-adapter"), pending["workspace"], "subscription:" + outcome + ":" + pending["plan"])
         return {outcome: True}
 
@@ -1140,7 +1484,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 messages.append({'role': entry['role'], 'content': entry['text']})
             if messages[-1]['role'] != 'user' or not messages[-1]['content'].strip():
                 fail(400, 'Save a new user message before requesting a reply.')
-            memory = [json.loads(r['payload']) for r in db.execute("SELECT payload FROM resources WHERE workspace=? AND product='orbit' AND kind='memory' ORDER BY id", (wid,))]
+            memory = [json.loads(r['payload']) for r in db.rows('resources', {'workspace': wid, 'product': 'orbit', 'kind': 'memory'}, columns=['payload'], order=['id'])]
             if len(json.dumps([messages, memory])) > 100_000:
                 fail(413, 'Conversation context is too large.')
             if not orbit_url:
@@ -1169,21 +1513,28 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             if current['version'] != data['version']:
                 fail(409, 'Conversation changed during execution. Reply was not saved.')
             thread['messages'].append({'role': 'assistant', 'text': answer})
-            db.execute('UPDATE resources SET payload=?,version=version+1 WHERE id=? AND workspace=?', (json.dumps(payload), rid, wid))
+            db.update('resources', {'id': rid, 'workspace': wid}, {'payload': json.dumps(payload)}, increments={'version': 1})
             store.audit(db, latest, wid, 'orbit:reply', rid)
-            return output(db.execute('SELECT * FROM resources WHERE id=? AND workspace=?', (rid, wid)).fetchone())
+            return output(db.one('resources', {'id': rid, 'workspace': wid}))
 
     if web_root:
         root = Path(web_root).resolve()
+        public_files = {name: name for name in (
+            "Orbit.html", "Spreadsheets.html", "Accounts.html", "website-analyzer.html", "index.html",
+            "alaada-logo.jpg", "images/alaada-logo.jpg")}
+        public_files["css/accounts-enterprise.css"] = "accounts-enterprise.css"
+        for asset in ("accounts-enterprise", "accounts-banking", "accounts-assets", "accounts-close", "accounts-reports"):
+            public_files["js/" + asset + ".js"] = asset + ".js"
 
-        @app.get("/{filename}", response_class=HTMLResponse)
-        async def product_page(filename: str):
-            if filename not in ("Orbit.html", "Spreadsheets.html", "Accounts.html", "website-analyzer.html", "index.html"):
+        @app.get("/{filename:path}")
+        @app.get("/")
+        async def product_page(filename: str = "index.html"):
+            if filename not in public_files:
                 fail(404, "Not found")
-            path = root / filename
-            if not path.is_file():
+            path = (root / public_files[filename]).resolve()
+            if not path.is_relative_to(root) or not path.is_file():
                 fail(404, "Product page unavailable")
-            return HTMLResponse(path.read_text(encoding="utf-8"))
+            return FileResponse(path, headers={"X-Content-Type-Options": "nosniff"})
 
     return app
 
@@ -1204,8 +1555,8 @@ async def provision_registered_users(store, key):
             rows = response.json()["users"]
             if not rows:
                 return count
-            with store.db() as db:
-                for row in rows:
+            for row in rows:
+                with store.db() as db:
                     store.personal(db, Identity(row["$id"]))
             count += len(rows)
             cursor = rows[-1]["$id"]
@@ -1567,8 +1918,8 @@ async def migrate_sqlite_to_appwrite(source_path, postgres_url, api_key, bucket)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--db", default=os.environ.get("APPWRITE_DATABASE_URL"),
-                        help="Appwrite managed PostgreSQL DSN; local SQLite path is supported for development")
+    parser.add_argument("--db", default=('tablesdb:' + os.environ['APPWRITE_DATABASE_ID']) if os.environ.get('APPWRITE_DATABASE_ID') else os.environ.get("APPWRITE_DATABASE_URL"),
+                        help="tablesdb:DATABASE_ID; legacy PostgreSQL and local development SQLite are supported")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--add-team", help="Provision an existing Appwrite team as an Enterprise workspace")
@@ -1577,13 +1928,17 @@ if __name__ == "__main__":
     parser.add_argument("--migrate-sqlite-from", help="Import an existing SQLite workspace database into Appwrite PostgreSQL and Storage")
     parser.add_argument("--migrate-only", action="store_true", help="Exit after the requested SQLite migration instead of starting the API")
     parser.add_argument("--web-root", help="Serve the five allowlisted product/landing HTML files for local staging")
+    parser.add_argument("--provision-tablesdb", action="store_true", help="Create private workspace tables in the configured Appwrite database")
     args = parser.parse_args()
+    if args.provision_tablesdb:
+        print('Created workspace tables:', provision_tablesdb(os.environ.get('APPWRITE_DATABASE_ID'), os.environ.get('APPWRITE_API_KEY')))
+        raise SystemExit(0)
     if not args.db:
-        parser.error("Set APPWRITE_DATABASE_URL or pass --db for local development")
+        parser.error("Set APPWRITE_DATABASE_ID or pass --db for local development")
     if os.environ.get("RENDER", "").lower() == "true":
         database_host = urlsplit(args.db).hostname or ""
-        if not args.db.startswith(("postgres://", "postgresql://")) or not database_host.lower().endswith(".appwrite.center"):
-            parser.error("Render must use Appwrite managed PostgreSQL; local SQLite and Render-hosted databases are prohibited")
+        if not args.db.startswith('tablesdb:') and (not args.db.startswith(("postgres://", "postgresql://")) or not database_host.lower().endswith(".appwrite.center")):
+            parser.error("Render must use Appwrite TablesDB or Appwrite managed PostgreSQL; local storage is prohibited")
     if args.migrate_only and not args.migrate_sqlite_from:
         parser.error("--migrate-only requires --migrate-sqlite-from")
     limits = json.loads(os.environ["ALAADA_LIMITS_JSON"]) if os.environ.get("ALAADA_LIMITS_JSON") else None

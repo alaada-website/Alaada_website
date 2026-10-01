@@ -79,7 +79,10 @@
   footer{ margin-top:28px; text-align:center; color:var(--muted); font-size:13px }
 </style>
 </head>
-<body>
+<body data-alaada-product="analyser">
+<script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
+<script src="/api/workspaces/client.js" data-product="analyser"></script>
+<script>if(!window.AlaadaWorkspace)document.addEventListener('DOMContentLoaded',()=>{const gate=document.createElement('div');gate.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui';gate.textContent='The private workspace service is unavailable. Reload when the service is connected.';document.body.append(gate);});</script>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BJGLCGLMK5"></script>
 <script>
@@ -134,7 +137,7 @@
           <button id="sampleBtn" class="btn ghost" title="Try example">Try example</button>
 
           <div class="meta">
-            <div class="badge" id="planBadge">Free • 3/day</div>
+            <div class="badge" id="planBadge">Checking workspace plan…</div>
             <div class="muted" id="usesNote">You have 3 free analyses today.</div>
           </div>
         </div>
@@ -156,7 +159,7 @@
             </div>
             <div style="text-align:right">
               <div class="muted">Plan</div>
-              <div style="font-weight:800;margin-top:6px">Free</div>
+              <div id="planSummary" style="font-weight:800;margin-top:6px">—</div>
             </div>
           </div>
 
@@ -170,7 +173,7 @@
             </div>
           </div>
           <div style="margin-top:12px">
-            <button id="upgradeBtn" class="btn" style="width:100%">Upgrade to Premium</button>
+            <button id="upgradeBtn" class="btn" style="width:100%">Manage personal subscription</button>
           </div>
         </div>
       </aside>
@@ -183,18 +186,19 @@
 <!-- simple modal -->
 <div id="modal" class="result-card" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,12,0.6);z-index:9999">
   <div style="width:min(680px,92%);background:linear-gradient(180deg,#071016,#08111a);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.03)">
-    <h3 style="margin:0 0 8px">Upgrade to Alaada Premium</h3>
-    <p style="margin:0 0 12px;color:var(--muted)">Unlimited analyses, priority processing, downloadable PDF reports, and more pro features.</p>
+    <h3 style="margin:0 0 8px">Alaada personal subscriptions</h3>
+    <p style="margin:0 0 12px;color:var(--muted)">Manage Free, Pro or Elite in your personal workspace. Changing plans preserves ownership of your existing reports.</p>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button id="closeModal" class="btn ghost">Close</button>
-      <button id="goPremium" class="btn">Get Premium</button>
+      <button id="goPremium" class="btn">Manage subscription</button>
     </div>
   </div>
 </div>
 
 <script>
-(() => {
+(async () => {
   'use strict';
+  try { await window.AlaadaWorkspace.ready; } catch { return; }
 
   const API_ORIGIN = 'https://alaada-website-analyser-2.onrender.com/analyze';
 
@@ -215,46 +219,58 @@
   const resultsSection = document.getElementById('results');
   const menuToggle = document.getElementById('menuToggle');
   const mainNav = document.getElementById('mainNav');
-
-  const USAGE_KEY = 'alaada_analyzer_usage_v1';
-  const FREE_USES_PER_DAY = 1000;
-
-  // ----------------- Usage tracking -----------------
-  function getLocalUsage() {
-    try {
-      const raw = localStorage.getItem(USAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-  }
-
-  function setLocalUsage(obj) {
-    localStorage.setItem(USAGE_KEY, JSON.stringify(obj));
-  }
-
-  function recordLocalUse() {
-    const today = new Date().toISOString().slice(0, 10);
-    const usage = getLocalUsage() || {};
-    if (usage.date !== today) { usage.date = today; usage.count = 0; }
-    usage.count = (usage.count || 0) + 1;
-    setLocalUsage(usage);
-    refreshUsageUI();
-  }
-
-  function refreshUsageUI() {
-    const usage = getLocalUsage();
-    const today = new Date().toISOString().slice(0, 10);
-    if (!usage || usage.date !== today) {
-      usesNote.textContent = `You have ${FREE_USES_PER_DAY} free analyses today.`;
-      analyzeBtn.disabled = false;
-      planBadge.textContent = `Free • ${FREE_USES_PER_DAY}/day`;
-    } else {
-      const left = Math.max(0, FREE_USES_PER_DAY - (usage.count || 0));
-      usesNote.textContent = left > 0
-        ? `You have ${left} free analyses today.`
-        : `You've used your free analyses for today.`;
-      analyzeBtn.disabled = left <= 0;
-      planBadge.textContent = left > 0 ? `Free • ${left}/day` : `Free • used`;
+  const monitorsPanel=document.createElement('section');
+  monitorsPanel.className='result-card';
+  monitorsPanel.innerHTML='<h3>Saved monitoring targets</h3><p>Targets belong to the active workspace. Runs are manual; automatic scheduling is not enabled.</p><label>Target name <input id="monitorName" maxlength="200" placeholder="My website"></label> <label>Preferred interval (hours) <input id="monitorInterval" type="number" min="1" max="8760" value="24"></label> <button id="saveMonitor" class="btn">Save current URL as a target</button><div id="monitorList"></div><h3>Saved reports</h3><div id="reportHistory"></div>';
+  resultsSection.after(monitorsPanel);
+  let editingMonitor=null,analysisRunning=false;
+  async function monitorAction(action){try{await action();}catch(error){usesNote.textContent=error.message;}}
+  function renderSavedResources(){
+    const list=document.getElementById('monitorList');list.replaceChildren();
+    for(const item of window.AlaadaWorkspace.list('monitor')){
+      const data=item.data;if(!data||typeof data.url!=='string')continue;
+      const row=document.createElement('div'),label=document.createElement('span');label.textContent=(data.name||data.url)+' · '+(data.intervalHours||24)+'h preference · ';
+      row.append(label);
+      for(const [title,action] of [
+        ['Load',async()=>{editingMonitor=item.id;urlInput.value=data.url;document.getElementById('monitorName').value=data.name||'';document.getElementById('monitorInterval').value=data.intervalHours||24;usesNote.textContent='Editing target in '+window.AlaadaWorkspace.active.name;}],
+        ['Run now',async()=>{urlInput.value=data.url;await analyzeWebsite(data.url);} ],
+        ['Delete',async()=>{if(confirm('Delete this monitoring target from '+window.AlaadaWorkspace.active.name+'? Saved reports remain.')){await window.AlaadaWorkspace.remove('monitor',item.id);if(editingMonitor===item.id)editingMonitor=null;renderSavedResources();}}]
+      ]){const button=document.createElement('button');button.className='btn ghost';button.textContent=title;button.onclick=()=>monitorAction(action);row.append(button);}
+      list.append(row);
     }
+    if(!list.children.length)list.textContent='No saved targets in this workspace.';
+    const history=document.getElementById('reportHistory');history.replaceChildren();
+    for(const item of window.AlaadaWorkspace.list('report')){
+      const data=item.data;if(!data||!data.result)continue;
+      const button=document.createElement('button');button.className='btn ghost';button.textContent=(data.url||'Report')+' · '+(data.createdAt||'');button.onclick=()=>{lastResult=data.result;resultsSection.innerHTML=renderAnalysisText(data.result.ai_summary||data.result.summary||data.result);timeNote.textContent='Saved report from '+(data.createdAt||'this workspace');};history.append(button);
+    }
+    if(!history.children.length)history.textContent='No saved reports loaded. Reload after an analysis to refresh history.';
+  }
+  document.getElementById('saveMonitor').onclick=()=>monitorAction(async()=>{
+    const url=new URL(normalizeUrl(urlInput.value.trim()));
+    if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Enter a public HTTP(S) URL without credentials.');
+    const intervalHours=Number(document.getElementById('monitorInterval').value),name=document.getElementById('monitorName').value.trim()||url.hostname;
+    if(!Number.isInteger(intervalHours)||intervalHours<1||intervalHours>8760)throw Error('Choose an interval from 1 to 8760 hours.');
+    const id=editingMonitor||crypto.randomUUID();
+    await window.AlaadaWorkspace.save('monitor',id,{name,url:url.href,intervalHours,scheduling:'manual'},name);
+    editingMonitor=null;renderSavedResources();usesNote.textContent='Monitoring target saved in '+window.AlaadaWorkspace.active.name+'. Automatic scheduling is not enabled.';
+  });
+
+  // Plans and quotas are server-owned and scoped to the active workspace.
+  async function refreshUsageUI() {
+    analyzeBtn.disabled = true;
+    sampleBtn.disabled = true;
+    try {
+      const policy = await window.AlaadaWorkspace.entitlements();
+      const limit = policy.products.analyser;
+      document.getElementById('planSummary').textContent = policy.plan;
+      planBadge.textContent = `${policy.plan} • ${limit.remaining} saved report writes remaining this month`;
+      usesNote.textContent = limit.execution_available
+        ? `Active workspace: ${window.AlaadaWorkspace.active.name}. Usage is checked by the server.`
+        : 'Analysis is unavailable until the workspace-authorised backend is connected. Existing saved reports remain yours.';
+      analyzeBtn.disabled = !limit.execution_available || limit.remaining <= 0;
+      sampleBtn.disabled = analyzeBtn.disabled;
+    } catch(error) { usesNote.textContent = error.message; }
   }
 
   // ----------------- Utilities -----------------
@@ -331,6 +347,8 @@
 
   // ----------------- Analyze -----------------
   async function analyzeWebsite(urlRaw) {
+    if(analysisRunning)return;
+    analysisRunning=true;
     const url = normalizeUrl(urlRaw);
 
     resultsSection.innerHTML = '';
@@ -344,7 +362,7 @@
       </div>`;
 
     try {
-      const resp = await fetch(API_ORIGIN, {
+      const resp = await window.AlaadaWorkspace.productFetch(API_ORIGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
@@ -353,8 +371,8 @@
       if (resp.status === 429) {
         resultsSection.innerHTML = `
           <div class="result-card">
-            <h3>Daily limit reached</h3>
-            <div class="muted">You’ve used your free analysis for today.</div>
+            <h3>Workspace usage limit reached</h3>
+            <div class="muted">The active workspace has reached its current plan allowance.</div>
             <div style="margin-top:12px;display:flex;gap:8px">
               <button class="btn" id="upgradeInline">Upgrade</button>
               <button class="btn ghost" id="tryLater">Try later</button>
@@ -378,6 +396,8 @@
       try { data = await resp.json(); } catch { data = { error: 'Invalid JSON from server' }; }
 
       lastResult = data;
+      // The authenticated gateway persists the report before returning success.
+      if (!resp.headers.get('X-Alaada-Report')) throw new Error('Report persistence was not confirmed.');
 
       // ✅ Corrected: AI summary > structured summary > fallback
       const toRender = data.ai_summary || data.summary || data;
@@ -391,7 +411,7 @@
       animateScore(score);
 
       timeNote.textContent = `Last analyzed: ${new Date().toLocaleString()}`;
-      recordLocalUse();
+      await refreshUsageUI();
 
     } catch {
       resultsSection.innerHTML = `
@@ -399,9 +419,10 @@
           <h3>Network error</h3>
           <div class="muted">Failed to contact backend. Possible CORS or server issue.</div>
         </div>`;
+    } finally {
+      analysisRunning=false;
+      await refreshUsageUI();
     }
-
-    analyzeBtn.disabled = false;
   }
 
   // ----------------- Event handlers -----------------
@@ -425,11 +446,12 @@
     setTimeout(() => copyReportBtn.textContent = "Copy Summary", 1400);
   };
   menuToggle.onclick = () => mainNav.classList.toggle('show');
-  upgradeBtn.onclick = showModal;
+  upgradeBtn.onclick = () => location.href = '/workspaces';
   closeModal.onclick = hideModal;
-  goPremium.onclick = () => location.href = "/premium.html";
+  goPremium.onclick = () => location.href = "/workspaces";
 
   refreshUsageUI();
+  renderSavedResources();
 })();
 </script>
 
