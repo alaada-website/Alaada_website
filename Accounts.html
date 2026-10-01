@@ -861,10 +861,9 @@ async function appwriteRequest(path, {method='GET', body=null} = {}){
   return fetchWithTimeout(APPWRITE_ENDPOINT + path, init, 10000);
 }
 
-function appwriteOAuthUrl(){
-  const success = window.location.origin + window.location.pathname;
-  const failure = window.location.origin + '/';
-  return `${APPWRITE_ENDPOINT}/account/sessions/oauth2/google?project=${encodeURIComponent(APPWRITE_PROJECT_ID)}&success=${encodeURIComponent(success)}&failure=${encodeURIComponent(failure)}`;
+function appwriteAuthUrl(){
+  const next = window.location.pathname + window.location.search + window.location.hash;
+  return `${window.location.origin}/auth.html?next=${encodeURIComponent(next)}`;
 }
 
 async function ensureAccountsIdentity({redirect=true} = {}){
@@ -881,7 +880,7 @@ async function ensureAccountsIdentity({redirect=true} = {}){
     APPWRITE_USER = null;
     APPWRITE_JWT = '';
     APPWRITE_JWT_EXPIRES_AT = 0;
-    if (redirect) window.location.replace(appwriteOAuthUrl());
+    if (redirect) window.location.replace(appwriteAuthUrl());
     throw new ApiError('Sign in to access Alaada Accounts.', 401, {});
   }
 }

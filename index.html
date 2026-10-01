@@ -841,7 +841,7 @@
 <!-- TRUST BAR -->
 <div class="trust-bar" role="list" aria-label="Trust indicators">
   <div class="trust-item" role="listitem">⚡ No install needed</div>
-  <div class="trust-item" role="listitem">🔒 Secure Google sign-in</div>
+  <div class="trust-item" role="listitem">🔒 Secure Appwrite sign-in</div>
   <div class="trust-item" role="listitem">🇮🇳 Made in India</div>
   <div class="trust-item" role="listitem">🌐 Works in your browser</div>
   <div class="trust-item" role="listitem">✦ Always improving</div>
@@ -1377,7 +1377,7 @@
     </div>
     <div class="pillars-grid">
       <div class="pillar reveal rd1"><span class="pillar-icon" aria-hidden="true">🎯</span><h3>One job, done right</h3><p>No feature overload. Each tool does exactly what it promises — clearly and fast.</p></div>
-      <div class="pillar reveal rd2"><span class="pillar-icon" aria-hidden="true">⚡</span><h3>Open in seconds</h3><p>Browser-based. No installs. Sign in with Google once and you're ready.</p></div>
+      <div class="pillar reveal rd2"><span class="pillar-icon" aria-hidden="true">⚡</span><h3>Open in seconds</h3><p>Browser-based. Sign in once with your secure Alaada account and work across your authorised spaces.</p></div>
       <div class="pillar reveal rd3"><span class="pillar-icon" aria-hidden="true">🔍</span><h3>Evidence, not noise</h3><p>Orbit reasons before it answers. Analyser shows data before it advises.</p></div>
       <div class="pillar reveal rd4"><span class="pillar-icon" aria-hidden="true">🇮🇳</span><h3>Proudly Indian</h3><p>Built in India for the world — competitive pricing, fast support, local trust.</p></div>
     </div>
@@ -1636,7 +1636,7 @@ if(ademo){
   "use strict";
   /* Appwrite is the identity authority for all four product workspaces. */
   const EP="https://sfo.cloud.appwrite.io/v1",PID="6972444700208a437da1";
-  const OAUTH=`${EP}/account/sessions/oauth2/google?project=${PID}&success=${encodeURIComponent("https://www.alaada.com")}&failure=${encodeURIComponent("https://www.alaada.com")}`;
+  const authUrl=dest=>`/auth.html?next=${encodeURIComponent(dest||'/account.html')}`;
   const CK="alaada_auth",IK="alaada_identity",PK="alaada_oauth_pending",AK="alaada_authed",CD=7;
   const DEST={orbit:"/Orbit.html",sheets:"/Spreadsheets.html",accounts:"/Accounts.html"};
   const cGet=n=>{
@@ -1672,8 +1672,8 @@ if(ademo){
     catch(_){
       cDel(CK);lsAuthDel();iClear();
       if(pendingGet()){pendingClear();msg.textContent='Sign-in could not be completed. Please try again.';ov.classList.add('show');setTimeout(hideSpin,3000);return;}
-      pendingSet(dest);msg.textContent='Redirecting to Google sign-in…';ov.classList.add('show');
-      setTimeout(()=>window.location.replace(OAUTH),600);
+      pendingClear();msg.textContent='Opening secure Alaada sign-in…';ov.classList.add('show');
+      setTimeout(()=>window.location.replace(authUrl(dest)),250);
     }
   };
   window.logout=async()=>{

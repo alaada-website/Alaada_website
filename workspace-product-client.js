@@ -137,7 +137,7 @@
     selector=document.createElement('select');selector.setAttribute('aria-label','Active workspace');selector.disabled=true;
     const manage=document.createElement('a');manage.href='/workspaces';manage.textContent='Manage workspaces';manage.style.color='#90e3da';
     const signin=document.createElement('a');const back=location.origin+location.pathname+location.search;
-    signin.href=endpoint+'/account/sessions/oauth2/google?project='+project+'&success='+encodeURIComponent(back)+'&failure='+encodeURIComponent(back);signin.textContent='Sign in';signin.style.color='#fff';
+    signin.href='/auth.html?next='+encodeURIComponent(back);signin.textContent='Sign in';signin.style.color='#fff';
     status=document.createElement('span');status.setAttribute('role','status');
     bar.append(label,selector,manage,signin,status);document.body.prepend(bar);
     gate=document.createElement('div');gate.style.cssText='position:fixed;inset:46px 0 0;z-index:2147483646;background:#0e1423;color:#fff;padding:10vh 10vw;font:20px system-ui';gate.textContent='Verifying your private workspace…';document.body.append(gate);
