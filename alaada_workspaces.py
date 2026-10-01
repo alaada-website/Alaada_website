@@ -5,6 +5,7 @@ APPWRITE_STORAGE_BUCKET_ID and run python alaada_workspaces.py --host 0.0.0.0.
 Local development may still pass --db /private/path/workspaces.sqlite3.
 """
 import argparse
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -61,6 +62,16 @@ CREATE TABLE IF NOT EXISTS billing_requests(
  state TEXT NOT NULL DEFAULT 'pending', created INTEGER NOT NULL);
 CREATE UNIQUE INDEX IF NOT EXISTS billing_pending ON billing_requests(workspace) WHERE state='pending';
 CREATE TABLE IF NOT EXISTS billing_events(id TEXT PRIMARY KEY, received INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS dodo_checkouts(
+ request TEXT PRIMARY KEY REFERENCES billing_requests(id),
+ workspace TEXT NOT NULL REFERENCES workspaces(id), owner TEXT NOT NULL,
+ plan TEXT NOT NULL, session_id TEXT UNIQUE, checkout_url TEXT,
+ state TEXT NOT NULL, created INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS dodo_subscriptions(
+ workspace TEXT PRIMARY KEY REFERENCES workspaces(id),
+ subscription_id TEXT NOT NULL UNIQUE, customer_id TEXT, product_id TEXT NOT NULL,
+ plan TEXT NOT NULL, status TEXT NOT NULL, current_period_end TEXT,
+ cancel_at_period_end INTEGER NOT NULL DEFAULT 0, pending_plan TEXT);
 CREATE TABLE IF NOT EXISTS audit(
  id INTEGER PRIMARY KEY, actor TEXT NOT NULL, workspace TEXT NOT NULL,
  action TEXT NOT NULL, resource TEXT, created INTEGER NOT NULL);
@@ -100,6 +111,8 @@ def tablesdb_schema():
         'usage': 'workspace product month amount:int',
         'billing_requests': 'id workspace plan state created:int pending_workspace?',
         'billing_events': 'id received:int',
+        'dodo_checkouts': 'request workspace owner plan session_id? checkout_url:mediumtext? state created:int',
+        'dodo_subscriptions': 'workspace subscription_id customer_id? product_id plan status current_period_end? cancel_at_period_end:int pending_plan?',
         'audit': 'id:int actor workspace action resource? created:int',
         'notifications': 'id:int workspace recipient action resource? created:int read_at:int?',
         'account_preferences': 'user workspace personal_activity:int organisation_activity:int version:int',
@@ -111,6 +124,8 @@ def tablesdb_schema():
         'folder_membership': [('child',)], 'grants': [('resource', 'user')],
         'usage': [('workspace', 'product', 'month')],
         'billing_requests': [('id',), ('pending_workspace',)], 'billing_events': [('id',)],
+        'dodo_checkouts': [('request',), ('session_id',)],
+        'dodo_subscriptions': [('workspace',), ('subscription_id',)],
         'audit': [('id',)], 'notifications': [('id',)],
         'account_preferences': [('user',), ('workspace',)], 'accounts_bindings': [('company',)],
     }
@@ -120,6 +135,8 @@ def tablesdb_schema():
         'billing_requests': [('workspace', 'state')], 'audit': [('workspace', 'created')],
         'notifications': [('workspace', 'recipient', 'id')],
         'accounts_bindings': [('workspace', 'created', 'company')],
+        'dodo_checkouts': [('workspace', 'state', 'created')],
+        'dodo_subscriptions': [('status', 'workspace')],
     }
     result = {}
     for table, spec in fields.items():
@@ -420,6 +437,7 @@ class TablesSession:
         data = dict(data)
         defaults = {'subscriptions': {'version': 0}, 'resources': {'version': 1},
                     'billing_requests': {'state': 'pending'}, 'notifications': {'read_at': None},
+                    'dodo_subscriptions': {'cancel_at_period_end': 0},
                     'account_preferences': {'personal_activity': 1, 'organisation_activity': 1, 'version': 1}}
         data = dict(defaults.get(table, {}), **data)
         if table in ('audit', 'notifications') and 'id' not in data:
@@ -625,7 +643,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                orbit_url=None, orbit_key=None, orbit_model='simplex1', orbit_transport=None,
                analyser_url=None, analyser_secret=None, analyser_transport=None,
                sheets_url=None, sheets_secret=None, sheets_transport=None,
-               appwrite_api_key=None, appwrite_storage_bucket=None, appwrite_storage_transport=None):
+               appwrite_api_key=None, appwrite_storage_bucket=None, appwrite_storage_transport=None,
+               dodo_api_key=None, dodo_webhook_key=None, dodo_environment='live_mode',
+               dodo_products=None, dodo_checkout_enabled=False, dodo_client=None):
     app = FastAPI(title="Alaada personal and organisation workspaces", docs_url=None, redoc_url=None)
     store = Store(path, limits, api_key=appwrite_api_key)
     if (store.postgres or store.tablesdb) and (not appwrite_api_key or not appwrite_storage_bucket):
@@ -634,6 +654,24 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     app.state.appwrite_api_key = appwrite_api_key
     app.state.appwrite_storage_bucket = appwrite_storage_bucket
     auth = authenticate or AppwriteIdentity()
+    dodo_products = dict(dodo_products or {})
+    if dodo_environment not in ('test_mode', 'live_mode'):
+        raise ValueError('DODO_PAYMENTS_ENVIRONMENT must be test_mode or live_mode')
+    for product_plan in ('Pro', 'Elite'):
+        product_id = dodo_products.get(product_plan)
+        if product_id and (not isinstance(product_id, str) or not re.fullmatch(r'pdt_[A-Za-z0-9_-]{1,120}', product_id)):
+            raise ValueError('Invalid Dodo product ID for ' + product_plan)
+    if dodo_client is None and dodo_api_key:
+        try:
+            from dodopayments import DodoPayments
+            dodo_client = DodoPayments(bearer_token=dodo_api_key, webhook_key=dodo_webhook_key,
+                                       environment=dodo_environment, max_retries=0, timeout=20)
+        except Exception as error:
+            raise ValueError('Dodo Payments SDK could not be configured') from error
+    dodo_checkout_ready = bool(dodo_checkout_enabled and dodo_api_key and dodo_webhook_key
+                               and dodo_products.get('Pro') and dodo_products.get('Elite'))
+    app.state.dodo_checkout_ready = dodo_checkout_ready
+    app.state.dodo_client = dodo_client
     if sheets_url and not sheets_secret:
         sheets_url = None
     if analyser_url and not analyser_secret:
@@ -733,7 +771,11 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         return {"ok": True, "service": "alaada-workspaces", "appwrite_project": PROJECT,
                 "workspace_database": "appwrite-tablesdb" if store.tablesdb else ("appwrite-postgresql" if store.postgres else "local-sqlite"),
                 "appwrite_storage": bool(appwrite_api_key and appwrite_storage_bucket),
-                "billing_adapter": bool(billing_secret),
+                "billing_adapter": bool(billing_secret or dodo_checkout_ready),
+                "dodo_billing": {"checkout_enabled": dodo_checkout_ready,
+                                  "webhook_configured": bool(dodo_client and dodo_webhook_key),
+                                  "products_configured": bool(dodo_products.get('Pro') and dodo_products.get('Elite')),
+                                  "environment": dodo_environment},
                 "provisioning_webhook": bool(webhook_secret and webhook_url),
                 "product_gateways": {
                     "accounts": bool(accounts_url and accounts_secret),
@@ -1138,6 +1180,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             sub = dict(db.one('subscriptions', {'workspace': wid}))
             pending = db.one('billing_requests', {'workspace': wid, 'state': 'pending'}, columns=['id', 'plan', 'state'])
             sub["pending"] = dict(pending) if pending else None
+            provider = db.one('dodo_subscriptions', {'workspace': wid})
+            sub['provider'] = ({'status': provider['status'], 'cancel_at_period_end': bool(provider['cancel_at_period_end']),
+                               'pending_plan': provider['pending_plan'], 'current_period_end': provider['current_period_end']}
+                              if provider else None)
             sub["usage"] = [dict(row) for row in db.rows('usage', {'workspace': wid, 'month': time.strftime('%Y-%m', time.gmtime())}, columns=['product', 'amount'])]
             sub["monthly_product_writes"] = store.limits[sub["plan"]]
             return sub
@@ -1392,6 +1438,61 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         except httpx.HTTPError:
             fail(503, "Accounts backend unavailable. The operation may need reconciliation; do not blindly retry a write.")
 
+    def dodo_model_value(value, key):
+        if isinstance(value, dict):
+            return value.get(key)
+        return getattr(value, key, None)
+
+    def dodo_checkout_link(value):
+        session_id = dodo_model_value(value, 'session_id')
+        url = dodo_model_value(value, 'checkout_url')
+        if not isinstance(session_id, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,160}', session_id):
+            return None, None
+        if not isinstance(url, str):
+            return session_id, None
+        parsed = urlsplit(url)
+        if parsed.scheme != 'https' or not parsed.hostname or not parsed.hostname.endswith('.dodopayments.com'):
+            return session_id, None
+        return session_id, url
+
+    async def create_dodo_checkout(user, wid, plan, rid):
+        if not dodo_checkout_ready or not dodo_client:
+            fail(503, 'Dodo checkout is not ready. No checkout or charge was created.')
+        metadata = {'workspace': wid, 'user': user.user, 'plan': plan, 'request': rid}
+        try:
+            result = await asyncio.to_thread(
+                dodo_client.checkout_sessions.create,
+                product_cart=[{'product_id': dodo_products[plan], 'quantity': 1}],
+                metadata=metadata,
+                return_url='https://www.alaada.com/account.html?billing=complete',
+                cancel_url='https://www.alaada.com/account.html?billing=cancelled')
+        except Exception as error:
+            # An API timeout can happen after Dodo has created the session. Leave
+            # the request locked for reconciliation instead of creating duplicates.
+            with store.db() as db:
+                db.update('dodo_checkouts', {'request': rid}, {'state': 'unknown'})
+            try:
+                from dodopayments import APIStatusError
+                if isinstance(error, APIStatusError) and 400 <= error.status_code < 500:
+                    with store.db() as db:
+                        db.update('billing_requests', {'id': rid}, {'state': 'failed'})
+                        db.update('dodo_checkouts', {'request': rid}, {'state': 'failed'})
+            except Exception:
+                pass
+            fail(503, 'Dodo could not confirm checkout creation. This request is locked for reconciliation; do not retry it.')
+        session_id, checkout_url = dodo_checkout_link(result)
+        if not session_id or not checkout_url:
+            with store.db() as db:
+                db.update('dodo_checkouts', {'request': rid}, {'state': 'unknown', 'session_id': session_id})
+            fail(502, 'Dodo returned an incomplete checkout. This request is locked for reconciliation.')
+        with store.db() as db:
+            latest = db.one('dodo_checkouts', {'request': rid})
+            checkout_state = 'active' if latest and latest['state'] == 'active' else 'ready'
+            db.update('dodo_checkouts', {'request': rid}, {'state': checkout_state, 'session_id': session_id,
+                                                              'checkout_url': checkout_url})
+        return JSONResponse({'id': rid, 'state': 'active' if checkout_state == 'active' else 'pending',
+                             'checkout_url': checkout_url}, status_code=201)
+
     @app.post("/api/workspaces/{wid}/subscription")
     async def change_subscription(wid: str, request: Request):
         user = await identity(request)
@@ -1399,21 +1500,184 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         data = await body(request)
         plan = data.get("plan")
         if plan not in ("Free", "Pro", "Elite"):
-            fail(400, "Choose Free, Pro or Elite. Cancel maps to Free.")
+            fail(400, "Choose Free, Pro or Elite.")
         with store.db() as db:
             workspace = store.workspace(db, user, wid)
             if workspace["kind"] != "personal" or workspace["owner"] != user.user:
                 fail(403, "Only the personal owner can change this subscription.")
+            current = db.one('subscriptions', {'workspace': wid})
+            provider = db.one('dodo_subscriptions', {'workspace': wid})
             pending = db.one('billing_requests', {'workspace': wid, 'state': 'pending'}, columns=['id', 'plan'])
+            if not dodo_checkout_ready:
+                if not billing_secret:
+                    fail(503, 'Dodo checkout is not configured. No billing request was created.')
+                if pending:
+                    if pending['plan'] != plan:
+                        fail(409, 'A billing request is already pending.')
+                    rid = pending['id']
+                else:
+                    rid = uuid.uuid4().hex
+                    db.insert('billing_requests', {'id': rid, 'workspace': wid, 'plan': plan, 'created': int(time.time())})
+                    store.audit(db, user, wid, 'subscription:requested:' + plan)
+                return JSONResponse({'id': rid, 'state': 'pending', 'message': 'Awaiting a verified billing adapter. No charge or plan change has occurred.'}, status_code=202)
             if pending:
-                if pending["plan"] != plan:
-                    fail(409, "A billing request is already pending.")
-                rid = pending["id"]
+                if pending['plan'] != plan:
+                    fail(409, 'A billing request is already pending.')
+                checkout = db.one('dodo_checkouts', {'request': pending['id']})
+                if checkout and checkout['state'] == 'ready' and checkout['checkout_url']:
+                    return JSONResponse({'id': pending['id'], 'state': 'pending', 'checkout_url': checkout['checkout_url']}, status_code=200)
+                fail(409, 'A Dodo request is already being reconciled. Do not create another checkout.')
+            if provider and provider['status'] in ('active', 'past_due', 'on_hold', 'paused'):
+                if plan == current['plan']:
+                    return {'plan': plan, 'state': 'active'}
+                if plan == 'Free':
+                    if provider['cancel_at_period_end']:
+                        return JSONResponse({'state': 'scheduled', 'plan': current['plan'],
+                            'message': 'Cancellation is already scheduled for the end of the paid period.'}, status_code=202)
+                    # Dodo keeps access through the paid period; the verified
+                    # cancellation/expiry webhook alone changes the plan to Free.
+                    action = 'cancel'
+                elif provider['status'] == 'active' and plan in dodo_products:
+                    rid = uuid.uuid4().hex
+                    db.insert('billing_requests', {'id': rid, 'workspace': wid, 'plan': plan, 'created': int(time.time())})
+                    action = 'change_plan'
+                    db.update('dodo_subscriptions', {'workspace': wid}, {'pending_plan': plan})
+                    store.audit(db, user, wid, 'subscription:requested:' + plan)
+                else:
+                    fail(409, 'This subscription cannot be changed while its provider status is ' + provider['status'] + '.')
+            elif plan == 'Free' and current['plan'] == 'Free':
+                return {'plan': 'Free', 'state': 'active'}
+            elif plan == 'Free':
+                fail(409, 'No active Dodo subscription is linked to this workspace; no plan change occurred.')
             else:
+                action = 'checkout'
                 rid = uuid.uuid4().hex
                 db.insert('billing_requests', {'id': rid, 'workspace': wid, 'plan': plan, 'created': int(time.time())})
-                store.audit(db, user, wid, "subscription:requested:" + plan)
-            return JSONResponse({"id": rid, "state": "pending", "message": "Requested; awaiting payment-provider confirmation. No charge or plan change has occurred."}, status_code=202)
+                db.insert('dodo_checkouts', {'request': rid, 'workspace': wid, 'owner': user.user,
+                                             'plan': plan, 'state': 'creating', 'created': int(time.time())})
+                store.audit(db, user, wid, 'subscription:checkout:' + plan)
+        if action == 'checkout':
+            return await create_dodo_checkout(user, wid, plan, rid)
+        try:
+            if action == 'change_plan':
+                await asyncio.to_thread(dodo_client.subscriptions.change_plan, provider['subscription_id'],
+                    product_id=dodo_products[plan], proration_billing_mode='do_not_bill', quantity=1,
+                    effective_at='next_billing_date', cancel_scheduled_change_plan=True,
+                    on_payment_failure='prevent_change')
+                with store.db() as db:
+                    db.update('billing_requests', {'id': rid}, {'state': 'confirmed'})
+                    store.audit(db, user, wid, 'subscription:scheduled:' + plan)
+                return JSONResponse({'id': rid, 'state': 'scheduled', 'plan': plan}, status_code=202)
+            await asyncio.to_thread(dodo_client.subscriptions.update, provider['subscription_id'],
+                cancel_at_next_billing_date=True, cancel_reason='cancelled_by_customer')
+            with store.db() as db:
+                latest = db.one('dodo_subscriptions', {'workspace': wid})
+                if latest and latest['status'] not in ('cancelled', 'expired'):
+                    db.update('dodo_subscriptions', {'workspace': wid}, {'cancel_at_period_end': 1})
+                    store.audit(db, user, wid, 'subscription:cancel_at_period_end')
+            return JSONResponse({'state': 'scheduled', 'plan': current['plan'],
+                                 'message': 'Cancellation is scheduled for the end of the paid period.'}, status_code=202)
+        except Exception:
+            fail(503, 'Dodo did not confirm the subscription change. The current plan remains unchanged; reconcile before retrying.')
+
+    @app.post('/api/dodo/webhook')
+    async def dodo_webhook(request: Request):
+        if not dodo_client or not dodo_webhook_key:
+            fail(503, 'Dodo webhook verification is not configured.')
+        raw_data = await body(request)
+        raw = request.state.raw_body
+        headers = {name: request.headers.get(name, '') for name in
+                   ('webhook-id', 'webhook-signature', 'webhook-timestamp')}
+        if any(not value for value in headers.values()):
+            fail(401, 'Dodo webhook signature headers are required.')
+        try:
+            dodo_client.webhooks.unwrap(raw.decode('utf-8'), headers=headers, key=dodo_webhook_key)
+        except Exception:
+            fail(401, 'Invalid Dodo webhook signature.')
+        event_id = headers['webhook-id']
+        event_type = raw_data.get('type')
+        event = raw_data.get('data')
+        if not isinstance(event_id, str) or len(event_id) > 255 or not isinstance(event_type, str) or not isinstance(event, dict):
+            fail(400, 'Invalid Dodo webhook event.')
+        subscription_events = {'subscription.active', 'subscription.renewed', 'subscription.plan_changed',
+                               'subscription.updated', 'subscription.cancelled', 'subscription.expired',
+                               'subscription.failed', 'subscription.past_due', 'subscription.on_hold',
+                               'subscription.paused', 'subscription.unpaused'}
+        with store.db() as db:
+            if db.one('billing_events', {'id': event_id}):
+                return {'duplicate': True}
+            if event_type in ('payment.failed', 'payment.cancelled', 'subscription.failed'):
+                metadata = event.get('metadata') if isinstance(event.get('metadata'), dict) else {}
+                rid = metadata.get('request')
+                if isinstance(rid, str):
+                    pending = db.one('billing_requests', {'id': rid, 'state': 'pending'})
+                    checkout = db.one('dodo_checkouts', {'request': rid})
+                    if pending and checkout and checkout['workspace'] == pending['workspace']:
+                        db.update('billing_requests', {'id': rid}, {'state': 'failed'})
+                        db.update('dodo_checkouts', {'request': rid}, {'state': 'failed'})
+            if event_type in subscription_events:
+                sid = event.get('subscription_id')
+                if not isinstance(sid, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,160}', sid):
+                    fail(400, 'Invalid Dodo subscription identifier.')
+                linked = db.one('dodo_subscriptions', {'subscription_id': sid})
+                metadata = event.get('metadata') if isinstance(event.get('metadata'), dict) else {}
+                product_id = event.get('product_id')
+                plan = next((name for name, pid in dodo_products.items() if pid and pid == product_id), None)
+                if not linked and event_type == 'subscription.active':
+                    rid = metadata.get('request')
+                    wid, owner = metadata.get('workspace'), metadata.get('user')
+                    pending = db.one('billing_requests', {'id': rid, 'state': 'pending'}) if isinstance(rid, str) else None
+                    checkout = db.one('dodo_checkouts', {'request': rid}) if isinstance(rid, str) else None
+                    workspace = db.one('workspaces', {'id': wid}) if isinstance(wid, str) else None
+                    if (not pending or not checkout or not workspace or workspace['kind'] != 'personal'
+                            or workspace['owner'] != owner or pending['workspace'] != wid
+                            or pending['plan'] != plan or checkout['owner'] != owner
+                            or checkout['workspace'] != wid or checkout['plan'] != plan):
+                        fail(409, 'Dodo subscription is not linked to a matching personal workspace checkout.')
+                    # Reuse the one provider link only after an earlier
+                    # subscription ended and paid access was already removed.
+                    existing = db.one('dodo_subscriptions', {'workspace': wid})
+                    current = db.one('subscriptions', {'workspace': wid})
+                    if existing and (existing['status'] not in ('cancelled', 'expired', 'failed')
+                                     or not current or current['plan'] != 'Free'):
+                        fail(409, 'A different Dodo subscription is already linked to this personal workspace.')
+                    customer = event.get('customer') if isinstance(event.get('customer'), dict) else {}
+                    customer_id = customer.get('customer_id') or event.get('customer_id')
+                    status = str(event.get('status') or 'active').lower()
+                    provider_row = {'workspace': wid, 'subscription_id': sid,
+                        'customer_id': customer_id if isinstance(customer_id, str) else None,
+                        'product_id': product_id, 'plan': plan, 'status': status,
+                        'current_period_end': str(event.get('next_billing_date')) if event.get('next_billing_date') else None,
+                        'cancel_at_period_end': int(bool(event.get('cancel_at_next_billing_date'))), 'pending_plan': None}
+                    if existing:
+                        db.update('dodo_subscriptions', {'workspace': wid}, provider_row)
+                    else:
+                        db.insert('dodo_subscriptions', provider_row)
+                    db.update('subscriptions', {'workspace': wid}, {'plan': plan}, increments={'version': 1})
+                    db.update('billing_requests', {'id': rid}, {'state': 'confirmed'})
+                    db.update('dodo_checkouts', {'request': rid}, {'state': 'active', 'session_id': checkout['session_id']})
+                    store.audit(db, Identity('dodo-webhook'), wid, 'subscription:confirmed:' + plan)
+                elif linked:
+                    wid = linked['workspace']
+                    status = str(event.get('status') or event_type.rsplit('.', 1)[-1]).lower()
+                    if event_type in ('subscription.cancelled', 'subscription.expired'):
+                        db.update('dodo_subscriptions', {'workspace': wid}, {'status': status,
+                            'cancel_at_period_end': 0, 'pending_plan': None})
+                        db.update('subscriptions', {'workspace': wid}, {'plan': 'Free'}, increments={'version': 1})
+                        store.audit(db, Identity('dodo-webhook'), wid, 'subscription:ended:Free')
+                    else:
+                        updates = {'status': status,
+                                   'current_period_end': str(event.get('next_billing_date')) if event.get('next_billing_date') else linked['current_period_end'],
+                                   'cancel_at_period_end': int(bool(event.get('cancel_at_next_billing_date')))}
+                        if event_type == 'subscription.plan_changed':
+                            if not plan:
+                                fail(409, 'Dodo plan-change event references an unconfigured product.')
+                            updates.update({'product_id': product_id, 'plan': plan, 'pending_plan': None})
+                            db.update('subscriptions', {'workspace': wid}, {'plan': plan}, increments={'version': 1})
+                            store.audit(db, Identity('dodo-webhook'), wid, 'subscription:changed:' + plan)
+                        db.update('dodo_subscriptions', {'workspace': wid}, updates)
+            db.insert('billing_events', {'id': event_id, 'received': int(time.time())})
+        return {'received': True}
 
     @app.post("/api/billing/confirmed")
     @app.post("/api/billing/failed")
@@ -1878,11 +2142,13 @@ async def migrate_sqlite_to_appwrite(source_path, target_path, api_key, bucket):
     headers = {"X-Appwrite-Project": PROJECT, "X-Appwrite-Key": api_key}
     base = ENDPOINT + "/storage/buckets/" + quote(bucket, safe="") + "/files"
     tables = ("workspaces", "subscriptions", "resources", "folder_membership", "grants", "usage",
-              "billing_requests", "billing_events", "audit", "notifications", "account_preferences", "accounts_bindings")
+              "billing_requests", "billing_events", "dodo_checkouts", "dodo_subscriptions", "audit",
+              "notifications", "account_preferences", "accounts_bindings")
     keys = {"workspaces": ("id",), "subscriptions": ("workspace",), "resources": ("id",),
             "folder_membership": ("child",), "grants": ("resource", "user"),
             "usage": ("workspace", "product", "month"), "billing_requests": ("id",),
-            "billing_events": ("id",), "audit": ("id",), "notifications": ("id",),
+            "billing_events": ("id",), "dodo_checkouts": ("request",),
+            "dodo_subscriptions": ("workspace",), "audit": ("id",), "notifications": ("id",),
             "account_preferences": ("user",), "accounts_bindings": ("company",)}
     counts = {}
     try:
@@ -1990,4 +2256,4 @@ if __name__ == "__main__":
         print(Store(args.db, limits).organisation(args.add_team, args.name))
     else:
         import uvicorn
-        uvicorn.run(create_app(args.db, limits=limits, billing_secret=os.environ.get("ALAADA_BILLING_ADAPTER_SECRET"), webhook_secret=os.environ.get("APPWRITE_WEBHOOK_SECRET"), webhook_url=os.environ.get("APPWRITE_WEBHOOK_URL"), web_root=args.web_root, accounts_url=os.environ.get("ALAADA_ACCOUNTS_UPSTREAM"), accounts_secret=os.environ.get("ALAADA_ACCOUNTS_GATEWAY_SECRET"), orbit_url=os.environ.get('ALAADA_ORBIT_UPSTREAM'), orbit_key=os.environ.get('ALAADA_ORBIT_API_KEY'), orbit_model=os.environ.get('ALAADA_ORBIT_MODEL', 'simplex1'), analyser_url=os.environ.get('ALAADA_ANALYSER_UPSTREAM'), analyser_secret=os.environ.get('ALAADA_ANALYSER_GATEWAY_SECRET'), sheets_url=os.environ.get('ALAADA_SHEETS_UPSTREAM'), sheets_secret=os.environ.get('ALAADA_CALCULATION_GATEWAY_SECRET'), appwrite_api_key=os.environ.get('APPWRITE_API_KEY'), appwrite_storage_bucket=os.environ.get('APPWRITE_STORAGE_BUCKET_ID')), host=args.host, port=args.port)
+        uvicorn.run(create_app(args.db, limits=limits, billing_secret=os.environ.get("ALAADA_BILLING_ADAPTER_SECRET"), webhook_secret=os.environ.get("APPWRITE_WEBHOOK_SECRET"), webhook_url=os.environ.get("APPWRITE_WEBHOOK_URL"), web_root=args.web_root, accounts_url=os.environ.get("ALAADA_ACCOUNTS_UPSTREAM"), accounts_secret=os.environ.get("ALAADA_ACCOUNTS_GATEWAY_SECRET"), orbit_url=os.environ.get('ALAADA_ORBIT_UPSTREAM'), orbit_key=os.environ.get('ALAADA_ORBIT_API_KEY'), orbit_model=os.environ.get('ALAADA_ORBIT_MODEL', 'simplex1'), analyser_url=os.environ.get('ALAADA_ANALYSER_UPSTREAM'), analyser_secret=os.environ.get('ALAADA_ANALYSER_GATEWAY_SECRET'), sheets_url=os.environ.get('ALAADA_SHEETS_UPSTREAM'), sheets_secret=os.environ.get('ALAADA_CALCULATION_GATEWAY_SECRET'), appwrite_api_key=os.environ.get('APPWRITE_API_KEY'), appwrite_storage_bucket=os.environ.get('APPWRITE_STORAGE_BUCKET_ID'), dodo_api_key=os.environ.get('DODO_PAYMENTS_API_KEY'), dodo_webhook_key=os.environ.get('DODO_WEBHOOK_KEY'), dodo_environment=os.environ.get('DODO_PAYMENTS_ENVIRONMENT', 'live_mode'), dodo_products={'Pro': os.environ.get('DODO_PRO_PRODUCT_ID'), 'Elite': os.environ.get('DODO_ELITE_PRODUCT_ID')}, dodo_checkout_enabled=os.environ.get('DODO_ENABLE_CHECKOUT', '').lower() == 'true'), host=args.host, port=args.port)

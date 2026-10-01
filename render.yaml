@@ -27,6 +27,18 @@ services:
         value: https://alaada-workspaces.onrender.com/api/appwrite/users-created
       - key: ALAADA_BILLING_ADAPTER_SECRET
         sync: false
+      - key: DODO_PAYMENTS_API_KEY
+        sync: false
+      - key: DODO_WEBHOOK_KEY
+        sync: false
+      - key: DODO_PAYMENTS_ENVIRONMENT
+        value: live_mode
+      - key: DODO_ENABLE_CHECKOUT
+        value: "false"
+      - key: DODO_PRO_PRODUCT_ID
+        sync: false
+      - key: DODO_ELITE_PRODUCT_ID
+        sync: false
       - key: ALAADA_ACCOUNTS_UPSTREAM
         sync: false
       - key: ALAADA_ACCOUNTS_GATEWAY_SECRET

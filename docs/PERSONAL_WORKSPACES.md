@@ -221,16 +221,19 @@ the current subscription and resources, closes the pending request and permits a
 new request. A late confirmation for that failed request is rejected. The adapter
 must reconcile ambiguous provider outcomes before declaring terminal failure.
 
-This signature protocol is NOT Dodo Payments' webhook protocol. A trusted billing
-adapter must first verify the actual provider signature, account, customer,
-product, payment status and effective date; only then may it call this endpoint.
-That adapter is not a Dodo webhook integration. The connected `alaada.com` Chrome
-profile shows the Alaada Dodo workspace in Live Mode with one ₹299/month Pro
-subscription product, 0 active products, and no Elite product. Checkout, Dodo
-signature verification, renewals, refunds and scheduled period-end cancellation
-are still unimplemented. Keep live checkout disabled until the intended Pro
-product is active, Elite terms and product are approved, and Dodo API/webhook
-secrets are configured server-side. The UI labels requests as pending.
+The `/api/billing/confirmed` and `/api/billing/failed` routes remain a separate
+private adapter contract; they do not parse Dodo webhook signatures. The monolith
+also has a Dodo SDK integration at `/api/dodo/webhook`. It verifies Standard
+Webhooks signatures, stores provider event IDs in Appwrite, links activation only
+to a matching pending personal checkout, and applies plan changes only after a
+verified subscription event. Cancellation preserves paid access until Dodo
+confirms cancellation or expiry. `DODO_ENABLE_CHECKOUT` defaults to false and
+production readiness also requires both live product IDs and server-side API and
+webhook keys. In the connected `alaada.com` Chrome profile, the Alaada Dodo
+dashboard showed Test Mode products for Pro (₹299/month) and Elite (₹999/month),
+one active; Live Mode showed one Pro subscription product and no Elite product,
+with no active products. Keep checkout disabled until the approved live catalogue
+is active and complete. Never store Dodo secrets in source control.
 
 ## Retention and employment changes
 
@@ -519,16 +522,13 @@ and retention of organisation payloads for its administrator. This is local HTTP
 and SQLite verification with a simulated Appwrite identity boundary; it does not
 certify live Appwrite removal or upstream Accounts financial operations.
 
-The repository includes a Render Blueprint for the monolithic API with no
-persistent disk; its production startup rejects SQLite and non-Appwrite database
-hosts. The live Render service still has a 10 GB disk attached at `/var/data`,
-and its configured start command explicitly selects
-`/var/data/workspaces.sqlite3`. The latest deployment of the SQLite rejection
-guard failed with status 2; the public health endpoint's HTTP 200 is from the
-previous successful deployment and does not prove Appwrite storage is active.
-Render is missing `APPWRITE_DATABASE_URL` and `APPWRITE_API_KEY`; the Appwrite
-project currently has TablesDB but no native PostgreSQL database. Do not store
-production workspace rows or files on Render. Export and migrate any required
-legacy data before removing the disk, then configure Appwrite credentials and
-deploy the no-disk Blueprint. The Cloudflare reverse proxy also remains to be
-configured.
+The Render Blueprint runs the monolithic API without a persistent disk and rejects
+local database storage in production. On 1 October 2026, the deployed health
+endpoint confirmed Appwrite TablesDB and Storage are active in project
+`6972444700208a437da1`; the live database provisioning check found no missing
+workspace tables. The deployed service still reports the legacy billing adapter
+disabled, and its current product gateway report has Accounts, Orbit and Sheets
+disabled (Analyser enabled). A new reviewed build must be deployed before its Dodo
+routes are available in production. Configure verified upstream endpoints and
+server-side credentials before enabling each product gateway. Render must not be
+used as a data store.

@@ -3,3 +3,4 @@ uvicorn[standard]>=0.30,<1
 httpx>=0.27,<1
 psycopg[binary]>=3.2,<4
 appwrite>=24.0.0
+dodopayments[webhooks]>=1.118.0,<2

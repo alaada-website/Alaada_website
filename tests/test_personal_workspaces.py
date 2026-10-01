@@ -633,6 +633,127 @@ def test_failed_billing_request_preserves_plan_and_allows_retry(env):
     assert confirm(env, retried.json()['id'], 'Free', 'cancel-after-failure').status_code == 200
 
 
+def dodo_app(tmp_path):
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+    from dodopayments import DodoPayments
+
+    key = 'whsec_' + base64.b64encode(b'local-dodo-webhook-secret').decode()
+    users = {'alice': m.Identity('alice'), 'admin': m.Identity('admin', {'team':['admin']})}
+    async def authenticate(token):
+        if token not in users:
+            raise HTTPException(401, 'Invalid session')
+        return users[token]
+    calls = {'checkout': None, 'checkout_count': 0, 'cancel': [], 'change': []}
+    def create_checkout(**kwargs):
+        calls['checkout_count'] += 1
+        calls['checkout'] = kwargs
+        return SimpleNamespace(session_id=f'sess_test_{calls["checkout_count"]}',
+                               checkout_url=f'https://checkout.dodopayments.com/session/{calls["checkout_count"]}')
+    client = SimpleNamespace(
+        webhooks=DodoPayments(bearer_token='test-key', webhook_key=key, environment='test_mode').webhooks,
+        checkout_sessions=SimpleNamespace(create=create_checkout),
+        subscriptions=SimpleNamespace(
+            update=lambda subscription_id, **kwargs: calls['cancel'].append((subscription_id, kwargs)),
+            change_plan=lambda subscription_id, **kwargs: calls['change'].append((subscription_id, kwargs))))
+    app = m.create_app(tmp_path / 'dodo.sqlite3', authenticate=authenticate,
+        dodo_api_key='test-key', dodo_webhook_key=key, dodo_environment='test_mode',
+        dodo_products={'Pro':'pdt_pro_test','Elite':'pdt_elite_test'}, dodo_checkout_enabled=True,
+        dodo_client=client)
+    http = TestClient(app)
+    wid = next(w['id'] for w in http.get('/api/workspaces', headers={'Authorization':'Bearer alice'}).json()['workspaces']
+               if w['kind'] == 'personal')
+    key_data = {'key': key, 'users': users, 'calls': calls, 'app': app, 'client': http, 'workspace': wid}
+    return key_data
+
+
+def signed_dodo_request(key, event_id, data, event_type='subscription.active'):
+    from datetime import datetime, timezone
+    from standardwebhooks import Webhook
+    timestamp = datetime.now(timezone.utc)
+    raw = json.dumps({'type': event_type, 'business_id':'bus_test', 'timestamp':timestamp.isoformat(),
+                      'data':data}, separators=(',', ':')).encode()
+    signature = Webhook(key).sign(event_id, timestamp, raw.decode())
+    headers = {'webhook-id':event_id, 'webhook-timestamp':str(int(timestamp.timestamp())),
+               'webhook-signature':signature, 'content-type':'application/json'}
+    return raw, headers
+
+
+def test_dodo_checkout_and_verified_webhook_bind_only_the_personal_workspace(tmp_path):
+    env = dodo_app(tmp_path)
+    client, wid, key = env['client'], env['workspace'], env['key']
+    headers = {'Authorization':'Bearer alice', 'X-Alaada-Workspace':wid}
+    checkout = client.post(f'/api/workspaces/{wid}/subscription', json={'plan':'Pro'}, headers=headers)
+    assert checkout.status_code == 201
+    assert checkout.json()['checkout_url'] == 'https://checkout.dodopayments.com/session/1'
+    sent = env['calls']['checkout']
+    assert sent['product_cart'] == [{'product_id':'pdt_pro_test','quantity':1}]
+    assert sent['metadata'] == {'workspace':wid,'user':'alice','plan':'Pro','request':checkout.json()['id']}
+    event = {'subscription_id':'sub_test_123','product_id':'pdt_pro_test','status':'active',
+             'metadata':sent['metadata'],'customer':{'customer_id':'cus_test'}}
+    raw, signature = signed_dodo_request(key, 'msg_sub_active_1', event)
+    delivered = client.post('/api/dodo/webhook', content=raw, headers=signature)
+    assert delivered.status_code == 200 and delivered.json() == {'received':True}
+    duplicate = client.post('/api/dodo/webhook', content=raw, headers=signature)
+    assert duplicate.status_code == 200 and duplicate.json() == {'duplicate':True}
+    result = client.get(f'/api/workspaces/{wid}/subscription', headers=headers).json()
+    assert result['plan'] == 'Pro' and result['provider']['status'] == 'active'
+    assert client.get(f'/api/workspaces/{wid}/subscription',
+        headers={'Authorization':'Bearer admin','X-Alaada-Workspace':wid}).status_code == 403
+
+
+def test_dodo_invalid_signature_and_cross_workspace_metadata_never_grant_plan(tmp_path):
+    env = dodo_app(tmp_path)
+    client, wid, key = env['client'], env['workspace'], env['key']
+    auth = {'Authorization':'Bearer alice','X-Alaada-Workspace':wid}
+    checkout = client.post(f'/api/workspaces/{wid}/subscription', json={'plan':'Elite'}, headers=auth).json()
+    forged = {'subscription_id':'sub_forged','product_id':'pdt_elite_test','status':'active',
+              'metadata':{'workspace':'another-workspace','user':'alice','plan':'Elite','request':checkout['id']}}
+    raw, headers = signed_dodo_request(key, 'msg_sub_forged_1', forged)
+    headers['webhook-signature'] = 'v1,not-a-valid-signature'
+    assert client.post('/api/dodo/webhook', content=raw, headers=headers).status_code == 401
+    raw, headers = signed_dodo_request(key, 'msg_sub_forged_2', forged)
+    result = client.post('/api/dodo/webhook', content=raw, headers=headers)
+    assert result.status_code == 409
+    assert client.get(f'/api/workspaces/{wid}/subscription', headers=auth).json()['plan'] == 'Free'
+
+
+def test_dodo_cancel_is_scheduled_then_verified_cancellation_downgrades_without_deleting_resources(tmp_path):
+    env = dodo_app(tmp_path)
+    client, wid, key = env['client'], env['workspace'], env['key']
+    auth = {'Authorization':'Bearer alice','X-Alaada-Workspace':wid}
+    checkout = client.post(f'/api/workspaces/{wid}/subscription', json={'plan':'Pro'}, headers=auth).json()
+    active = {'subscription_id':'sub_cancel_test','product_id':'pdt_pro_test','status':'active',
+              'metadata':env['calls']['checkout']['metadata']}
+    raw, headers = signed_dodo_request(key, 'msg_sub_active_cancel', active)
+    assert client.post('/api/dodo/webhook', content=raw, headers=headers).status_code == 200
+    resource = client.post(f'/api/workspaces/{wid}/resources', json={
+        'product':'accounts','kind':'ledger','title':'Keep me','payload':{'marker':'personal'}}, headers=auth).json()
+    scheduled = client.post(f'/api/workspaces/{wid}/subscription', json={'plan':'Free'}, headers=auth)
+    assert scheduled.status_code == 202 and scheduled.json()['state'] == 'scheduled'
+    assert env['calls']['cancel'] and client.get(f'/api/workspaces/{wid}/subscription', headers=auth).json()['plan'] == 'Pro'
+    again = client.post(f'/api/workspaces/{wid}/subscription', json={'plan':'Free'}, headers=auth)
+    assert again.status_code == 202 and len(env['calls']['cancel']) == 1
+    ended = {'subscription_id':'sub_cancel_test','product_id':'pdt_pro_test','status':'cancelled',
+             'metadata':active['metadata']}
+    raw, headers = signed_dodo_request(key, 'msg_sub_cancelled', ended, 'subscription.cancelled')
+    assert client.post('/api/dodo/webhook', content=raw, headers=headers).status_code == 200
+    result = client.get(f'/api/workspaces/{wid}/subscription', headers=auth).json()
+    assert result['plan'] == 'Free' and result['provider']['status'] == 'cancelled'
+    preserved = client.get(f'/api/workspaces/{wid}/resources/{resource["id"]}', headers=auth)
+    assert preserved.status_code == 200 and preserved.json()['payload']['marker'] == 'personal'
+    renewal_checkout = client.post(f'/api/workspaces/{wid}/subscription', json={'plan':'Pro'}, headers=auth)
+    assert renewal_checkout.status_code == 201
+    renewed = {'subscription_id':'sub_after_cancel','product_id':'pdt_pro_test','status':'active',
+               'metadata':env['calls']['checkout']['metadata']}
+    raw, headers = signed_dodo_request(key, 'msg_sub_after_cancel', renewed)
+    assert client.post('/api/dodo/webhook', content=raw, headers=headers).status_code == 200
+    result = client.get(f'/api/workspaces/{wid}/subscription', headers=auth).json()
+    assert result['plan'] == 'Pro' and result['provider']['status'] == 'active'
+    preserved = client.get(f'/api/workspaces/{wid}/resources/{resource["id"]}', headers=auth)
+    assert preserved.status_code == 200 and preserved.json()['payload']['marker'] == 'personal'
+
+
 def test_health_is_safe_and_reports_configuration(env):
     response = env[0].get('/health')
     assert response.status_code == 200
