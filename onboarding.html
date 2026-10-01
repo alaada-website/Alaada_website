@@ -1,1 +1,105 @@
-<!doctype html><html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Get started · Alaada</title><style>body{margin:0;background:#f5f4ef;color:#242321;font:15px system-ui,sans-serif}.shell{max-width:600px;margin:8vh auto;padding:20px}.card{background:#fffdf8;border:1px solid #dedbd2;border-radius:18px;padding:28px}h1{margin:0 0 6px}.muted{color:#77746d}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin:12px 0}.field label{display:block;color:#77746d;font-size:.8rem;margin-bottom:5px}.field input,.field select{width:100%;padding:11px;border:1px solid #dedbd2;border-radius:9px;box-sizing:border-box;font:inherit}button{border:0;border-radius:9px;padding:11px 15px;background:#242321;color:white;font:inherit;cursor:pointer}.status{min-height:22px;color:#77746d}.error{color:#b33c35}@media(max-width:650px){.grid{grid-template-columns:1fr}}</style></head><body><div class="shell"><main class="card"><h1>Welcome to Alaada</h1><p class="muted">Set up your profile and workspace. You can change these details later.</p><form id="form"><div class="grid"><div class="field"><label for="first">First name</label><input id="first" required></div><div class="field"><label for="last">Last name</label><input id="last"></div></div><div class="field"><label for="kind">How will you use Alaada?</label><select id="kind"><option value="individual">Personally</option><option value="business">For a business or team</option></select></div><div id="org-fields"><div class="grid"><div class="field"><label for="org">Organization name</label><input id="org" placeholder="Optional"></div><div class="field"><label for="slug">Organization slug</label><input id="slug" pattern="[a-z0-9-]{3,48}" placeholder="optional-slug"></div></div></div><button>Continue to Alaada</button><p id="status" class="status" role="status"></p></form></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script><script src="js/alaada-ums.js"></script><script>const $=id=>document.getElementById(id),msg=(x,e=false)=>{$('status').textContent=x;$('status').className=e?'status error':'status'};async function boot(){if(!window.AlaadaUMS){msg('Alaada authentication is not configured.',true);return}await AlaadaUMS.refresh();if(!AlaadaUMS.user){location.replace('/auth.html?next=/onboarding.html');return}if(AlaadaUMS.profile?.onboarding_completed){location.replace('/account.html');return}}$('kind').onchange=()=>{$('org-fields').style.display=$('kind').value==='business'?'block':'none'};$('form').onsubmit=async e=>{e.preventDefault();try{const r=await AlaadaUMS.updateProfile({first_name:$('first').value.trim(),last_name:$('last').value.trim(),display_name:`${$('first').value.trim()} ${$('last').value.trim()}`.trim(),onboarding_completed:true});if(r.error)throw r.error;if($('kind').value==='business'&&$('org').value.trim()){const slug=$('slug').value.trim()||$('org').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48);const created=await AlaadaUMS.createOrganization($('org').value,slug);if(created.error)throw created.error}location.replace('/account.html')}catch(err){msg(err.message||'Could not complete onboarding.',true)}};boot();</script></body></html>
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Get started · Alaada</title>
+  <style>
+    :root{color-scheme:light;--bg:#f5f4ef;--ink:#242321;--muted:#77746d;--line:#dedbd2;--card:#fffdf8;--gold:#a37423;--error:#b33c35;--ok:#28744b}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif;display:grid;place-items:center}.shell{width:min(100% - 32px,620px);padding:28px 0}.brand{display:block;text-align:center;text-decoration:none;color:var(--ink);font-weight:750;font-size:1.35rem;margin-bottom:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 22px;box-shadow:0 16px 44px #2423210d}h1{font-size:1.55rem;line-height:1.2;margin:0 0 7px}.muted{color:var(--muted);margin:0 0 20px}.field{margin:13px 0}.field label{display:block;color:var(--muted);font-size:.8rem;margin-bottom:5px}.field input,.field select{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;font:inherit;background:white;color:var(--ink)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.choice{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:10px;cursor:pointer}.choice input{margin-top:5px}.choice small{display:block;color:var(--muted)}.notice{padding:12px 14px;border-radius:10px;background:#f4f0e8;color:#5c574d;font-size:.9rem}.primary{border:0;border-radius:9px;padding:11px 14px;background:var(--ink);color:white;font:inherit;font-weight:600;cursor:pointer}.primary:disabled{opacity:.6;cursor:wait}.status{min-height:24px;margin:14px 0 0;color:var(--muted);font-size:.88rem}.error{color:var(--error)}.ok{color:var(--ok)}.hidden{display:none!important}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="brand" href="/">Alaada</a>
+    <main class="card">
+      <h1>Welcome to Alaada</h1>
+      <p class="muted">Set up your profile. Alaada creates a private personal workspace for every account. You can join an organisation workspace from an invitation at any time.</p>
+      <div id="loading" class="notice" role="status">Checking your Appwrite account and private workspace…</div>
+      <form id="form" class="hidden" novalidate>
+        <div class="grid">
+          <div class="field"><label for="first">First name</label><input id="first" autocomplete="given-name" maxlength="64" required></div>
+          <div class="field"><label for="last">Last name</label><input id="last" autocomplete="family-name" maxlength="64"></div>
+        </div>
+        <div class="field"><label for="account-type">Account type</label><select id="account-type"><option value="personal">Personal account</option><option value="enterprise">Enterprise member</option></select></div>
+        <div class="field"><label for="classification">Classification</label><select id="classification"><option value="individual">Individual</option><option value="professional">Professional</option><option value="freelancer">Freelancer</option><option value="small_business">Small business</option><option value="business_team">Business team</option><option value="enterprise_member">Enterprise member</option></select></div>
+        <div id="business-note" class="notice hidden">Every Alaada identity keeps its private personal workspace and subscription. Enterprise access is a separate membership: ask your organisation administrator to invite this same email address. Switching account type does not create a seat or expose your personal data.</div>
+        <div class="field"><label for="personal-plan">Personal subscription</label><select id="personal-plan"><option value="Free">Free</option><option value="Pro" disabled>Pro · checkout unavailable</option><option value="Elite" disabled>Elite · checkout unavailable</option></select></div>
+        <div class="notice" id="payment-note">Payment and paid-plan checkout are handled through Dodo Payments. The live checkout and verified billing webhook are not connected yet, so no charge or paid entitlement can be activated here.</div>
+        <button id="submit" class="primary" type="submit" style="width:100%;margin-top:14px">Continue to Alaada</button>
+      </form>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </main>
+  </div>
+  <script>
+  (()=>{
+    'use strict';
+    const ENDPOINT='https://sfo.cloud.appwrite.io/v1',PROJECT='6972444700208a437da1';
+    const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
+    const safeNext=value=>typeof value==='string'&&value.startsWith('/')&&!value.startsWith('//')&&!value.includes('\\')?value:'/account.html';
+    const next=safeNext(params.get('next')||'/account.html');
+    function message(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error);$('status').classList.toggle('ok',!error&&!!text)}
+    async function appwrite(path,method='GET',data){
+      const options={method,credentials:'include',cache:'no-store',headers:{'X-Appwrite-Project':PROJECT}};
+      if(data!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(data)}
+      const response=await fetch(ENDPOINT+path,options);let body={};try{body=await response.json()}catch{}
+      if(!response.ok)throw new Error(body.message||`Appwrite request failed (${response.status})`);
+      return body;
+    }
+    async function workspaceContext(){
+      const token=await appwrite('/account/jwts','POST',{});
+      const response=await fetch('/api/workspaces',{cache:'no-store',headers:{Authorization:'Bearer '+token.jwt}});
+      let body={};try{body=await response.json()}catch{}
+      if(!response.ok)throw new Error(body.detail||`Personal workspace could not be checked (${response.status})`);
+      const personal=(body.workspaces||[]).find(workspace=>workspace.kind==='personal');
+      if(!personal)throw new Error('Your private personal workspace is still being prepared. Wait a moment and retry.');
+      let subscription={plan:personal.plan||'Free'};
+      const subResponse=await fetch('/api/workspaces/'+encodeURIComponent(personal.id)+'/subscription',{cache:'no-store',headers:{Authorization:'Bearer '+token.jwt,'X-Alaada-Workspace':personal.id}});
+      if(subResponse.ok)subscription=await subResponse.json();
+      return {token:token.jwt,personal,subscription};
+    }
+    async function boot(){
+      try{
+        const account=await appwrite('/account');
+        if(account.prefs?.onboarding_completed){location.replace(next);return}
+        const context=await workspaceContext();
+        const name=(account.name||'').trim().split(/\s+/).filter(Boolean);
+        $('first').value=name.shift()||'';$('last').value=name.join(' ');
+        const prefs=account.prefs||{};$('account-type').value=prefs.account_type==='enterprise'?'enterprise':'personal';$('classification').value=prefs.classification||'individual';
+        $('business-note').classList.toggle('hidden',$('account-type').value!=='enterprise');
+        $('personal-plan').value=['Free','Pro','Elite'].includes(context.subscription.plan)?context.subscription.plan:'Free';
+        for(const option of $('personal-plan').options)if(option.value!=='Free')option.disabled=true;
+        $('payment-note').textContent=`Current personal plan: ${context.subscription.plan||'Free'}. Paid checkout and verified billing are unavailable until Dodo's live catalogue, checkout, and webhook are connected. No payment has been taken.`;
+        $('form').classList.remove('hidden');$('loading').classList.add('hidden');
+        window.__alaadaOnboarding={account,workspace:context.personal};
+      }catch(error){
+        const unauthorised=/401|403|session|unauthorized|unauthorised/i.test(error.message);
+        $('loading').textContent=unauthorised?'Sign in to finish setting up your Alaada account.':error.message||'Your private workspace is temporarily unavailable.';
+        if(unauthorised){const link=document.createElement('a');link.href='/auth.html?next='+encodeURIComponent(location.pathname+location.search);link.textContent='Sign in';link.className='primary';link.style.display='inline-block';link.style.marginTop='14px';$('loading').append(document.createElement('br'),link)}
+        else {const retry=document.createElement('button');retry.type='button';retry.textContent='Retry';retry.className='primary';retry.style.marginTop='14px';retry.onclick=()=>{retry.disabled=true;boot().finally(()=>retry.disabled=false)};$('loading').append(document.createElement('br'),retry)}
+      }
+    }
+    $('account-type').addEventListener('change',()=>{$('business-note').classList.toggle('hidden',$('account-type').value!=='enterprise');if($('account-type').value==='enterprise')$('classification').value='enterprise_member';else if($('classification').value==='enterprise_member')$('classification').value='individual'});
+    $('form').addEventListener('submit',async event=>{
+      event.preventDefault();const first=$('first').value.trim(),last=$('last').value.trim();
+      if(!first)return message('Enter your first name to continue.',true);
+      const button=$('submit');button.disabled=true;message('Saving your profile and private workspace…');
+      try{
+        const account=await appwrite('/account');
+        if(!window.__alaadaOnboarding||account.$id!==window.__alaadaOnboarding.account.$id)throw new Error('Your signed-in account changed. Reload this page before continuing.');
+        const context=await workspaceContext();
+        const displayName=[first,last].filter(Boolean).join(' ').slice(0,128);
+        await appwrite('/account/name','PUT',{name:displayName});
+        const latest=await appwrite('/account');
+        const prefs={...(latest.prefs||{}),onboarding_completed:true,account_type:$('account-type').value,classification:$('classification').value,personal_plan:context.subscription.plan||'Free',onboarding_completed_at:new Date().toISOString()};
+        await appwrite('/account/prefs','PUT',{prefs});
+        message(`Your profile is ready. Active workspace: ${context.personal.name} · Personal.`);
+        location.replace(next);
+      }catch(error){message(error.message||'Could not finish setting up your account. Your personal workspace data is unchanged.',true)}
+      finally{button.disabled=false}
+    });
+    boot();
+  })();
+  </script>
+</body>
+</html>
