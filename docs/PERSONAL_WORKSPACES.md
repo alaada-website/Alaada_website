@@ -50,15 +50,14 @@ the four core products require Appwrite rather than Supabase sessions.
    secrets. The service creates its
    relational tables idempotently at startup. Render has no persistent disk and
    no SQLite fallback in its production start command.
-3. If the existing Render volume contains workspace data, first deploy the
-   Appwrite-capable monolith while the old volume remains mounted. With the
-   service stopped for writes, run
-   `python alaada_workspaces.py --migrate-sqlite-from /var/data/workspaces.sqlite3 --migrate-only`
-   in its Render Shell. This reads `APPWRITE_DATABASE_URL`, verifies file hashes,
-   moves file bytes into Appwrite Storage, and updates their database metadata.
-   Review the reported table counts and verify sample file downloads from Appwrite.
-   Keep the volume until those checks pass; then sync the Blueprint that removes
-   the volume and deploy the no-disk start command.
+3. If an older Render deployment has workspace data on a persistent disk, do not
+   attach that disk to the new service. With the old service stopped for writes,
+   export a one-time encrypted SQLite backup to an operator-controlled machine
+   outside Render and verify its checksum. Run the migration from that machine
+   with the backup as `--migrate-sqlite-from`, using the Appwrite PostgreSQL DSN,
+   Storage bucket ID, and API key in its environment. Review the table counts and
+   verify sample file downloads from Appwrite before deleting the legacy Render
+   disk. No application records or backups belong on Render's filesystem.
 4. For local staging only, run `python alaada_workspaces.py --db /private/alaada/workspaces.sqlite3`.
 4. Reverse proxy `/workspaces`, `/api/workspaces`, `/api/workspaces/*`, `/api/shared`
    `/api/appwrite/users-created` and `/api/billing/confirmed` to this service on the same HTTPS origin as the
@@ -175,9 +174,11 @@ grant workspace listing access. Existing confirmed copy/move operations carry
 the bytes into the destination ownership scope without inheriting grants.
 Organisation membership removal denies organisation downloads and leaves personal
 files intact. Uploads consume one platform write; downloads do not consume writes.
-SQLite and its backups contain the file bytes: use the documented encrypted disk
-and backup controls. Large uploads and resumable transfers are
-not implemented by this initial storage path.
+Local-development SQLite databases and migration backups contain file bytes.
+Production database rows and file bytes reside in Appwrite PostgreSQL and
+Storage; Render's filesystem is ephemeral and is never used as a data store.
+Large uploads and resumable transfers are not implemented by this initial
+storage path.
 
 Folders now have canonical membership links in the workspace database. The manager
 can create folders, open their contents and place selected files/folders in a
@@ -241,11 +242,10 @@ Personal data is retained independently. Legal hold, retention schedules and
 organisation deletion need a separately approved implementation before launch.
 
 Schema version 1 creates new tables only. It does not import or reassign existing
-browser/legacy data. Back up the database using SQLite's online backup API before
-future migrations; preserve the pre-migration copy. Do not overwrite existing
-workspace files with a fresh database. The database must be persistent, not an
-ephemeral deployment filesystem. Multi-host deployment needs a transactional
-shared database and migration review; this SQLite service is single-host.
+browser/legacy data. For local SQLite development, use SQLite's online backup API
+before migrations. Production durability comes from Appwrite PostgreSQL and
+Storage, never the deployment filesystem. Multi-host deployment uses the shared
+Appwrite database; local SQLite remains single-host development only.
 
 ## Accounts backend gateway
 
@@ -516,7 +516,10 @@ and retention of organisation payloads for its administrator. This is local HTTP
 and SQLite verification with a simulated Appwrite identity boundary; it does not
 certify live Appwrite removal or upstream Accounts financial operations.
 
-The repository includes a Render Blueprint for the monolithic API with a 10 GB
-persistent disk, safe `/health` readiness output and `autoDeploy: false`. This is
-deployment preparation only; the Cloudflare reverse proxy and provider secrets
-still require configuration.
+The repository includes a Render Blueprint for the monolithic API with no
+persistent disk; its production startup rejects SQLite and non-Appwrite database
+hosts. The existing Render service still has a 10 GB disk attached at `/var/data`
+according to the Render dashboard. The service is suspended, so the legacy disk
+must be exported/migrated or deliberately deleted before the no-disk production
+state is complete. Do not store production workspace rows or files on Render.
+The Cloudflare reverse proxy and provider secrets still require configuration.

@@ -1580,6 +1580,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if not args.db:
         parser.error("Set APPWRITE_DATABASE_URL or pass --db for local development")
+    if os.environ.get("RENDER", "").lower() == "true":
+        database_host = urlsplit(args.db).hostname or ""
+        if not args.db.startswith(("postgres://", "postgresql://")) or not database_host.lower().endswith(".appwrite.center"):
+            parser.error("Render must use Appwrite managed PostgreSQL; local SQLite and Render-hosted databases are prohibited")
     if args.migrate_only and not args.migrate_sqlite_from:
         parser.error("--migrate-only requires --migrate-sqlite-from")
     limits = json.loads(os.environ["ALAADA_LIMITS_JSON"]) if os.environ.get("ALAADA_LIMITS_JSON") else None
