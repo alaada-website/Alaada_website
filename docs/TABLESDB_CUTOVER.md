@@ -99,6 +99,19 @@ passed these checks:
 
 Test subscriptions were assigned only to disposable test accounts; no payment
 was made. The two disposable users, test team, test workspace records, and test
-storage file were removed after verification. These checks do not verify a payment-provider integration. Billing and
-the four product execution gateway credentials remain incomplete. Workspace
-deployment is verified; full product production acceptance remains outstanding.
+storage file were removed after verification. These checks do not verify a payment-provider integration.
+
+The existing Web Analyser repository was updated without replacing its audit
+modules, deployed at revision `43284ac`, and connected using a dedicated shared
+server secret. The workspace service now reports `product_gateways.analyser=true`.
+A real Appwrite-authenticated call analysed `https://example.com`, returned HTTP
+200 with a generated AI summary, and persisted the report in that user's private
+TablesDB workspace. Unauthenticated report reads returned 401. The disposable
+user and report were removed. Unsigned direct analyser requests return 401.
+The analyser no longer persists usage counters on Render; production quota
+reservations remain in Appwrite through the workspace service.
+
+Billing and Accounts, Orbit and Sheets execution remain incomplete. The operator
+selected the approved live Dodo catalogue; access to its merchant dashboard is
+pending. Workspace and Analyser deployment are verified; full product production
+acceptance remains outstanding.
