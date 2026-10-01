@@ -518,8 +518,14 @@ certify live Appwrite removal or upstream Accounts financial operations.
 
 The repository includes a Render Blueprint for the monolithic API with no
 persistent disk; its production startup rejects SQLite and non-Appwrite database
-hosts. The existing Render service still has a 10 GB disk attached at `/var/data`
-according to the Render dashboard. The service is suspended, so the legacy disk
-must be exported/migrated or deliberately deleted before the no-disk production
-state is complete. Do not store production workspace rows or files on Render.
-The Cloudflare reverse proxy and provider secrets still require configuration.
+hosts. The live Render service still has a 10 GB disk attached at `/var/data`,
+and its configured start command explicitly selects
+`/var/data/workspaces.sqlite3`. The latest deployment of the SQLite rejection
+guard failed with status 2; the public health endpoint's HTTP 200 is from the
+previous successful deployment and does not prove Appwrite storage is active.
+Render is missing `APPWRITE_DATABASE_URL` and `APPWRITE_API_KEY`; the Appwrite
+project currently has TablesDB but no native PostgreSQL database. Do not store
+production workspace rows or files on Render. Export and migrate any required
+legacy data before removing the disk, then configure Appwrite credentials and
+deploy the no-disk Blueprint. The Cloudflare reverse proxy also remains to be
+configured.
