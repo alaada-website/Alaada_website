@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content="Alaada Accounts helps businesses manage ledgers, vouchers, reports, sales, purchases, inventory, GST and CRM in one workspace."/>
-<link rel="canonical" href="https://www.alaada.com/Accounts.html"/>
 <title>Alaada Accounts — Ledgers, Vouchers &amp; Reports</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="accounts-enterprise.css"/>
+<link rel="stylesheet" href="css/accounts-enterprise.css"/>
 <style>
 /* ============================================================
    ALAADA ACCOUNTS — design tokens (shared with alaada.com)
@@ -28,7 +26,6 @@
   --sidebar-w:230px; --topbar-h:60px;
   --mono:'JetBrains Mono',monospace;
 }
-.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;max-width:100%;overflow-x:hidden;}
 body{
@@ -47,7 +44,7 @@ button{font-family:inherit;}
 
 /* ---------- topbar ---------- */
 #topbar{
-  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);z-index:200;
+  position:fixed;top:46px;left:0;right:0;height:var(--topbar-h);z-index:200;
   background:rgba(245,244,239,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:18px;padding:0 20px 0 18px;
@@ -110,7 +107,7 @@ button{font-family:inherit;}
 /* ---------- sidebar ---------- */
 .hamburger-btn{display:none;flex-shrink:0;width:34px;height:34px;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--borderM);background:var(--white);cursor:pointer;color:var(--ink2);}
 #sidebar{
-  position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--sidebar-w);
+  position:fixed;top:calc(var(--topbar-h) + 46px);left:0;bottom:0;width:var(--sidebar-w);
   background:var(--white);border-right:1px solid var(--border);
   padding:18px 12px;overflow-y:auto;z-index:100;
   transition:transform .22s ease;
@@ -260,7 +257,7 @@ select{cursor:pointer;}
 .modal.wide{max-width:760px;}
 @keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.modal-head h2{font-family:'Syne';font-weight:800;font-size:1.02rem;letter-spacing:-.3px;}
+.modal-head h3{font-family:'Syne';font-weight:800;font-size:1.02rem;letter-spacing:-.3px;}
 .modal-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--bg);color:var(--ink2);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;}
 .modal-close:hover{background:var(--bg2);}
 .modal-body{padding:22px;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
@@ -385,7 +382,10 @@ select{cursor:pointer;}
 
 </style>
 </head>
-<body>
+<body data-alaada-product="accounts">
+<script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
+<script src="/api/workspaces/client.js" data-product="accounts"></script>
+<script>if(!window.AlaadaWorkspace)document.addEventListener('DOMContentLoaded',()=>{const gate=document.createElement('div');gate.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui';gate.textContent='The private workspace service is unavailable. Reload when the service is connected.';document.body.append(gate);});</script>
 
 <!-- ============== API GATE (first run / connection lost) ============== -->
 <div id="gate" style="display:none;">
@@ -681,7 +681,6 @@ select{cursor:pointer;}
 
   <!-- ============== MAIN ============== -->
   <main id="main">
-    <h1 class="visually-hidden">Alaada Accounts</h1>
     <div id="view"></div>
   </main>
 </div>
@@ -703,7 +702,7 @@ select{cursor:pointer;}
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal" id="modal">
     <div class="modal-head">
-      <h2 id="modal-title">Title</h2>
+      <h3 id="modal-title">Title</h3>
       <button class="modal-close" id="modal-close">✕</button>
     </div>
     <div class="modal-ai-tools" id="modal-ai-tools">
@@ -751,16 +750,16 @@ function developerModeAllowed(){
   return isDeveloperFrontend() || !!(window.ALAADA_CONFIG && window.ALAADA_CONFIG.allowDeveloperMode === true);
 }
 
-let DEVELOPER_MODE = developerModeAllowed() && localStorage.getItem(LS.devMode) === '1';
+let DEVELOPER_MODE = developerModeAllowed() && window.AlaadaWorkspace.storage.getItem(LS.devMode) === '1';
 function setDeveloperMode(on){
   if (on && !developerModeAllowed()) {
     DEVELOPER_MODE = false;
-    localStorage.removeItem(LS.devMode);
+    window.AlaadaWorkspace.storage.removeItem(LS.devMode);
     applyDeveloperModeVisibility();
     return false;
   }
   DEVELOPER_MODE = !!on;
-  if (DEVELOPER_MODE) localStorage.setItem(LS.devMode, '1'); else localStorage.removeItem(LS.devMode);
+  if (DEVELOPER_MODE) window.AlaadaWorkspace.storage.setItem(LS.devMode, '1'); else window.AlaadaWorkspace.storage.removeItem(LS.devMode);
   applyDeveloperModeVisibility();
   return DEVELOPER_MODE;
 }
@@ -807,14 +806,14 @@ function resolveApiBase(){
   if (window.ALAADA_CONFIG && window.ALAADA_CONFIG.apiBase) return window.ALAADA_CONFIG.apiBase.replace(/\/$/,'');
   const meta = document.querySelector('meta[name="alaada-api-base"]');
   if (meta && meta.content) return meta.content.trim().replace(/\/$/,'');
-  const stored = localStorage.getItem(LS.api);
+  const stored = window.AlaadaWorkspace.storage.getItem(LS.api);
   if (stored && (isDeveloperFrontend() || isTrustedAccountsApiBase(stored))) return stored.replace(/\/$/,'');
-  if (stored && !isTrustedAccountsApiBase(stored)) localStorage.removeItem(LS.api);
+  if (stored && !isTrustedAccountsApiBase(stored)) window.AlaadaWorkspace.storage.removeItem(LS.api);
   return FALLBACK_API;
 }
 let API_BASE = resolveApiBase();
 // API key lives in memory only for the current page session. It is never
-// written to localStorage/sessionStorage — closing or reloading the tab
+// written to window.AlaadaWorkspace.storage/sessionStorage — closing or reloading the tab
 // clears it, by design. Only relevant when self-hosting with
 // ALAADA_ENFORCE_API_AUTH=true; the public deployment does not require it.
 let API_KEY = '';
@@ -827,7 +826,7 @@ let API_KEY = '';
    ============================================================ */
 const APPWRITE_ENDPOINT = ((window.ALAADA_CONFIG && window.ALAADA_CONFIG.appwriteEndpoint) || 'https://sfo.cloud.appwrite.io/v1').replace(/\/$/,'');
 const APPWRITE_PROJECT_ID = (window.ALAADA_CONFIG && window.ALAADA_CONFIG.appwriteProjectId) || '6972444700208a437da1';
-const APPWRITE_AUTH_REQUIRED = !(window.ALAADA_CONFIG && window.ALAADA_CONFIG.requireAppwriteAuth === false);
+const APPWRITE_AUTH_REQUIRED = true;
 let APPWRITE_USER = null;
 let APPWRITE_JWT = '';
 let APPWRITE_JWT_EXPIRES_AT = 0;
@@ -842,7 +841,7 @@ async function fetchWithTimeout(input, init={}, timeoutMs=10000){
     else externalSignal.addEventListener('abort', () => controller.abort(), {once:true});
   }
   try {
-    return await fetch(input, {...init, signal:controller.signal});
+    return await window.AlaadaWorkspace.productFetch(input, {...init, signal:controller.signal});
   } finally {
     clearTimeout(timer);
   }
@@ -865,6 +864,8 @@ function appwriteOAuthUrl(){
 }
 
 async function ensureAccountsIdentity({redirect=true} = {}){
+  await window.AlaadaWorkspace.ready;
+  await window.AlaadaWorkspace.verify();
   if (!APPWRITE_AUTH_REQUIRED) return null;
   if (APPWRITE_USER) return APPWRITE_USER;
   try {
@@ -917,7 +918,7 @@ async function apiAuthHeaders(extra={}){
 }
 let STATE = {
   companies: [],
-  companyId: localStorage.getItem(LS.company) || null,
+  companyId: window.AlaadaWorkspace.storage.getItem(LS.company) || null,
   company: null,
   groups: [],
   ledgers: [],
@@ -1000,16 +1001,16 @@ const DRAFT_KEY_STORE = 'device_keys';
 const DRAFT_VERSION = 1;
 
 function markBackupNeeded(companyId){
-  localStorage.setItem(LS.dirtyBackup + companyId, '1');
+  window.AlaadaWorkspace.storage.setItem(LS.dirtyBackup + companyId, '1');
   sessionStorage.removeItem(LS.backupReminderDismissed + companyId);
   updateBackupReminder();
 }
 function clearBackupNeeded(companyId){
-  localStorage.removeItem(LS.dirtyBackup + companyId);
+  window.AlaadaWorkspace.storage.removeItem(LS.dirtyBackup + companyId);
   sessionStorage.removeItem(LS.backupReminderDismissed + companyId);
   updateBackupReminder();
 }
-function backupNeeded(companyId){ return localStorage.getItem(LS.dirtyBackup + companyId) === '1'; }
+function backupNeeded(companyId){ return window.AlaadaWorkspace.storage.getItem(LS.dirtyBackup + companyId) === '1'; }
 function hideBackupReminder(){
   if (STATE.companyId) sessionStorage.setItem(LS.backupReminderDismissed + STATE.companyId, '1');
   updateBackupReminder();
@@ -1093,7 +1094,7 @@ function backupSummary(record){
 
 function openBackupDb(){
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(BACKUP_DB, 1);
+    const req = indexedDB.open(window.AlaadaWorkspace.databaseName(BACKUP_DB), 1);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(BACKUP_STORE)) db.createObjectStore(BACKUP_STORE, {keyPath:'companyId'});
@@ -1206,7 +1207,7 @@ function draftUserId(){
 function openDraftDb(){
   if (!secureDraftsSupported()) return Promise.reject(new Error('Secure device draft storage is not available in this browser.'));
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DRAFT_DB, 1);
+    const req = indexedDB.open(window.AlaadaWorkspace.databaseName(DRAFT_DB), 1);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(DRAFT_STORE)) {
@@ -1636,8 +1637,8 @@ async function tryConnect(url, {silent=false} = {}) {
   try {
     const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
     if (!res.ok) throw await healthResponseError(res);
-    if (isDeveloperFrontend() || isTrustedAccountsApiBase(API_BASE)) localStorage.setItem(LS.api, API_BASE);
-    else localStorage.removeItem(LS.api);
+    if (isDeveloperFrontend() || isTrustedAccountsApiBase(API_BASE)) window.AlaadaWorkspace.storage.setItem(LS.api, API_BASE);
+    else window.AlaadaWorkspace.storage.removeItem(LS.api);
     setApiStatus('up');
     gate.style.display = 'none';
     await bootstrap();
@@ -1682,7 +1683,7 @@ function applyDeveloperModeVisibility(){
   const devAllowed = developerModeAllowed();
   if (!devAllowed && DEVELOPER_MODE) {
     DEVELOPER_MODE = false;
-    localStorage.removeItem(LS.devMode);
+    window.AlaadaWorkspace.storage.removeItem(LS.devMode);
   }
   if (urlRow) urlRow.style.display = devAllowed && DEVELOPER_MODE ? '' : 'none';
   if (keyRow) keyRow.style.display = devAllowed && DEVELOPER_MODE ? '' : 'none';
@@ -1885,6 +1886,8 @@ async function downloadOfflineBackup(){
 }
 let autoConnectPromise = null;
 async function startAutoConnect(){
+  try { await window.AlaadaWorkspace.ready; } catch { return; }
+  STATE.companyId = window.AlaadaWorkspace.storage.getItem(LS.company) || null;
   if (autoConnectPromise) return autoConnectPromise;
   autoConnectPromise = (async () => {
     await ensureAccountsIdentity();
@@ -1898,7 +1901,7 @@ async function startAutoConnect(){
       if (i > 0) renderConnectingView(i+1);
       try {
         const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
-        if (res.ok) { localStorage.setItem(LS.api, API_BASE); setApiStatus('up'); await bootstrap(); return true; }
+        if (res.ok) { window.AlaadaWorkspace.storage.setItem(LS.api, API_BASE); setApiStatus('up'); await bootstrap(); return true; }
         lastError = await healthResponseError(res);
       } catch(e) { lastError = normalizeConnectionError(e, API_BASE + '/health'); }
     }
@@ -1926,8 +1929,8 @@ async function loadCompanies() {
   const selectedStillExists = STATE.companies.some(company => company.id === STATE.companyId);
   if (!selectedStillExists) {
     STATE.companyId = STATE.companies[0]?.id || null;
-    if (STATE.companyId) localStorage.setItem(LS.company, STATE.companyId);
-    else localStorage.removeItem(LS.company);
+    if (STATE.companyId) window.AlaadaWorkspace.storage.setItem(LS.company, STATE.companyId);
+    else window.AlaadaWorkspace.storage.removeItem(LS.company);
   }
   renderCompanyMenu();
   if (STATE.companyId) await selectCompany(STATE.companyId, {silentNav:true});
@@ -1963,7 +1966,7 @@ document.getElementById('co-new-btn').onclick = () => { document.getElementById(
 async function selectCompany(id, {silentNav=false} = {}) {
   const generation = ++STATE.companyGeneration;
   STATE.companyId = id;
-  localStorage.setItem(LS.company, id);
+  window.AlaadaWorkspace.storage.setItem(LS.company, id);
   clearCompanyScopedLoadStates();
   try {
     const company = await api(`/companies/${id}`);
@@ -6920,7 +6923,7 @@ async function deleteCurrentCompany(){
     await api(`/companies/${deletingCompanyId}`, {method:'DELETE'});
     clearBackupNeeded(deletingCompanyId);
     toast('Company deleted','ok');
-    STATE.companyId = null; localStorage.removeItem(LS.company);
+    STATE.companyId = null; window.AlaadaWorkspace.storage.removeItem(LS.company);
     await loadCompanies(); navigate('dashboard');
   } catch(e){ errToast(e); }
 }
@@ -7570,10 +7573,10 @@ window.addEventListener('beforeunload', e => {
   }
 });
 </script>
-<script src="accounts-enterprise.js"></script>
-<script src="accounts-banking.js"></script>
-<script src="accounts-assets.js"></script>
-<script src="accounts-close.js"></script>
-<script src="accounts-reports.js"></script>
+<script src="js/accounts-enterprise.js"></script>
+<script src="js/accounts-banking.js"></script>
+<script src="js/accounts-assets.js"></script>
+<script src="js/accounts-close.js"></script>
+<script src="js/accounts-reports.js"></script>
 </body>
 </html>
