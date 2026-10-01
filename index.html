@@ -10,23 +10,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="preconnect" href="https://www.googletagmanager.com"/>
 
-  <!-- ══════════════════════════════════════════
-       FAVICON — uses alaada-logo.jpg (confirmed present)
-       Google needs: accessible, square, ≥ 48 × 48 px
-  ═══════════════════════════════════════════ -->
-  <link rel="icon"             type="image/jpeg" href="images/alaada-logo.jpg"/>
-  <link rel="icon"             type="image/jpeg" sizes="32x32"   href="images/alaada-logo.jpg"/>
-  <link rel="icon"             type="image/jpeg" sizes="48x48"   href="images/alaada-logo.jpg"/>
-  <link rel="icon"             type="image/jpeg" sizes="96x96"   href="images/alaada-logo.jpg"/>
-  <link rel="icon"             type="image/jpeg" sizes="192x192" href="images/alaada-logo.jpg"/>
-  <link rel="apple-touch-icon" sizes="180x180"   href="images/alaada-logo.jpg"/>
-  <link rel="shortcut icon"                      href="images/alaada-logo.jpg"/>
-  <!-- Web-app manifest (tells Google the preferred icon) -->
-  <link rel="manifest" href="manifest.json"/>
+  <!-- Use the existing logo without claiming unsupported per-file dimensions. -->
+  <link rel="icon" href="images/alaada-logo.jpg" type="image/jpeg"/>
+  <link rel="apple-touch-icon" href="images/alaada-logo.jpg"/>
 
   <!-- ── PRIMARY SEO ── -->
   <meta name="description" content="Alaada builds AI, business and productivity tools for modern work — Orbit AI, Accounts, Web Analyser and Sheets, all in one connected ecosystem."/>
-  <meta name="keywords" content="Alaada, Orbit AI, AI tools, business software, productivity tools, accounting software India, GST accounting, inventory management, CRM, website SEO audit, web analyser, AI spreadsheet, Excel alternative, spreadsheet AI, business tools India"/>
+  
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
   <meta name="author" content="Arzo Das, Alaada"/>
   <meta name="application-name" content="Alaada"/>
@@ -44,9 +34,9 @@
   <meta property="og:url" content="https://www.alaada.com/"/>
   <meta property="og:title" content="Alaada — AI, Business &amp; Productivity Tools"/>
   <meta property="og:description" content="AI, business and productivity tools for modern work — Orbit AI, Accounts, Web Analyser and Sheets, built in India."/>
-  <meta property="og:image" content="https://www.alaada.com/images/alaada-og.png"/>
-  <meta property="og:image:width" content="1200"/>
-  <meta property="og:image:height" content="630"/>
+  <meta property="og:image" content="https://www.alaada.com/images/Alaada%20landscape%20img.png"/>
+  <meta property="og:image:width" content="1536"/>
+  <meta property="og:image:height" content="1024"/>
   <meta property="og:image:alt" content="Alaada products built in India: Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets."/>
   <meta property="og:locale" content="en_IN"/>
 
@@ -55,7 +45,7 @@
   <meta name="twitter:site" content="@alaada_ai"/>
   <meta name="twitter:title" content="Alaada — AI, Business &amp; Productivity Tools"/>
   <meta name="twitter:description" content="Orbit AI, Accounts, Web Analyser and Sheets — connected tools for AI, business and productivity."/>
-  <meta name="twitter:image" content="https://www.alaada.com/images/alaada-og.png"/>
+  <meta name="twitter:image" content="https://www.alaada.com/images/Alaada%20landscape%20img.png"/>
   <meta name="twitter:image:alt" content="Alaada AI and business tools — built in India"/>
 
   <!-- ── STRUCTURED DATA ── -->
@@ -105,12 +95,7 @@
         "url": "https://www.alaada.com",
         "publisher": { "@id": "https://www.alaada.com/#organization" },
         "description": "Where Perfection meets Possibility. Connected AI, accounting and business tools built in India.",
-        "inLanguage": "en-IN",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": { "@type": "EntryPoint", "urlTemplate": "https://www.alaada.com/?q={search_term_string}" },
-          "query-input": "required name=search_term_string"
-        }
+        "inLanguage": "en-IN"
       },
       {
         "@type": "WebPage",
@@ -134,7 +119,7 @@
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
         "description": "Deep reasoning AI assistant. Thinks step-by-step before answering. Includes live web search, file analysis, and voice output.",
         "url": "https://www.alaada.com/Orbit.html",
-        "screenshot": "https://www.alaada.com/images/alaada-og.png",
+        "screenshot": "https://www.alaada.com/images/Alaada%20landscape%20img.png",
         "featureList": ["Deep reasoning", "Live web search", "File analysis", "Voice output"],
         "publisher": { "@id": "https://www.alaada.com/#organization" }
       },
@@ -785,7 +770,7 @@
 </div>
 
 <!-- NAV -->
-<nav>
+<nav aria-label="Primary">
   <a href="/" class="nav-logo" aria-label="Alaada home">
     <img src="images/alaada-logo.jpg" alt="Alaada logo" width="28" height="28" loading="eager"/>
     Alaada
@@ -800,7 +785,7 @@
     <li><a href="/about-us.html">About</a></li>
     <li><a href="/blog.html">Blog</a></li>
     <li><a href="/developers.html">Developers</a></li>
-    <li><a href="#" class="nav-cta launch-orbit-btn">Try Orbit →</a></li>
+    <li><a href="/Orbit.html" class="nav-cta launch-orbit-btn">Try Orbit →</a></li>
   </ul>
   <div id="user-badge">
     <div class="badge-avatar" id="badge-initial">A</div>
@@ -828,7 +813,7 @@
     <h1 class="hero-title">AI that thinks.<br><span>Tools that <span class="accent">deliver.</span></span></h1>
     <p class="hero-sub">A connected ecosystem of AI, business, and productivity tools built to help you think, operate, analyse, and create — from one place.</p>
     <div class="hero-btns">
-      <a href="#" class="btn-primary launch-orbit-btn">Try Orbit AI →</a>
+      <a href="/Orbit.html" class="btn-primary launch-orbit-btn">Try Orbit AI →</a>
       <a href="#analyser-section" class="btn-ghost">See Web Analyser</a>
       <a href="#sheets-section" class="btn-ghost">Check out Spreadsheets</a>
     </div>
@@ -1096,7 +1081,7 @@
           <span class="pill" style="background:var(--violet2);color:var(--violet);">CRM &amp; Automation</span>
           <span class="pill" style="background:var(--violet2);color:var(--violet);">AI Assistance</span>
         </div>
-        <a href="#" class="btn-accounts launch-accounts-btn">Open Alaada Accounts →</a>
+        <a href="/Accounts.html" class="btn-accounts launch-accounts-btn">Open Alaada Accounts →</a>
         <p style="margin-top:14px;font-size:.78rem;color:var(--ink3);">Live now · Browser-based · Built for Indian businesses and growing teams.</p>
       </div>
 
@@ -1446,7 +1431,7 @@
   <a href="/about-us.html">About Us</a>
   <a href="/blog.html">Blog</a>
   <a href="/developers.html">Developers</a>
-  <a href="#" class="launch-accounts-btn">Alaada Accounts</a>
+  <a href="/Accounts.html" class="launch-accounts-btn">Alaada Accounts</a>
 </div>
       <button class="footer-logout" onclick="logout()">Sign out</button>
     </div>
