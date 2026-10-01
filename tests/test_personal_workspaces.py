@@ -79,6 +79,21 @@ def request(env, who, method, path, data=None, workspace=None):
                           headers={"Authorization": "Bearer " + who, "X-Alaada-Workspace": workspace or ""})
 
 
+def test_confirmed_appwrite_team_membership_provisions_enterprise_workspace(env):
+    store = env[4].state.store
+    with store.db() as db:
+        db.delete('subscriptions', {'workspace': env[2]})
+        db.delete('workspaces', {'id': env[2]})
+    response = request(env, 'alice', 'GET', '/workspaces')
+    assert response.status_code == 200
+    enterprise = next(workspace for workspace in response.json()['workspaces'] if workspace['kind'] == 'organisation')
+    assert enterprise['team'] == 'team'
+    assert enterprise['name'] == 'team'
+    assert enterprise['plan'] == 'Enterprise'
+    bob_workspaces = request(env, 'bob', 'GET', '/workspaces').json()['workspaces']
+    assert all(workspace['kind'] == 'personal' and workspace['owner'] == 'bob' for workspace in bob_workspaces)
+
+
 def create(env, workspace, who="alice", product="sheets", kind="workbook"):
     return request(env, who, "POST", f"/workspaces/{workspace}/resources",
                    {"product": product, "kind": kind, "title": "Private workbook", "payload": {"secret": "private"}}, workspace)
@@ -268,6 +283,7 @@ def test_appwrite_adapter_uses_verified_confirmed_memberships(monkeypatch):
     identity = asyncio.run(m.AppwriteIdentity()("opaque-token"))
     assert identity.user == "alice"
     assert identity.teams == {"team": ["editor"]}
+    assert identity.team_names == {"team": "team"}
     assert len(calls) == 5
 
 

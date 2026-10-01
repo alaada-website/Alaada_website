@@ -234,8 +234,9 @@ def fail(status, message):
 
 
 class Identity:
-    def __init__(self, user, teams=None):
+    def __init__(self, user, teams=None, team_names=None):
         self.user, self.teams = user, teams or {}
+        self.team_names = team_names or {}
 
 
 class AppwriteIdentity:
@@ -271,13 +272,14 @@ class AppwriteIdentity:
             account = await get("/account")
             if not account.get("status"):
                 fail(401, "Account disabled.")
-            teams = {}
+            teams, team_names = {}, {}
             async for team in pages("/teams", "teams"):
                 query = [{"method": "equal", "attribute": "userId", "values": [account["$id"]]}]
                 async for member in pages("/teams/" + quote(team["$id"], safe="") + "/memberships", "memberships", query):
                     if member.get("confirm") and member.get("userId") == account["$id"]:
                         teams[team["$id"]] = member.get("roles", [])
-            return Identity(account["$id"], teams)
+                        team_names[team["$id"]] = team.get("name") or team["$id"]
+            return Identity(account["$id"], teams, team_names)
 
 
 class SqlSession:
@@ -1029,6 +1031,11 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     @app.get("/api/workspaces")
     async def workspaces(request: Request):
         user = await identity(request)
+        # Confirmed Appwrite team memberships are the source of truth for
+        # Enterprise workspaces. Provision their workspace rows idempotently
+        # here so a newly accepted invitation becomes available immediately.
+        for team_id in user.teams:
+            store.organisation(team_id, user.team_names.get(team_id, team_id))
         with store.db() as db:
             visible = db.rows('workspaces', {'owner': user.user})
             for team in user.teams:
