@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#090d14"/>
 <meta name="referrer" content="strict-origin-when-cross-origin"/>
 <title>Alaada — Website Analyzer</title>
+<link rel="preconnect" href="https://sfo.cloud.appwrite.io" crossorigin>
 <meta name="description" content="Alaada Website Analyzer — fast, practical AI-powered website diagnostics and actionable suggestions." />
 <link rel="canonical" href="https://www.alaada.com/website-analyzer.html"/>
 <link rel="icon" href="/images/alaada-logo.jpg" type="image/jpeg"/>
@@ -83,8 +84,8 @@
 </head>
 <body data-alaada-product="analyser">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/api/workspaces/client.js" data-product="analyser"></script>
-<script>if(!window.AlaadaWorkspace)document.addEventListener('DOMContentLoaded',()=>{const gate=document.createElement('div');gate.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui';gate.textContent='The private workspace service is unavailable. Reload when the service is connected.';document.body.append(gate);});</script>
+<script src="/workspace-product-client.js" data-product="analyser"></script>
+<script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BJGLCGLMK5"></script>
 <script>

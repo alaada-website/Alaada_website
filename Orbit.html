@@ -8,16 +8,24 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f4ef">
 <title>Orbit AI — Alaada</title>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="preconnect" href="https://sfo.cloud.appwrite.io" crossorigin>
+<meta name="description" content="Orbit AI helps with research, analysis, files, and everyday work."/>
+<link rel="canonical" href="https://www.alaada.com/Orbit.html"/>
+<script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
   MathJax = {
     tex: { inlineMath:[['$','$'],['\\(','\\)']], displayMath:[['$$','$$'],['\\[','\\]']], processEscapes:true, processEnvironments:true },
     options: { skipHtmlTags:['script','noscript','style','textarea','pre'] }
   };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<script>
+let mathJaxLoadPromise;
+function ensureMathJax(){if(window.MathJax?.typesetPromise)return Promise.resolve(window.MathJax);if(!mathJaxLoadPromise)mathJaxLoadPromise=new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";script.async=true;script.onload=()=>resolve(window.MathJax);script.onerror=()=>{mathJaxLoadPromise=null;script.remove();reject(new Error("Math rendering could not be loaded"))};document.head.append(script)});return mathJaxLoadPromise}
+function typesetMath(node){if(!/[\$]|\\\(|\\\[/.test(node?.textContent||""))return;ensureMathJax().then(()=>window.MathJax.typesetPromise([node])).catch(()=>{})}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 /* ═══════════════════════════════════
    DESIGN TOKENS — matches alaada.com
 ═══════════════════════════════════ */
@@ -1024,8 +1032,8 @@ body {
 </head>
 <body data-alaada-product="orbit">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/api/workspaces/client.js" data-product="orbit"></script>
-<script>if(!window.AlaadaWorkspace)document.addEventListener('DOMContentLoaded',()=>{const gate=document.createElement('div');gate.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui';gate.textContent='The private workspace service is unavailable. Reload when the service is connected.';document.body.append(gate);});</script>
+<script src="/workspace-product-client.js" data-product="orbit"></script>
+<script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 <div id="app">
 
   <!-- SIDEBAR -->
@@ -1081,6 +1089,7 @@ body {
 
   <!-- MAIN -->
   <div class="main">
+    <h1 class="visually-hidden">Orbit AI</h1>
     <div id="mobileHeader">
       <button id="menuBtn" onclick="openSidebar()">☰</button>
       <span id="mobileTitle">Orbit AI</span>
@@ -1099,7 +1108,7 @@ body {
 
     <div class="input-wrapper" id="inputWrapper">
       <div id="previewBar">
-        <img id="prevThumb" src="" alt="" style="display:none">
+        <img id="prevThumb" src="/images/alaada-logo.jpg" alt="" style="display:none">
         <div id="prevName"></div>
         <button id="prevClose" onclick="clearPreview()">✕</button>
       </div>
@@ -1120,7 +1129,7 @@ body {
 <div class="modal-bg" id="profileModal">
   <div class="sheet" id="profileSheet">
     <div class="sheet-handle"></div>
-    <h3 id="sheetTitle">Your Profile</h3>
+    <h2 id="sheetTitle">Your Profile</h2>
     <label>Name *</label>
     <input id="p_name" placeholder="Your name" autocomplete="name" inputmode="text">
     <label>Email *</label>
@@ -1583,7 +1592,7 @@ function streamToken(tok) {
   if(node){
     node.innerHTML=parseMathMarkdown(last.text);
     applyDownloadLinks(node);
-    if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([node]).catch(()=>{});
+    typesetMath(node);
   }
   ensureActionsBar(wrap,last);
   chat.scrollTop=chat.scrollHeight;
@@ -1672,7 +1681,7 @@ function renderChat() {
     });
   } else {
     t.messages.forEach(m=>chat.appendChild(makeBubble(m)));
-    if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([chat]).catch(()=>{});
+    typesetMath(chat);
   }
   chat.scrollTop=chat.scrollHeight;
 }
@@ -1685,7 +1694,7 @@ function makeBubble(msg) {
   } else if(msg.text){
     div.innerHTML=parseMathMarkdown(msg.text);
     applyDownloadLinks(div);
-    if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([div]).catch(()=>{});
+    typesetMath(div);
   }
   if(msg.images?.length){const g=document.createElement("div");g.className="gallery";msg.images.forEach(src=>{if(!src)return;const img=document.createElement("img");img.src=src;img.loading="lazy";img.alt="Generated image";img.onclick=()=>window.open(src,"_blank");g.appendChild(img);});div.appendChild(g);}
   wrap.appendChild(div);

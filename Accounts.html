@@ -1,14 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="Alaada Accounts helps businesses manage ledgers, vouchers, reports, sales, purchases, inventory, GST and CRM in one workspace."/><link rel="canonical" href="https://www.alaada.com/Accounts.html"/>
 <title>Alaada Accounts — Ledgers, Vouchers &amp; Reports</title>
+<link rel="preconnect" href="https://sfo.cloud.appwrite.io" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/accounts-enterprise.css"/>
+<link rel="stylesheet" href="accounts-enterprise.css"/>
 <style>
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 /* ============================================================
    ALAADA ACCOUNTS — design tokens (shared with alaada.com)
    ============================================================ */
@@ -257,7 +260,7 @@ select{cursor:pointer;}
 .modal.wide{max-width:760px;}
 @keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.modal-head h3{font-family:'Syne';font-weight:800;font-size:1.02rem;letter-spacing:-.3px;}
+.modal-head h2{font-family:'Syne';font-weight:800;font-size:1.02rem;letter-spacing:-.3px;}
 .modal-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--bg);color:var(--ink2);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;}
 .modal-close:hover{background:var(--bg2);}
 .modal-body{padding:22px;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
@@ -384,8 +387,8 @@ select{cursor:pointer;}
 </head>
 <body data-alaada-product="accounts">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/api/workspaces/client.js" data-product="accounts"></script>
-<script>if(!window.AlaadaWorkspace)document.addEventListener('DOMContentLoaded',()=>{const gate=document.createElement('div');gate.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui';gate.textContent='The private workspace service is unavailable. Reload when the service is connected.';document.body.append(gate);});</script>
+<script src="/workspace-product-client.js" data-product="accounts"></script>
+<script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 
 <!-- ============== API GATE (first run / connection lost) ============== -->
 <div id="gate" style="display:none;">
@@ -681,6 +684,7 @@ select{cursor:pointer;}
 
   <!-- ============== MAIN ============== -->
   <main id="main">
+    <h1 class="visually-hidden">Alaada Accounts</h1>
     <div id="view"></div>
   </main>
 </div>
@@ -702,7 +706,7 @@ select{cursor:pointer;}
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal" id="modal">
     <div class="modal-head">
-      <h3 id="modal-title">Title</h3>
+      <h2 id="modal-title">Title</h2>
       <button class="modal-close" id="modal-close">✕</button>
     </div>
     <div class="modal-ai-tools" id="modal-ai-tools">
@@ -7573,10 +7577,10 @@ window.addEventListener('beforeunload', e => {
   }
 });
 </script>
-<script src="js/accounts-enterprise.js"></script>
-<script src="js/accounts-banking.js"></script>
-<script src="js/accounts-assets.js"></script>
-<script src="js/accounts-close.js"></script>
-<script src="js/accounts-reports.js"></script>
+<script defer src="accounts-enterprise.js"></script>
+<script defer src="accounts-banking.js"></script>
+<script defer src="accounts-assets.js"></script>
+<script defer src="accounts-close.js"></script>
+<script defer src="accounts-reports.js"></script>
 </body>
 </html>
