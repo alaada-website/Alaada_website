@@ -1850,10 +1850,20 @@ PRODUCT_CLIENT = r'''
 '''
 
 
-async def migrate_sqlite_to_appwrite(source_path, postgres_url, api_key, bucket):
-    """Idempotently migrate the previous SQLite store and embedded files."""
+async def migrate_sqlite_to_appwrite(source_path, target_path, api_key, bucket):
+    """Idempotently migrate SQLite workspace rows and embedded files to Appwrite.
+
+    ``target_path`` may be an Appwrite TablesDB locator or an Appwrite-managed
+    PostgreSQL DSN. Render deployments should use TablesDB; this helper never
+    selects a local SQLite target.
+    """
     if not api_key or not bucket:
         raise ValueError("APPWRITE_API_KEY and APPWRITE_STORAGE_BUCKET_ID are required for migration")
+    target_path = str(target_path)
+    if not target_path.startswith('tablesdb:'):
+        target_host = urlsplit(target_path).hostname or ''
+        if not target_path.startswith(('postgres://', 'postgresql://')) or not target_host.lower().endswith('.appwrite.center'):
+            raise ValueError("Migration target must be Appwrite TablesDB or Appwrite managed PostgreSQL")
     if not Path(source_path).is_file():
         raise FileNotFoundError("The source SQLite workspace database does not exist")
     source = sqlite3.connect(source_path)
@@ -1864,7 +1874,7 @@ async def migrate_sqlite_to_appwrite(source_path, postgres_url, api_key, bucket)
     if not required.issubset(available):
         source.close()
         raise RuntimeError("Source SQLite file does not contain the complete workspace schema")
-    target = Store(postgres_url)
+    target = Store(target_path, api_key=api_key)
     headers = {"X-Appwrite-Project": PROJECT, "X-Appwrite-Key": api_key}
     base = ENDPOINT + "/storage/buckets/" + quote(bucket, safe="") + "/files"
     tables = ("workspaces", "subscriptions", "resources", "folder_membership", "grants", "usage",
@@ -1901,26 +1911,40 @@ async def migrate_sqlite_to_appwrite(source_path, postgres_url, api_key, bucket)
                             payload.pop("content", None)
                             payload["storage_file_id"] = file_id
                             row["payload"] = json.dumps(payload, separators=(",", ":"))
-                    columns = tuple(row.keys())
-                    placeholders = ",".join("%s" for _ in columns)
-                    sql = "INSERT INTO " + table + "(" + ",".join(columns) + ") VALUES(" + placeholders + ") ON CONFLICT DO NOTHING"
-                    with target.db() as db:
-                        inserted = db.execute(sql, tuple(row[column] for column in columns)).rowcount
-                        if not inserted:
-                            where = " AND ".join(column + "=?" for column in keys[table])
-                            existing = db.execute("SELECT * FROM " + table + " WHERE " + where,
-                                tuple(row[column] for column in keys[table])).fetchone()
-                            if not existing or any(existing[column] != row[column] for column in columns):
+                    if target.tablesdb:
+                        key = {column: row[column] for column in keys[table]}
+                        with target.db() as db:
+                            existing = db.one(table, key)
+                            if existing is None:
+                                db.insert(table, row)
+                            elif any(existing.get(column) != row[column] for column in row):
                                 raise RuntimeError("Conflicting Appwrite database row during migration: " + table)
+                    else:
+                        columns = tuple(row.keys())
+                        placeholders = ",".join("%s" for _ in columns)
+                        sql = "INSERT INTO " + table + "(" + ",".join(columns) + ") VALUES(" + placeholders + ") ON CONFLICT DO NOTHING"
+                        with target.db() as db:
+                            inserted = db.execute(sql, tuple(row[column] for column in columns)).rowcount
+                            if not inserted:
+                                where = " AND ".join(column + "=?" for column in keys[table])
+                                existing = db.execute("SELECT * FROM " + table + " WHERE " + where,
+                                    tuple(row[column] for column in keys[table])).fetchone()
+                                if not existing or any(existing[column] != row[column] for column in columns):
+                                    raise RuntimeError("Conflicting Appwrite database row during migration: " + table)
                     copied += 1
-                with target.db() as db:
-                    target_count = db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+                if target.tablesdb:
+                    with target.db() as db:
+                        target_count = len(db.rows(table))
+                else:
+                    with target.db() as db:
+                        target_count = db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
                 if target_count < copied:
                     raise RuntimeError("Appwrite database row count is below the SQLite source count: " + table)
                 counts[table] = {"source": copied, "target": target_count}
-        with target.db() as db:
-            for table in ("audit", "notifications"):
-                db.execute("SELECT setval(pg_get_serial_sequence(%s, 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM " + table + "), 1), 1), EXISTS(SELECT 1 FROM " + table + "))", (table,))
+        if not target.tablesdb:
+            with target.db() as db:
+                for table in ("audit", "notifications"):
+                    db.execute("SELECT setval(pg_get_serial_sequence(%s, 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM " + table + "), 1), 1), EXISTS(SELECT 1 FROM " + table + "))", (table,))
         return counts
     finally:
         source.close()
@@ -1935,7 +1959,7 @@ if __name__ == "__main__":
     parser.add_argument("--add-team", help="Provision an existing Appwrite team as an Enterprise workspace")
     parser.add_argument("--name", default="Organisation")
     parser.add_argument("--sync-users", action="store_true", help="Idempotently provision all registered Appwrite users using a users.read key")
-    parser.add_argument("--migrate-sqlite-from", help="Import an existing SQLite workspace database into Appwrite PostgreSQL and Storage")
+    parser.add_argument("--migrate-sqlite-from", help="Import an existing SQLite workspace database into Appwrite TablesDB/PostgreSQL and Storage")
     parser.add_argument("--migrate-only", action="store_true", help="Exit after the requested SQLite migration instead of starting the API")
     parser.add_argument("--web-root", help="Serve the five allowlisted product/landing HTML files for local staging")
     parser.add_argument("--provision-tablesdb", action="store_true", help="Create private workspace tables in the configured Appwrite database")

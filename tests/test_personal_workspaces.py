@@ -787,3 +787,75 @@ def test_analyser_signed_scope_persistence_and_revocation(tmp_path,scenario):
     if scenario!='success':assert 'private report' not in result.text
     if scenario=='unsigned':assert calls==['/workspace-gateway/health']
 
+
+def test_sqlite_migration_supports_appwrite_tablesdb_idempotently(monkeypatch, tmp_path):
+    source_path = tmp_path / 'legacy.sqlite3'
+    source = m.sqlite3.connect(source_path)
+    source.executescript(m.SCHEMA)
+    source.execute("INSERT INTO workspaces(id,kind,owner,team,name) VALUES(?,?,?,?,?)",
+                   ('p_owner', 'personal', 'owner', None, 'Personal'))
+    source.execute("INSERT INTO subscriptions(workspace,plan,version) VALUES(?,?,?)",
+                   ('p_owner', 'Pro', 2))
+    source.commit()
+    source.close()
+
+    class MemoryRows:
+        def __init__(self):
+            self.tables = {name[3:]: {} for name in m.tablesdb_schema()}
+
+        def one(self, table, where):
+            return next((row.copy() for row in self.tables[table].values()
+                         if all(row.get(key) == value for key, value in where.items())), None)
+
+        def insert(self, table, data):
+            schema = m.tablesdb_schema()['aw_' + table]
+            keys = schema['indexes'][0]['attributes']
+            row_id = hashlib.sha256(json.dumps([table] + [data[key] for key in keys],
+                separators=(',', ':')).encode()).hexdigest()[:36]
+            if row_id in self.tables[table]:
+                raise AssertionError('migration must probe before it writes')
+            row = dict(data)
+            if table == 'subscriptions':
+                row.setdefault('version', 0)
+            if table == 'resources':
+                payload = json.loads(row['payload'])
+                row['storage_file_id'] = payload.get('storage_file_id')
+            if table == 'billing_requests':
+                row['pending_workspace'] = row['workspace'] if row.get('state') == 'pending' else None
+            if table == 'notifications':
+                row.setdefault('read_at', None)
+            if table == 'account_preferences':
+                row.setdefault('personal_activity', 1)
+                row.setdefault('organisation_activity', 1)
+                row.setdefault('version', 1)
+            self.tables[table][row_id] = row
+
+        def rows(self, table):
+            return [row.copy() for row in self.tables[table].values()]
+
+    memory = MemoryRows()
+
+    class TablesStore:
+        def __init__(self, path, api_key=None):
+            assert path == 'tablesdb:existing-database'
+            assert api_key == 'migration-key'
+            self.tablesdb = True
+
+        @m.contextmanager
+        def db(self):
+            yield memory
+
+    monkeypatch.setattr(m, 'Store', TablesStore)
+    first = asyncio.run(m.migrate_sqlite_to_appwrite(
+        str(source_path), 'tablesdb:existing-database', 'migration-key', 'storage-bucket'))
+    second = asyncio.run(m.migrate_sqlite_to_appwrite(
+        str(source_path), 'tablesdb:existing-database', 'migration-key', 'storage-bucket'))
+
+    assert first['workspaces'] == {'source': 1, 'target': 1}
+    assert first['subscriptions'] == {'source': 1, 'target': 1}
+    assert second['workspaces'] == {'source': 1, 'target': 1}
+    assert memory.one('subscriptions', {'workspace': 'p_owner'})['plan'] == 'Pro'
+    with pytest.raises(ValueError, match='Migration target must be Appwrite'):
+        asyncio.run(m.migrate_sqlite_to_appwrite(
+            str(source_path), str(tmp_path / 'render-disk.sqlite3'), 'migration-key', 'storage-bucket'))
+

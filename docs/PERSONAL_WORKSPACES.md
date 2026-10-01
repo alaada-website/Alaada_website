@@ -5,8 +5,9 @@
 `alaada_workspaces.py` is one monolithic service containing the Appwrite identity
 adapter, database schema, HTTP API, permission checks and embedded HTML/CSS/JS.
 `index.html` adds a Workspaces link to the signed-in badge. The existing Appwrite
-Storage bucket was configured for per-file security; no application deployment
-has been completed.
+Storage bucket is configured for per-file security. The workspace and Analyser
+services have been deployed and verified against Appwrite; Sheets, Accounts,
+Orbit execution and live billing still have outstanding production work.
 
 This implements a new workspace resource service, not a completed migration of
 the existing products. Do not describe the current website as fully isolated.
@@ -36,26 +37,24 @@ the four core products require Appwrite rather than Supabase sessions.
 
 ## Run in staging
 
-1. The project currently has a TablesDB database (`6abe5c8c00331e943f9e`) and a
-   separate native PostgreSQL database is required by this monolithic SQL
-   backend. Create one in the existing `sfo` project and select its compute tier
-   in Appwrite. The existing empty Storage bucket `Alaada_UMS`
-   (`69cbf6750039400951c0`) has per-file security, encryption, and antivirus
-   scanning enabled. The service streams file bytes through the workspace
-   authorization layer.
-2. Configure Render with `APPWRITE_DATABASE_URL` from the Appwrite PostgreSQL
-   credentials dialog, `APPWRITE_STORAGE_BUCKET_ID`, and `APPWRITE_API_KEY`. The
-   API key needs only `files.read` and `files.write`; database access uses the
-   native PostgreSQL credential. Set the credential and API key as Render
-   secrets. The service creates its
-   relational tables idempotently at startup. Render has no persistent disk and
-   no SQLite fallback in its production start command.
+1. Use the existing Appwrite TablesDB database (`6abe5c8c00331e943f9e`) and
+   private Storage bucket `Alaada_UMS` (`69cbf6750039400951c0`). Workspace tables
+   use row security with no public permissions; the bucket enforces per-file
+   security. Production workspace rows and file bytes stay in Appwrite.
+2. Configure Render with `APPWRITE_DATABASE_ID`, `APPWRITE_STORAGE_BUCKET_ID`,
+   `APPWRITE_PROJECT_ID`, `APPWRITE_ENDPOINT`, and `APPWRITE_API_KEY`. Give the
+   server key only the TablesDB table/row and Storage file permissions needed by
+   the service, and store it as a Render secret. Create or verify the private
+   tables once with `python alaada_workspaces.py --provision-tablesdb`. Use the
+   `tablesdb:<DATABASE_ID>` target in production; Render's filesystem and disk
+   must not be used for application persistence.
 3. If an older Render deployment has workspace data on a persistent disk, do not
    attach that disk to the new service. With the old service stopped for writes,
    export a one-time encrypted SQLite backup to an operator-controlled machine
    outside Render and verify its checksum. Run the migration from that machine
-   with the backup as `--migrate-sqlite-from`, using the Appwrite PostgreSQL DSN,
-   Storage bucket ID, and API key in its environment. Review the table counts and
+   with the backup as `--migrate-sqlite-from`, using
+   `--db tablesdb:<DATABASE_ID>`, the Storage bucket ID, and API key in its
+   environment. Review the table counts and
    verify sample file downloads from Appwrite before deleting the legacy Render
    disk. No application records or backups belong on Render's filesystem.
 4. For local staging only, run `python alaada_workspaces.py --db /private/alaada/workspaces.sqlite3`.
@@ -175,8 +174,8 @@ the bytes into the destination ownership scope without inheriting grants.
 Organisation membership removal denies organisation downloads and leaves personal
 files intact. Uploads consume one platform write; downloads do not consume writes.
 Local-development SQLite databases and migration backups contain file bytes.
-Production database rows and file bytes reside in Appwrite PostgreSQL and
-Storage; Render's filesystem is ephemeral and is never used as a data store.
+Production database rows reside in Appwrite TablesDB and file bytes reside in
+Appwrite Storage; Render's filesystem is never used as a data store.
 Large uploads and resumable transfers are not implemented by this initial
 storage path.
 
@@ -225,9 +224,13 @@ must reconcile ambiguous provider outcomes before declaring terminal failure.
 This signature protocol is NOT Dodo Payments' webhook protocol. A trusted billing
 adapter must first verify the actual provider signature, account, customer,
 product, payment status and effective date; only then may it call this endpoint.
-That adapter, checkout, renewals, refunds and scheduled period-end cancellation
-are not implemented because provider integration/configuration was not supplied.
-The UI honestly labels requests pending. Do not activate live billing yet.
+That adapter is not a Dodo webhook integration. The connected `alaada.com` Chrome
+profile shows the Alaada Dodo workspace in Live Mode with one ₹299/month Pro
+subscription product, 0 active products, and no Elite product. Checkout, Dodo
+signature verification, renewals, refunds and scheduled period-end cancellation
+are still unimplemented. Keep live checkout disabled until the intended Pro
+product is active, Elite terms and product are approved, and Dodo API/webhook
+secrets are configured server-side. The UI labels requests as pending.
 
 ## Retention and employment changes
 
@@ -243,7 +246,7 @@ organisation deletion need a separately approved implementation before launch.
 
 Schema version 1 creates new tables only. It does not import or reassign existing
 browser/legacy data. For local SQLite development, use SQLite's online backup API
-before migrations. Production durability comes from Appwrite PostgreSQL and
+before migrations. Production durability comes from Appwrite TablesDB and
 Storage, never the deployment filesystem. Multi-host deployment uses the shared
 Appwrite database; local SQLite remains single-host development only.
 
