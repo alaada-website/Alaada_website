@@ -1,12 +1,14 @@
-
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#090d14"/>
+<meta name="referrer" content="strict-origin-when-cross-origin"/>
 <title>Alaada — Website Analyzer</title>
 <meta name="description" content="Alaada Website Analyzer — fast, practical AI-powered website diagnostics and actionable suggestions." />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23ff7f50'/%3E%3Ctext x='50' y='57' font-size='48' text-anchor='middle' fill='%23081018' font-family='Inter,Segoe UI,Roboto' font-weight='700'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="canonical" href="https://www.alaada.com/website-analyzer.html"/>
+<link rel="icon" href="/images/alaada-logo.jpg" type="image/jpeg"/>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8528400701607693"
      crossorigin="anonymous"></script>
 <style>
@@ -45,7 +47,7 @@
   /* ---------- Main Content ---------- */
   .wrap{ width:100%; max-width:var(--maxw); }
   header{ display:flex; gap:12px; align-items:center; margin:18px 0 }
-  .brand h2{ margin:0; font-size:18px }
+  .brand h1{ margin:0; font-size:18px }
   .brand p{ margin:2px 0 0; font-size:13px; color:var(--muted) }
 
   .card{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:var(--radius); padding:18px; box-shadow:0 6px 30px rgba(4,8,12,0.6); border:1px solid rgba(255,255,255,0.03) }
@@ -117,12 +119,12 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <h2>Alaada Website Analyzer</h2>
+      <h1 id="pageTitle">Alaada Website Analyzer</h1>
       <p>AI-powered site diagnostics with helpful, prioritized recommendations.</p>
     </div>
   </header>
 
-  <main class="card" role="main" aria-labelledby="pageTitle">
+  <main class="card" aria-labelledby="pageTitle">
     <div class="hero-row">
       <div class="left">
         <label for="urlInput">Enter a website URL to analyze</label>
@@ -179,14 +181,14 @@
       </aside>
     </div>
 
-    <section id="results" aria-hidden="false"></section>
+    <div id="results" role="region" aria-label="Analysis results" aria-live="polite"></div>
   </main>
 </div>
 
 <!-- simple modal -->
 <div id="modal" class="result-card" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,12,0.6);z-index:9999">
   <div style="width:min(680px,92%);background:linear-gradient(180deg,#071016,#08111a);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.03)">
-    <h3 style="margin:0 0 8px">Alaada personal subscriptions</h3>
+    <h2 style="margin:0 0 8px">Alaada personal subscriptions</h2>
     <p style="margin:0 0 12px;color:var(--muted)">Manage Free, Pro or Elite in your personal workspace. Changing plans preserves ownership of your existing reports.</p>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button id="closeModal" class="btn ghost">Close</button>

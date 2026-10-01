@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f4ef">
 <title>Orbit AI — Alaada</title>
+<meta name="description" content="Orbit AI is Alaada’s reasoning assistant for research, analysis, files, and everyday work."/>
+<link rel="canonical" href="https://www.alaada.com/Orbit.html"/>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
   MathJax = {
@@ -18,6 +20,8 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+
 /* ═══════════════════════════════════
    DESIGN TOKENS — matches alaada.com
 ═══════════════════════════════════ */
@@ -1081,6 +1085,7 @@ body {
 
   <!-- MAIN -->
   <div class="main">
+    <h1 class="visually-hidden">Orbit AI</h1>
     <div id="mobileHeader">
       <button id="menuBtn" onclick="openSidebar()">☰</button>
       <span id="mobileTitle">Orbit AI</span>
@@ -1099,7 +1104,7 @@ body {
 
     <div class="input-wrapper" id="inputWrapper">
       <div id="previewBar">
-        <img id="prevThumb" src="" alt="" style="display:none">
+        <img id="prevThumb" src="/images/alaada-logo.jpg" alt="" style="display:none">
         <div id="prevName"></div>
         <button id="prevClose" onclick="clearPreview()">✕</button>
       </div>
@@ -1120,7 +1125,7 @@ body {
 <div class="modal-bg" id="profileModal">
   <div class="sheet" id="profileSheet">
     <div class="sheet-handle"></div>
-    <h3 id="sheetTitle">Your Profile</h3>
+    <h2 id="sheetTitle">Your Profile</h2>
     <label>Name *</label>
     <input id="p_name" placeholder="Your name" autocomplete="name" inputmode="text">
     <label>Email *</label>
