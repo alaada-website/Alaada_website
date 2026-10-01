@@ -1541,6 +1541,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
 
 async def provision_registered_users(store, key):
     """Operator-only backfill. Uses users.read; never returns user profile data."""
+    import asyncio
     if not key:
         raise ValueError("APPWRITE_USERS_READ_KEY is required for backfill")
     count, cursor = 0, None
@@ -1556,8 +1557,17 @@ async def provision_registered_users(store, key):
             if not rows:
                 return count
             for row in rows:
-                with store.db() as db:
-                    store.personal(db, Identity(row["$id"]))
+                # Provisioning is idempotent, including when a commit succeeded
+                # but its response was lost. Retry the whole user transaction.
+                for attempt in range(5):
+                    try:
+                        with store.db() as db:
+                            store.personal(db, Identity(row["$id"]))
+                        break
+                    except HTTPException as exc:
+                        if exc.status_code not in (409, 503) or attempt == 4:
+                            raise
+                        await asyncio.sleep(2 ** attempt)
             count += len(rows)
             cursor = rows[-1]["$id"]
             if len(rows) < 100:

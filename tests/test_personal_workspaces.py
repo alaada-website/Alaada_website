@@ -357,6 +357,30 @@ def test_registered_user_backfill_pagination_retry_and_no_profile_retention(tmp_
     assert b'must not persist' not in Path(store.path).read_bytes()
 
 
+def test_backfill_retries_transient_transaction_without_resetting_plan(tmp_path, monkeypatch):
+    store = m.Store(tmp_path / 'retry.sqlite3')
+    with store.db() as db:
+        workspace = store.personal(db, m.Identity('retry-user'))
+        db.update('subscriptions', {'workspace': workspace}, {'plan': 'Pro'})
+    original_client, original_personal = httpx.AsyncClient, store.personal
+    monkeypatch.setattr(m.httpx, 'AsyncClient', lambda **kwargs: original_client(
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, json={'users': [{'$id': 'retry-user'}]})), **kwargs))
+    attempts, sleeps = [], []
+    def flaky(db, identity):
+        attempts.append(identity)
+        if len(attempts) < 3:
+            raise HTTPException(503, 'Temporary connection failure')
+        return original_personal(db, identity)
+    async def sleep(delay):
+        sleeps.append(delay)
+    monkeypatch.setattr(store, 'personal', flaky)
+    monkeypatch.setattr(asyncio, 'sleep', sleep)
+    assert asyncio.run(m.provision_registered_users(store, 'test-key')) == 1
+    assert sleeps == [1, 2]
+    with store.db() as db:
+        assert db.one('subscriptions', {'workspace': workspace})['plan'] == 'Pro'
+
+
 def test_staging_html_allowlist_and_client_route(env,tmp_path):
     (tmp_path/'Orbit.html').write_text('<h1>Orbit</h1>',encoding='utf-8')
     (tmp_path/'secret.env').write_text('private',encoding='utf-8')
@@ -762,3 +786,4 @@ def test_analyser_signed_scope_persistence_and_revocation(tmp_path,scenario):
         assert db.execute("SELECT COALESCE(SUM(amount),0) FROM usage WHERE product='analyser'").fetchone()[0]==(0 if scenario=='unsigned' else 1)
     if scenario!='success':assert 'private report' not in result.text
     if scenario=='unsigned':assert calls==['/workspace-gateway/health']
+

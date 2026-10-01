@@ -62,7 +62,16 @@ workspace tests pass using SQLite plus mocked identity/storage. The product clie
 behavior test passes for all four products. The separate live TablesDB test above
 adds real database isolation/conflict evidence, not successful deployment proof.
 
-Several required product pages, assets, and tests are locally untracked. Review
-and include them in the deployment commit, without staging unrelated website
-changes. Do not deploy the standalone unauthenticated `main.py` policy example as
-the workspace service.
+The product pages, required Accounts assets, and tests were included in commit
+`27f0b0b` and deployed to `https://alaada-workspaces.onrender.com`. Live HTTP
+checks confirm TablesDB and Storage configuration, public product pages, and
+401 for unauthenticated workspace access. Secrets and backend source return 404.
+Do not deploy the standalone unauthenticated `main.py` policy example as the
+workspace service.
+
+The backfill now retries an individual idempotent user transaction up to five
+times on a conflict or temporary database failure. A regression test confirms
+that retries preserve an existing Pro plan. All 67 local workspace tests pass.
+Existing-user backfill and the signed signup webhook still require completion
+and verification. Billing and product gateway configuration remain incomplete;
+a healthy workspace service alone is not full product production acceptance.
