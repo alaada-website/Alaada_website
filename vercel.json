@@ -4,6 +4,14 @@
     {
       "source": "/api/:path*",
       "destination": "https://alaada-workspaces.onrender.com/api/:path*"
+    },
+    {
+      "source": "/workspace",
+      "destination": "/workspace.html"
+    },
+    {
+      "source": "/workspaces",
+      "destination": "/workspace.html"
     }
   ]
 }
