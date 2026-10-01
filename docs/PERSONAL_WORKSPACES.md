@@ -35,18 +35,22 @@ the four core products require Appwrite rather than Supabase sessions.
 
 ## Run in staging
 
-1. Install `fastapi`, `uvicorn`, `httpx` in the staging Python environment.
-   The repository includes `workspace-requirements.txt` and a Render Blueprint
-   (`render.yaml`) for the monolithic workspace service. Render runs the SQLite
-   file at `/tmp/alaada-workspaces.sqlite3`; no Render persistent disk is attached.
-   Render's temporary filesystem can be cleared when an instance restarts or is
-   replaced. This configuration is suitable only for disposable staging data.
-2. Before production use, move the workspace database to a managed external
-   database with backups and configure the service to use it. Do not store the
-   production workspace database on Render's persistent disk or temporary filesystem.
-3. Run `python alaada_workspaces.py --db /private/alaada/workspaces.sqlite3` for
-   local staging only. Production must use the managed external database described
-   above; the current monolith still uses SQLite and does not yet have that adapter.
+1. Create an Appwrite managed PostgreSQL database in the existing `sfo` project
+   and a private Storage bucket for workspace files. Keep the bucket inaccessible
+   to unauthenticated clients; the service streams file bytes through the
+   workspace authorization layer.
+2. Configure Render with `APPWRITE_DATABASE_URL` from the Appwrite PostgreSQL
+   credentials dialog, `APPWRITE_STORAGE_BUCKET_ID`, and `APPWRITE_API_KEY`. The
+   API key needs only `files.read` and `files.write`; database access uses the
+   PostgreSQL credential. Set them as Render secrets. The service creates its
+   relational tables idempotently at startup. Render has no persistent disk and
+   no SQLite fallback in its production start command.
+3. To migrate a legacy SQLite file before removing its source disk, run
+   `python alaada_workspaces.py --db "$APPWRITE_DATABASE_URL" --migrate-sqlite-from /path/to/workspaces.sqlite3`.
+   The migration is idempotent, verifies file hashes, moves file bytes into
+   Appwrite Storage, and updates their database metadata. Preserve the source
+   SQLite file until row counts and sample file downloads have been verified.
+4. For local staging only, run `python alaada_workspaces.py --db /private/alaada/workspaces.sqlite3`.
 4. Reverse proxy `/workspaces`, `/api/workspaces`, `/api/workspaces/*`, `/api/shared`
    `/api/appwrite/users-created` and `/api/billing/confirmed` to this service on the same HTTPS origin as the
    website. The homepage link requires this routing; static hosting alone is
