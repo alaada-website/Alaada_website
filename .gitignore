@@ -1,6 +1,5 @@
-".env" 
 .env
-"__pycache__/" 
-"*.db" 
-"*.log" 
-"alaada_spreadsheets.py" 
+__pycache__/
+*.db
+*.log
+alaada_spreadsheets.py
