@@ -45,11 +45,15 @@ the four core products require Appwrite rather than Supabase sessions.
    PostgreSQL credential. Set them as Render secrets. The service creates its
    relational tables idempotently at startup. Render has no persistent disk and
    no SQLite fallback in its production start command.
-3. To migrate a legacy SQLite file before removing its source disk, run
-   `python alaada_workspaces.py --db "$APPWRITE_DATABASE_URL" --migrate-sqlite-from /path/to/workspaces.sqlite3`.
-   The migration is idempotent, verifies file hashes, moves file bytes into
-   Appwrite Storage, and updates their database metadata. Preserve the source
-   SQLite file until row counts and sample file downloads have been verified.
+3. If the existing Render volume contains workspace data, first deploy the
+   Appwrite-capable monolith while the old volume remains mounted. With the
+   service stopped for writes, run
+   `python alaada_workspaces.py --migrate-sqlite-from /var/data/workspaces.sqlite3 --migrate-only`
+   in its Render Shell. This reads `APPWRITE_DATABASE_URL`, verifies file hashes,
+   moves file bytes into Appwrite Storage, and updates their database metadata.
+   Review the reported table counts and verify sample file downloads from Appwrite.
+   Keep the volume until those checks pass; then sync the Blueprint that removes
+   the volume and deploy the no-disk start command.
 4. For local staging only, run `python alaada_workspaces.py --db /private/alaada/workspaces.sqlite3`.
 4. Reverse proxy `/workspaces`, `/api/workspaces`, `/api/workspaces/*`, `/api/shared`
    `/api/appwrite/users-created` and `/api/billing/confirmed` to this service on the same HTTPS origin as the

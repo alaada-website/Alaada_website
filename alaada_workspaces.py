@@ -1508,6 +1508,11 @@ async def migrate_sqlite_to_appwrite(source_path, postgres_url, api_key, bucket)
     base = ENDPOINT + "/storage/buckets/" + quote(bucket, safe="") + "/files"
     tables = ("workspaces", "subscriptions", "resources", "folder_membership", "grants", "usage",
               "billing_requests", "billing_events", "audit", "notifications", "account_preferences", "accounts_bindings")
+    keys = {"workspaces": ("id",), "subscriptions": ("workspace",), "resources": ("id",),
+            "folder_membership": ("child",), "grants": ("resource", "user"),
+            "usage": ("workspace", "product", "month"), "billing_requests": ("id",),
+            "billing_events": ("id",), "audit": ("id",), "notifications": ("id",),
+            "account_preferences": ("user",), "accounts_bindings": ("company",)}
     counts = {}
     try:
         async with httpx.AsyncClient(timeout=60, follow_redirects=False) as client:
@@ -1539,9 +1544,19 @@ async def migrate_sqlite_to_appwrite(source_path, postgres_url, api_key, bucket)
                     placeholders = ",".join("%s" for _ in columns)
                     sql = "INSERT INTO " + table + "(" + ",".join(columns) + ") VALUES(" + placeholders + ") ON CONFLICT DO NOTHING"
                     with target.db() as db:
-                        db.execute(sql, tuple(row[column] for column in columns))
+                        inserted = db.execute(sql, tuple(row[column] for column in columns)).rowcount
+                        if not inserted:
+                            where = " AND ".join(column + "=?" for column in keys[table])
+                            existing = db.execute("SELECT * FROM " + table + " WHERE " + where,
+                                tuple(row[column] for column in keys[table])).fetchone()
+                            if not existing or any(existing[column] != row[column] for column in columns):
+                                raise RuntimeError("Conflicting Appwrite database row during migration: " + table)
                     copied += 1
-                counts[table] = copied
+                with target.db() as db:
+                    target_count = db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+                if target_count < copied:
+                    raise RuntimeError("Appwrite database row count is below the SQLite source count: " + table)
+                counts[table] = {"source": copied, "target": target_count}
         with target.db() as db:
             for table in ("audit", "notifications"):
                 db.execute("SELECT setval(pg_get_serial_sequence(%s, 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM " + table + "), 1), 1), EXISTS(SELECT 1 FROM " + table + "))", (table,))
@@ -1560,16 +1575,21 @@ if __name__ == "__main__":
     parser.add_argument("--name", default="Organisation")
     parser.add_argument("--sync-users", action="store_true", help="Idempotently provision all registered Appwrite users using a users.read key")
     parser.add_argument("--migrate-sqlite-from", help="Import an existing SQLite workspace database into Appwrite PostgreSQL and Storage")
+    parser.add_argument("--migrate-only", action="store_true", help="Exit after the requested SQLite migration instead of starting the API")
     parser.add_argument("--web-root", help="Serve the five allowlisted product/landing HTML files for local staging")
     args = parser.parse_args()
     if not args.db:
         parser.error("Set APPWRITE_DATABASE_URL or pass --db for local development")
+    if args.migrate_only and not args.migrate_sqlite_from:
+        parser.error("--migrate-only requires --migrate-sqlite-from")
     limits = json.loads(os.environ["ALAADA_LIMITS_JSON"]) if os.environ.get("ALAADA_LIMITS_JSON") else None
     if args.migrate_sqlite_from:
         import asyncio
         result = asyncio.run(migrate_sqlite_to_appwrite(args.migrate_sqlite_from, args.db,
             os.environ.get("APPWRITE_API_KEY"), os.environ.get("APPWRITE_STORAGE_BUCKET_ID")))
         print("SQLite records migrated:", json.dumps(result, sort_keys=True))
+        if args.migrate_only:
+            raise SystemExit(0)
     if args.sync_users:
         import asyncio
         print("Registered users provisioned:", asyncio.run(provision_registered_users(Store(args.db, limits), os.environ.get("APPWRITE_USERS_READ_KEY"))))
