@@ -20,7 +20,7 @@ services:
       - key: APPWRITE_API_KEY
         sync: false
       - key: APPWRITE_STORAGE_BUCKET_ID
-        sync: false
+        value: 69cbf6750039400951c0
       - key: APPWRITE_WEBHOOK_SECRET
         sync: false
       - key: APPWRITE_WEBHOOK_URL

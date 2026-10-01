@@ -4,8 +4,9 @@
 
 `alaada_workspaces.py` is one monolithic service containing the Appwrite identity
 adapter, database schema, HTTP API, permission checks and embedded HTML/CSS/JS.
-`index.html` adds a Workspaces link to the signed-in badge. No production service
-or database has been modified or deployed.
+`index.html` adds a Workspaces link to the signed-in badge. The existing Appwrite
+Storage bucket was configured for per-file security; no application deployment
+has been completed.
 
 This implements a new workspace resource service, not a completed migration of
 the existing products. Do not describe the current website as fully isolated.
@@ -35,14 +36,18 @@ the four core products require Appwrite rather than Supabase sessions.
 
 ## Run in staging
 
-1. Create an Appwrite managed PostgreSQL database in the existing `sfo` project
-   and a private Storage bucket for workspace files. Keep the bucket inaccessible
-   to unauthenticated clients; the service streams file bytes through the
-   workspace authorization layer.
+1. The project currently has a TablesDB database (`6abe5c8c00331e943f9e`) and a
+   separate native PostgreSQL database is required by this monolithic SQL
+   backend. Create one in the existing `sfo` project and select its compute tier
+   in Appwrite. The existing empty Storage bucket `Alaada_UMS`
+   (`69cbf6750039400951c0`) has per-file security, encryption, and antivirus
+   scanning enabled. The service streams file bytes through the workspace
+   authorization layer.
 2. Configure Render with `APPWRITE_DATABASE_URL` from the Appwrite PostgreSQL
    credentials dialog, `APPWRITE_STORAGE_BUCKET_ID`, and `APPWRITE_API_KEY`. The
    API key needs only `files.read` and `files.write`; database access uses the
-   PostgreSQL credential. Set them as Render secrets. The service creates its
+   native PostgreSQL credential. Set the credential and API key as Render
+   secrets. The service creates its
    relational tables idempotently at startup. Render has no persistent disk and
    no SQLite fallback in its production start command.
 3. If the existing Render volume contains workspace data, first deploy the
