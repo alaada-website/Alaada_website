@@ -22,8 +22,8 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 
-ENDPOINT = "https://sfo.cloud.appwrite.io/v1"
-PROJECT = "6972444700208a437da1"
+ENDPOINT = os.environ.get("APPWRITE_ENDPOINT", "https://sfo.cloud.appwrite.io/v1").rstrip("/")
+PROJECT = os.environ.get("APPWRITE_PROJECT_ID", "6972444700208a437da1")
 KINDS = {"orbit": ["conversation", "memory"], "sheets": ["workbook", "analysis"],
          "accounts": ["ledger", "bookkeeping"], "analyser": ["report", "monitor"],
          "platform": ["file", "folder", "notification", "settings"]}

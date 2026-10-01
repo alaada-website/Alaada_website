@@ -9,6 +9,10 @@ services:
     healthCheckPath: /health
     autoDeploy: false
     envVars:
+      - key: APPWRITE_ENDPOINT
+        value: https://sfo.cloud.appwrite.io/v1
+      - key: APPWRITE_PROJECT_ID
+        value: 6972444700208a437da1
       - key: APPWRITE_USERS_READ_KEY
         sync: false
       - key: APPWRITE_DATABASE_URL
