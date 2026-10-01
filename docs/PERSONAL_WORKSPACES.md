@@ -526,9 +526,10 @@ The Render Blueprint runs the monolithic API without a persistent disk and rejec
 local database storage in production. On 1 October 2026, the deployed health
 endpoint confirmed Appwrite TablesDB and Storage are active in project
 `6972444700208a437da1`; the live database provisioning check found no missing
-workspace tables. The deployed service still reports the legacy billing adapter
-disabled, and its current product gateway report has Accounts, Orbit and Sheets
-disabled (Analyser enabled). A new reviewed build must be deployed before its Dodo
-routes are available in production. Configure verified upstream endpoints and
+workspace tables. The reviewed Dodo integration was deployed to
+`workspace-production` at commit `1664fb0`; live health now reports the Dodo
+checkout disabled, webhook unconfigured, and product IDs unconfigured. The legacy
+billing adapter remains disabled. Accounts, Orbit and Sheets product gateways are
+disabled (Analyser is enabled). Configure verified upstream endpoints and
 server-side credentials before enabling each product gateway. Render must not be
 used as a data store.
