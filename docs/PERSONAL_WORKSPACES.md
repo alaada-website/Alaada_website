@@ -37,12 +37,16 @@ the four core products require Appwrite rather than Supabase sessions.
 
 1. Install `fastapi`, `uvicorn`, `httpx` in the staging Python environment.
    The repository includes `workspace-requirements.txt` and a Render Blueprint
-   (`render.yaml`) for the monolithic workspace service. It provisions a persistent
-   `/var/data/workspaces.sqlite3` disk and keeps all identity, billing and upstream
-   secrets in the deployment secret manager.
-2. Keep the SQLite database outside the public website directory with OS access
-   limited to the service account. Use an encrypted disk and encrypted backups.
-3. Run `python alaada_workspaces.py --db /private/alaada/workspaces.sqlite3`.
+   (`render.yaml`) for the monolithic workspace service. Render runs the SQLite
+   file at `/tmp/alaada-workspaces.sqlite3`; no Render persistent disk is attached.
+   Render's temporary filesystem can be cleared when an instance restarts or is
+   replaced. This configuration is suitable only for disposable staging data.
+2. Before production use, move the workspace database to a managed external
+   database with backups and configure the service to use it. Do not store the
+   production workspace database on Render's persistent disk or temporary filesystem.
+3. Run `python alaada_workspaces.py --db /private/alaada/workspaces.sqlite3` for
+   local staging only. Production must use the managed external database described
+   above; the current monolith still uses SQLite and does not yet have that adapter.
 4. Reverse proxy `/workspaces`, `/api/workspaces`, `/api/workspaces/*`, `/api/shared`
    `/api/appwrite/users-created` and `/api/billing/confirmed` to this service on the same HTTPS origin as the
    website. The homepage link requires this routing; static hosting alone is
