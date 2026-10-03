@@ -514,7 +514,8 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
   <div id="docwrap"><div id="docname" onclick="G.renDoc()">Untitled Spreadsheet</div></div>
   <div id="workspaceSearchWrap"><input id="workspaceQuickSearch" type="search" placeholder="Search workbook or commands…" aria-label="Search workbook and commands" onkeydown="G.workspaceSearchKey(event)"></div>
   <span id="saveState" class="ui-badge" data-state="saved" aria-live="polite">Saved</span>
-  <div id="conn"><div id="cdot"></div><span id="ctxt">Offline</span></div>
+  <div id="conn" role="status"><div id="cdot"></div><span id="ctxt">Checking cloud access…</span></div>
+  <span id="engineState" class="ui-badge" title="Calculation availability is separate from cloud save state">Local calculations</span>
   <button class="ui-icon-button" onclick="G.toggleUiTheme()" title="Switch light or dark theme" aria-label="Switch theme">◐</button>
   <button class="ui-icon-button" onclick="G.toggleSpreadsheetFullscreen()" title="Distraction-free mode" aria-label="Toggle distraction-free mode">⛶</button>
   <button class="ui-icon-button" onclick="G.toggleWorkspaceMenu(event)" title="Workspace menu" aria-label="Open workspace menu" aria-haspopup="menu" aria-expanded="false">•••</button>
@@ -559,10 +560,10 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
       <button class="rb" onclick="G.findSameFormatting(true)">Find Format</button>
     </div><div class="rl">Clipboard</div></div></div>
     <div class="rg" data-t="home"><div class="rs"><div class="ri">
-      <select class="rb" id="rfont" onchange="G.fmt('fontFamily',this.value)" style="min-width:110px">
+      <select class="rb" id="rfont" aria-label="Font family" onchange="G.fmt('fontFamily',this.value)" style="min-width:110px">
         <option>Arial</option><option>Calibri</option><option>Cambria</option><option>Times New Roman</option><option>Verdana</option><option>Tahoma</option><option>Trebuchet MS</option><option>Georgia</option><option>Courier New</option><option>Roboto</option><option>Open Sans</option><option>Lato</option><option>Montserrat</option><option>Nunito</option><option>Source Sans 3</option><option>Noto Sans</option><option>Noto Serif</option><option>IBM Plex Mono</option><option>Plus Jakarta Sans</option>
       </select>
-      <input type="number" class="rb" id="rsize" value="12" min="6" max="72" onchange="G.fmt('fontSize',this.value+'px')">
+      <input type="number" class="rb" id="rsize" aria-label="Font size" value="12" min="6" max="72" onchange="G.fmt('fontSize',this.value+'px')">
     </div><div class="ri" style="gap:2px">
       <button class="rb" id="rbb" onclick="G.tog('bold')"><b>B</b></button>
       <button class="rb" id="rbi" onclick="G.tog('italic')"><i>I</i></button>
@@ -570,9 +571,9 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
     </div><div class="rl">Font</div></div></div>
     <div class="rg" data-t="home"><div class="rs"><div class="ri" style="gap:5px">
       <span style="font-size:10px;color:var(--dim)">A</span>
-      <input type="color" class="rb" id="rcolor" value="#1a1d2e" onchange="G.fmt('color',this.value)">
+      <input type="color" class="rb" id="rcolor" aria-label="Text color" value="#1a1d2e" onchange="G.fmt('color',this.value)">
       <span style="font-size:10px;color:var(--dim)">BG</span>
-      <input type="color" class="rb" id="rbg" value="#ffffff" onchange="G.fmt('background',this.value)">
+      <input type="color" class="rb" id="rbg" aria-label="Cell background color" value="#ffffff" onchange="G.fmt('background',this.value)">
     </div><div class="rl">Color</div></div></div>
     <div class="rg" data-t="home"><div class="rs"><div class="ri">
       <button class="rb" id="ral" onclick="G.setAlign('left')">⬅</button>
@@ -583,7 +584,7 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
       <button class="rb" onclick="G.unmergeSelection()">Unmerge</button>
     </div><div class="rl">Align</div></div></div>
     <div class="rg" data-t="home"><div class="rs"><div class="ri">
-      <select class="rb" id="rnf" onchange="G.fmt('numfmt',this.value)" style="min-width:80px">
+      <select class="rb" id="rnf" aria-label="Number format" onchange="G.fmt('numfmt',this.value)" style="min-width:80px">
         <option value="">General</option><option value="number">1,234</option>
         <option value="currency">$1,234</option><option value="percent">12.3%</option>
       </select>
@@ -817,7 +818,7 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
 <!-- AI BAR -->
 <div id="aibar">
   <div id="aiorb"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div>
-  <input id="aiin" type="text" placeholder='Ask Orbit AI… "sum column B", "chart sales by quarter", "fix errors"' onkeydown="if(event.key==='Enter')G.aiRun()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <input id="aiin" type="text" aria-label="Spreadsheet AI command" placeholder='Ask Orbit AI… "sum column B", "chart sales by quarter", "fix errors"' onkeydown="if(event.key==='Enter')G.aiRun()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
   <select id="langsel" onchange="G.setLocale(this.value)" aria-label="Language"></select>
   <button id="micbtn" onclick="G.toggleVoice()" title="Voice command">
     <span class="mic-dot"></span>
@@ -1220,7 +1221,7 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
   <div id="chatBody"></div>
   <div id="chatSugg"></div>
   <form id="chatInput" onsubmit="event.preventDefault();G.chatSend()">
-    <textarea id="chatTxt" rows="1" placeholder="Ask about your data, request charts, changes…"
+    <textarea id="chatTxt" aria-label="Message about your spreadsheet" rows="1" placeholder="Ask about your data, request charts, changes…"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();G.chatSend()}"
       oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
     <button id="chatSend" type="submit" aria-label="Send">➤</button>
@@ -2276,7 +2277,25 @@ const G={
   closeAno(){document.getElementById('anoDrawer').classList.remove('open')},
   _renderAno(d){const list=d.anomalies||[];document.getElementById('anoSub').textContent=`· ${list.length} found · ${d.rows_analysed||0} rows scanned`;const body=document.getElementById('anoBody');if(!list.length){body.innerHTML='<div class="ano-empty"><span class="ok">✓</span>Your workbook looks clean — no anomalies detected.</div>';return}body.innerHTML=list.map((a,i)=>{const sheet=Number.isInteger(a.sheet_index)?a.sheet_index:this.si,cells=(a.cells||[]).slice(0,12).map(c=>`<span class="ano-cell" data-sheet="${sheet}" data-jump="${this._esc(c)}">${this._esc(c)}</span>`).join(''),icon=a.type==='outlier'?'📈':a.type==='blank'?'⬜':a.type==='duplicate'?'🔁':a.type==='error'?'⚠':a.type==='sign'?'➖':'•',sheetLabel=a.sheet?`${this._esc(a.sheet)} · `:'';return`<div class="ano-card" data-idx="${i}"><div class="ano-pip ${this._esc(a.severity||'low')}"></div><div class="ano-body"><div class="ano-ttl">${icon} ${sheetLabel}${this._esc(a.header||a.column||'')} · ${this._esc(a.type||'issue')}</div><div class="ano-msg">${this._esc(a.message||'')}</div>${cells?`<div class="ano-cells">${cells}</div>`:''}</div></div>`}).join('');body.querySelectorAll('[data-jump]').forEach(el=>{el.addEventListener('click',e=>{e.stopPropagation();const ref=el.dataset.jump,p=this.pRef(ref),sheet=Number(el.dataset.sheet);if(p){if(Number.isInteger(sheet)&&sheet>=0&&sheet<this.sheets.length&&sheet!==this.si){this.si=sheet;this.renderTabs();this.renderCharts()}this.moveTo(p.r,p.c);this.scrollIntoView(p.r,p.c);if(window.innerWidth<640)this.closeAno()}})})},
 
-  async checkConn(){try{const r=await window.AlaadaWorkspace.productFetch(`${API}/api/health`,{signal:AbortSignal.timeout(4000)});const ok=r.ok;document.getElementById('cdot').className=ok?'on':'';document.getElementById('ctxt').textContent=ok?'Connected':'Offline'}catch{document.getElementById('cdot').className='';document.getElementById('ctxt').textContent='Offline'}},
+  async checkConn(){
+    if(this._connectionChecking)return;
+    this._connectionChecking=true;
+    const workspace=window.AlaadaWorkspace.active,dot=document.getElementById('cdot'),label=document.getElementById('ctxt'),engine=document.getElementById('engineState');
+    try{
+      if(navigator.onLine===false){dot.className='';label.textContent='Cloud offline';return;}
+      const policy=await window.AlaadaWorkspace.entitlements();
+      if(window.AlaadaWorkspace.active!==workspace)return;
+      dot.className='on';label.textContent='Cloud connected';
+      this._sheetsOperations=policy.products?.sheets?.capabilities?.operations||{};
+      const chatButton=document.getElementById('chatSend');
+      if(chatButton){chatButton.disabled=!!this._chat?.busy||this._sheetsOperations['ai-chat']===false;chatButton.title=this._sheetsOperations['ai-chat']===false?'Workbook AI is unavailable; your draft is kept.':'Send a workbook AI request';}
+      const remote=policy.products?.sheets?.capabilities?.formula===true||policy.products?.sheets?.execution_available===true;
+      engine.textContent=remote?'Local + server calculations':'Local calculations';
+      engine.title=remote?'Server calculation is configured; local formulas remain available.':'Server calculation is unavailable. Local formulas and cloud saving are separate capabilities.';
+      label.title=this._collab.connected?'Cloud access verified; collaboration has its own connection and pending-edit state.':'Cloud access verified. Collaboration is not connected.';
+    }catch{dot.className='';label.textContent=navigator.onLine===false?'Cloud offline':'Cloud access unavailable';}
+    finally{this._connectionChecking=false;}
+  },
 
   toast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='show '+type;clearTimeout(this._tt);this._tt=setTimeout(()=>t.className='',2800)},
 
@@ -2560,7 +2579,64 @@ G.applyOrbitProposal=function(id,toCopy=false){const record=this._orbitProposals
 G.editOrbitProposal=function(id){const record=this._orbitProposals.get(id);if(!record)return false;const input=document.getElementById('chatTxt');if(input){input.value=`Revise this request: ${record.request}`;input.focus();input.setSelectionRange(input.value.length,input.value.length)}return true};
 G.rejectOrbitProposal=function(id){const record=this._orbitProposals.get(id);if(!record)return false;record.status='rejected';const card=document.querySelector(`[data-proposal="${id}"]`);if(card){card.querySelector('h5').textContent='Proposal rejected';card.querySelector('.orbit-proposal-actions').remove()}this._chat.history.push({role:'assistant',content:'The user rejected the proposed operations; do not treat them as applied.'});return true};
 G.cancelOrbitRequest=function(){this._orbitAbort?.abort();this._orbitAbort=null};
-G.chatSend=async function(retryText=''){if(this._chat.busy)return;const input=document.getElementById('chatTxt'),text=String(retryText||input.value||'').trim();if(!text)return;if(!retryText){input.value='';input.style.height='auto';this._chatPush('user',text);this._chat.history.push({role:'user',content:text})}this._lastOrbitRequest=text;this._chatSugg([]);const thinking=this._chatPush('bot','');thinking.classList.add('thinking','orbit-progress');thinking.innerHTML='<span>Reviewing the workbook context and preparing a response…</span><button class="rb" onclick="G.cancelOrbitRequest()">Cancel</button>';this._chat.busy=true;document.getElementById('chatSend').disabled=true;const controller=new AbortController();this._orbitAbort=controller;try{const response=await window.AlaadaWorkspace.productFetch(`${API}/api/ai/chat`,{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({workspace_id:this._collab.workspaceId||null,messages:this._chat.history.slice(-12),sheets:this._compactSheets(),active_sheet:this.si,active_cell:this.ref(this.row,this.col),selection:this._selectionRange(),locale:this.locale,formula_catalog:FORMULA_CATALOG.slice(0,700)})});const data=await response.json();if(!response.ok)throw new Error(data.detail||'Orbit could not complete the request');thinking.remove();const reply=data.reply||'I could not form a response.',ops=Array.isArray(data.operations)?data.operations:[];if(ops.length)this._renderOrbitProposal(reply,ops,text);else this._chatPush('bot',reply);this._chat.history.push({role:'assistant',content:reply+(ops.length?` I proposed ${ops.length} operations and am waiting for approval.`:'')});this._chatSugg(data.suggestions||[])}catch(error){thinking.remove();if(error.name==='AbortError')this._chatPush('bot','Request cancelled. No workbook changes were made.');else{const message=this._chatPush('bot','');message.classList.add('orbit-error');message.innerHTML=`<div>${this.esc(error.message||'Orbit is temporarily unavailable.')}</div><button class="rb" style="margin-top:7px" onclick="G.chatSend(G._lastOrbitRequest)">Retry</button>`}}finally{this._orbitAbort=null;this._chat.busy=false;document.getElementById('chatSend').disabled=false}};
+G.chatSend=async function(retryText=''){
+  if(this._chat.busy)return;
+  const input=document.getElementById('chatTxt'),text=String(retryText||input.value||'').trim();
+  if(!text)return;
+  if(this._sheetsOperations?.['ai-chat']===false){this.toast('Workbook AI is unavailable. Your draft has been kept.','warn');return;}
+  const workspace=window.AlaadaWorkspace.active,user=window.AlaadaWorkspace.user,book=this._persist.workbookId;
+  const workbookContext=JSON.stringify([book,this._compactSheets(),this.si,this.ref(this.row,this.col),this._selectionRange(),this.locale]);
+  let pending=this._pendingOrbitRequest;
+  if(retryText&&(!pending||pending.text!==text)){this.toast('This request is no longer the pending request. Enter a new request to continue.','warn');return;}
+  const retry=!!pending&&pending.text===text;
+  if(retry&&(pending.context!==workbookContext||pending.workspace!==workspace?.id||pending.user!==user)){
+    this.toast('The workbook or account changed. Review it and enter a new request; the old request will not be repeated.','warn');return;
+  }
+  if(!retry){
+    this._chatPush('user',text);
+    this._chat.history.push({role:'user',content:text});
+    pending={text,context:workbookContext,workspace:workspace?.id,user,body:JSON.stringify({
+      workspace_id:workspace?.id||null,messages:this._chat.history.slice(-12),sheets:this._compactSheets(),
+      active_sheet:this.si,active_cell:this.ref(this.row,this.col),selection:this._selectionRange(),
+      locale:this.locale,formula_catalog:FORMULA_CATALOG.slice(0,700)})};
+    this._pendingOrbitRequest=pending;
+  }
+  this._lastOrbitRequest=text;this._chatSugg([]);
+  const thinking=this._chatPush('bot','');thinking.classList.add('thinking','orbit-progress');
+  thinking.innerHTML='<span>Reviewing the workbook context and preparing a response…</span><button class="rb" onclick="G.cancelOrbitRequest()">Cancel</button>';
+  this._chat.busy=true;document.getElementById('chatSend').disabled=true;
+  const controller=new AbortController();this._orbitAbort=controller;
+  try{
+    const response=await window.AlaadaWorkspace.productFetch(API+'/api/ai/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:pending.body});
+    const data=await response.json();
+    if(!response.ok||data.success===false){
+      const detail=data.error?.message||(typeof data.detail==='string'?data.detail:data.detail?.message);
+      throw new Error(detail||'Orbit could not complete the request');
+    }
+    if(window.AlaadaWorkspace.active?.id!==pending.workspace||window.AlaadaWorkspace.user!==pending.user
+        ||JSON.stringify([this._persist.workbookId,this._compactSheets(),this.si,this.ref(this.row,this.col),this._selectionRange(),this.locale])!==pending.context)
+      throw new Error('The workbook context changed. The response was not applied; review the workbook before another request.');
+    const reply=data.reply||'I could not form a response.',ops=Array.isArray(data.operations)?data.operations:[];
+    if(ops.length)this._renderOrbitProposal(reply,ops,text);else this._chatPush('bot',reply);
+    this._chat.history.push({role:'assistant',content:reply+(ops.length?' I proposed '+ops.length+' operations and am waiting for approval.':'')});
+    this._chatSugg(data.suggestions||[]);this._pendingOrbitRequest=null;
+    if(input.value.trim()===text){input.value='';input.style.height='auto';}
+  }catch(error){
+    if(!input.value.trim()){input.value=text;input.style.height='auto';}
+    const message=this._chatPush('bot','');message.classList.add('orbit-error');
+    const explanation=document.createElement('div');
+    explanation.textContent=error.name==='AbortError'
+      ?'Stopped waiting. The server may still be processing. Your draft is kept; Retry checks the same operation.'
+      :error.message||'Orbit is temporarily unavailable.';
+    const retryButton=document.createElement('button');retryButton.className='rb';retryButton.style.marginTop='7px';
+    retryButton.textContent='Retry same request';retryButton.onclick=()=>this.chatSend(text);
+    message.append(explanation,retryButton);
+  }finally{
+    thinking.remove();this._orbitAbort=null;this._chat.busy=false;
+    document.getElementById('chatSend').disabled=this._sheetsOperations?.['ai-chat']===false;
+  }
+};
 G.aiRun=function(){const source=document.getElementById('aiin'),command=source.value.trim();if(!command)return;source.value='';this.openChat();const input=document.getElementById('chatTxt');input.value=command;this.chatSend()};
 G._orbitActionHistory=Array.isArray(G._orbitActionHistory)?G._orbitActionHistory:[];
 G._orbitPreviewValue=function(op){const ref=String(op.ref||op.cell||'').toUpperCase(),range=String(op.range||''),target=ref||range||op.sheet||op.column||op.col||'',cell=ref&&this.cells[ref],before=ref?String(cell?.computed??cell?.value??''):(range?`Current values in ${range}`:'Current workbook state'),after=op.value??op.formula??op.values??op.format??op.chart_type??op.title??String(op.type||'change').replaceAll('_',' ');return{target,before:String(before).slice(0,160),after:(typeof after==='string'?after:JSON.stringify(after)).slice(0,240)}};

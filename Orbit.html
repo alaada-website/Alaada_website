@@ -1104,7 +1104,7 @@ body {
       <button id="speakStopBtn" onclick="stopSpeaking()">⏹ Stop</button>
     </div>
 
-    <div id="statusBar">—</div>
+    <div id="statusBar" role="status" aria-live="polite">Checking workspace capabilities…</div>
 
     <div class="input-wrapper" id="inputWrapper">
       <div id="previewBar">
@@ -1113,11 +1113,11 @@ body {
         <button id="prevClose" onclick="clearPreview()">✕</button>
       </div>
       <div class="input-row">
-        <button class="rnd-btn" id="micBtn">🎤</button>
-        <button class="rnd-btn" id="voiceBtn" title="Read aloud  •  Long-press for settings">🔊</button>
-        <button class="rnd-btn" onclick="triggerFile()">📎</button>
-        <textarea id="inputTextarea" placeholder="Ask Orbit anything…" rows="1"></textarea>
-        <button id="sendBtn" onclick="send()">➤</button>
+        <button class="rnd-btn" id="micBtn" aria-label="Voice input" disabled>🎤</button>
+        <button class="rnd-btn" id="voiceBtn" aria-label="Read response aloud" title="Read aloud  •  Long-press for settings" disabled>🔊</button>
+        <button class="rnd-btn" id="attachBtn" aria-label="Attach a file" onclick="triggerFile()" disabled>📎</button>
+        <textarea id="inputTextarea" aria-label="Message to Orbit" aria-describedby="statusBar" placeholder="Ask Orbit anything…" rows="1"></textarea>
+        <button id="sendBtn" aria-label="Send message" onclick="send()" disabled>➤</button>
         <input id="fileInput" type="file" style="display:none"
           accept="image/*,application/pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.txt,.csv">
       </div>
@@ -1327,6 +1327,7 @@ function prepareTextForSpeech(raw) {
 }
 
 async function speakText(text) {
+  if(!orbitCapabilities.voiceOutput){toast('Read-aloud is not available in this workspace yet.');return;}
   if (!text || text === "__TYPING__") return;
   stopSpeaking();
   const clean = prepareTextForSpeech(text);
@@ -1519,8 +1520,19 @@ function downloadGalleryImage(img) {
 function openSidebar(){document.getElementById("sidebar").classList.add("open");document.getElementById("overlay").classList.add("open");}
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("open");}
 
+let orbitCapabilities={text:false,files:false,voiceInput:false,voiceOutput:false};
+const composerDrafts=new Map();
 function connectWS() {
-  window.AlaadaWorkspace.entitlements().then(policy=>setStatus(policy.products.orbit.execution_available?"Workspace text chat ready":"Workspace Orbit backend needs configuration")).catch(error=>setStatus(error.message)); return; // Execution uses the authenticated workspace API.
+  const workspace=window.AlaadaWorkspace.active;
+  window.AlaadaWorkspace.entitlements().then(policy=>{
+    if(window.AlaadaWorkspace.active!==workspace)return;
+    // The current signed adapter supports text only. Do not advertise legacy
+    // upload/voice routes before their scoped contracts are implemented.
+    orbitCapabilities.text=policy.products?.orbit?.execution_available===true;
+    lockInput(busy);
+    setStatus(orbitCapabilities.text?'Text chat ready · voice and attachments are not connected yet.':'Text chat is not connected yet. You can keep drafting and read saved conversations.');
+  }).catch(()=>{orbitCapabilities.text=false;lockInput(busy);setStatus('Workspace access could not be verified. Your draft has not been sent.');});
+  return; // Execution uses the authenticated workspace API.
 
   if(ws&&(ws.readyState===WebSocket.OPEN||ws.readyState===WebSocket.CONNECTING))return;
   ws=new WebSocket(WS_URL);
@@ -1549,23 +1561,27 @@ function profilePayload() {
 
 async function send() {
   if(busy)return;
+  if(!orbitCapabilities.text){toast('Chat is not available yet. Your draft has been kept.');return;}
   const ta=document.getElementById("inputTextarea");const text=ta.value;
   if(!text.trim()&&!fileId)return;
   if(fileId){toast("Workspace file execution is not connected yet.");return;}
   const t=activeThread();if(!t)return;
-  t.messages.push({role:"user",text:text||"(file sent)",images:(filePreview&&fileIsImage)?[filePreview]:null});
-  ta.value="";ta.style.height="auto";
-  filePreview=null;fileId=null;fileIsImage=false;hidePreview();
+  if(!(t.pendingPrompt===text&&t.messages.at(-1)?.role==='user'&&t.messages.at(-1)?.text===text)){
+    t.messages.push({role:"user",text,images:null});
+  }
+  t.pendingPrompt=text;
   saveThreads();renderChat();busy=true;lockInput(true);stopSpeaking();
   closeSidebar();
   setStatus("Orbit is replying in "+window.AlaadaWorkspace.active.name+"…");
   try {
+    await window.AlaadaWorkspace.flush();
     const updated=await window.AlaadaWorkspace.orbitReply(t.id);
     t.messages=updated.messages;
+    delete t.pendingPrompt;composerDrafts.delete(t.id);ta.value="";ta.style.height="auto";
     updateUserMemory(text,t.messages[t.messages.length-1].text);
     autoTitle();saveThreads();renderChat();
     setStatus("Saved in "+window.AlaadaWorkspace.active.name);
-  } catch(error) {toast(error.message,7000);setStatus("Reply not completed. Reload to verify the saved conversation.");}
+  } catch(error) {ta.value=text;toast(error.message,7000);setStatus("Reply not confirmed. Your draft is kept; reload to check the saved conversation before retrying.");}
   finally {busy=false;lockInput(false);}
 }
 
@@ -1607,7 +1623,13 @@ function finalize(remaining) {
   if(remaining!==undefined)setStatus(`${remaining} messages left today`);
 }
 
-function lockInput(on){["inputTextarea","micBtn","sendBtn"].forEach(id=>{document.getElementById(id).disabled=on;});}
+function lockInput(on){
+  document.getElementById('inputTextarea').disabled=on;
+  for(const[id,capability]of[['sendBtn','text'],['micBtn','voiceInput'],['voiceBtn','voiceOutput'],['attachBtn','files']]){
+    const button=document.getElementById(id);button.disabled=on||!orbitCapabilities[capability];
+    button.title=orbitCapabilities[capability]?'':'This capability is not connected for this workspace yet.';
+  }
+}
 
 function showErr(msg) {
   const t=activeThread();if(!t)return;
@@ -1622,7 +1644,7 @@ function createThread() {
   saveThreads();renderThreads();openThread(id);closeSidebar();
 }
 
-function openThread(id){activeId=id;stopSpeaking();renderThreads();renderChat();const t=threads.find(x=>x.id===id);if(t)document.getElementById("mobileTitle").textContent=t.title;}
+function openThread(id){if(busy)return;const input=document.getElementById('inputTextarea');if(activeId)composerDrafts.set(activeId,input.value);activeId=id;stopSpeaking();renderThreads();renderChat();const t=threads.find(x=>x.id===id);if(t){document.getElementById("mobileTitle").textContent=t.title;input.value=composerDrafts.get(id)??(t.pendingPrompt&&t.messages.at(-1)?.role==='user'?t.pendingPrompt:'');}}
 
 function renderThreads() {
   const aEl=document.getElementById("threads"),arEl=document.getElementById("archivedThreads"),arcSec=document.getElementById("archivedSection");
@@ -1775,11 +1797,12 @@ function ctxAction(action) {
 document.addEventListener("click",(e)=>{const m=document.getElementById("ctxMenu");if(m.style.display==="block"&&!m.contains(e.target))closeCtx();});
 document.addEventListener("touchstart",(e)=>{const m=document.getElementById("ctxMenu");if(m.style.display==="block"&&!m.contains(e.target))closeCtx();},{passive:true});
 
-function triggerFile(){document.getElementById("fileInput").click();}
+function triggerFile(){if(!orbitCapabilities.files){toast('Attachments are not connected for this workspace yet.');return;}document.getElementById("fileInput").click();}
 function hidePreview(){document.getElementById("previewBar").style.display="none";}
 function clearPreview(){filePreview=fileId=null;fileIsImage=false;document.getElementById("fileInput").value="";hidePreview();}
 
 document.getElementById("fileInput").onchange=async()=>{
+  if(!orbitCapabilities.files){toast('Attachments are not connected for this workspace yet.');return;}
   const file=document.getElementById("fileInput").files[0];if(!file)return;toast("Uploading…");
   const form=new FormData();form.append("file",file);
   try{const res=await timedFetch(`${BACKEND}/upload`,{method:"POST",body:form},30000);const data=await res.json();if(!data.file_id){toast("Upload failed.");return;}fileId=data.file_id;fileIsImage=file.type.startsWith("image/");toast("File ready ✓");}
@@ -1797,6 +1820,7 @@ iw.addEventListener("drop",(e)=>{e.preventDefault();iw.classList.remove("dragove
 document.getElementById("micBtn").addEventListener("click",toggleMic);
 
 async function toggleMic() {
+  if(!orbitCapabilities.voiceInput){toast('Voice input is not connected for this workspace yet.');return;}
   const btn=document.getElementById("micBtn"),audioWave=document.getElementById("audioWave"),ri=document.getElementById("recordingIndicator");
   if(recorder?.state==="recording"){recorder.stop();return;}
   let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}catch{toast("Microphone access denied.");return;}

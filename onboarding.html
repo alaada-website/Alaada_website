@@ -36,8 +36,16 @@
     'use strict';
     const ENDPOINT='https://sfo.cloud.appwrite.io/v1',PROJECT='6972444700208a437da1';
     const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
-    const safeNext=value=>typeof value==='string'&&value.startsWith('/')&&!value.startsWith('//')&&!value.includes('\\')?value:'/account.html';
+    function safeNext(value) {
+      try {
+        if(typeof value!=='string'||(!value.startsWith('/')&&!/^https?:\/\//i.test(value))||value.startsWith('//')||/[\\\x00-\x20]/.test(value))return '/account.html';
+        const url=new URL(value,location.origin),path=decodeURIComponent(url.pathname);
+        if(url.origin!==location.origin||url.username||url.password||/[\\\x00-\x20]/.test(path)||['/auth.html','/onboarding.html'].includes(path.toLowerCase()))return '/account.html';
+        return url.pathname+url.search+url.hash;
+      } catch {return '/account.html';}
+    }
     const next=safeNext(params.get('next')||'/account.html');
+    let checkoutReady=false;
     function message(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error);$('status').classList.toggle('ok',!error&&!!text)}
     async function appwrite(path,method='GET',data){
       const options={method,credentials:'include',cache:'no-store',headers:{'X-Appwrite-Project':PROJECT}};
@@ -68,8 +76,9 @@
         const prefs=account.prefs||{};$('account-type').value=prefs.account_type==='enterprise'?'enterprise':'personal';$('classification').value=prefs.classification||'individual';
         $('business-note').classList.toggle('hidden',$('account-type').value!=='enterprise');
         $('personal-plan').value=['Free','Pro','Elite'].includes(context.subscription.plan)?context.subscription.plan:'Free';
-        for(const option of $('personal-plan').options)if(option.value!=='Free')option.disabled=true;
-        $('payment-note').textContent=`Current personal plan: ${context.subscription.plan||'Free'}. Paid checkout and verified billing are unavailable until Dodo's live catalogue, checkout, and webhook are connected. No payment has been taken.`;
+        try{const response=await fetch('/api/health',{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Billing unavailable');const billing=(await response.json()).dodo_billing||{};checkoutReady=Boolean(billing.checkout_enabled&&billing.webhook_configured&&billing.products_configured)}catch{checkoutReady=false}
+        for(const option of $('personal-plan').options)if(option.value!=='Free'){option.disabled=!checkoutReady;option.textContent=option.value+(checkoutReady?' · review checkout':' · checkout unavailable')}
+        $('payment-note').textContent=`Current personal plan: ${context.subscription.plan||'Free'}. `+(checkoutReady?'Choose a paid plan to review secure checkout after saving your profile. Selecting a plan does not charge you or activate access.':'Paid checkout is currently unavailable. Continue with your existing plan; no payment has been taken.');
         $('form').classList.remove('hidden');$('loading').classList.add('hidden');
         window.__alaadaOnboarding={account,workspace:context.personal};
       }catch(error){
@@ -94,7 +103,8 @@
         const prefs={...(latest.prefs||{}),onboarding_completed:true,account_type:$('account-type').value,classification:$('classification').value,personal_plan:context.subscription.plan||'Free',onboarding_completed_at:new Date().toISOString()};
         await appwrite('/account/prefs','PUT',{prefs});
         message(`Your profile is ready. Active workspace: ${context.personal.name} · Personal.`);
-        location.replace(next);
+        const selected=$('personal-plan').value;
+        location.replace(checkoutReady&&selected!=='Free'&&selected!==context.subscription.plan?'/account.html?plan='+encodeURIComponent(selected)+'#subscription':next);
       }catch(error){message(error.message||'Could not finish setting up your account. Your personal workspace data is unchanged.',true)}
       finally{button.disabled=false}
     });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="referrer" content="no-referrer">
   <title>Sign in · Alaada</title>
   <style>
     :root{color-scheme:light;--bg:#f5f4ef;--ink:#242321;--muted:#77746d;--line:#dedbd2;--card:#fffdf8;--gold:#a37423;--error:#b33c35}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif;display:grid;place-items:center}.shell{width:min(100% - 32px,440px);padding:28px 0}.brand{display:block;text-align:center;text-decoration:none;color:var(--ink);font-weight:750;font-size:1.35rem;margin-bottom:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 22px;box-shadow:0 16px 44px #2423210d}h1{font-size:1.55rem;line-height:1.2;margin:0 0 7px}.muted{color:var(--muted);margin:0 0 20px}.field{margin:13px 0}.field label{display:block;color:var(--muted);font-size:.8rem;margin-bottom:5px}.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;font:inherit;background:white;color:var(--ink)}button{border:0;border-radius:9px;padding:11px 14px;font:inherit;font-weight:600;cursor:pointer}.primary{background:var(--ink);color:white;width:100%}.primary:disabled{opacity:.65;cursor:wait}.secondary{background:#eee9dc;color:var(--ink)}.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.actions button{padding-inline:8px}.continue{display:inline-block;margin-top:8px;color:var(--gold)}.status{min-height:24px;margin:14px 0 0;color:var(--muted);font-size:.88rem}.error{color:var(--error)}.switch{text-align:center;color:var(--muted);margin:18px 0 0;font-size:.88rem}.switch button{padding:0;background:none;color:var(--gold)}.hidden{display:none!important}@media(max-width:420px){.actions{grid-template-columns:1fr 1fr}}
@@ -33,45 +33,54 @@
     'use strict';
     const ENDPOINT='https://sfo.cloud.appwrite.io/v1',PROJECT='6972444700208a437da1';
     const $=id=>document.getElementById(id),params=new URLSearchParams(location.search);
-    const nextParam=params.get('next')||'/onboarding.html?next=%2Faccount.html';
-    const next=nextParam.startsWith('/')&&!nextParam.startsWith('//')&&!nextParam.includes('\\')?nextParam:'/account.html';
-    let signup=false,busy=false;
+    function safeNext(value) {
+      try {
+        if(typeof value!=='string'||(!value.startsWith('/')&&!/^https?:\/\//i.test(value))||value.startsWith('//')||/[\\\x00-\x20]/.test(value))return '/account.html';
+        const url=new URL(value,location.origin),path=decodeURIComponent(url.pathname);
+        if(url.origin!==location.origin||url.username||url.password||/[\\\x00-\x20]/.test(path)||path.toLowerCase()==='/auth.html')return '/account.html';
+        return url.pathname+url.search+url.hash;
+      } catch {return '/account.html';}
+    }
+    const next=safeNext(params.get('next')||'/account.html');
+    let signup=params.get('mode')==='signup',busy=false;
+    function destination(account){return account.prefs?.onboarding_completed||new URL(next,location.origin).pathname==='/onboarding.html'?next:'/onboarding.html?next='+encodeURIComponent(next)}
     function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error)}
     const recoveryUserId=params.get('userId'),recoverySecret=params.get('secret');
-    const recovering=Boolean(recoveryUserId&&recoverySecret&&params.get('recovery')==='complete');
+    let recovering=Boolean(recoveryUserId&&recoverySecret&&params.get('recovery')==='complete');
     const verificationUserId=params.get('userId'),verificationSecret=params.get('secret');
     const magicComplete=Boolean(verificationUserId&&verificationSecret&&params.get('magic')==='complete');
     if(params.has('userId')&&params.has('secret'))history.replaceState(null,'','/auth.html');
-    function mode(){ $('title').textContent=recovering?'Choose a new password':signup?'Create your Alaada account':'Welcome back';$('subtitle').textContent=recovering?'Your new password will protect this Appwrite account.':signup?'Create one Alaada identity. Your private personal workspace is provisioned when you sign in.':'One Appwrite account for your personal and organisation workspaces.';$('name-wrap').classList.toggle('hidden',!signup||recovering);$('email').closest('.field').classList.toggle('hidden',recovering);$('google').classList.toggle('hidden',recovering);$('forgot').classList.toggle('hidden',recovering);$('magic').classList.toggle('hidden',recovering);$('password').closest('.field').classList.toggle('hidden',magicComplete||recovering);$('password').required=!magicComplete&&!recovering;$('password').autocomplete=signup||recovering?'new-password':'current-password';$('submit').textContent=recovering?'Set new password':signup?'Create account':'Sign in';$('mode-copy').classList.toggle('hidden',recovering);$('mode').classList.toggle('hidden',recovering);status('') }
+    function mode(){ $('title').textContent=recovering?'Choose a new password':signup?'Create your Alaada account':'Welcome back';$('subtitle').textContent=recovering?'Your new password will protect this Appwrite account.':signup?'Create one Alaada identity. Your private personal workspace is provisioned when you sign in.':'One Appwrite account for your personal and organisation workspaces.';$('name-wrap').classList.toggle('hidden',!signup||recovering);$('email').closest('.field').classList.toggle('hidden',recovering);$('google').classList.toggle('hidden',recovering);$('forgot').classList.toggle('hidden',recovering);$('magic').classList.toggle('hidden',recovering);$('password').closest('.field').classList.toggle('hidden',magicComplete);$('password').required=!magicComplete;$('password').autocomplete=signup||recovering?'new-password':'current-password';$('submit').textContent=recovering?'Set new password':signup?'Create account':'Sign in';$('mode-copy').textContent=signup?'Already have an account?':'New to Alaada?';$('mode').textContent=signup?'Sign in':'Create an account';$('mode-copy').classList.toggle('hidden',recovering);$('mode').classList.toggle('hidden',recovering);$('continue').classList.add('hidden');status('') }
     async function api(path,method='GET',data){
-      const options={method,credentials:'include',cache:'no-store',headers:{'X-Appwrite-Project':PROJECT}};
+      const options={method,credentials:'include',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000),headers:{'X-Appwrite-Project':PROJECT}};
       if(data!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(data)}
       const response=await fetch(ENDPOINT+path,options);let body={};try{body=await response.json()}catch{}
       if(!response.ok){const error=new Error(body.message||body.response?.message||`Appwrite request failed (${response.status})`);error.code=body.code;throw error}return body
     }
-    async function finishSignIn(){try{await api('/account');location.replace(next)}catch{status('Alaada could not verify the Appwrite session. Check your email and password, then try again.',true)}}
-    function showContinue(text,error=false){status(text,error);$('continue').href=next;$('continue').classList.remove('hidden')}
-    $('mode').addEventListener('click',()=>{signup=!signup;mode()});
+    async function finishSignIn(){try{const account=await api('/account');location.replace(destination(account))}catch{status('Alaada could not verify the Appwrite session. Check your email and password, then try again.',true)}}
+    function showContinue(text,error=false,account={}){status(text,error);$('continue').href=destination(account);$('continue').classList.remove('hidden')}
+    $('mode').addEventListener('click',()=>{if(busy)return;signup=!signup;mode()});
     $('google').addEventListener('click',()=>{const success=new URL('/auth.html?oauth=complete&next='+encodeURIComponent(next),location.origin).href;const failure=new URL('/auth.html?oauth=failed&next='+encodeURIComponent(next),location.origin).href;location.assign(`${ENDPOINT}/account/sessions/oauth2/google?project=${encodeURIComponent(PROJECT)}&success=${encodeURIComponent(success)}&failure=${encodeURIComponent(failure)}`)});
-    $('forgot').addEventListener('click',async()=>{const email=$('email').value.trim().toLowerCase();if(!email)return status('Enter your email first.',true);try{await api('/account/recovery','POST',{email,url:new URL('/auth.html?recovery=complete',location.origin).href});status('If this Appwrite account exists, a password recovery link is on its way.')}catch(error){status(error.message,true)}});
+    $('forgot').addEventListener('click',async()=>{const email=$('email').value.trim().toLowerCase();if(busy)return;if(!$('email').checkValidity())return status('Enter a valid email address first.',true);$('forgot').disabled=true;try{await api('/account/recovery','POST',{email,url:new URL('/auth.html?recovery=complete&next='+encodeURIComponent(next),location.origin).href});status('If this Appwrite account exists, a password recovery link is on its way.')}catch(error){status(error.message,true)}finally{$('forgot').disabled=false}});
     $('magic').addEventListener('click',async()=>{const email=$('email').value.trim().toLowerCase();if(!$('email').checkValidity())return status('Enter a valid email address first.',true);$('magic').disabled=true;try{const url=new URL('/auth.html?magic=complete&next='+encodeURIComponent(next),location.origin).href;await api('/account/tokens/magic-url','POST',{userId:crypto.randomUUID(),email,url});status('If you can use this email, a sign-in link is on its way. Open it in this browser to finish signing in.')}catch(error){status(error.message||'A sign-in link could not be sent. Try again or use your password.',true)}finally{$('magic').disabled=false}});
     $('form').addEventListener('submit',async event=>{
       event.preventDefault();if(busy)return;const email=$('email').value.trim().toLowerCase(),password=$('password').value,name=$('name').value.trim();
-      if((!recovering&&!$('email').checkValidity())||(!recovering&&password.length<8))return status('Enter a valid email and a password with at least 8 characters.',true);
-      busy=true;$('submit').disabled=true;status(signup?'Creating your account…':'Signing in…');
+      if((!recovering&&!$('email').checkValidity())||password.length<8)return status(recovering?'Enter a new password with at least 8 characters.':'Enter a valid email and a password with at least 8 characters.',true);
+      busy=true;$('submit').disabled=true;status(recovering?'Updating your password…':signup?'Creating your account…':'Signing in…');
       try{
-        if(recovering){await api('/account/recovery','PUT',{userId:recoveryUserId,secret:recoverySecret,password,passwordAgain:password});status('Password updated. You can now sign in.');return}
+        if(recovering){await api('/account/recovery','PUT',{userId:recoveryUserId,secret:recoverySecret,password});recovering=false;signup=false;mode();$('password').value='';status('Password updated. Sign in with your new password.');return}
         if(signup){
           if(!name)return status('Enter your display name to create an account.',true);
           const user={userId:crypto.randomUUID(),email,password,name};await api('/account','POST',user);
           await api('/account/sessions/email','POST',{email,password});
           let emailSent=true;try{await api('/account/verification','POST',{url:new URL('/auth.html?verified=complete&next='+encodeURIComponent(next),location.origin).href})}catch{emailSent=false}
-          signup=false;mode();$('email').value=email;showContinue(emailSent?'Account created. Verify your email, then continue to your personal workspace.':'Account created and signed in, but Appwrite could not send the verification email. Continue to set up your private workspace.',!emailSent);return
+          const createdAccount=await api('/account');signup=false;mode();$('email').value=email;$('password').value='';showContinue(emailSent?'Account created. Verify your email, then continue to your personal workspace.':'Account created and signed in, but Appwrite could not send the verification email. Continue to set up your private workspace.',!emailSent,createdAccount);return
         }
         await api('/account/sessions/email','POST',{email,password});
         await finishSignIn();
       }catch(error){status(error.message||'Could not complete sign-in. Please try again.',true)}finally{busy=false;$('submit').disabled=false}
     });
+    mode();
     (async()=>{
       if(recovering)return;
       if(verificationUserId&&verificationSecret&&params.get('verified')==='complete'){try{await api('/account/verification','PUT',{userId:verificationUserId,secret:verificationSecret});status('Email verified. Continuing to your workspace…');await finishSignIn()}catch(error){status(error.message,true)}return}
@@ -80,8 +89,8 @@
       if(params.get('recovery')==='complete'){status('Password recovery link is missing required data. Request a new link.',true);return}
       if(params.get('oauth')==='failed'){status('Google sign-in did not finish. Please try again.',true);return}
       if(params.get('oauth')==='complete'){status('Checking your Appwrite session…');await finishSignIn();return}
-      try{await api('/account');location.replace(next)}catch{}
-    })();mode();
+      try{const account=await api('/account');location.replace(destination(account))}catch{}
+    })();
   })();
   </script>
 </body>

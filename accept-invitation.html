@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#f5f4ef">
   <title>Accept invitation · Alaada</title>
   <style>
@@ -22,7 +22,8 @@
     const ENDPOINT='https://sfo.cloud.appwrite.io/v1',PROJECT='6972444700208a437da1',KEY='alaada-team-invitation';
     const $=id=>document.getElementById(id),query=new URLSearchParams(location.search),fragment=new URLSearchParams(location.hash.slice(1)),stored=(()=>{try{return JSON.parse(sessionStorage.getItem(KEY)||'null')}catch{return null}})();
     const invite={teamId:query.get('teamId')||query.get('team')||stored?.teamId,membershipId:query.get('membershipId')||query.get('inviteId')||stored?.membershipId,userId:query.get('userId')||stored?.userId,secret:query.get('secret')||stored?.secret};
-    function authUrl(){const next=new URLSearchParams();for(const [key,value] of Object.entries(invite))if(value)next.set(key,value);return '/auth.html?'+new URLSearchParams({next:'/accept-invitation.html?'+next.toString()}).toString()}
+    // The invitation secret stays in tab-scoped storage, never in a login URL.
+    function authUrl(){return '/auth.html?next=%2Faccept-invitation.html'}
     function persistAndClean(){if(invite.teamId&&invite.membershipId&&invite.userId&&invite.secret){sessionStorage.setItem(KEY,JSON.stringify(invite));history.replaceState(null,'',location.pathname)}else if(fragment.get('teamId')&&(fragment.get('inviteId')||fragment.get('membershipId'))){Object.assign(invite,{teamId:fragment.get('teamId'),membershipId:fragment.get('membershipId')||fragment.get('inviteId'),userId:fragment.get('userId'),secret:fragment.get('secret')});if(invite.teamId&&invite.membershipId&&invite.userId&&invite.secret){sessionStorage.setItem(KEY,JSON.stringify(invite));history.replaceState(null,'',location.pathname)}}$('sign-in').href=authUrl()}
     async function appwrite(path,method='GET',body){const response=await fetch(ENDPOINT+path,{method,credentials:'include',headers:{'X-Appwrite-Project':PROJECT,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const data=response.status===204?{}:await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||`Appwrite request failed (${response.status})`);return data}
     function showError(message){$('message').textContent=message;$('message').className='error'}

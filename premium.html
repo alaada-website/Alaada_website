@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alaada Premium — Coming Soon</title>
+  <title>Alaada Plans and Billing</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3C/svg%3E">
   <style>
     :root {
@@ -63,6 +63,7 @@
       color: var(--muted);
       font-size: 0.9rem;
     }
+    .plans{width:min(1080px,100%)}.plan-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:28px 0}.plan-card{background:var(--card);border:1px solid #34405a;border-radius:16px;padding:24px;text-align:left;display:flex;flex-direction:column}.plan-card h2{font-size:1.4rem;margin:0;color:var(--text)}.plan-card p{font-size:1rem;flex:1}.plan-link,.manage{display:inline-block;background:var(--primary);color:white;text-decoration:none;padding:12px 18px;border-radius:9px}.plan-link[aria-disabled=true]{background:#303a50;cursor:not-allowed}.manage{margin:8px}.plan-link:focus-visible,.manage:focus-visible,nav a:focus-visible{outline:3px solid #c4b5fd;outline-offset:4px}#plan-status{min-height:2.8em;font-size:1rem}@media(max-width:700px){.plan-grid{grid-template-columns:1fr}.content{padding:24px 16px}nav{padding:16px;gap:12px;flex-wrap:wrap}nav .menu a{margin-left:12px}}
   </style>
 </head>
 <body>
@@ -85,12 +86,34 @@
   </nav>
 
   <!-- Main Content -->
-  <div class="content">
-    <div>
-      <h2>Premium Features</h2>
-      <p>Not yet implemented. Stay tuned for updates!</p>
-    </div>
-  </div>
+  <main class="content">
+    <section class="plans" aria-labelledby="plans-title">
+      <h1 id="plans-title">Your Alaada plan</h1>
+      <p>One personal workspace across Sheets, Accounts, Orbit and Web Analyser. Availability and usage limits come from your verified account.</p>
+      <p id="plan-status" role="status" aria-live="polite">Checking checkout availability…</p>
+      <div class="plan-grid">
+        <article class="plan-card"><h2>Free</h2><p>Start with a personal workspace and the features currently available to your account.</p><a class="plan-link" href="/account.html?plan=Free">Open your account</a></article>
+        <article class="plan-card"><h2>Pro</h2><p>A personal subscription. Review the current price, billing interval and account limits before confirming a purchase.</p><a class="plan-link" data-paid="Pro" aria-disabled="true" tabindex="-1">Checkout unavailable</a></article>
+        <article class="plan-card"><h2>Elite</h2><p>A personal subscription. Review the current price, billing interval and account limits before confirming a purchase.</p><a class="plan-link" data-paid="Elite" aria-disabled="true" tabindex="-1">Checkout unavailable</a></article>
+      </div>
+      <a class="manage" href="/account.html#subscription">Manage subscription or check a payment</a>
+      <p>Organisation workspaces and licensing are separate from your personal subscription. Your account shows the organisations you can access.</p>
+      <p>Returning from checkout does not activate a plan. Your account displays the status confirmed by the payment service.</p>
+    </section>
+  </main>
+  <script>
+    (async()=>{
+      const label=document.getElementById('plan-status');
+      try{
+        const response=await fetch('/api/health',{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(10000)});
+        if(!response.ok)throw new Error('Availability check failed');
+        const billing=(await response.json()).dodo_billing||{};
+        const available=billing.checkout_enabled===true&&billing.webhook_configured===true&&billing.products_configured===true;
+        label.textContent=available?'Paid checkout is available. Your account will verify eligibility and show the next step.':'New paid checkout is temporarily unavailable. You can still use your current plan and manage an existing subscription in your account.';
+        if(available)document.querySelectorAll('[data-paid]').forEach(link=>{link.href='/account.html?plan='+encodeURIComponent(link.dataset.paid);link.removeAttribute('aria-disabled');link.removeAttribute('tabindex');link.textContent='Review '+link.dataset.paid+' in your account';});
+      }catch{label.textContent='Checkout availability could not be verified. Open your account to check the latest billing status; no purchase has been started.';}
+    })();
+  </script>
 
   <!-- Footer -->
   <footer>

@@ -1760,12 +1760,12 @@ async function healthResponseError(res){
   let data = null;
   const text = await res.text().catch(() => '');
   try { data = text ? JSON.parse(text) : null; } catch(e) { data = text ? {code:'MALFORMED_RESPONSE', detail:text.slice(0,240)} : null; }
-  const message = data?.error?.message || data?.detail?.message || data?.message || `Health check failed (${res.status})`;
+  const message = data?.error?.message || data?.detail?.message || data?.message || (typeof data?.detail==='string'?data.detail:null) || `Health check failed (${res.status})`;
   return new ApiError(message, res.status, data || {code:`HTTP_${res.status}`});
 }
 function normalizeConnectionError(error, endpoint){
   if (error instanceof ApiError) return error;
-  if (error && error.name === 'AbortError') return new ApiError('The Accounts service timed out while opening.', 0, {code:'REQUEST_TIMEOUT', endpoint});
+  if (error && ['AbortError','TimeoutError'].includes(error.name)) return new ApiError('The Accounts service timed out while opening.', 0, {code:'REQUEST_TIMEOUT', endpoint});
   return new ApiError('The Accounts service could not be reached from this browser.', 0, {code:'NETWORK_OR_CORS', endpoint});
 }
 function requestIdFromError(error){
@@ -1782,7 +1782,11 @@ function classifyAccountsError(error, phase){
   let title = 'The operation could not be completed';
   let message = error?.message || 'Try again after checking the connection.';
   let kind = 'server_error';
-  if (status === 0) {
+  if (code === 'INTEGRATION_UNAVAILABLE') {
+    kind = 'integration_unavailable';
+    title = 'Accounts is not connected yet';
+    message = 'Your workspace is available, but its accounting service has not been connected. No company data was changed. Try again after your administrator enables the service.';
+  } else if (status === 0) {
     kind = code === 'REQUEST_TIMEOUT' ? 'timeout' : 'network_or_cors';
     title = code === 'REQUEST_TIMEOUT' ? 'Accounts is taking too long to respond' : 'Accounts server could not be reached';
     message = code === 'REQUEST_TIMEOUT'
@@ -1809,6 +1813,10 @@ function classifyAccountsError(error, phase){
     kind = 'validation_or_business_rule';
     title = 'Accounts rejected the submitted data';
     message = error?.message || 'Review the details, fix the issue, and retry.';
+  } else if (status === 429) {
+    kind = 'usage_limit';
+    title = 'Accounts usage limit reached';
+    message = 'Check your workspace plan and usage. Retrying immediately will not increase the limit.';
   } else if (status === 503) {
     kind = 'database_or_migrations';
     title = 'Accounts database is not ready';
@@ -1822,14 +1830,15 @@ function classifyAccountsError(error, phase){
     title = 'Accounts server error';
     message = 'The server reported an internal problem. Retry after a moment or contact support with the request ID.';
   }
-  return {phase, kind, status: status || 'network', code, title, message, requestId: requestIdFromError(error), raw: error?.data || error?.message || ''};
+  const retryable = ['timeout','network_or_cors','database_or_migrations'].includes(kind) || [502,504].includes(status);
+  return {phase, kind, retryable, status: status || 'network', code, title, message, requestId: requestIdFromError(error), raw: error?.data || error?.message || ''};
 }
 function renderConnectingView(attempt){
   view().innerHTML = `<div class="empty" style="padding-top:80px;">
     <div class="empty-icon"><span class="spin" style="width:26px;height:26px;border-width:3px;"></span></div>
-    <h4>${attempt>1 ? 'Still starting up…' : 'Alaada Accounts is starting…'}</h4>
+    <h4>${attempt>1 ? 'Reconnecting to Accounts…' : 'Opening Alaada Accounts…'}</h4>
     <p>${attempt>1
-        ? `This can take up to a minute the first time. Retrying automatically.`
+        ? `The service is taking longer to respond. Retrying the connection.`
         : `Setting things up for you.`}</p>
     ${technicalDetails([['Endpoint', API_BASE], ['Attempt', attempt]])}
   </div>`;
@@ -1894,6 +1903,16 @@ async function startAutoConnect(){
   if (autoConnectPromise) return autoConnectPromise;
   autoConnectPromise = (async () => {
     await ensureAccountsIdentity();
+    try {
+      const policy=await window.AlaadaWorkspace.entitlements();
+      if(!policy.products?.accounts?.execution_available){
+        setApiStatus('down');
+        renderOfflineView(classifyAccountsError(new ApiError('Accounts is not connected',503,{code:'INTEGRATION_UNAVAILABLE'}),'opening Accounts'));
+        return false;
+      }
+    } catch(error) {
+      setApiStatus('down');renderOfflineView(classifyAccountsError(normalizeConnectionError(error,API_BASE),'verifying workspace access'));return false;
+    }
     gateUrl.value = API_BASE;
     setApiStatus('connecting');
     renderConnectingView(1);
@@ -1907,9 +1926,11 @@ async function startAutoConnect(){
         if (res.ok) { window.AlaadaWorkspace.storage.setItem(LS.api, API_BASE); setApiStatus('up'); await bootstrap(); return true; }
         lastError = await healthResponseError(res);
       } catch(e) { lastError = normalizeConnectionError(e, API_BASE + '/health'); }
+      if(!classifyAccountsError(lastError,'opening Accounts').retryable)break;
     }
     setApiStatus('down');
-    await renderOfflineBackupView(classifyAccountsError(lastError, 'opening Accounts'));
+    const classified=classifyAccountsError(lastError,'opening Accounts');
+    if(classified.retryable)await renderOfflineBackupView(classified);else renderOfflineView(classified);
     return false;
   })().finally(() => { autoConnectPromise = null; });
   return autoConnectPromise;
@@ -2111,6 +2132,9 @@ document.getElementById('balance-beam').onclick = () => navigate('report-trial-b
 function view(){ return document.getElementById('view'); }
 function renderSidebarRouting(){
   document.querySelectorAll('.side-link[data-view]').forEach(l => {
+    l.setAttribute('role','button');l.tabIndex=0;
+    l.setAttribute('aria-current',l.classList.contains('active')?'page':'false');
+    l.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();l.click();}};
     l.onclick = () => { navigate(l.dataset.view); closeSidebarDrawer(); };
   });
 }
@@ -2138,7 +2162,7 @@ const DEV_ONLY_VIEWS = ['backend-features', 'internal-api'];
 function navigate(v){
   if (DEV_ONLY_VIEWS.includes(v) && !DEVELOPER_MODE) v = 'dashboard';
   STATE.currentView = v;
-  document.querySelectorAll('.side-link[data-view]').forEach(l => l.classList.toggle('active', l.dataset.view===v));
+  document.querySelectorAll('.side-link[data-view]').forEach(l => {l.classList.toggle('active', l.dataset.view===v);l.setAttribute('aria-current',l.dataset.view===v?'page':'false');});
   const fn = VIEW_RENDERERS[v] || renderDashboard;
   fn();
   updateBackupReminder();
