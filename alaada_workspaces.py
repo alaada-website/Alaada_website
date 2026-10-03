@@ -935,6 +935,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         result["payload"] = json.loads(result["payload"])
         return result
 
+    @app.get("/api/health")
     @app.get("/health")
     async def health():
         # Deliberately exposes readiness categories only; never return secrets or

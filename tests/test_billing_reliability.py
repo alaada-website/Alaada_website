@@ -109,6 +109,15 @@ def test_configured_sheets_reports_calculation_capability(tmp_path):
     assert product['capabilities']['ai'] is False
 
 
+def test_public_billing_readiness_uses_same_origin_api_rewrite(env):
+    direct = env[0].get('/health')
+    frontend = env[0].get('/api/health')
+    assert direct.status_code == frontend.status_code == 200
+    assert direct.json() == frontend.json()
+    assert frontend.json()['dodo_billing']['checkout_enabled'] is False
+    assert 'api_key' not in frontend.text and 'test-secret' not in frontend.text
+
+
 def test_sharing_notifies_recipient_private_inbox_once_and_revoke_revokes_access(env):
     alice = env[3]
     bob = next(w['id'] for w in request(env, 'bob', 'GET', '/workspaces').json()['workspaces'] if w['kind'] == 'personal')
