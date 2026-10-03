@@ -3,8 +3,9 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const source = fs.readFileSync(process.argv[2], 'utf8').replaceAll('__ENDPOINT__','https://sfo.cloud.appwrite.io/v1').replaceAll('__PROJECT__','project');
 
-async function boot(product, requested='', seed=[]) {
+async function boot(product, requested='', seed=[], operationStorage=new Map()) {
   const requests=[], navigation=[], events={},cookies=[]; let currentUser='alice', revoked=false;
+  let operationReply=()=>new Response(JSON.stringify({success:true,reply:'Scoped result'}),{status:200});
   class Element {
     constructor(tag){this.tagName=tag;this.children=[];this.style={};this.hidden=false;this.disabled=false;this.textContent='';this.value='';}
     append(...items){this.children.push(...items);for(const item of items)if(item.selected)this.value=item.value;}
@@ -20,6 +21,7 @@ async function boot(product, requested='', seed=[]) {
     requests.push({url:String(url),options});
     if(String(url).endsWith('/account'))return {ok:true,json:async()=>({$id:currentUser})};
     if(String(url).endsWith('/account/jwts'))return {ok:true,json:async()=>({jwt:'verified-token'})};
+    if(String(url).includes('/sheets/execute/'))return operationReply();
     if(url==='/api/workspaces')return {ok:true,json:async()=>({...state,workspaces:revoked?state.workspaces.slice(0,1):state.workspaces})};
     if(String(url).endsWith('/orbit/reply'))return {ok:true,json:async()=>({id:'saved',product:'orbit',kind:'conversation',version:2,payload:{native_key:'first',data:{id:'first',title:'First',messages:[{role:'assistant',text:'Scoped reply'}]}}})};
     if(options.method==='PUT'){
@@ -28,13 +30,14 @@ async function boot(product, requested='', seed=[]) {
     }
     return {ok:true,json:async()=>seed};
   };
-  const window={fetch,addEventListener:(type,fn)=>events[type]=fn};
-  const context=vm.createContext({window,document,location,URL,Headers,Map,Set,Promise,Error,JSON,encodeURIComponent,confirm:()=>true,console,
+  const window={fetch,addEventListener:(type,fn)=>events[type]=fn,
+    sessionStorage:{getItem:key=>operationStorage.get(key)||null,setItem:(key,value)=>operationStorage.set(key,value)}};
+  const context=vm.createContext({window,document,location,URL,Headers,Response,TextEncoder,Uint8Array,crypto:require('node:crypto').webcrypto,Map,Set,Promise,Error,JSON,encodeURIComponent,confirm:()=>true,console,
     localStorage:{getItem(){throw Error('Legacy storage must never be read');}}});
   vm.runInContext(source,context);
   const W=window.AlaadaWorkspace;
   await W.ready;
-  return {W,requests,navigation,document,events,cookies,setUser:u=>currentUser=u,revoke:()=>revoked=true};
+  return {W,requests,navigation,document,events,cookies,operationStorage,setOperationReply:fn=>operationReply=fn,setUser:u=>currentUser=u,revoke:()=>revoked=true};
 }
 
 (async()=>{
@@ -107,6 +110,28 @@ async function boot(product, requested='', seed=[]) {
   assert.equal(calculation.options.headers['X-Alaada-Workspace'],'personal');
   assert.equal(calculation.options.headers.Authorization,'Bearer verified-token');
   assert(!sheets.requests.some(r=>r.url.startsWith('https://legacy-sheets.example')));
+  const signIn=sheets.document.body.children[0].children[3];
+  assert.equal(signIn.href,'/auth.html?next=%2Fsheets.html');
+  const chatOptions={method:'POST',headers:{'Content-Type':'application/json',Authorization:'attacker','X-Alaada-Workspace':'wrong'},body:JSON.stringify({messages:[{role:'user',content:'sum'}]})};
+  sheets.setOperationReply(()=>new Response(JSON.stringify({state:'unknown'}),{status:502}));
+  const attempts=()=>sheets.requests.filter(r=>r.url.includes('/sheets/execute/'));
+  await sheets.W.productFetch('/api/ai/chat',chatOptions);
+  await sheets.W.productFetch('/api/ai/chat',chatOptions);
+  assert.equal(attempts().length,2);
+  assert.equal(attempts()[0].options.headers['X-Alaada-Operation'],attempts()[1].options.headers['X-Alaada-Operation']);
+  assert.equal(attempts()[0].options.headers.Authorization,'Bearer verified-token');
+  assert.equal(attempts()[0].options.headers['X-Alaada-Workspace'],'personal');
+  const reloaded=await boot('sheets','',[],sheets.operationStorage);
+  const concurrent=await Promise.all([reloaded.W.productFetch('/api/ai/chat',chatOptions),reloaded.W.productFetch('/api/ai/chat',chatOptions)]);
+  assert.equal(concurrent.length,2);
+  const reloadedAttempts=()=>reloaded.requests.filter(r=>r.url.includes('/sheets/execute/'));
+  assert.equal(reloadedAttempts().length,1);
+  assert.equal(reloadedAttempts()[0].options.headers['X-Alaada-Operation'],attempts()[0].options.headers['X-Alaada-Operation']);
+  await reloaded.W.productFetch('/api/ai/chat',chatOptions);
+  assert.notEqual(reloadedAttempts()[1].options.headers['X-Alaada-Operation'],reloadedAttempts()[0].options.headers['X-Alaada-Operation']);
+  reloaded.setOperationReply(()=>{reloaded.setUser('bob');return new Response(JSON.stringify({private:'result'}));});
+  await assert.rejects(reloaded.W.productFetch('/api/ai/chat',chatOptions),/account changed during/);
+  assert.equal(reloaded.document.body.children.at(-1).hidden,false);
   await analyser.W.save('monitor','target',{url:'https://example.com',intervalHours:24,scheduling:'manual'},'Target');
   assert.equal(analyser.W.list('monitor').length,1);
   await analyser.W.remove('monitor','target');

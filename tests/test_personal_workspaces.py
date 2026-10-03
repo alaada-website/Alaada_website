@@ -79,7 +79,7 @@ def request(env, who, method, path, data=None, workspace=None):
                           headers={"Authorization": "Bearer " + who, "X-Alaada-Workspace": workspace or ""})
 
 
-def test_confirmed_appwrite_team_membership_provisions_enterprise_workspace(env):
+def test_confirmed_appwrite_team_membership_provisions_workspace_without_paid_licence(env):
     store = env[4].state.store
     with store.db() as db:
         db.delete('subscriptions', {'workspace': env[2]})
@@ -89,7 +89,7 @@ def test_confirmed_appwrite_team_membership_provisions_enterprise_workspace(env)
     enterprise = next(workspace for workspace in response.json()['workspaces'] if workspace['kind'] == 'organisation')
     assert enterprise['team'] == 'team'
     assert enterprise['name'] == 'team'
-    assert enterprise['plan'] == 'Enterprise'
+    assert enterprise['plan'] == 'Free'
     bob_workspaces = request(env, 'bob', 'GET', '/workspaces').json()['workspaces']
     assert all(workspace['kind'] == 'personal' and workspace['owner'] == 'bob' for workspace in bob_workspaces)
 
@@ -706,6 +706,7 @@ def test_dodo_checkout_and_verified_webhook_bind_only_the_personal_workspace(tmp
     assert sent['product_cart'] == [{'product_id':'pdt_pro_test','quantity':1}]
     assert sent['metadata'] == {'workspace':wid,'user':'alice','plan':'Pro','request':checkout.json()['id']}
     event = {'subscription_id':'sub_test_123','product_id':'pdt_pro_test','status':'active',
+             'next_billing_date': m.datetime.fromtimestamp(time.time() + 86400, m.timezone.utc).isoformat(),
              'metadata':sent['metadata'],'customer':{'customer_id':'cus_test'}}
     raw, signature = signed_dodo_request(key, 'msg_sub_active_1', event)
     delivered = client.post('/api/dodo/webhook', content=raw, headers=signature)
@@ -740,6 +741,7 @@ def test_dodo_cancel_is_scheduled_then_verified_cancellation_downgrades_without_
     auth = {'Authorization':'Bearer alice','X-Alaada-Workspace':wid}
     checkout = client.post(f'/api/workspaces/{wid}/subscription', json={'plan':'Pro'}, headers=auth).json()
     active = {'subscription_id':'sub_cancel_test','product_id':'pdt_pro_test','status':'active',
+              'next_billing_date': m.datetime.fromtimestamp(time.time() + 86400, m.timezone.utc).isoformat(),
               'metadata':env['calls']['checkout']['metadata']}
     raw, headers = signed_dodo_request(key, 'msg_sub_active_cancel', active)
     assert client.post('/api/dodo/webhook', content=raw, headers=headers).status_code == 200
@@ -761,6 +763,7 @@ def test_dodo_cancel_is_scheduled_then_verified_cancellation_downgrades_without_
     renewal_checkout = client.post(f'/api/workspaces/{wid}/subscription', json={'plan':'Pro'}, headers=auth)
     assert renewal_checkout.status_code == 201
     renewed = {'subscription_id':'sub_after_cancel','product_id':'pdt_pro_test','status':'active',
+               'next_billing_date': m.datetime.fromtimestamp(time.time() + 86400, m.timezone.utc).isoformat(),
                'metadata':env['calls']['checkout']['metadata']}
     raw, headers = signed_dodo_request(key, 'msg_sub_after_cancel', renewed)
     assert client.post('/api/dodo/webhook', content=raw, headers=headers).status_code == 200

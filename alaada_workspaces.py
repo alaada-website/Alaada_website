@@ -16,6 +16,7 @@ import sqlite3
 import time
 import uuid
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote, urlsplit
 
@@ -62,6 +63,15 @@ CREATE TABLE IF NOT EXISTS billing_requests(
  state TEXT NOT NULL DEFAULT 'pending', created INTEGER NOT NULL);
 CREATE UNIQUE INDEX IF NOT EXISTS billing_pending ON billing_requests(workspace) WHERE state='pending';
 CREATE TABLE IF NOT EXISTS billing_events(id TEXT PRIMARY KEY, received INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS billing_receipts(
+ id TEXT PRIMARY KEY, payload_hash TEXT NOT NULL, event_type TEXT NOT NULL,
+ state TEXT NOT NULL, attempts INTEGER NOT NULL, received INTEGER NOT NULL,
+ updated INTEGER NOT NULL, error TEXT);
+CREATE TABLE IF NOT EXISTS product_operations(
+ id TEXT PRIMARY KEY, workspace TEXT NOT NULL REFERENCES workspaces(id),
+ user TEXT NOT NULL, product TEXT NOT NULL, operation TEXT NOT NULL,
+ request_hash TEXT NOT NULL, state TEXT NOT NULL, month TEXT NOT NULL,
+ status INTEGER, response TEXT, created INTEGER NOT NULL, updated INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS dodo_checkouts(
  request TEXT PRIMARY KEY REFERENCES billing_requests(id),
  workspace TEXT NOT NULL REFERENCES workspaces(id), owner TEXT NOT NULL,
@@ -111,6 +121,8 @@ def tablesdb_schema():
         'usage': 'workspace product month amount:int',
         'billing_requests': 'id workspace plan state created:int pending_workspace?',
         'billing_events': 'id received:int',
+        'billing_receipts': 'id payload_hash event_type state attempts:int received:int updated:int error?',
+        'product_operations': 'id workspace user product operation request_hash state month status:int? response:mediumtext? created:int updated:int',
         'dodo_checkouts': 'request workspace owner plan session_id? checkout_url:mediumtext? state created:int',
         'dodo_subscriptions': 'workspace subscription_id customer_id? product_id plan status current_period_end? cancel_at_period_end:int pending_plan?',
         'audit': 'id:int actor workspace action resource? created:int',
@@ -124,6 +136,8 @@ def tablesdb_schema():
         'folder_membership': [('child',)], 'grants': [('resource', 'user')],
         'usage': [('workspace', 'product', 'month')],
         'billing_requests': [('id',), ('pending_workspace',)], 'billing_events': [('id',)],
+        'billing_receipts': [('id',)],
+        'product_operations': [('id',)],
         'dodo_checkouts': [('request',), ('session_id',)],
         'dodo_subscriptions': [('workspace',), ('subscription_id',)],
         'audit': [('id',)], 'notifications': [('id',)],
@@ -133,6 +147,8 @@ def tablesdb_schema():
         'resources': [('workspace', 'title', 'id'), ('workspace', 'product', 'kind'), ('storage_file_id',)],
         'folder_membership': [('parent',)], 'grants': [('user',)],
         'billing_requests': [('workspace', 'state')], 'audit': [('workspace', 'created')],
+        'billing_receipts': [('state', 'updated')],
+        'product_operations': [('workspace', 'user', 'created'), ('state', 'updated')],
         'notifications': [('workspace', 'recipient', 'id')],
         'accounts_bindings': [('workspace', 'created', 'company')],
         'dodo_checkouts': [('workspace', 'state', 'created')],
@@ -508,6 +524,8 @@ class Store:
         self.path = str(path)
         self.postgres = self.path.startswith(("postgres://", "postgresql://"))
         self.tablesdb = self.path.startswith('tablesdb:')
+        if (os.environ.get('RENDER', '').lower() == 'true' or os.environ.get('ALAADA_ENV') == 'production') and not self.tablesdb:
+            raise ValueError('Production workspace storage must use Appwrite TablesDB.')
         self.limits = limits or dict(LIMITS)
         if set(self.limits) != set(LIMITS) or any(type(v) is not int or v < 0 for v in self.limits.values()):
             raise ValueError("Limits must define nonnegative integer Free, Pro, Elite, Enterprise quotas")
@@ -571,12 +589,14 @@ class Store:
         db.ensure('subscriptions', {'workspace': wid}, {'workspace': wid, 'plan': 'Free', 'version': 0})
         return wid
 
-    def organisation(self, team, name):
+    def organisation(self, team, name, *, licensed=True):
         """Operator-only provisioning; team ID must come from the configured Appwrite project."""
         wid = "o_" + hashlib.sha256(team.encode()).hexdigest()
         with self.db() as db:
             db.ensure('workspaces', {'id': wid}, {'id': wid, 'kind': 'organisation', 'owner': None, 'team': team, 'name': name})
-            db.ensure('subscriptions', {'workspace': wid}, {'workspace': wid, 'plan': 'Enterprise', 'version': 0})
+            db.ensure('subscriptions', {'workspace': wid}, {'workspace': wid, 'plan': 'Enterprise' if licensed else 'Free', 'version': 0})
+            if licensed and db.one('subscriptions', {'workspace': wid})['plan'] != 'Enterprise':
+                db.update('subscriptions', {'workspace': wid}, {'plan': 'Enterprise'}, increments={'version': 1})
         return wid
 
     def role(self, identity, workspace):
@@ -614,8 +634,70 @@ class Store:
             fail(403, "Resource permission denied.")
         return row
 
+    def effective_plan(self, db, wid):
+        """Re-evaluate eligibility on every use, even when a webhook was missed.
+
+        No implicit grace period: pending/paused/past-due/malformed/expired
+        provider state is Free until a verified active paid period is known.
+        Downgrades affect limits, never ownership or existing readable data.
+        """
+        subscription = db.one('subscriptions', {'workspace': wid})
+        provider = db.one('dodo_subscriptions', {'workspace': wid})
+        if not provider:
+            return subscription['plan'] if subscription and subscription['plan'] in self.limits else 'Free'
+        if provider['status'] != 'active' or provider['plan'] not in ('Pro', 'Elite'):
+            return 'Free'
+        try:
+            end = datetime.fromisoformat(provider['current_period_end'].replace('Z', '+00:00'))
+            if end.utcoffset() is None or end <= datetime.now(timezone.utc):
+                return 'Free'
+        except (TypeError, AttributeError, ValueError, OverflowError):
+            return 'Free'
+        return provider['plan']
+
+    @contextmanager
+    def billing_receipt(self, ledger_id, raw, event_type):
+        """Persist verified receipt/retry diagnostics without retaining raw PII.
+
+        The business ledger and state changes remain one transaction. A crash
+        after that commit is recovered by the existing event ID deduplication.
+        """
+        digest, now = hashlib.sha256(raw).hexdigest(), int(time.time())
+        conflict = False
+        with self.db() as db:
+            receipt = db.one('billing_receipts', {'id': ledger_id})
+            if receipt:
+                conflict = receipt['payload_hash'] != digest
+                updates = {'updated': now}
+                if conflict:
+                    updates['error'] = 'payload_conflict_requires_reconciliation'
+                db.update('billing_receipts', {'id': ledger_id}, updates, increments={'attempts': 1})
+            else:
+                db.insert('billing_receipts', {'id': ledger_id, 'payload_hash': digest,
+                    'event_type': event_type, 'state': 'received', 'attempts': 1,
+                    'received': now, 'updated': now, 'error': None})
+        if conflict:
+            fail(409, 'This webhook ID has a different payload. Provider reconciliation is required.')
+        try:
+            yield
+        except Exception as error:
+            # Never store provider bodies, secrets or exception messages.
+            with self.db() as db:
+                receipt = db.one('billing_receipts', {'id': ledger_id})
+                if receipt and receipt['state'] not in ('processed', 'stale', 'ignored'):
+                    db.update('billing_receipts', {'id': ledger_id}, {'state': 'failed',
+                        'updated': int(time.time()), 'error': 'http_' + str(error.status_code)
+                        if isinstance(error, HTTPException) else 'processing_failed'})
+            raise
+        else:
+            with self.db() as db:
+                receipt = db.one('billing_receipts', {'id': ledger_id})
+                if receipt and receipt['state'] in ('received', 'failed'):
+                    db.update('billing_receipts', {'id': ledger_id}, {'state': 'processed',
+                        'updated': int(time.time()), 'error': None})
+
     def quota(self, db, wid, product):
-        plan = db.one('subscriptions', {'workspace': wid})['plan']
+        plan = self.effective_plan(db, wid)
         month = time.strftime("%Y-%m", time.gmtime())
         key = {'workspace': wid, 'product': product, 'month': month}
         row = db.one('usage', key)
@@ -627,6 +709,47 @@ class Store:
         else:
             db.insert('usage', dict(key, amount=1))
         return month
+
+    def find_operation(self, db, user, wid, product, operation, operation_id, payload):
+        if not isinstance(operation_id, str) or not re.fullmatch(r'[A-Za-z0-9_-]{16,128}', operation_id):
+            fail(400, 'A stable X-Alaada-Operation identifier is required.')
+        key = hashlib.sha256(json.dumps([wid, user.user, operation_id], separators=(',', ':')).encode()).hexdigest()
+        try:
+            digest = hashlib.sha256(json.dumps([product, operation, payload], sort_keys=True,
+                separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+        except (TypeError, ValueError):
+            fail(400, 'Workbook operation inputs must be finite JSON values.')
+        existing = db.one('product_operations', {'id': key})
+        if existing:
+            if existing['request_hash'] != digest:
+                fail(409, 'This operation identifier was already used with different inputs.')
+        return key, digest, existing
+
+    def reserve_operation(self, db, user, wid, product, operation, operation_id, payload):
+        """Atomically reserve a logical operation once across processes/retries."""
+        key, digest, existing = self.find_operation(db, user, wid, product, operation, operation_id, payload)
+        if existing:
+            return existing, False
+        month = self.quota(db, wid, product)
+        now = int(time.time())
+        record = {'id': key, 'workspace': wid, 'user': user.user, 'product': product,
+            'operation': operation, 'request_hash': digest, 'state': 'pending', 'month': month,
+            'status': None, 'response': None, 'created': now, 'updated': now}
+        db.insert('product_operations', record)
+        return record, True
+
+    def finish_operation(self, db, record, state, status, response, *, refund=False):
+        current = db.one('product_operations', {'id': record['id']})
+        if not current or current['state'] != 'pending':
+            fail(409, 'The operation outcome has already been recorded.')
+        if refund:
+            key = {'workspace': record['workspace'], 'product': record['product'], 'month': record['month']}
+            usage = db.one('usage', key)
+            if not usage or usage['amount'] < 1:
+                fail(409, 'The operation reservation could not be reconciled.')
+            db.update('usage', key, {}, increments={'amount': -1})
+        db.update('product_operations', {'id': record['id']}, {'state': state, 'status': status,
+            'response': json.dumps(response, separators=(',', ':'), allow_nan=False), 'updated': int(time.time())})
 
     def audit(self, db, identity, wid, action, rid=None):
         db.insert('audit', {'actor': identity.user, 'workspace': wid, 'action': action, 'resource': rid, 'created': int(time.time())})
@@ -663,6 +786,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         product_id = dodo_products.get(product_plan)
         if product_id and (not isinstance(product_id, str) or not re.fullmatch(r'pdt_[A-Za-z0-9_-]{1,120}', product_id)):
             raise ValueError('Invalid Dodo product ID for ' + product_plan)
+    if dodo_products.get('Pro') and dodo_products.get('Pro') == dodo_products.get('Elite'):
+        raise ValueError('Pro and Elite require different Dodo product IDs')
     if dodo_client is None and dodo_api_key:
         try:
             from dodopayments import DodoPayments
@@ -672,6 +797,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             raise ValueError('Dodo Payments SDK could not be configured') from error
     dodo_checkout_ready = bool(dodo_checkout_enabled and dodo_api_key and dodo_webhook_key
                                and dodo_products.get('Pro') and dodo_products.get('Elite'))
+    # Closing new sales must not prevent existing subscribers from cancelling.
+    dodo_management_ready = bool(dodo_api_key and dodo_client and dodo_webhook_key)
     app.state.dodo_checkout_ready = dodo_checkout_ready
     app.state.dodo_client = dodo_client
     if sheets_url and not sheets_secret:
@@ -689,6 +816,48 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             raise ValueError('Sheets upstream must be a trusted HTTPS origin')
         if len(sheets_secret)<32:raise ValueError('Sheets requires a dedicated gateway secret of at least 32 characters')
         sheets_url=sheets_url.rstrip('/')
+    sheets_operations = frozenset(('ai-command', 'ai-chat', 'ai-analyze', 'anomalies', 'translate', 'analytics', 'predict'))
+    sheets_capability_cache = {'expires': 0.0, 'values': {}}
+
+    async def sheets_call(user, wid, method, path, data=None, operation_id=None):
+        if not sheets_url:
+            fail(503, 'The Appwrite Sheets execution service is not connected.')
+        raw = b'' if data is None else json.dumps(data, separators=(',', ':'), allow_nan=False).encode()
+        assertion = {'v': 1, 'aud': 'sheets-calculation', 'workspace': wid, 'user': user.user,
+            'method': method, 'target': path, 'body': hashlib.sha256(raw).hexdigest(), 'iat': int(time.time())}
+        if operation_id:
+            assertion['operation_id'] = operation_id
+        encoded = base64.urlsafe_b64encode(json.dumps(assertion, separators=(',', ':')).encode()).decode()
+        signature = hmac.new(sheets_secret.encode(), encoded.encode(), hashlib.sha256).hexdigest()
+        async with httpx.AsyncClient(timeout=60, follow_redirects=False, transport=sheets_transport) as client:
+            async with client.stream(method, sheets_url + path, content=raw, headers={'Content-Type': 'application/json',
+                    'X-Alaada-Workspace': wid, 'X-Alaada-Gateway-Context': encoded,
+                    'X-Alaada-Gateway-Signature': signature}) as response:
+                if response.headers.get('x-alaada-workspace-enforced') != 'v1':
+                    fail(502, 'The Sheets service did not confirm workspace enforcement.')
+                result = bytearray()
+                async for chunk in response.aiter_bytes():
+                    result.extend(chunk)
+                    if len(result) > 750000:
+                        fail(502, 'The workbook operation result is too large.')
+                parsed = json.loads(result)
+                if not isinstance(parsed, dict):
+                    fail(502, 'Invalid workbook operation response.')
+                return response.status_code, parsed, response.headers.get('x-alaada-execution')
+
+    async def sheets_capabilities(user, wid, *, fresh=False):
+        if not sheets_url:
+            return {}
+        if not fresh and sheets_capability_cache['expires'] > time.monotonic():
+            return dict(sheets_capability_cache['values'])
+        try:
+            status, response, _ = await sheets_call(user, wid, 'GET', '/workspace-gateway/health')
+            advertised = response.get('capabilities', {}) if status == 200 else {}
+            values = {name: advertised.get(name) is True for name in sheets_operations}
+        except (HTTPException, httpx.HTTPError, ValueError):
+            values = {}
+        sheets_capability_cache.update(expires=time.monotonic() + 15, values=values)
+        return values
     if analyser_url:
         parsed = urlsplit(analyser_url)
         local = parsed.hostname in ('localhost', '127.0.0.1', '::1')
@@ -775,6 +944,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 "appwrite_storage": bool(appwrite_api_key and appwrite_storage_bucket),
                 "billing_adapter": bool(billing_secret or dodo_checkout_ready),
                 "dodo_billing": {"checkout_enabled": dodo_checkout_ready,
+                                  "management_enabled": dodo_management_ready,
                                   "webhook_configured": bool(dodo_client and dodo_webhook_key),
                                   "products_configured": bool(dodo_products.get('Pro') and dodo_products.get('Elite')),
                                   "environment": dodo_environment},
@@ -784,6 +954,24 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     "orbit": bool(orbit_url and orbit_key),
                     "analyser": bool(analyser_url and analyser_secret),
                     "sheets": bool(sheets_url and sheets_secret)}}
+
+    @app.get('/api/admin/overview')
+    async def admin_overview(request: Request):
+        user = await identity(request)
+        # Operator-configured Appwrite team; browser labels/preferences and
+        # self-created organisation roles never establish platform privileges.
+        admin_team = os.environ.get('ALAADA_PLATFORM_ADMIN_TEAM', '')
+        roles = user.teams.get(admin_team, []) if admin_team else []
+        if not admin_team or not any(role in ('owner', 'admin') for role in roles):
+            fail(403, 'Platform administrator access is required.')
+        totals, capped = {}, []
+        with store.db() as db:
+            for table in ('workspaces', 'resources', 'notifications', 'billing_requests'):
+                rows = db.rows(table, columns=['id'], limit=1001)
+                totals[table] = min(1000, len(rows))
+                if len(rows) > 1000:
+                    capped.append(table)
+        return {'admin_role': 'Appwrite platform administrator', 'totals': totals, 'capped': capped}
 
     async def appwrite_file_request(method, file_id, content=None, name=None):
         if not appwrite_api_key or not appwrite_storage_bucket:
@@ -1035,12 +1223,14 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         # Enterprise workspaces. Provision their workspace rows idempotently
         # here so a newly accepted invitation becomes available immediately.
         for team_id in user.teams:
-            store.organisation(team_id, user.team_names.get(team_id, team_id))
+            # Membership creates a tenant, not a paid licence. Existing operator
+            # provisions are preserved; new self-service teams start on Free.
+            store.organisation(team_id, user.team_names.get(team_id, team_id), licensed=False)
         with store.db() as db:
             visible = db.rows('workspaces', {'owner': user.user})
             for team in user.teams:
                 visible.extend(db.rows('workspaces', {'team': team}))
-            rows = [dict(row, role=store.role(user, row), plan=db.one('subscriptions', {'workspace': row['id']})['plan']) for row in visible if store.role(user, row)]
+            rows = [dict(row, role=store.role(user, row), plan=store.effective_plan(db, row['id'])) for row in visible if store.role(user, row)]
             return {"user": user.user, "workspaces": rows, "kinds": KINDS, "limits": store.limits}
 
     @app.get("/api/shared")
@@ -1141,10 +1331,20 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             fail(400, "Permission must be read, write or revoke.")
         with store.db() as db:
             store.resource(db, user, wid, rid, manage=True)
+            previous = db.one('grants', {'resource': rid, 'user': target})
+            if (permission == 'revoke' and not previous) or (previous and previous['permission'] == permission):
+                return {'permission': permission}
             db.delete('grants', {'resource': rid, 'user': target})
             if permission != "revoke":
                 db.insert('grants', {'resource': rid, 'user': target, 'permission': permission})
             store.audit(db, user, wid, "share:" + permission, rid)
+            owner_workspace = db.one('workspaces', {'id': wid})
+            recipient_workspace = db.one('workspaces', {'owner': target, 'kind': 'personal'})
+            if owner_workspace['kind'] == 'personal' and recipient_workspace and target != user.user:
+                # Notify the recipient in THEIR private inbox, not the owner's
+                # workspace. Resource access still requires the live grant.
+                db.insert('notifications', {'workspace': recipient_workspace['id'], 'recipient': target,
+                    'action': 'share:' + permission, 'resource': rid, 'created': int(time.time())})
         return {"permission": permission}
 
     @app.post("/api/workspaces/{wid}/resources/{rid}/transfer")
@@ -1185,6 +1385,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             if store.role(user, workspace) not in ("owner", "admin"):
                 fail(403, "Subscription owner required.")
             sub = dict(db.one('subscriptions', {'workspace': wid}))
+            sub['plan'] = store.effective_plan(db, wid)
             pending = db.one('billing_requests', {'workspace': wid, 'state': 'pending'}, columns=['id', 'plan', 'state'])
             sub["pending"] = dict(pending) if pending else None
             provider = db.one('dodo_subscriptions', {'workspace': wid})
@@ -1199,14 +1400,26 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     async def entitlements(wid: str, request: Request):
         user = await identity(request)
         with store.db() as db:
+            store.workspace(db, user, wid)
+        sheet_execution = await sheets_capabilities(user, wid)
+        with store.db() as db:
             workspace = store.workspace(db, user, wid)
-            plan = db.one('subscriptions', {'workspace': wid}, columns=['plan'])[0]
+            plan = store.effective_plan(db, wid)
             month = time.strftime("%Y-%m", time.gmtime())
             used = {row["product"]: row["amount"] for row in db.rows('usage', {'workspace': wid, 'month': month}, columns=['product', 'amount'])}
+            capabilities = {
+                'orbit': {'text': bool(orbit_url), 'stream': False, 'voice': False, 'files': False, 'images': False},
+                'sheets': {'formula': bool(sheets_url), 'ai': sheet_execution.get('ai-chat', False),
+                           'operations': sheet_execution, 'automation': False, 'collaboration': False},
+                'accounts': {'gateway': bool(accounts_url)},
+                'analyser': {'analysis': bool(analyser_url)},
+                'platform': {'resources': True, 'notifications': True},
+            }
             return {"workspace": wid, "plan": plan, "month": month, "role": store.role(user, workspace),
                     "products": {p: {"monthly_writes": store.limits[plan], "used": used.get(p, 0),
                                      "remaining": max(0, store.limits[plan] - used.get(p, 0)),
-                                     "execution_available": bool(orbit_url) if p == 'orbit' else bool(accounts_url) if p == 'accounts' else bool(analyser_url) if p == 'analyser' else False} for p in KINDS}}
+                                     "capabilities": capabilities[p],
+                                     "execution_available": bool(orbit_url) if p == 'orbit' else bool(accounts_url) if p == 'accounts' else bool(analyser_url) if p == 'analyser' else bool(sheets_url) if p == 'sheets' else False} for p in KINDS}}
 
     @app.post('/api/workspaces/{wid}/sheets/formula')
     async def sheets_formula(wid: str, request: Request):
@@ -1251,6 +1464,67 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             store.workspace(db,latest,wid,write=True)
             store.audit(db,latest,wid,'sheets:calculate')
         return {'result':result['result'],'success':result['success']}
+
+    @app.post('/api/workspaces/{wid}/sheets/execute/{operation}')
+    async def sheets_execute(wid: str, operation: str, request: Request):
+        user = await identity(request)
+        context(request, wid)
+        if operation not in sheets_operations:
+            fail(404, 'Unknown workbook operation.')
+        data = await body(request)
+        if data.get('workspace_id') not in (None, wid):
+            fail(403, 'Workbook context belongs to a different workspace.')
+        data.pop('workspace_id', None)
+        def replay(record):
+            if record['state'] == 'pending':
+                return JSONResponse({'detail': 'This operation is still pending. Do not submit a new operation.',
+                    'operation_id': record['id'], 'state': 'pending'}, status_code=409)
+            return JSONResponse(json.loads(record['response']), status_code=record['status'],
+                headers={'X-Alaada-Operation': record['id'], 'X-Alaada-Replayed': 'true'})
+        with store.db() as db:
+            store.workspace(db, user, wid, write=True)
+            _, _, existing = store.find_operation(db, user, wid, 'sheets', operation,
+                request.headers.get('x-alaada-operation'), data)
+            if existing:
+                return replay(existing)
+        if not (await sheets_capabilities(user, wid, fresh=True)).get(operation):
+            fail(503, 'This workbook operation is not available. No usage was reserved.')
+        with store.db() as db:
+            store.workspace(db, user, wid, write=True)
+            record, created = store.reserve_operation(db, user, wid, 'sheets', operation,
+                request.headers.get('x-alaada-operation'), data)
+            if not created:
+                return replay(record)
+        try:
+            status, result, execution = await sheets_call(user, wid, 'POST', '/workspace-gateway/' + operation, data, record['id'])
+            if status not in (200, 400, 403, 413, 422, 429, 500, 502, 503):
+                raise ValueError('Unexpected workbook operation status')
+            latest = await identity(request)
+            if latest.user != user.user:
+                fail(401, 'Account changed during the workbook operation.')
+            with store.db() as db:
+                store.workspace(db, latest, wid, write=True)
+                # Only validation/authorization/rate rejections confirmed by the
+                # signed computation boundary refund a reservation. Unknown
+                # provider outcomes stay recorded; they are never auto-retried.
+                rejected = execution == 'rejected' and status in (400, 403, 413, 422, 429, 503)
+                state = 'rejected' if rejected else 'succeeded' if status == 200 and result.get('success', True) is not False else 'failed'
+                if rejected:
+                    result = {**result, 'state': 'rejected'}
+                store.finish_operation(db, record, state, status, result, refund=rejected)
+                store.audit(db, latest, wid, 'sheets:execute:' + operation)
+            return JSONResponse(result, status_code=status, headers={'X-Alaada-Operation': record['id']})
+        except (httpx.HTTPError, HTTPException, ValueError) as error:
+            # Never save a result after membership loss, nor repeat an upstream
+            # call simply because its transport or final persistence was uncertain.
+            status = error.status_code if isinstance(error, HTTPException) and error.status_code in (401, 403) else 502
+            result = {'detail': 'Workbook execution could not be confirmed. The operation was not automatically retried.',
+                      'operation_id': record['id'], 'state': 'unknown'}
+            with store.db() as db:
+                current = db.one('product_operations', {'id': record['id']})
+                if current and current['state'] == 'pending':
+                    store.finish_operation(db, record, 'unknown', status, result)
+            return JSONResponse(result, status_code=status)
 
     @app.post('/api/workspaces/{wid}/analyser/analyze')
     async def analyser_execute(wid: str, request: Request):
@@ -1480,7 +1754,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 db.update('dodo_checkouts', {'request': rid}, {'state': 'unknown'})
             try:
                 from dodopayments import APIStatusError
-                if isinstance(error, APIStatusError) and 400 <= error.status_code < 500:
+                if isinstance(error, APIStatusError) and error.status_code in (400, 401, 403, 404, 422):
                     with store.db() as db:
                         db.update('billing_requests', {'id': rid}, {'state': 'failed'})
                         db.update('dodo_checkouts', {'request': rid}, {'state': 'failed'})
@@ -1515,7 +1789,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             current = db.one('subscriptions', {'workspace': wid})
             provider = db.one('dodo_subscriptions', {'workspace': wid})
             pending = db.one('billing_requests', {'workspace': wid, 'state': 'pending'}, columns=['id', 'plan'])
-            if not dodo_checkout_ready:
+            if not provider and not pending and plan == current['plan']:
+                return {'plan': plan, 'state': 'active'}
+            if not dodo_management_ready and not provider:
                 if not billing_secret:
                     fail(503, 'Dodo checkout is not configured. No billing request was created.')
                 if pending:
@@ -1527,6 +1803,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     db.insert('billing_requests', {'id': rid, 'workspace': wid, 'plan': plan, 'created': int(time.time())})
                     store.audit(db, user, wid, 'subscription:requested:' + plan)
                 return JSONResponse({'id': rid, 'state': 'pending', 'message': 'Awaiting a verified billing adapter. No charge or plan change has occurred.'}, status_code=202)
+            if not dodo_management_ready:
+                fail(503, 'Dodo subscription management is unavailable. No change was sent.')
             if pending:
                 if pending['plan'] != plan:
                     fail(409, 'A billing request is already pending.')
@@ -1534,9 +1812,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 if checkout and checkout['state'] == 'ready' and checkout['checkout_url']:
                     return JSONResponse({'id': pending['id'], 'state': 'pending', 'checkout_url': checkout['checkout_url']}, status_code=200)
                 fail(409, 'A Dodo request is already being reconciled. Do not create another checkout.')
-            if provider and provider['status'] in ('active', 'past_due', 'on_hold', 'paused'):
-                if plan == current['plan']:
-                    return {'plan': plan, 'state': 'active'}
+            if provider and provider['status'] not in ('cancelled', 'expired', 'failed'):
                 if plan == 'Free':
                     if provider['cancel_at_period_end']:
                         return JSONResponse({'state': 'scheduled', 'plan': current['plan'],
@@ -1544,19 +1820,28 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     # Dodo keeps access through the paid period; the verified
                     # cancellation/expiry webhook alone changes the plan to Free.
                     action = 'cancel'
-                elif provider['status'] == 'active' and plan in dodo_products:
-                    rid = uuid.uuid4().hex
-                    db.insert('billing_requests', {'id': rid, 'workspace': wid, 'plan': plan, 'created': int(time.time())})
+                elif plan == current['plan']:
+                    return {'plan': plan, 'state': 'active'}
+                elif provider['cancel_at_period_end']:
+                    fail(409, 'Cancellation is already scheduled; a plan change was not sent.')
+                elif provider['pending_plan'] == plan:
+                    return JSONResponse({'state': 'scheduled', 'plan': plan}, status_code=202)
+                elif provider['status'] == 'active' and dodo_products.get(plan):
                     action = 'change_plan'
-                    db.update('dodo_subscriptions', {'workspace': wid}, {'pending_plan': plan})
-                    store.audit(db, user, wid, 'subscription:requested:' + plan)
                 else:
                     fail(409, 'This subscription cannot be changed while its provider status is ' + provider['status'] + '.')
+                # Serialize cancellation and plan changes across workers. Unknown
+                # provider outcomes stay pending until a signed webhook reconciles.
+                rid = uuid.uuid4().hex
+                db.insert('billing_requests', {'id': rid, 'workspace': wid, 'plan': plan, 'created': int(time.time())})
+                store.audit(db, user, wid, 'subscription:requested:' + plan)
             elif plan == 'Free' and current['plan'] == 'Free':
                 return {'plan': 'Free', 'state': 'active'}
             elif plan == 'Free':
                 fail(409, 'No active Dodo subscription is linked to this workspace; no plan change occurred.')
             else:
+                if not dodo_checkout_ready:
+                    fail(503, 'Dodo checkout is not configured. No billing request was created.')
                 action = 'checkout'
                 rid = uuid.uuid4().hex
                 db.insert('billing_requests', {'id': rid, 'workspace': wid, 'plan': plan, 'created': int(time.time())})
@@ -1573,18 +1858,28 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     on_payment_failure='prevent_change')
                 with store.db() as db:
                     db.update('billing_requests', {'id': rid}, {'state': 'confirmed'})
+                    latest = db.one('dodo_subscriptions', {'workspace': wid})
+                    if latest and latest['subscription_id'] == provider['subscription_id'] and latest['status'] == 'active' and latest['plan'] != plan:
+                        db.update('dodo_subscriptions', {'workspace': wid}, {'pending_plan': plan})
                     store.audit(db, user, wid, 'subscription:scheduled:' + plan)
                 return JSONResponse({'id': rid, 'state': 'scheduled', 'plan': plan}, status_code=202)
             await asyncio.to_thread(dodo_client.subscriptions.update, provider['subscription_id'],
                 cancel_at_next_billing_date=True, cancel_reason='cancelled_by_customer')
             with store.db() as db:
+                db.update('billing_requests', {'id': rid}, {'state': 'confirmed'})
                 latest = db.one('dodo_subscriptions', {'workspace': wid})
-                if latest and latest['status'] not in ('cancelled', 'expired'):
+                if latest and latest['subscription_id'] == provider['subscription_id'] and latest['status'] not in ('cancelled', 'expired', 'failed'):
                     db.update('dodo_subscriptions', {'workspace': wid}, {'cancel_at_period_end': 1})
                     store.audit(db, user, wid, 'subscription:cancel_at_period_end')
             return JSONResponse({'state': 'scheduled', 'plan': current['plan'],
                                  'message': 'Cancellation is scheduled for the end of the paid period.'}, status_code=202)
-        except Exception:
+        except Exception as error:
+            # A definitive validation rejection permits a corrected request.
+            # Timeouts, throttling and conflicts retain the reconciliation lock.
+            from dodopayments import APIStatusError
+            if isinstance(error, APIStatusError) and error.status_code in (400, 401, 403, 404, 422):
+                with store.db() as db:
+                    db.update('billing_requests', {'id': rid, 'state': 'pending'}, {'state': 'failed'})
             fail(503, 'Dodo did not confirm the subscription change. The current plan remains unchanged; reconcile before retrying.')
 
     @app.post('/api/dodo/webhook')
@@ -1604,42 +1899,68 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         event_id = headers['webhook-id']
         event_type = raw_data.get('type')
         event = raw_data.get('data')
-        if not isinstance(event_id, str) or len(event_id) > 255 or not isinstance(event_type, str) or not isinstance(event, dict):
+        if not isinstance(event_id, str) or len(event_id) > 255 or not isinstance(event_type, str) or not 1 <= len(event_type) <= 128 or not isinstance(event, dict):
             fail(400, 'Invalid Dodo webhook event.')
         subscription_events = {'subscription.active', 'subscription.renewed', 'subscription.plan_changed',
                                'subscription.updated', 'subscription.cancelled', 'subscription.expired',
                                'subscription.failed', 'subscription.past_due', 'subscription.on_hold',
                                'subscription.paused', 'subscription.unpaused'}
-        with store.db() as db:
-            if db.one('billing_events', {'id': event_id}):
+        # The delivery header timestamp protects signatures from replay; the
+        # signed body timestamp orders business events across delayed deliveries.
+        # Hash provider IDs to fit the existing private TablesDB ledger columns.
+        ledger_id = 'dodo-event:' + hashlib.sha256(event_id.encode()).hexdigest()
+        with store.billing_receipt(ledger_id, raw, event_type), store.db() as db:
+            if db.one('billing_events', {'id': ledger_id}) or db.one('billing_events', {'id': event_id}):
                 return {'duplicate': True}
-            if event_type in ('payment.failed', 'payment.cancelled', 'subscription.failed'):
-                metadata = event.get('metadata') if isinstance(event.get('metadata'), dict) else {}
-                rid = metadata.get('request')
-                if isinstance(rid, str):
-                    pending = db.one('billing_requests', {'id': rid, 'state': 'pending'})
-                    checkout = db.one('dodo_checkouts', {'request': rid})
-                    if pending and checkout and checkout['workspace'] == pending['workspace']:
-                        db.update('billing_requests', {'id': rid}, {'state': 'failed'})
-                        db.update('dodo_checkouts', {'request': rid}, {'state': 'failed'})
+            # A declined payment can be retried in the same checkout session.
+            # Only terminal subscription state closes its billing request; a
+            # payment.failed notification must not strand a later paid checkout.
             if event_type in subscription_events:
                 sid = event.get('subscription_id')
                 if not isinstance(sid, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,160}', sid):
                     fail(400, 'Invalid Dodo subscription identifier.')
+                try:
+                    occurred = datetime.fromisoformat(raw_data['timestamp'].replace('Z', '+00:00'))
+                    if occurred.utcoffset() is None:
+                        raise ValueError('Timezone required')
+                    delta = occurred.astimezone(timezone.utc) - datetime(1970, 1, 1, tzinfo=timezone.utc)
+                    event_time = (delta.days * 86400 + delta.seconds) * 1000000 + delta.microseconds
+                    if not 0 < event_time < 9007199254740991:
+                        raise ValueError('Timestamp outside storage bounds')
+                except (KeyError, TypeError, AttributeError, ValueError, OverflowError):
+                    fail(400, 'Invalid Dodo event timestamp.')
+                cursor_id = 'dodo-cursor:' + hashlib.sha256(sid.encode()).hexdigest()
+                cursor = db.one('billing_events', {'id': cursor_id})
+                if cursor and event_time < cursor['received']:
+                    db.insert('billing_events', {'id': ledger_id, 'received': int(time.time())})
+                    db.update('billing_receipts', {'id': ledger_id}, {'state': 'stale', 'error': None})
+                    return {'received': True, 'stale': True}
                 linked = db.one('dodo_subscriptions', {'subscription_id': sid})
                 metadata = event.get('metadata') if isinstance(event.get('metadata'), dict) else {}
                 product_id = event.get('product_id')
                 plan = next((name for name, pid in dodo_products.items() if pid and pid == product_id), None)
-                if not linked and event_type == 'subscription.active':
+                status = event.get('status')
+                if status not in ('pending', 'active', 'past_due', 'on_hold', 'paused', 'cancelled', 'expired', 'failed'):
+                    fail(400, 'Invalid Dodo subscription status.')
+                terminal = status in ('cancelled', 'expired', 'failed')
+                if linked and linked['status'] in ('cancelled', 'expired', 'failed') and not terminal:
+                    # Dodo terminal subscriptions cannot be reactivated. A delayed
+                    # plan-change snapshot must never restore their paid access.
+                    db.insert('billing_events', {'id': ledger_id, 'received': int(time.time())})
+                    db.update('billing_receipts', {'id': ledger_id}, {'state': 'stale', 'error': None})
+                    return {'received': True, 'stale': True}
+                new_link = not linked
+                if new_link:
                     rid = metadata.get('request')
                     wid, owner = metadata.get('workspace'), metadata.get('user')
-                    pending = db.one('billing_requests', {'id': rid, 'state': 'pending'}) if isinstance(rid, str) else None
+                    pending = db.one('billing_requests', {'id': rid}) if isinstance(rid, str) else None
                     checkout = db.one('dodo_checkouts', {'request': rid}) if isinstance(rid, str) else None
                     workspace = db.one('workspaces', {'id': wid}) if isinstance(wid, str) else None
                     if (not pending or not checkout or not workspace or workspace['kind'] != 'personal'
                             or workspace['owner'] != owner or pending['workspace'] != wid
                             or pending['plan'] != plan or checkout['owner'] != owner
-                            or checkout['workspace'] != wid or checkout['plan'] != plan):
+                            or checkout['workspace'] != wid or checkout['plan'] != plan
+                            or pending['state'] not in ('pending', 'failed')):
                         fail(409, 'Dodo subscription is not linked to a matching personal workspace checkout.')
                     # Reuse the one provider link only after an earlier
                     # subscription ended and paid access was already removed.
@@ -1650,7 +1971,6 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                         fail(409, 'A different Dodo subscription is already linked to this personal workspace.')
                     customer = event.get('customer') if isinstance(event.get('customer'), dict) else {}
                     customer_id = customer.get('customer_id') or event.get('customer_id')
-                    status = str(event.get('status') or 'active').lower()
                     provider_row = {'workspace': wid, 'subscription_id': sid,
                         'customer_id': customer_id if isinstance(customer_id, str) else None,
                         'product_id': product_id, 'plan': plan, 'status': status,
@@ -1660,37 +1980,56 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                         db.update('dodo_subscriptions', {'workspace': wid}, provider_row)
                     else:
                         db.insert('dodo_subscriptions', provider_row)
-                    db.update('subscriptions', {'workspace': wid}, {'plan': plan}, increments={'version': 1})
-                    db.update('billing_requests', {'id': rid}, {'state': 'confirmed'})
-                    db.update('dodo_checkouts', {'request': rid}, {'state': 'active', 'session_id': checkout['session_id']})
-                    store.audit(db, Identity('dodo-webhook'), wid, 'subscription:confirmed:' + plan)
-                elif linked:
-                    wid = linked['workspace']
-                    status = str(event.get('status') or event_type.rsplit('.', 1)[-1]).lower()
-                    if event_type in ('subscription.cancelled', 'subscription.expired'):
-                        db.update('dodo_subscriptions', {'workspace': wid}, {'status': status,
-                            'cancel_at_period_end': 0, 'pending_plan': None})
-                        db.update('subscriptions', {'workspace': wid}, {'plan': 'Free'}, increments={'version': 1})
-                        store.audit(db, Identity('dodo-webhook'), wid, 'subscription:ended:Free')
-                    else:
-                        updates = {'status': status,
-                                   'current_period_end': str(event.get('next_billing_date')) if event.get('next_billing_date') else linked['current_period_end'],
-                                   'cancel_at_period_end': int(bool(event.get('cancel_at_next_billing_date')))}
-                        if event_type == 'subscription.plan_changed':
-                            if not plan:
-                                fail(409, 'Dodo plan-change event references an unconfigured product.')
-                            updates.update({'product_id': product_id, 'plan': plan, 'pending_plan': None})
-                            db.update('subscriptions', {'workspace': wid}, {'plan': plan}, increments={'version': 1})
-                            store.audit(db, Identity('dodo-webhook'), wid, 'subscription:changed:' + plan)
-                        db.update('dodo_subscriptions', {'workspace': wid}, updates)
-            db.insert('billing_events', {'id': event_id, 'received': int(time.time())})
+                    linked = db.one('dodo_subscriptions', {'workspace': wid})
+                wid = linked['workspace']
+                # Webhook data contains the latest subscription snapshot at
+                # delivery time. The event name alone does not describe access.
+                if not plan and product_id == linked['product_id']:
+                    plan = linked['plan']
+                if not isinstance(product_id, str) or not re.fullmatch(r'pdt_[A-Za-z0-9_-]{1,120}', product_id):
+                    fail(400, 'Invalid Dodo product identifier.')
+                entitled_plan = plan if status == 'active' and plan in ('Pro', 'Elite') else 'Free'
+                scheduled = event.get('scheduled_change')
+                scheduled_plan = next((name for name, pid in dodo_products.items()
+                                       if pid and isinstance(scheduled, dict) and pid == scheduled.get('product_id')), None)
+                updates = {'status': status, 'product_id': product_id, 'plan': plan or 'Free',
+                    'current_period_end': str(event.get('next_billing_date')) if event.get('next_billing_date') else linked['current_period_end'],
+                    'cancel_at_period_end': (int(event['cancel_at_next_billing_date'] is True)
+                        if 'cancel_at_next_billing_date' in event else linked['cancel_at_period_end']) if not terminal else 0}
+                if terminal or 'scheduled_change' in event or entitled_plan == linked['pending_plan']:
+                    updates['pending_plan'] = scheduled_plan if not terminal else None
+                db.update('dodo_subscriptions', {'workspace': wid}, updates)
+                entitled_plan = store.effective_plan(db, wid)
+                current = db.one('subscriptions', {'workspace': wid})
+                if current['plan'] != entitled_plan:
+                    db.update('subscriptions', {'workspace': wid}, {'plan': entitled_plan}, increments={'version': 1})
+                    store.audit(db, Identity('dodo-webhook'), wid, 'subscription:confirmed:' + entitled_plan)
+                pending = db.one('billing_requests', {'workspace': wid, 'state': 'pending'})
+                if pending:
+                    checkout = db.one('dodo_checkouts', {'request': pending['id']})
+                    confirmed = ((pending['plan'] == 'Free' and (terminal or updates['cancel_at_period_end']))
+                                 or pending['plan'] == entitled_plan or pending['plan'] == scheduled_plan
+                                 or (status == 'active' and pending['plan'] == plan))
+                    if confirmed or terminal:
+                        db.update('billing_requests', {'id': pending['id']}, {'state': 'confirmed' if confirmed else 'failed'})
+                        if checkout:
+                            db.update('dodo_checkouts', {'request': pending['id']}, {'state': 'active' if confirmed else 'failed'})
+                # The existing ledger stores both processed IDs (seconds) and
+                # namespaced per-subscription ordering cursors (microseconds).
+                if cursor:
+                    db.update('billing_events', {'id': cursor_id}, {'received': event_time})
+                else:
+                    db.insert('billing_events', {'id': cursor_id, 'received': event_time})
+            else:
+                db.update('billing_receipts', {'id': ledger_id}, {'state': 'ignored', 'error': None})
+            db.insert('billing_events', {'id': ledger_id, 'received': int(time.time())})
         return {'received': True}
 
     @app.post("/api/billing/confirmed")
     @app.post("/api/billing/failed")
     async def billing(request: Request):
         # This is a private adapter contract, NOT a Dodo webhook signature format.
-        if not billing_secret:
+        if not billing_secret or dodo_client or dodo_webhook_key:
             fail(503, "Verified billing adapter is not configured.")
         stamp = request.headers.get("x-alaada-timestamp", "")
         try:
@@ -1713,6 +2052,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             pending = db.one('billing_requests', {'id': text(data, 'request'), 'state': 'pending'})
             if not pending or data.get("plan") != pending["plan"]:
                 fail(409, "No matching pending subscription request.")
+            if db.one('dodo_subscriptions', {'workspace': pending['workspace']}):
+                fail(409, 'Dodo-linked subscriptions require a verified Dodo webhook.')
             if outcome == 'confirmed':
                 db.update('subscriptions', {'workspace': pending['workspace']}, {'plan': pending['plan']}, increments={'version': 1})
             db.update('billing_requests', {'id': pending['id']}, {'state': outcome})
@@ -1940,7 +2281,7 @@ $('download').onclick=()=>run(async()=>{
 $('transfer').onclick=()=>run(async()=>{if(!selected||dirty)throw Error('Select a saved resource without unsaved changes.');const candidates=state.workspaces.filter(w=>w.id!==selected.workspace);const number=await ask('Destination number:\n'+candidates.map((w,i)=>(i+1)+'. '+w.name+' ('+w.kind+')').join('\n'));if(!number)return;const dest=candidates[Number(number)-1];if(!dest)throw Error('Invalid destination');const mode=await ask('Type copy or move','copy');if(!mode)return;if(!confirm('The '+mode+' will be owned by '+dest.name+' ('+dest.kind+'). Existing sharing permissions will not carry over. Organisation administrators can access organisation-owned data. Continue?'))return;await api('/workspaces/'+selected.workspace+'/resources/'+selected.id+'/transfer','POST',{destination:dest.id,mode,version:selected.version,confirm_ownership:dest.id},selected.workspace);clear();await load();message('Transfer completed. Destination owner: '+dest.name)});
 async function subscribe(plan){const p=state.workspaces.find(w=>w.kind==='personal');if(!confirm('Request personal plan '+plan+'? Existing resources remain owned by you.'))return;const result=await api('/workspaces/'+p.id+'/subscription','POST',{plan},p.id);await plans();message(result.message)}
 $('subscribe').onclick=()=>run(()=>subscribe($('planChoice').value));$('cancel').onclick=()=>run(()=>subscribe('Free'));
-$('login').onclick=()=>{const returnTo=location.origin+'/workspaces';location.href=EP+'/account/sessions/oauth2/google?project='+PID+'&success='+encodeURIComponent(returnTo)+'&failure='+encodeURIComponent(returnTo)};
+$('login').onclick=()=>{location.href='/auth.html?next='+encodeURIComponent('/workspaces')};
 $('logout').onclick=()=>run(async()=>{await aw('/account/sessions/current','DELETE');location.reload()});
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
 // Revalidate membership before showing data again after another tab / admin action.
@@ -1959,7 +2300,9 @@ PRODUCT_CLIENT = r'''
   for(const name of ['orbit_name','orbit_email'])document.cookie=name+'=; Max-Age=0; Path=/; SameSite=Lax';
   const endpoint = '__ENDPOINT__', project = '__PROJECT__';
   const nativeFetch = window.fetch.bind(window);
-  const values = new Map(), records = new Map(), requests = new Set();
+  const values = new Map(), records = new Map(), requests = new Set(), sheetFlights = new Map();
+  const sheetRoutes = {'/api/ai/command':'ai-command','/api/ai/chat':'ai-chat','/api/ai/analyze':'ai-analyze',
+    '/api/ai/anomalies':'anomalies','/api/ai/translate-batch':'translate','/api/analytics/run':'analytics','/api/analytics/predict':'predict'};
   let user = null, workspace = null, workspaces = [], pending = 0, tail = Promise.resolve(), failed = null;
   let bar, status, selector, gate, label, verified = false, surfaces=[], beforeSwitch=async()=>{};
   const readyDOM = document.readyState === 'loading' ? new Promise(r => document.addEventListener('DOMContentLoaded',r,{once:true})) : Promise.resolve();
@@ -1984,7 +2327,10 @@ PRODUCT_CLIENT = r'''
       if(user && user!==account.$id) {freeze('The signed-in account changed.');throw failed;}
       const jwt=await appwrite('/account/jwts','POST');
       const contentType=rawOptions?new Headers(rawOptions.headers||{}).get('Content-Type'):'application/json';
-      const response=await nativeFetch('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))});
+      const operationId=rawOptions?new Headers(rawOptions.headers||{}).get('X-Alaada-Operation'):null;
+      const response=await nativeFetch('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))});
+      const latest=await appwrite('/account');
+      if(latest.$id!==account.$id){freeze('The signed-in account changed during the request.');throw failed;}
       if(rawOptions){if([401,403].includes(response.status))freeze('Product access was denied. Reopen a verified workspace.');return response;}
       const data=await response.json();
       if(!response.ok){if([401,403].includes(response.status))freeze('Workspace permission expired or was revoked.');throw Error(data.detail||'Workspace request failed');}
@@ -2060,6 +2406,37 @@ PRODUCT_CLIENT = r'''
       const target=new URL(typeof url==='string'?url:url.url,location.href);
       if(target.origin===new URL(endpoint).origin && ['/v1/account','/v1/account/jwts'].includes(target.pathname))return nativeFetch(url,options);
       await W.ready;
+      if(product==='sheets' && sheetRoutes[target.pathname] && (options.method||'GET').toUpperCase()==='POST'){
+        if(!verified||failed)throw failed||Error('A verified workspace is required.');
+        if(typeof options.body!=='string')throw Error('Workbook operations require a JSON request.');
+        const scope=JSON.stringify([user,workspace.id,target.pathname,options.body]);
+        if(sheetFlights.has(scope))return (await sheetFlights.get(scope)).clone();
+        const operation=(async()=>{
+          const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(scope)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+          // Persist only opaque operation IDs and hashes, never workbook contents
+          // or authority. An uncertain retry after reload keeps the same receipt.
+          const storageKey='alaada:sheets:operations:'+encodeURIComponent(user)+':'+encodeURIComponent(workspace.id);
+          let saved;
+          try{saved=JSON.parse(window.sessionStorage.getItem(storageKey)||'{}');}
+          catch{throw Error('Enable session storage before running a workbook operation so retries remain safe.');}
+          if(!saved||typeof saved!=='object'||Array.isArray(saved))throw Error('The operation retry cache is invalid.');
+          if(!saved[digest]){
+            if(Object.keys(saved).length>=100)throw Error('Too many unresolved workbook operations. Resolve them before starting more.');
+            saved[digest]=crypto.randomUUID();
+          }
+          window.sessionStorage.setItem(storageKey,JSON.stringify(saved));
+          const headers=new Headers(options.headers||{});headers.set('X-Alaada-Operation',saved[digest]);
+          const response=await api('/workspaces/'+workspace.id+'/sheets/execute/'+sheetRoutes[target.pathname],'POST',undefined,{...options,headers});
+          const result=await response.clone().json().catch(()=>({}));
+          if((response.ok&&result.success!==false)||result.state==='rejected'){
+            const current=JSON.parse(window.sessionStorage.getItem(storageKey)||'{}');
+            if(current[digest]===saved[digest]){delete current[digest];window.sessionStorage.setItem(storageKey,JSON.stringify(current));}
+          }
+          return response;
+        })();
+        sheetFlights.set(scope,operation);requests.add(operation);selector.disabled=true;
+        try{return (await operation).clone();}finally{sheetFlights.delete(scope);requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
+      }
       if(product==='sheets' && target.pathname==='/api/formula/eval' && (options.method||'GET').toUpperCase()==='POST'){
         const operation=api('/workspaces/'+workspace.id+'/sheets/formula','POST',undefined,options);
         requests.add(operation);selector.disabled=true;
@@ -2086,8 +2463,8 @@ PRODUCT_CLIENT = r'''
     label=document.createElement('strong');label.textContent='Verifying workspace…';
     selector=document.createElement('select');selector.setAttribute('aria-label','Active workspace');selector.disabled=true;
     const manage=document.createElement('a');manage.href='/workspaces';manage.textContent='Manage workspaces';manage.style.color='#90e3da';
-    const signin=document.createElement('a');const back=location.origin+location.pathname+location.search;
-    signin.href=endpoint+'/account/sessions/oauth2/google?project='+project+'&success='+encodeURIComponent(back)+'&failure='+encodeURIComponent(back);signin.textContent='Sign in';signin.style.color='#fff';
+    const signin=document.createElement('a');
+    signin.href='/auth.html?next='+encodeURIComponent(location.pathname+location.search);signin.textContent='Sign in';signin.style.color='#fff';
     status=document.createElement('span');status.setAttribute('role','status');
     bar.append(label,selector,manage,signin,status);document.body.prepend(bar);
     gate=document.createElement('div');gate.style.cssText='position:fixed;inset:46px 0 0;z-index:2147483646;background:#0e1423;color:#fff;padding:10vh 10vw;font:20px system-ui';gate.textContent='Verifying your private workspace…';document.body.append(gate);
@@ -2149,18 +2526,20 @@ async def migrate_sqlite_to_appwrite(source_path, target_path, api_key, bucket):
     headers = {"X-Appwrite-Project": PROJECT, "X-Appwrite-Key": api_key}
     base = ENDPOINT + "/storage/buckets/" + quote(bucket, safe="") + "/files"
     tables = ("workspaces", "subscriptions", "resources", "folder_membership", "grants", "usage",
-              "billing_requests", "billing_events", "dodo_checkouts", "dodo_subscriptions", "audit",
+              "billing_requests", "billing_events", "billing_receipts", "product_operations", "dodo_checkouts", "dodo_subscriptions", "audit",
               "notifications", "account_preferences", "accounts_bindings")
     keys = {"workspaces": ("id",), "subscriptions": ("workspace",), "resources": ("id",),
             "folder_membership": ("child",), "grants": ("resource", "user"),
             "usage": ("workspace", "product", "month"), "billing_requests": ("id",),
-            "billing_events": ("id",), "dodo_checkouts": ("request",),
+            "billing_events": ("id",), "billing_receipts": ("id",), "product_operations": ("id",), "dodo_checkouts": ("request",),
             "dodo_subscriptions": ("workspace",), "audit": ("id",), "notifications": ("id",),
             "account_preferences": ("user",), "accounts_bindings": ("company",)}
     counts = {}
     try:
         async with httpx.AsyncClient(timeout=60, follow_redirects=False) as client:
             for table in tables:
+                if table not in available and table not in required:
+                    continue
                 rows = source.execute("SELECT * FROM " + table).fetchall()
                 copied = 0
                 for raw in rows:
@@ -2243,9 +2622,8 @@ if __name__ == "__main__":
     if not args.db:
         parser.error("Set APPWRITE_DATABASE_ID or pass --db for local development")
     if os.environ.get("RENDER", "").lower() == "true":
-        database_host = urlsplit(args.db).hostname or ""
-        if not args.db.startswith('tablesdb:') and (not args.db.startswith(("postgres://", "postgresql://")) or not database_host.lower().endswith(".appwrite.center")):
-            parser.error("Render must use Appwrite TablesDB or Appwrite managed PostgreSQL; local storage is prohibited")
+        if not args.db.startswith('tablesdb:'):
+            parser.error("Render must use Appwrite TablesDB; local or alternate production databases are prohibited")
     if args.migrate_only and not args.migrate_sqlite_from:
         parser.error("--migrate-only requires --migrate-sqlite-from")
     limits = json.loads(os.environ["ALAADA_LIMITS_JSON"]) if os.environ.get("ALAADA_LIMITS_JSON") else None
