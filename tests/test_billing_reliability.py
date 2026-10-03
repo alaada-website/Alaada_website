@@ -109,6 +109,39 @@ def test_configured_sheets_reports_calculation_capability(tmp_path):
     assert product['capabilities']['ai'] is False
 
 
+
+
+def test_accounts_gateway_preserves_and_signs_idempotency_key(tmp_path):
+    import base64
+    import hmac
+    from fastapi.testclient import TestClient
+    secret = 'accounts-gateway-secret-more-than-32-characters'
+    seen = []
+    async def auth(token):
+        return m.Identity('alice')
+    async def upstream(req):
+        context = json.loads(base64.urlsafe_b64decode(req.headers['x-alaada-gateway-context']))
+        assert hmac.compare_digest(req.headers['x-alaada-gateway-signature'],
+            hmac.new(secret.encode(), req.headers['x-alaada-gateway-context'].encode(), hashlib.sha256).hexdigest())
+        seen.append((req.method, req.url.path, context.get('idempotency'), req.headers.get('idempotency-key')))
+        return httpx.Response(200 if req.method == 'GET' else 201, json={'id': 'company-retry'},
+            headers={'x-alaada-workspace-enforced': 'v1'})
+    application = m.create_app(tmp_path / 'accounts-key.db', authenticate=auth,
+        accounts_url='http://127.0.0.1', accounts_secret=secret, accounts_transport=httpx.MockTransport(upstream))
+    client = TestClient(application)
+    wid = client.get('/api/workspaces', headers={'Authorization': 'Bearer alice'}).json()['workspaces'][0]['id']
+    headers = {'Authorization': 'Bearer alice', 'X-Alaada-Workspace': wid, 'Idempotency-Key': 'retry-company-key-123'}
+    path = f'/api/workspaces/{wid}/accounts/companies'
+    assert client.post(path, headers=headers, json={'name': 'Business'}).status_code == 201
+    assert seen == [('GET', '/workspace-gateway/health', '', None),
+        ('POST', '/companies', 'retry-company-key-123', 'retry-company-key-123')]
+    seen.clear()
+    for value in ('short', 'spaces are not allowed'):
+        assert client.post(path, headers=headers | {'Idempotency-Key': value}, json={}).status_code == 400
+    assert client.post(path, headers=headers | {'X-Idempotency-Key': 'conflicting-retry-key'}, json={}).status_code == 400
+    assert seen == []
+
+
 def test_public_billing_readiness_uses_same_origin_api_rewrite(env):
     direct = env[0].get('/health')
     frontend = env[0].get('/api/health')

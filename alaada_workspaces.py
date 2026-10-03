@@ -1634,6 +1634,12 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                         fail(409, "Conflicting Accounts scope.")
         bearer = request.headers["authorization"]
         token = bearer[7:]
+        idempotency_key = request.headers.get('idempotency-key') or request.headers.get('x-idempotency-key') or ''
+        if idempotency_key and not re.fullmatch(r'[A-Za-z0-9_.:-]{16,180}', idempotency_key):
+            fail(400, 'Invalid Accounts Idempotency-Key.')
+        if (request.headers.get('idempotency-key') and request.headers.get('x-idempotency-key')
+                and request.headers['idempotency-key'] != request.headers['x-idempotency-key']):
+            fail(400, 'Conflicting Accounts idempotency headers.')
 
         async def revalidate():
             latest = await auth(token)
@@ -1647,10 +1653,14 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             assertion = {"v": 1, "aud": "accounts", "workspace": wid, "user": user.user,
                          "method": verb, "target": target, "body": hashlib.sha256(content).hexdigest(),
                          "token": hashlib.sha256(token.encode()).hexdigest(), "iat": int(time.time())}
+            operation_key = idempotency_key if verb not in ('GET', 'HEAD') else ''
+            assertion['idempotency'] = operation_key
             encoded = base64.urlsafe_b64encode(json.dumps(assertion, separators=(",", ":")).encode()).decode()
             signature = hmac.new(accounts_secret.encode(), encoded.encode(), hashlib.sha256).hexdigest()
             headers = {"Authorization": bearer, "X-Alaada-Workspace": wid,
                        "X-Alaada-Gateway-Context": encoded, "X-Alaada-Gateway-Signature": signature}
+            if operation_key:
+                headers['Idempotency-Key'] = operation_key
             if content_type:
                 headers["Content-Type"] = content_type
             response = await client.request(verb, accounts_url + target, headers=headers, content=content)
