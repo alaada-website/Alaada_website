@@ -387,7 +387,7 @@
   'use strict';
   const STORAGE_KEY = 'alaada_hr_employees_v1';
   const RECOVERY_KEY = 'alaada_hr_recovery_v1';
-  const API_BASE = ['localhost', '127.0.0.1'].includes(location.hostname) ? '' : 'https://alaada-hr-backend.onrender.com';
+  const API_BASE = ['localhost', '127.0.0.1'].includes(location.hostname) ? '' : 'https://hr-demo-whmk.onrender.com';
   const $ = selector => document.querySelector(selector);
   const $$ = selector => Array.from(document.querySelectorAll(selector));
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
