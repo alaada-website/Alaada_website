@@ -46,6 +46,8 @@
       color: #261700; background: linear-gradient(135deg, var(--gold-2), var(--gold));
       font-size: 19px; font-weight: 850; box-shadow: 0 8px 24px rgba(240,165,0,.27);
     }
+    .brand-logo { width: 40px; height: 40px; object-fit: contain; border-radius: 10px; background: #fff; }
+    details.custom-fields summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
     .brand strong { display: block; color: #fff; font-size: 16px; letter-spacing: -.02em; }
     .brand small { display: block; color: #858fa8; font-size: 11px; margin-top: 1px; }
     .nav-label { padding: 0 11px 7px; color: #707b94; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
@@ -203,6 +205,46 @@
     .modal-foot-note { color: var(--muted); font-size: 11px; }
     .modal-actions { display: flex; gap: 9px; }
     .hidden { display: none !important; }
+    .data-table td > small { display: block; margin-top: 3px; }
+    .feature-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: end; }
+    .feature-toolbar label { display: grid; gap: 4px; min-width: 125px; color: var(--muted); font-size: 11px; }
+    .feature-toolbar .search-field { flex: 1; }
+    .feature-toolbar input, .feature-toolbar select { min-width: 0; }
+    .feature-note { color: var(--muted); font-size: 12px; margin: 8px 0 16px; }
+    .feature-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .feature-grid .btn { margin: 4px 5px 4px 0; }
+    .custom-row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; margin: 9px 0; }
+    .custom-row label { min-width: 0; font-size: 11px; color: var(--muted); }
+    .custom-row input { margin-top: 4px; }
+    .custom-row button { align-self: end; }
+    .feature-error { padding: 12px; border-radius: 10px; background: #fff0f0; color: #a13b46; margin-bottom: 12px; }
+    .form-error:empty { display: none; }
+    .form-error { color: #a13b46; padding: 10px 0; }
+    .feature-alert { margin-bottom: 16px; padding: 12px 16px; background: #fff3d0; border: 1px solid #eed488; border-radius: 12px; }
+    .feature-alert button { margin-left: 10px; }
+    .feature-modal { z-index: 40; }
+    .feature-modal .modal { width: min(700px, 100%); }
+    .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .backup-meta { font-size: 12px; color: var(--muted); margin: 10px 0; }
+    .nav { gap: 4px; }
+    @media(max-width:820px) {
+      body .nav button span:last-child { display: inline; }
+      body .topbar { flex-wrap: wrap; position: static; }
+      .top-actions { flex-wrap: wrap; }
+      body .top-actions .btn:not(.primary) { display: inline-flex; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .feature-toolbar label { flex: 1; }
+      .custom-row { grid-template-columns: 1fr; padding: 12px; background: var(--paper); border-radius: 10px; }
+    }
+    @media print {
+      .sidebar,.topbar,.hero,.toolbar,.feature-toolbar,button,.toast,.modal-backdrop { display:none!important; }
+      .app-shell,.content { display:block; }
+      .main { padding:0; }
+      .view:not(.active) { display:none; }
+      .table-scroll { overflow:visible; }
+      .data-table { min-width:0; font-size:10px; }
+      .card { box-shadow:none; }
+    }
     .toast { position: fixed; right: 24px; bottom: 24px; z-index: 60; max-width: 360px; padding: 12px 15px; border: 1px solid #bdeedf; border-radius: 12px; color: #096f57; background: #effdf8; box-shadow: var(--shadow); font-size: 12px; font-weight: 700; transform: translateY(15px); opacity: 0; pointer-events: none; transition: .2s ease; }
     .toast.show { transform: none; opacity: 1; }
     .toast.error { border-color: #f3c3c8; color: #a13b46; background: #fff5f6; }
@@ -256,8 +298,8 @@
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark">A</div>
-        <div><strong>Alaada People</strong><small>Local HR workspace</small></div>
+        <img class="brand-logo" src="https://www.alaada.com/images/alaada-logo.jpg" alt="Alaada logo" width="40" height="40">
+        <div><strong>Alaada People</strong><small>HR demo · saved in this browser</small></div>
       </div>
       <div>
         <div class="nav-label">Workspace</div>
@@ -341,117 +383,310 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script>
-    (() => {
-      'use strict';
-      const STORAGE_KEY = 'alaada_hr_employees_v1';
-      const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
-        ? '' : 'https://alaada-hr-backend.onrender.com';
-      const state = { employees: [], view: 'overview', search: '', status: 'all', editingId: null };
-      const $ = (selector) => document.querySelector(selector);
-      const $$ = (selector) => Array.from(document.querySelectorAll(selector));
-      const today = () => new Date().toISOString().slice(0, 10);
-      const makeId = () => `employee_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-      const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || '?';
-      const formatDate = (value, fallback = '—') => { if (!value) return fallback; const date = new Date(`${value}T00:00:00`); return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }); };
-      const dateParts = (value) => { if (!value) return { day: '—', month: '' }; const date = new Date(`${value}T00:00:00`); return { day: String(date.getDate()).padStart(2, '0'), month: date.toLocaleDateString(undefined, { month: 'short' }) }; };
-      const statusLabel = (value) => ({ active: 'Active', 'on-leave': 'On leave', inactive: 'Inactive' }[value] || 'Active');
-      const badge = (type, label) => `<span class="badge ${type}">${esc(label)}</span>`;
-      const documentState = (employee, numberKey, expiryKey) => {
-        const number = String(employee[numberKey] || '').trim();
-        const expiry = employee[expiryKey] || '';
-        if (!number) return { type: 'missing', label: 'Missing' };
-        if (expiry) {
-          const days = Math.ceil((new Date(`${expiry}T23:59:59`) - new Date()) / 86400000);
-          if (days < 0) return { type: 'missing', label: 'Expired' };
-          if (days <= 60) return { type: 'expiring', label: `Expires ${formatDate(expiry)}` };
-        }
-        return { type: 'active', label: expiry ? `Valid to ${formatDate(expiry)}` : 'Number saved' };
-      };
-      const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state.employees));
-      const load = () => {
-        try {
-          const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-          state.employees = Array.isArray(parsed) ? parsed.filter((record) => record && typeof record === 'object').map(normalizeEmployee) : [];
-        } catch (error) { state.employees = []; showToast('Saved local records could not be read; a fresh directory is ready.', true); }
-      };
-      const normalizeEmployee = (record) => ({
-        id: record.id || makeId(), serialNumber: Number(record.serialNumber) || 0, name: String(record.name || '').trim(), status: ['active', 'on-leave', 'inactive'].includes(record.status) ? record.status : 'active',
-        designation: String(record.designation || ''), department: String(record.department || ''), joiningDate: String(record.joiningDate || ''), employmentType: String(record.employmentType || 'full-time'), address: String(record.address || ''), phone: String(record.phone || ''), email: String(record.email || ''), emergencyContact: String(record.emergencyContact || ''), bloodGroup: String(record.bloodGroup || ''), absenceDate: String(record.absenceDate || ''), absenceReason: String(record.absenceReason || ''), passportNumber: String(record.passportNumber || ''), passportExpiry: String(record.passportExpiry || ''), visaNumber: String(record.visaNumber || ''), visaExpiry: String(record.visaExpiry || ''), aadhaarNumber: String(record.aadhaarNumber || ''), notes: String(record.notes || ''), createdAt: record.createdAt || new Date().toISOString(), updatedAt: record.updatedAt || new Date().toISOString()
-      });
-      const assignSerial = () => state.employees.reduce((max, item) => Math.max(max, Number(item.serialNumber) || 0), 0) + 1;
-      const sortedEmployees = (employees = state.employees) => [...employees].sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
-      const filteredEmployees = () => sortedEmployees(state.employees.filter((employee) => {
-        const query = state.search.trim().toLowerCase();
-        const haystack = [employee.name, employee.email, employee.phone, employee.designation, employee.department, employee.address].join(' ').toLowerCase();
-        return (!query || haystack.includes(query)) && (state.status === 'all' || employee.status === state.status);
-      }));
-      const withinDays = (date, days) => { if (!date) return false; const diff = Math.ceil((new Date(`${date}T23:59:59`) - new Date()) / 86400000); return diff >= 0 && diff <= days; };
-      const documentAlerts = (employee) => [documentState(employee, 'passportNumber', 'passportExpiry'), documentState(employee, 'visaNumber', 'visaExpiry')].filter((item) => item.type !== 'active').length + (!employee.aadhaarNumber ? 1 : 0);
-      const allDocumentAlerts = () => state.employees.reduce((total, employee) => total + documentAlerts(employee), 0);
+(() => {
+  'use strict';
+  const STORAGE_KEY = 'alaada_hr_employees_v1';
+  const RECOVERY_KEY = 'alaada_hr_recovery_v1';
+  const API_BASE = ['localhost', '127.0.0.1'].includes(location.hostname) ? '' : 'https://alaada-hr-backend.onrender.com';
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => Array.from(document.querySelectorAll(selector));
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const makeId = () => crypto.randomUUID ? crypto.randomUUID() : `hr_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  const isDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value+'T00:00:00Z')) && new Date(value+'T00:00:00Z').toISOString().slice(0,10) === value;
+  const day = value => Date.parse(value+'T00:00:00Z') / 86400000;
+  const dayDiff = (a,b) => day(b)-day(a);
+  const formatDate = value => isDate(value) ? new Date(value+'T12:00:00').toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'}) : '—';
+  const initials = name => String(name || '?').trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase();
+  const badge = (type,label) => `<span class="badge ${esc(type)}">${esc(label)}</span>`;
+  const person = e => `<div class="person"><span class="avatar">${esc(initials(e.name))}</span><span><strong>${esc(e.name)}</strong><small>${esc([e.designation,e.department].filter(Boolean).join(' · ') || 'No role details')}</small></span></div>`;
+  const state = {employees:[],view:'overview',search:'',status:'all',department:'all',sort:'name',editingId:null,raw:null,blocked:false,undo:null,imported:null};
+  const fields = ['name','status','designation','department','joiningDate','employmentType','address','phone','email','emergencyContact','bloodGroup','passportNumber','passportExpiry','visaNumber','visaExpiry','aadhaarNumber','notes'];
+  const ids = {name:'employeeName',status:'employeeStatus'};
+  const statusLabel = value => ({active:'Active','on-leave':'On leave',inactive:'Inactive'}[value] || 'Active');
+  const types = ['Annual','Sick','Unpaid','Other'];
+  const empty = (title,detail='') => `<div class="empty"><strong>${esc(title)}</strong><span>${esc(detail)}</span></div>`;
+  const employeeById = id => state.employees.find(e=>e.id===id);
+  const activeLeaves = e => e.leaves.filter(l=>l.status!=='cancelled');
+  const nextLeave = e => [...activeLeaves(e)].sort((a,b)=>a.startDate.localeCompare(b.startDate)).find(l=>l.endDate>=today());
 
-      function showToast(message, error = false) { const toast = $('#toast'); toast.textContent = message; toast.className = `toast show${error ? ' error' : ''}`; clearTimeout(showToast.timer); showToast.timer = setTimeout(() => { toast.className = 'toast'; }, 2800); }
-      function renderStats() {
-        const total = state.employees.length; const active = state.employees.filter((employee) => employee.status === 'active').length; const alerts = allDocumentAlerts(); const upcoming = state.employees.filter((employee) => withinDays(employee.absenceDate, 30)).length;
-        $('#statTotal').textContent = total; $('#statActive').textContent = active; $('#statActiveFoot').textContent = total ? `${Math.round(active / total * 100)}% of your directory` : '0% of your directory'; $('#statDocs').textContent = alerts; $('#statAbsences').textContent = upcoming;
-        $('#absenceWeek').textContent = state.employees.filter((employee) => withinDays(employee.absenceDate, 7)).length; $('#absenceMonth').textContent = upcoming; $('#absenceRecorded').textContent = state.employees.filter((employee) => employee.absenceDate).length;
-      }
-      function renderRecent() {
-        const target = $('#recentEmployees'); const recent = [...state.employees].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-        if (!recent.length) { target.innerHTML = `<div class="empty"><strong>Your directory is ready.</strong><span>Add your first employee to start tracking records.</span><button class="btn primary small" type="button" data-open-add>Add employee</button></div>`; return; }
-        target.innerHTML = `<table class="mini-table"><thead><tr><th>Employee</th><th>Department</th><th>Status</th></tr></thead><tbody>${recent.map((employee) => `<tr><td><div class="person"><span class="avatar">${esc(initials(employee.name))}</span><span><strong>${esc(employee.name)}</strong><small>${esc(employee.designation || 'No designation')}</small></span></div></td><td>${esc(employee.department || '—')}</td><td>${badge(employee.status === 'on-leave' ? 'leave' : employee.status, statusLabel(employee.status))}</td></tr>`).join('')}</tbody></table>`;
-      }
-      function renderAttention() {
-        const target = $('#attentionList'); const rows = [];
-        state.employees.forEach((employee) => { if (documentAlerts(employee)) rows.push({ icon: '▣', title: employee.name, detail: `${documentAlerts(employee)} document item${documentAlerts(employee) === 1 ? '' : 's'} need attention` }); if (withinDays(employee.absenceDate, 30)) rows.push({ icon: '◷', title: employee.name, detail: `Absence on ${formatDate(employee.absenceDate)}` }); });
-        $('#attentionCount').textContent = `${rows.length} item${rows.length === 1 ? '' : 's'}`;
-        target.innerHTML = rows.length ? `<div class="watch-list">${rows.slice(0, 7).map((row) => `<div class="watch-item"><span class="watch-bullet">${row.icon}</span><span><strong>${esc(row.title)}</strong><span>${esc(row.detail)}</span></span></div>`).join('')}</div>` : `<div class="empty"><strong>Nothing urgent here.</strong><span>Missing documents and upcoming absences will show up here.</span></div>`;
-      }
-      function renderDirectory() {
-        const rows = $('#directoryRows'); const employees = filteredEmployees(); $('#directoryCount').textContent = `${employees.length} record${employees.length === 1 ? '' : 's'}`;
-        rows.innerHTML = employees.length ? employees.map((employee) => { const passport = documentState(employee, 'passportNumber', 'passportExpiry'); const visa = documentState(employee, 'visaNumber', 'visaExpiry'); return `<tr><td class="sl">${esc(employee.serialNumber || '—')}</td><td><div class="person"><span class="avatar">${esc(initials(employee.name))}</span><span><strong>${esc(employee.name)}</strong><small>${esc([employee.designation, employee.department].filter(Boolean).join(' · ') || 'No role details')}</small></span></div></td><td><strong>${esc(employee.phone || '—')}</strong><small class="muted">${esc(employee.email || '—')}</small></td><td><div style="display:grid;gap:4px">${badge(passport.type, `Passport: ${passport.type === 'active' ? 'OK' : passport.label}`)}${badge(visa.type, `Visa: ${visa.type === 'active' ? 'OK' : visa.label}`)}</div></td><td>${employee.absenceDate ? `<strong>${esc(formatDate(employee.absenceDate))}</strong><small class="muted">${esc(employee.absenceReason || 'Scheduled')}</small>` : '<span class="muted">—</span>'}</td><td>${badge(employee.status === 'on-leave' ? 'leave' : employee.status, statusLabel(employee.status))}</td><td class="actions"><button class="icon-btn" type="button" data-edit="${esc(employee.id)}" title="Edit">✎</button><button class="icon-btn delete" type="button" data-delete="${esc(employee.id)}" title="Delete">⌫</button></td></tr>`; }).join('') : `<tr><td colspan="7"><div class="empty"><strong>No matching employees.</strong><span>Adjust the search or add a new employee.</span><button class="btn primary small" type="button" data-open-add>Add employee</button></div></td></tr>`;
-      }
-      function mask(value) { const clean = String(value || '').replace(/\s+/g, ''); if (!clean) return '—'; return clean.length <= 4 ? `••••${clean}` : `••••••${clean.slice(-4)}`; }
-      function renderDocuments() {
-        const total = state.employees.length; const passport = state.employees.filter((employee) => employee.passportNumber).length; const visa = state.employees.filter((employee) => employee.visaNumber).length; const aadhaar = state.employees.filter((employee) => employee.aadhaarNumber).length;
-        [['passport', passport], ['visa', visa], ['aadhaar', aadhaar]].forEach(([key, count]) => { $(`#${key}Count`).textContent = `${count}/${total}`; $(`#${key}Progress`).style.width = total ? `${count / total * 100}%` : '0%'; });
-        $('#documentRows').innerHTML = total ? sortedEmployees().map((employee) => { const passportState = documentState(employee, 'passportNumber', 'passportExpiry'); const visaState = documentState(employee, 'visaNumber', 'visaExpiry'); return `<tr><td><div class="person"><span class="avatar">${esc(initials(employee.name))}</span><span><strong>${esc(employee.name)}</strong><small>${esc(employee.department || 'No department')}</small></span></div></td><td><strong>${esc(mask(employee.passportNumber))}</strong><small class="muted">${esc(passportState.label)}</small></td><td><strong>${esc(mask(employee.visaNumber))}</strong><small class="muted">${esc(visaState.label)}</small></td><td><strong>${esc(mask(employee.aadhaarNumber))}</strong><small class="muted">${employee.aadhaarNumber ? 'Number saved' : 'Missing'}</small></td><td class="actions"><button class="icon-btn" type="button" data-edit="${esc(employee.id)}" title="Edit">✎</button></td></tr>`; }).join('') : `<tr><td colspan="5"><div class="empty"><strong>No document records yet.</strong><span>Add an employee to begin your document register.</span><button class="btn primary small" type="button" data-open-add>Add employee</button></div></td></tr>`;
-      }
-      function renderAbsences() {
-        const target = $('#absenceList'); const list = state.employees.filter((employee) => employee.absenceDate).sort((a, b) => a.absenceDate.localeCompare(b.absenceDate));
-        target.innerHTML = list.length ? list.map((employee) => { const parts = dateParts(employee.absenceDate); return `<article class="absence-item"><span class="date-block"><b>${esc(parts.day)}</b><small>${esc(parts.month)}</small></span><span><strong>${esc(employee.name)}</strong><span>${esc(employee.absenceReason || 'Absence recorded')} · ${esc(employee.department || 'No department')}</span></span><button class="icon-btn" type="button" data-edit="${esc(employee.id)}" title="Edit absence" style="margin-left:auto">✎</button></article>`; }).join('') : `<div class="empty" style="grid-column:1/-1"><strong>No absence dates recorded.</strong><span>Add an absence date to an employee record and it will appear here.</span></div>`;
-      }
-      function renderAll() { renderStats(); renderRecent(); renderAttention(); renderDirectory(); renderDocuments(); renderAbsences(); bindDynamicButtons(); }
-      function openModal(employee = null) {
-        state.editingId = employee ? employee.id : null; $('#modalTitle').textContent = employee ? 'Edit employee' : 'Add employee'; $('#serialNumber').value = employee ? employee.serialNumber : assignSerial(); $('#employeeRecordId').value = employee ? employee.id : '';
-        const fields = ['name', 'status', 'designation', 'department', 'joiningDate', 'employmentType', 'address', 'phone', 'email', 'emergencyContact', 'bloodGroup', 'absenceDate', 'passportNumber', 'passportExpiry', 'visaNumber', 'visaExpiry', 'aadhaarNumber', 'absenceReason', 'notes']; const fieldIds = { name: 'employeeName', status: 'employeeStatus' }; fields.forEach((field) => { const element = $(`#${fieldIds[field] || field}`); if (element) element.value = employee?.[field] || (field === 'status' ? 'active' : field === 'employmentType' ? 'full-time' : ''); }); $('#employeeModal').classList.add('open'); setTimeout(() => $('#employeeName').focus(), 30); }
-      function closeModal() { $('#employeeModal').classList.remove('open'); state.editingId = null; $('#employeeForm').reset(); }
-      function formRecord() { return normalizeEmployee({ id: state.editingId || makeId(), serialNumber: Number($('#serialNumber').value) || assignSerial(), name: $('#employeeName').value, status: $('#employeeStatus').value, designation: $('#designation').value, department: $('#department').value, joiningDate: $('#joiningDate').value, employmentType: $('#employmentType').value, address: $('#address').value, phone: $('#phone').value, email: $('#email').value, emergencyContact: $('#emergencyContact').value, bloodGroup: $('#bloodGroup').value, absenceDate: $('#absenceDate').value, absenceReason: $('#absenceReason').value, passportNumber: $('#passportNumber').value, passportExpiry: $('#passportExpiry').value, visaNumber: $('#visaNumber').value, visaExpiry: $('#visaExpiry').value, aadhaarNumber: $('#aadhaarNumber').value, notes: $('#notes').value, createdAt: state.editingId ? (state.employees.find((employee) => employee.id === state.editingId)?.createdAt || new Date().toISOString()) : new Date().toISOString(), updatedAt: new Date().toISOString() }); }
-      function download(filename, content, mime) { const blob = new Blob([content], { type: mime }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = filename; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
-      function exportJson() { download(`alaada-people-${today()}.json`, JSON.stringify({ exportedAt: new Date().toISOString(), source: 'Alaada People local HR workspace', employees: state.employees }, null, 2), 'application/json'); showToast('JSON backup exported to this device.'); }
-      function csvCell(value) { const text = String(value ?? ''); return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text; }
-      function exportCsv() { const columns = ['slNo', 'name', 'status', 'designation', 'department', 'joiningDate', 'employmentType', 'address', 'phone', 'email', 'emergencyContact', 'bloodGroup', 'absenceDate', 'absenceReason', 'passportNumber', 'passportExpiry', 'visaNumber', 'visaExpiry', 'aadhaarNumber', 'notes']; const lines = [columns.join(','), ...sortedEmployees().map((employee) => columns.map((column) => csvCell(column === 'slNo' ? employee.serialNumber : employee[column])).join(','))]; download(`alaada-people-${today()}.csv`, lines.join('\n'), 'text/csv;charset=utf-8'); showToast('CSV export created.'); }
-      function importJson(file) { const reader = new FileReader(); reader.onload = () => { try { const parsed = JSON.parse(reader.result); const imported = Array.isArray(parsed) ? parsed : parsed.employees; if (!Array.isArray(imported)) throw new Error('Expected an employees array'); const records = imported.map(normalizeEmployee).filter((employee) => employee.name); const replace = window.confirm(`Import ${records.length} employee record${records.length === 1 ? '' : 's'} and replace the current local directory?`); if (!replace) return; state.employees = records.map((employee, index) => ({ ...employee, serialNumber: employee.serialNumber || index + 1 })); save(); renderAll(); showToast(`${records.length} employee record${records.length === 1 ? '' : 's'} imported.`); } catch (error) { showToast('Import failed: choose a valid Alaada People JSON export.', true); } }; reader.readAsText(file); }
-      async function checkApi() {
-        if (window.location.protocol === 'file:') { $('#apiStatus').textContent = 'Local file mode'; return; }
-        try {
-          const response = await fetch(`${API_BASE}/api/health`, {
-            headers: { Accept: 'application/json' }, credentials: 'omit', cache: 'no-store',
-            signal: AbortSignal.timeout(90000)
-          });
-          if (!response.ok) throw new Error('API unavailable');
-          const payload = await response.json();
-          if (payload.status !== 'ok' || payload.service !== 'alaada-people') throw new Error('Unexpected service');
-          $('#apiDot').classList.add('ok'); $('#apiStatus').textContent = 'Backend connected';
-        } catch (error) { $('#apiStatus').textContent = 'Backend offline · local records available'; }
-      }
-      function setView(view) { state.view = view; $$('.nav button').forEach((button) => button.classList.toggle('active', button.dataset.view === view)); $$('.view').forEach((section) => section.classList.toggle('active', section.id === `view-${view}`)); const copy = { overview: ['Overview', 'A calm view of your people records and upcoming actions.'], directory: ['People directory', 'Search and maintain your local employee register.'], absences: ['Absences', 'See recorded absence dates and reasons at a glance.'], documents: ['Documents', 'Track identity documents without uploading them anywhere.'] }[view]; $('#pageTitle').textContent = copy[0]; $('#pageSubtitle').textContent = copy[1]; }
-      function bindDynamicButtons() { $$('[data-open-add]').forEach((button) => { button.onclick = () => openModal(); }); $$('[data-go="directory"]').forEach((button) => { button.onclick = () => setView('directory'); }); $$('[data-edit]').forEach((button) => { button.onclick = () => { const employee = state.employees.find((item) => item.id === button.dataset.edit); if (employee) openModal(employee); }; }); $$('[data-delete]').forEach((button) => { button.onclick = () => { const employee = state.employees.find((item) => item.id === button.dataset.delete); if (!employee) return; if (!window.confirm(`Delete ${employee.name}'s local employee record?`)) return; state.employees = state.employees.filter((item) => item.id !== employee.id); save(); renderAll(); showToast('Employee record deleted.'); }; }); }
-      function bindEvents() {
-        $$('.nav button').forEach((button) => button.addEventListener('click', () => setView(button.dataset.view))); $('#addEmployeeBtn').addEventListener('click', () => openModal()); $('#closeModalBtn').addEventListener('click', closeModal); $('#cancelModalBtn').addEventListener('click', closeModal); $('#employeeModal').addEventListener('click', (event) => { if (event.target === $('#employeeModal')) closeModal(); }); $('#employeeForm').addEventListener('submit', (event) => { event.preventDefault(); const record = formRecord(); if (!record.name) { showToast('Full name is required.', true); $('#employeeName').focus(); return; } if (record.email && !/^\S+@\S+\.\S+$/.test(record.email)) { showToast('Enter a valid email address or leave it blank.', true); $('#email').focus(); return; } if (record.aadhaarNumber && !/^[\d\s-]{4,20}$/.test(record.aadhaarNumber)) { showToast('Aadhaar card number should contain digits only.', true); $('#aadhaarNumber').focus(); return; } const existingIndex = state.employees.findIndex((employee) => employee.id === record.id); if (existingIndex >= 0) state.employees[existingIndex] = record; else state.employees.push(record); save(); closeModal(); renderAll(); showToast(existingIndex >= 0 ? 'Employee record updated.' : 'Employee added to your local directory.'); }); $('#directorySearch').addEventListener('input', (event) => { state.search = event.target.value; renderDirectory(); bindDynamicButtons(); }); $('#statusFilter').addEventListener('change', (event) => { state.status = event.target.value; renderDirectory(); bindDynamicButtons(); }); $('#exportJsonBtn').addEventListener('click', exportJson); $('#exportCsvBtn').addEventListener('click', exportCsv); $('#importInput').addEventListener('change', (event) => { if (event.target.files[0]) importJson(event.target.files[0]); event.target.value = ''; }); document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && $('#employeeModal').classList.contains('open')) closeModal(); if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setView('directory'); $('#directorySearch').focus(); } }); }
-      function addImportButton() { const toolbar = document.querySelector('#view-directory .toolbar-right'); const button = document.createElement('button'); button.className = 'btn small'; button.type = 'button'; button.textContent = '⇧ Import JSON'; button.addEventListener('click', () => $('#importInput').click()); toolbar.prepend(button); }
-      load(); bindEvents(); addImportButton(); renderAll(); checkApi();
-    })();
+  function normalizeEmployee(record) {
+    if (!record || typeof record!=='object' || Array.isArray(record) || typeof record.name!=='string' || !record.name.trim()) throw Error('Every record must have a full name.');
+    const e = {...record};
+    e.id = typeof record.id==='string' && record.id ? record.id : makeId();
+    if (e.id.length>120) throw Error('An employee ID is too long.');
+    e.serialNumber = Number.isSafeInteger(Number(record.serialNumber)) && Number(record.serialNumber)>0 ? Number(record.serialNumber) : 0;
+    for (const key of [...fields,'absenceDate','absenceReason']) {
+      if (record[key]!=null && typeof record[key]!=='string') throw Error(`${key} must be text.`);
+      e[key] = String(record[key] || '').trim();
+      if (e[key].length>5000) throw Error(`${key} is too long.`);
+    }
+    e.status = ['active','on-leave','inactive'].includes(e.status) ? e.status : 'active';
+    e.employmentType ||= 'full-time';
+    for (const key of ['joiningDate','absenceDate','passportExpiry','visaExpiry']) if (e[key] && !isDate(e[key])) throw Error(`Invalid ${key} for ${e.name}.`);
+    let leaves = record.leaves;
+    if (leaves===undefined) leaves = e.absenceDate ? [{id:makeId(),startDate:e.absenceDate,endDate:e.absenceDate,type:'Other',status:'approved',reason:e.absenceReason}] : [];
+    if (!Array.isArray(leaves) || leaves.length>2000) throw Error('Leave history must be a list of at most 2,000 entries.');
+    const seen = new Set();
+    e.leaves = leaves.map(l=>{
+      if (!l || typeof l!=='object' || !isDate(l.startDate) || !isDate(l.endDate) || l.endDate<l.startDate) throw Error(`Invalid leave dates for ${e.name}.`);
+      const id = typeof l.id==='string' && l.id ? l.id : makeId();
+      if (id.length>120 || seen.has(id)) throw Error(`Duplicate or invalid leave IDs for ${e.name}.`);
+      seen.add(id);
+      if (!types.includes(l.type) || !['planned','approved','cancelled'].includes(l.status)) throw Error(`Invalid leave type or status for ${e.name}.`);
+      if (typeof l.reason!=='string' && l.reason!=null) throw Error('Leave reasons must be text.');
+      return {...l,id,reason:String(l.reason || '').slice(0,500)};
+    });
+    if (record.customFields!==undefined && !Array.isArray(record.customFields)) throw Error('Custom fields must be a list.');
+    const names = new Set();
+    e.customFields = (record.customFields || []).map(f=>{
+      if (!f || typeof f.label!=='string' || typeof f.value!=='string' || !f.label.trim() || f.label.length>50 || f.value.length>300) throw Error('Custom fields need a label (up to 50 characters) and value (up to 300).');
+      const label = f.label.trim();
+      if (names.has(label.toLowerCase())) throw Error('Custom field labels must be unique for each employee.');
+      names.add(label.toLowerCase()); return {label,value:f.value.trim()};
+    });
+    if (e.customFields.length>20) throw Error('Use up to 20 custom fields per employee.');
+    e.createdAt = typeof record.createdAt==='string' ? record.createdAt : new Date().toISOString();
+    e.updatedAt = typeof record.updatedAt==='string' ? record.updatedAt : e.createdAt;
+    return e;
+  }
+  function normalizeList(list) {
+    if (!Array.isArray(list) || list.length>10000) throw Error('Choose an employee list with at most 10,000 records.');
+    const idsSeen=new Set(), serials=new Set(); let next=0;
+    const result=list.map(normalizeEmployee);
+    result.forEach(e=>{ if(idsSeen.has(e.id)) throw Error('Duplicate employee IDs found. Import was not applied.'); idsSeen.add(e.id); next=Math.max(next,e.serialNumber); });
+    result.forEach(e=>{ if(!e.serialNumber || serials.has(e.serialNumber)) e.serialNumber=++next; serials.add(e.serialNumber); });
+    return result;
+  }
+  function showToast(message,error=false) { const t=$('#toast');t.textContent=message;t.className=`toast show${error?' error':''}`;clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.className='toast',4500); }
+  function notice(message) { $('#storageNotice').classList.remove('hidden');$('#storageMessage').textContent=message; }
+  function load() {
+    try { state.raw=localStorage.getItem(STORAGE_KEY); state.employees=normalizeList(JSON.parse(state.raw || '[]')); state.blocked=false; $('#storageNotice').classList.add('hidden'); }
+    catch(error) {state.blocked=true; notice(`Saved records could not be opened: ${error.message} Export the saved data or restore a valid JSON backup.`);}
+  }
+  function commit(list,message,{allowReplace=false,remember=true}={}) {
+    try {
+      if (state.blocked && !allowReplace) throw Error('Resolve the storage notice before saving. Your saved data has not been replaced.');
+      const current=localStorage.getItem(STORAGE_KEY);
+      if(current!==state.raw) {notice('Records changed in another tab. Reload records before saving this draft.');throw Error('Another tab changed these records. Save was stopped to prevent overwriting them.');}
+      const normalized=normalizeList(list), raw=JSON.stringify(normalized);
+      // Keep the previous exact payload recoverable before the atomic primary write.
+      if(current!==null) localStorage.setItem(RECOVERY_KEY,JSON.stringify({savedAt:new Date().toISOString(),raw:current}));
+      localStorage.setItem(STORAGE_KEY,raw);
+      if(remember) state.undo={employees:state.employees,raw:state.raw};
+      state.employees=normalized;state.raw=raw;state.blocked=false;$('#storageNotice').classList.add('hidden');renderAll();showToast(message);return true;
+    } catch(error) {showToast(error.name==='QuotaExceededError'?'Storage is full. Nothing was saved. Export a backup before freeing space.':error.message,true);return false;}
+  }
+  function sortedEmployees(list=state.employees) {return [...list].sort((a,b)=>state.sort==='serial'?a.serialNumber-b.serialNumber:state.sort==='joined'?(b.joiningDate||'').localeCompare(a.joiningDate||'')||a.name.localeCompare(b.name):a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));}
+  function filteredEmployees() {const q=state.search.trim().toLowerCase();return sortedEmployees(state.employees.filter(e=>(state.status==='all'||e.status===state.status)&&(state.department==='all'||e.department===state.department)&&(!q||[e.name,e.serialNumber,e.email,e.phone,e.designation,e.department,e.address,...e.customFields.flatMap(f=>[f.label,f.value])].join(' ').toLowerCase().includes(q))));}
+  function docStatus(e,key,expiryKey) {
+    if(!e[key])return {kind:'missing',label:'Missing',badge:'missing'};
+    if(!expiryKey)return {kind:'saved',label:'Number saved',badge:'active'};
+    if(!e[expiryKey])return {kind:'undated',label:'Expiry not set',badge:'leave'};
+    const n=dayDiff(today(),e[expiryKey]);
+    return n<0?{kind:'expired',label:`Expired ${formatDate(e[expiryKey])}`,badge:'missing'}:n<=60?{kind:'expiring',label:`${n===0?'Expires today':`Expires in ${n} days`}`,badge:'expiring'}:{kind:'valid',label:`Valid to ${formatDate(e[expiryKey])}`,badge:'active'};
+  }
+  function docItems(e) {return [['Passport','passportNumber','passportExpiry'],['Visa','visaNumber','visaExpiry'],['Aadhaar','aadhaarNumber',null]].map(([documentName,key,expiry])=>({employee:e,documentName,key,expiry:e[expiry]||'',...docStatus(e,key,expiry)}));}
+  const docAlerts=e=>docItems(e).filter(d=>['missing','expired','expiring','undated'].includes(d.kind)).length;
+  const mask=value=>value?`•••• ${String(value).replace(/\s/g,'').slice(-4)}`:'—';
+  const allLeaves=()=>state.employees.flatMap(employee=>employee.leaves.map(leave=>({employee,...leave})));
+  const upcomingLeaves=n=>allLeaves().filter(l=>l.status!=='cancelled' && l.endDate>=today() && dayDiff(today(),l.startDate)<=n);
+
+  function renderStats() {
+    const n=state.employees.length, active=state.employees.filter(e=>e.status==='active').length;
+    $('#statTotal').textContent=n;$('#statActive').textContent=active;$('#statActiveFoot').textContent=`${n?Math.round(active/n*100):0}% of your directory`;
+    $('#statDocs').textContent=state.employees.reduce((a,e)=>a+docAlerts(e),0);$('#statAbsences').textContent=new Set(upcomingLeaves(30).map(l=>l.employee.id)).size;
+    $('#absenceWeek').textContent=upcomingLeaves(7).length;$('#absenceMonth').textContent=upcomingLeaves(30).length;$('#absenceRecorded').textContent=allLeaves().length;
+  }
+  function renderRecent() {
+    const list=[...state.employees].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,5);
+    $('#recentEmployees').innerHTML=list.length?`<table class="mini-table"><thead><tr><th>Employee</th><th>Department</th><th>Status</th></tr></thead><tbody>${list.map(e=>`<tr><td>${person(e)}</td><td>${esc(e.department||'—')}</td><td>${badge(e.status==='on-leave'?'leave':e.status,statusLabel(e.status))}</td></tr>`).join('')}</tbody></table>`:empty('Your directory is ready.','Add your first employee to start tracking records.');
+  }
+  function renderAttention() {
+    const rows=[];
+    state.employees.forEach(e=>{if(docAlerts(e))rows.push({e,label:`${docAlerts(e)} document items need attention`});const leave=nextLeave(e);if(leave&&dayDiff(today(),leave.startDate)<=30)rows.push({e,label:`${leave.type} leave: ${formatDate(leave.startDate)} – ${formatDate(leave.endDate)}`});});
+    $('#attentionCount').textContent=`${rows.length} ${rows.length===1?'item':'items'}`;
+    $('#attentionList').innerHTML=rows.length?`<div class="watch-list">${rows.slice(0,8).map(r=>`<div class="watch-item"><span class="watch-bullet">◷</span><span><strong>${esc(r.e.name)}</strong><span>${esc(r.label)}</span></span></div>`).join('')}</div>`:empty('Nothing urgent here.','Upcoming leave and document reminders will appear here.');
+  }
+  function renderDirectory() {
+    const departments=[...new Set(state.employees.map(e=>e.department).filter(Boolean))].sort();
+    if(state.department!=='all'&&!departments.includes(state.department))state.department='all';
+    $('#departmentFilter').innerHTML='<option value="all">All departments</option>'+departments.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');$('#departmentFilter').value=state.department;
+    const list=filteredEmployees();$('#directoryCount').textContent=`${list.length} of ${state.employees.length} records`;
+    $('#directoryRows').innerHTML=list.length?list.map(e=>{const l=nextLeave(e);return `<tr><td class="sl">${e.serialNumber}</td><td>${person(e)}</td><td><strong>${esc(e.phone||'—')}</strong><small class="muted">${esc(e.email||'—')}</small></td><td>${badge(docAlerts(e)?'leave':'active',docAlerts(e)?`${docAlerts(e)} reminders`:'Complete')}</td><td>${l?`${esc(formatDate(l.startDate))}<small class="muted">${esc(l.type)} · ${dayDiff(l.startDate,l.endDate)+1} calendar days</small>`:'—'}</td><td>${badge(e.status==='on-leave'?'leave':e.status,statusLabel(e.status))}</td><td class="actions"><button class="icon-btn" type="button" data-edit="${esc(e.id)}" aria-label="Edit ${esc(e.name)}">✎</button><button class="icon-btn" type="button" data-add-leave="${esc(e.id)}" aria-label="Record leave for ${esc(e.name)}">◷</button><button class="icon-btn delete" type="button" data-delete="${esc(e.id)}" aria-label="Delete ${esc(e.name)}">⌫</button></td></tr>`;}).join(''):`<tr><td colspan="7">${empty('No matching employees.','Adjust the filters or add an employee.')}</td></tr>`;
+  }
+  function documentMatches(e) {
+    const filter=$('#documentFilter').value,q=$('#documentSearch').value.trim().toLowerCase();
+    return (!q||[e.name,e.department].join(' ').toLowerCase().includes(q))&&(filter==='all'||docItems(e).some(d=>d.kind===filter));
+  }
+  function renderDocuments() {
+    const n=state.employees.length;
+    for(const [key,field] of [['passport','passportNumber'],['visa','visaNumber'],['aadhaar','aadhaarNumber']]){const count=state.employees.filter(e=>e[field]).length;$(`#${key}Count`).textContent=`${count}/${n}`;$(`#${key}Progress`).style.width=n?`${count/n*100}%`:'0%';}
+    const list=sortedEmployees().filter(documentMatches);
+    $('#documentCount').textContent=`${list.length} matching employees`;
+    $('#documentRows').innerHTML=list.length?list.map(e=>`<tr><td>${person(e)}</td>${docItems(e).map(d=>`<td><strong>${esc(mask(e[d.key]))}</strong><small>${badge(d.badge,d.label)}</small></td>`).join('')}<td><button class="btn small" data-edit="${esc(e.id)}">Edit documents</button></td></tr>`).join(''):`<tr><td colspan="5">${empty('No matching documents.','Change the filter to see other records.')}</td></tr>`;
+  }
+  function filteredLeaves() {
+    const employee=$('#leaveFilterEmployee').value,status=$('#leaveFilterStatus').value,from=$('#leaveFrom').value,to=$('#leaveTo').value;
+    if(from&&to&&from>to)return [];
+    return allLeaves().filter(l=>(!employee||l.employee.id===employee)&&(status==='all'||l.status===status)&&(!from||l.endDate>=from)&&(!to||l.startDate<=to)).sort((a,b)=>b.startDate.localeCompare(a.startDate));
+  }
+  function renderAbsences() {
+    const selected=$('#leaveFilterEmployee').value;
+    $('#leaveFilterEmployee').innerHTML='<option value="">All employees</option>'+sortedEmployees().map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');
+    if(employeeById(selected))$('#leaveFilterEmployee').value=selected;
+    const from=$('#leaveFrom').value,to=$('#leaveTo').value,list=filteredLeaves();
+    const total=list.filter(l=>l.status!=='cancelled').reduce((sum,l)=>sum+dayDiff(from&&from>l.startDate?from:l.startDate,to&&to<l.endDate?to:l.endDate)+1,0);
+    $('#absenceRangeLabel').textContent=from&&to&&from>to?'Start filter must be on or before end filter.':`${list.length} ${list.length===1?'entry':'entries'} · ${total} calendar days (excluding cancelled; clipped to filter)`;
+    $('#absenceList').innerHTML=list.length?list.map(l=>`<article class="absence-item"><div><strong>${esc(l.employee.name)}</strong><span>${esc(formatDate(l.startDate))} → ${esc(formatDate(l.endDate))}</span><span>${esc(l.type)} · ${dayDiff(l.startDate,l.endDate)+1} calendar days · ${esc(l.reason||'No reason provided')}</span>${badge(l.status==='approved'?'active':l.status==='cancelled'?'inactive':'leave',l.status)}</div><button class="btn small" data-leave-edit="${esc(l.id)}" data-employee="${esc(l.employee.id)}" style="margin-left:auto">Edit</button></article>`).join(''):empty('No leave entries match.','Record leave or adjust the filters.');
+  }
+  function renderBackups() {
+    $('#undoBtn').disabled=!state.undo;
+    $('#storageSize').textContent=`${state.employees.length} employees · ${(new Blob([state.raw||'[]']).size/1024).toFixed(1)} KB of employee data`;
+    try {const recovery=JSON.parse(localStorage.getItem(RECOVERY_KEY)||'null');$('#recoveryDownload').disabled=!recovery;$('#recoveryMeta').textContent=recovery?`Previous save: ${new Date(recovery.savedAt).toLocaleString()}`:'A recovery snapshot is created before your next saved change.';}catch{$('#recoveryDownload').disabled=true;$('#recoveryMeta').textContent='Recovery snapshot is unavailable.';}
+  }
+  function renderAll(){renderStats();renderRecent();renderAttention();renderDirectory();renderDocuments();renderAbsences();renderBackups();}
+
+  let returnFocus=null;
+  function showModal(id) {returnFocus=document.activeElement;$(id).classList.add('open');document.body.style.overflow='hidden';setTimeout(()=>$(id).querySelector('input:not([type=hidden]):not([readonly]),select,button')?.focus(),0);}
+  function hideModal(id) {$(id).classList.remove('open');document.body.style.overflow=$$('.modal-backdrop.open').length?'hidden':'';if(returnFocus?.isConnected)returnFocus.focus();}
+  function renderCustomFields(list) {$('#customFields').innerHTML=list.map(f=>`<div class="custom-row"><label>Field label<input data-custom-label maxlength="50" value="${esc(f.label)}" placeholder="e.g. Work location"></label><label>Value<input data-custom-value maxlength="300" value="${esc(f.value)}" placeholder="e.g. Kolkata"></label><button type="button" class="btn small" data-remove-custom>Remove</button></div>`).join('');}
+  function readCustomFields(){return $$('#customFields .custom-row').map(row=>({label:row.querySelector('[data-custom-label]').value.trim(),value:row.querySelector('[data-custom-value]').value.trim()})).filter(f=>f.label||f.value);}
+  function openModal(employee=null) {
+    state.editingId=employee?.id||null;$('#employeeForm').reset();$('#modalTitle').textContent=employee?'Edit employee':'Add employee';$('#employeeError').textContent='';
+    $('#serialNumber').value=employee?.serialNumber||Math.max(0,...state.employees.map(e=>e.serialNumber))+1;
+    fields.forEach(f=>{$(`#${ids[f]||f}`).value=employee?.[f]||(f==='status'?'active':f==='employmentType'?'full-time':'');});
+    renderCustomFields(employee?.customFields||[]);$('#customDetails').open=!!employee?.customFields.length;$('#profileLeaveNote').textContent=employee?`${employee.leaves.length} leave entries. Manage them in the Leave register.`:'Save this employee first, then record leave in the Leave register.';showModal('#employeeModal');$('#employeeName').focus();
+  }
+  function closeModal(){hideModal('#employeeModal');state.editingId=null;}
+  function saveEmployee(event) {
+    event.preventDefault();$('#employeeError').textContent='';
+    try {
+      const existing=employeeById(state.editingId),record={...(existing||{}),id:existing?.id||makeId(),serialNumber:Number($('#serialNumber').value),customFields:readCustomFields(),updatedAt:new Date().toISOString()};
+      fields.forEach(f=>record[f]=$(`#${ids[f]||f}`).value.trim());
+      if(record.email&&!/^\S+@\S+\.\S+$/.test(record.email))throw Error('Enter a valid email address.');
+      if(record.aadhaarNumber&&!/^\d{12}$/.test(record.aadhaarNumber.replace(/[\s-]/g,'')))throw Error('Aadhaar must have 12 digits, or be left blank.');
+      const normalized=normalizeEmployee(record);
+      if(state.employees.some(e=>e.id!==record.id&&record.email&&e.email.toLowerCase()===record.email.toLowerCase())&&!confirm('Another employee has this email. Save this record anyway?'))return;
+      const next=existing?state.employees.map(e=>e.id===existing.id?normalized:e):[...state.employees,normalized];
+      if(commit(next,existing?'Employee updated.':'Employee added.'))closeModal();
+    }catch(error){$('#employeeError').textContent=error.message;}
+  }
+  function openLeave(employeeId='',leaveId='') {
+    if(!state.employees.length){showToast('Add an employee before recording leave.',true);return;}
+    $('#leaveForm').reset();$('#leaveError').textContent='';$('#leaveId').value=leaveId;$('#leaveOwner').value=employeeId;
+    $('#leaveEmployee').innerHTML=sortedEmployees().map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');if(employeeId)$('#leaveEmployee').value=employeeId;
+    const leave=employeeById(employeeId)?.leaves.find(l=>l.id===leaveId);
+    $('#leaveTitle').textContent=leave?'Edit leave':'Record leave';$('#leaveEmployee').disabled=!!leave;
+    $('#leaveStart').value=leave?.startDate||today();$('#leaveEnd').value=leave?.endDate||today();$('#leaveType').value=leave?.type||'Annual';$('#leaveStatus').value=leave?.status||'planned';$('#leaveReason').value=leave?.reason||'';
+    updateLeaveDuration();showModal('#leaveModal');
+  }
+  function updateLeaveDuration(){const a=$('#leaveStart').value,b=$('#leaveEnd').value;$('#leaveDuration').textContent=isDate(a)&&isDate(b)&&b>=a?`${dayDiff(a,b)+1} calendar days, including both dates. Weekends are included.`:'Choose an end date on or after the start date.';}
+  function saveLeave(event) {
+    event.preventDefault();$('#leaveError').textContent='';
+    const e=employeeById($('#leaveEmployee').value),id=$('#leaveId').value||makeId();
+    const leave={id,startDate:$('#leaveStart').value,endDate:$('#leaveEnd').value,type:$('#leaveType').value,status:$('#leaveStatus').value,reason:$('#leaveReason').value.trim()};
+    if(!e||!isDate(leave.startDate)||!isDate(leave.endDate)||leave.endDate<leave.startDate){$('#leaveError').textContent='Choose an employee and a valid date range.';return;}
+    if(leave.status!=='cancelled'&&e.leaves.some(l=>l.id!==id&&l.status!=='cancelled'&&l.startDate<=leave.endDate&&l.endDate>=leave.startDate)){$('#leaveError').textContent='These dates overlap another planned or approved leave entry. Edit that entry or choose different dates.';return;}
+    const leaves=e.leaves.some(l=>l.id===id)?e.leaves.map(l=>l.id===id?leave:l):[...e.leaves,leave];
+    const changed={...e,leaves,updatedAt:new Date().toISOString()};
+    if(commit(state.employees.map(item=>item.id===e.id?changed:item),'Leave saved.'))hideModal('#leaveModal');
+  }
+
+  function download(filename,content,mime='application/json'){const url=URL.createObjectURL(new Blob([content],{type:mime})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  function exportJson(){if(state.blocked){download(`alaada-saved-data-${today()}.json`,state.raw||'[]');return;}download(`alaada-people-${today()}.json`,JSON.stringify({schemaVersion:2,exportedAt:new Date().toISOString(),source:'Alaada People',employees:state.employees},null,2));showToast('Full JSON backup downloaded.');}
+  function csvCell(value){let s=String(value??'');if(/^[\s]*[=+@-]/.test(s)||/^[\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
+  function csvDownload(name,headers,rows){download(`${name}-${today()}.csv`,'\ufeff'+[headers,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');}
+  function exportCsv(){const cols=['serialNumber',...fields,'absenceDate','absenceReason','leaves','customFields'];csvDownload('alaada-people',cols,filteredEmployees().map(e=>cols.map(k=>['leaves','customFields'].includes(k)?JSON.stringify(e[k]):e[k])));showToast('Filtered directory exported. JSON backup keeps all records.');}
+  function exportLeaves(){csvDownload('alaada-leave',['Sl no.','Employee','Start','End','Calendar days','Type','Status','Reason'],filteredLeaves().map(l=>[l.employee.serialNumber,l.employee.name,l.startDate,l.endDate,dayDiff(l.startDate,l.endDate)+1,l.type,l.status,l.reason]));}
+  function exportDocuments(){const filter=$('#documentFilter').value;const list=sortedEmployees().filter(documentMatches).flatMap(docItems).filter(d=>filter==='all'||d.kind===filter);csvDownload('alaada-document-reminders',['Sl no.','Employee','Department','Document','Masked number','Expiry','Status'],list.map(d=>[d.employee.serialNumber,d.employee.name,d.employee.department,d.documentName,mask(d.employee[d.key]),d.expiry,d.label]));}
+  function importPlan() {
+    const imported=state.imported||[],mode=$('#importMode').value;
+    let added=0,updated=0;const map=new Map(state.employees.map(e=>[e.id,e]));
+    imported.forEach(e=>{if(map.has(e.id))updated++;else added++;map.set(e.id,e);});
+    return {employees:normalizeList(mode==='replace'?imported:[...map.values()]),added,updated,mode};
+  }
+  function renderImportPreview(){try{const p=importPlan();$('#importSummary').textContent=p.mode==='merge'?`${state.imported.length} valid records: ${p.added} new, ${p.updated} matching IDs updated. ${p.employees.length} employees after import. Records match by ID, not by name or email.`:`Replace ${state.employees.length} current employees with ${p.employees.length} imported employees. A recovery snapshot of the current data is saved first.`;$('#applyImport').disabled=state.blocked&&p.mode!=='replace';}catch(error){$('#importSummary').textContent=error.message;$('#applyImport').disabled=true;}}
+  async function importJson(file) {
+    try {
+      if(file.size>5*1024*1024)throw Error('Choose a JSON backup under 5 MB.');
+      const parsed=JSON.parse(await file.text());
+      if(!Array.isArray(parsed)&&parsed?.schemaVersion!==undefined&&![1,2].includes(parsed.schemaVersion))throw Error('This backup uses an unsupported version.');
+      state.imported=normalizeList(Array.isArray(parsed)?parsed:parsed?.employees);$('#importMode').value=state.blocked?'replace':'merge';renderImportPreview();showModal('#importModal');
+    }catch(error){state.imported=null;showToast(`Import not applied: ${error.message}`,true);}
+  }
+  function applyImport(){const p=importPlan();if(p.mode==='replace'&&!confirm(`Replace the current directory with ${p.employees.length} employees? A recovery snapshot will be kept.`))return;if(commit(p.employees,'Backup imported.',{allowReplace:p.mode==='replace'})){state.imported=null;hideModal('#importModal');}}
+  function undo(){if(!state.undo)return;const previous=state.undo;if(commit(previous.employees,'Last change undone.',{remember:false})){state.undo=null;renderBackups();}}
+  function downloadRecovery(){try{const recovery=JSON.parse(localStorage.getItem(RECOVERY_KEY)||'null');if(!recovery)throw Error('No recovery snapshot is available.');download(`alaada-recovery-${today()}.json`,recovery.raw);}catch(error){showToast(error.message,true);}}
+
+  function installFeatures() {
+    const nav=document.querySelector('.nav');
+    nav.querySelector('[data-view="absences"] span:last-child').textContent='Leave register';
+    $('.hero').remove();
+    $$('.nav button').forEach(b=>b.setAttribute('aria-label',b.textContent.trim()));
+    $('.main').insertAdjacentHTML('afterbegin','<div id="storageNotice" class="feature-alert hidden" role="alert"><span id="storageMessage"></span><button class="btn small" id="reloadRecords">Reload records</button><button class="btn small" id="rawBackup">Export saved data</button></div>');
+    $('#view-directory .toolbar-left').insertAdjacentHTML('beforeend','<label class="filter-pill">Department <select class="select" id="departmentFilter"></select></label><label class="filter-pill">Sort <select class="select" id="directorySort"><option value="name">Name</option><option value="serial">Sl no.</option><option value="joined">Newest joining</option></select></label>');
+    $('#view-directory .toolbar-right').insertAdjacentHTML('afterbegin','<button class="btn small" data-import>Import JSON</button>');
+    $('#exportCsvBtn').textContent='Export CSV';$('#view-directory .toolbar-right').append($('#exportCsvBtn'));
+    $('#exportJsonBtn').textContent='Backup & restore';
+    $('#view-absences .section-title h2').textContent='Leave register';$('#view-absences .section-title p').textContent='Record multiple absences, date ranges and leave status for each employee.';
+    const add=$('#view-absences .section-title button');add.removeAttribute('data-open-add');add.id='newLeave';add.textContent='＋ Record leave';
+    $('#view-absences .card-head h3').textContent='Leave history';
+    $('#absenceRecorded').nextElementSibling.textContent='All leave entries, including cancelled';
+    $('#absenceRecorded').closest('.stat-card').querySelector('.stat-top span').textContent='Leave entries';
+    $('#view-absences .stats').insertAdjacentHTML('afterend',`<div class="feature-toolbar"><label>Employee<select class="select" id="leaveFilterEmployee"></select></label><label>Status<select class="select" id="leaveFilterStatus"><option value="all">All statuses</option><option value="planned">Planned</option><option value="approved">Approved</option><option value="cancelled">Cancelled</option></select></label><label>From<input type="date" id="leaveFrom"></label><label>Through<input type="date" id="leaveTo"></label><button class="btn" id="clearLeaveFilters">Clear filters</button><button class="btn" id="exportLeaves">Export leave CSV</button></div><p class="feature-note">Status is a local record only. Day counts include weekends; no company leave policy or holiday calendar is assumed.</p>`);
+    $('#view-documents .document-grid').insertAdjacentHTML('afterend',`<div class="feature-toolbar"><label class="search-field">Find employee<input type="text" id="documentSearch" placeholder="Name or department"></label><label>Show documents<select class="select" id="documentFilter"><option value="all">All records</option><option value="expired">Expired</option><option value="expiring">Due within 60 days</option><option value="missing">Missing numbers</option><option value="undated">Expiry not set</option></select></label><button class="btn" id="exportDocuments">Export reminder CSV</button><span class="feature-note" id="documentCount"></span></div>`);
+    $('#view-documents .section-title p').textContent='Filter missing details and expiring documents; export a masked reminder list.';
+    $$('.doc-caption').forEach(n=>n.textContent='document numbers recorded');
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal-backdrop feature-modal" id="backupModal" role="dialog" aria-modal="true" aria-labelledby="backupTitle"><div class="modal"><div class="modal-head"><div><h2 id="backupTitle">Backup & restore</h2><p>Records stay in this browser. Download JSON to move them to another device.</p></div><button class="modal-close" data-close="#backupModal" aria-label="Close backup dialog">×</button></div><div class="modal-body"><p id="storageSize" class="backup-meta"></p><div class="row-actions"><button class="btn primary" id="backupDownload">Download JSON</button><button class="btn" data-import>Import JSON</button><button class="btn" id="undoBtn" disabled>Undo last change</button></div><details style="margin-top:16px"><summary>Previous save</summary><p id="recoveryMeta" class="backup-meta"></p><button class="btn" id="recoveryDownload" disabled>Download recovery snapshot</button><p class="feature-note">Import this snapshot to restore it. Undo covers the latest change made in this tab.</p></details></div></div></div>`);
+    // Legacy dates become leave entries on load; keep their original fields in exports.
+    $('#absenceDate').closest('.field-wrap').classList.add('hidden');$('#absenceReason').closest('.field-wrap').classList.add('hidden');
+    $('#employeeForm .modal-body').insertAdjacentHTML('beforeend',`<details class="form-section custom-fields" id="customDetails"><summary>Extra details (optional)</summary><p class="feature-note">Add a label and value, such as work location or equipment ID.</p><div id="customFields"></div><button class="btn small" type="button" id="addCustomField">＋ Add field</button></details><p class="feature-note" id="profileLeaveNote"></p><div class="form-error" id="employeeError" role="alert"></div>`);
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal-backdrop feature-modal" id="leaveModal" role="dialog" aria-modal="true" aria-labelledby="leaveTitle"><form class="modal" id="leaveForm"><div class="modal-head"><div><h2 id="leaveTitle">Record leave</h2><p>Add a dated entry to an employee's leave history.</p></div><button class="modal-close" type="button" data-close="#leaveModal" aria-label="Close leave form">×</button></div><div class="modal-body"><input type="hidden" id="leaveId"><input type="hidden" id="leaveOwner"><div class="form-grid"><div class="field-wrap"><label for="leaveEmployee">Employee</label><select id="leaveEmployee" class="select" required></select></div><div class="field-wrap"><label for="leaveType">Leave type</label><select id="leaveType" class="select">${types.map(t=>`<option>${t}</option>`).join('')}</select></div><div class="field-wrap"><label for="leaveStart">Start date</label><input type="date" id="leaveStart" required></div><div class="field-wrap"><label for="leaveEnd">End date</label><input type="date" id="leaveEnd" required></div><div class="field-wrap"><label for="leaveStatus">Leave status</label><select id="leaveStatus" class="select"><option value="planned">Planned</option><option value="approved">Approved</option><option value="cancelled">Cancelled</option></select></div><div class="field-wrap"><label for="leaveReason">Reason / note</label><input type="text" id="leaveReason" maxlength="500"></div></div><p class="feature-note" id="leaveDuration"></p><div id="leaveError" class="form-error" role="alert"></div></div><div class="modal-foot"><span class="modal-foot-note">Cancelled entries stay in history and do not count as time away.</span><div class="modal-actions"><button class="btn" type="button" data-close="#leaveModal">Cancel</button><button class="btn primary" type="submit">Save leave</button></div></div></form></div>
+      <div class="modal-backdrop feature-modal" id="importModal" role="dialog" aria-modal="true" aria-labelledby="importTitle"><div class="modal"><div class="modal-head"><div><h2 id="importTitle">Preview import</h2><p>No changes have been saved yet.</p></div><button class="modal-close" data-close="#importModal" aria-label="Close import preview">×</button></div><div class="modal-body"><div class="field-wrap"><label for="importMode">Import mode</label><select id="importMode" class="select"><option value="merge">Merge by employee ID</option><option value="replace">Replace the whole directory</option></select></div><p id="importSummary" class="feature-note"></p></div><div class="modal-foot"><button class="btn" data-close="#importModal">Cancel</button><button class="btn primary" id="applyImport">Apply import</button></div></div></div>`);
+  }
+  function setView(view) {
+    if(!['overview','directory','absences','documents'].includes(view))return;
+    state.view=view;$$('.nav button').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);b.setAttribute('aria-current',b.dataset.view===view?'page':'false');});$$('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${view}`));
+    const copy={overview:['Overview','Your people, upcoming leave and document reminders.'],directory:['People directory','Search, filter and maintain your employee register.'],absences:['Leave register','Date ranges, leave status and a complete absence history.'],documents:['Documents','Find missing details and upcoming expiry dates.']}[view];$('#pageTitle').textContent=copy[0];$('#pageSubtitle').textContent=copy[1];
+  }
+  function bindEvents() {
+    document.addEventListener('click',event=>{
+      const b=event.target.closest('button');if(!b)return;
+      if(b.dataset.view)setView(b.dataset.view);
+      if(b.dataset.go)setView(b.dataset.go);
+      if(b.hasAttribute('data-open-add')||b.id==='addEmployeeBtn')openModal();
+      if(b.dataset.edit)openModal(employeeById(b.dataset.edit));
+      if(b.dataset.delete){const e=employeeById(b.dataset.delete);if(e&&confirm(`Delete ${e.name} and their leave history? You can undo this in Backup & restore.`))commit(state.employees.filter(x=>x.id!==e.id),'Employee deleted. Undo is available in Backup & restore.');}
+      if(b.hasAttribute('data-add-leave'))openLeave(b.dataset.addLeave);
+      if(b.dataset.leaveEdit)openLeave(b.dataset.employee,b.dataset.leaveEdit);
+      if(b.dataset.close)hideModal(b.dataset.close);
+      if(b.hasAttribute('data-import')){if($('#backupModal').classList.contains('open'))hideModal('#backupModal');$('#importInput').click();}
+      if(b.hasAttribute('data-remove-custom'))b.closest('.custom-row').remove();
+    });
+    $('#employeeForm').addEventListener('submit',saveEmployee);$('#leaveForm').addEventListener('submit',saveLeave);
+    $('#closeModalBtn').onclick=closeModal;$('#cancelModalBtn').onclick=closeModal;
+    $('#directorySearch').oninput=e=>{state.search=e.target.value;renderDirectory();};$('#statusFilter').onchange=e=>{state.status=e.target.value;renderDirectory();};$('#departmentFilter').onchange=e=>{state.department=e.target.value;renderDirectory();};$('#directorySort').onchange=e=>{state.sort=e.target.value;renderDirectory();};
+    $('#documentFilter').onchange=renderDocuments;$('#documentSearch').oninput=renderDocuments;
+    for(const id of ['leaveFilterEmployee','leaveFilterStatus','leaveFrom','leaveTo'])$(`#${id}`).onchange=renderAbsences;
+    $('#clearLeaveFilters').onclick=()=>{$('#leaveFilterEmployee').value='';$('#leaveFilterStatus').value='all';$('#leaveFrom').value='';$('#leaveTo').value='';renderAbsences();};
+    $('#newLeave').onclick=()=>openLeave();$('#leaveStart').onchange=updateLeaveDuration;$('#leaveEnd').onchange=updateLeaveDuration;
+    $('#addCustomField').onclick=()=>{const list=readCustomFields();if(list.length>=20){showToast('Use up to 20 custom fields.',true);return;}renderCustomFields([...list,{label:'',value:''}]);$('#customFields .custom-row:last-child input').focus();};
+    $('#exportJsonBtn').onclick=()=>showModal('#backupModal');$('#exportCsvBtn').onclick=exportCsv;$('#backupDownload').onclick=exportJson;$('#exportLeaves').onclick=exportLeaves;$('#exportDocuments').onclick=exportDocuments;
+    $('#importInput').onchange=event=>{const file=event.target.files[0];event.target.value='';if(file)importJson(file);};$('#importMode').onchange=renderImportPreview;$('#applyImport').onclick=applyImport;$('#undoBtn').onclick=undo;$('#recoveryDownload').onclick=downloadRecovery;
+    $('#reloadRecords').onclick=()=>{if($$('.modal-backdrop.open').length&&!confirm('Discard the open draft and reload saved records?'))return;$$('.modal-backdrop.open').forEach(m=>hideModal('#'+m.id));state.undo=null;load();renderAll();};
+    $('#rawBackup').onclick=()=>{try{download(`alaada-saved-data-${today()}.json`,localStorage.getItem(STORAGE_KEY)||'[]');}catch(error){showToast(error.message,true);}};
+    window.addEventListener('storage',event=>{if(event.key!==STORAGE_KEY&&event.key!==null)return;state.undo=null;if($$('.modal-backdrop.open').length)notice('Records changed in another tab. Reload records before saving this draft.');else{load();renderAll();showToast('Updated from another tab.');}});
+    document.addEventListener('keydown',event=>{
+      const modal=$$('.modal-backdrop.open').at(-1);
+      if(event.key==='Escape'&&modal)hideModal('#'+modal.id);
+      if(event.key==='Tab'&&modal){const inputs=Array.from(modal.querySelectorAll('button,input,select,textarea')).filter(e=>!e.disabled&&e.type!=='hidden'&&e.getClientRects().length);const first=inputs[0],last=inputs.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}
+      if(!modal&&(event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();setView('directory');$('#directorySearch').focus();}
+    });
+  }
+  async function checkApi(){if(location.protocol==='file:'){$('#apiStatus').textContent='Local file mode';return;}try{const r=await fetch(`${API_BASE}/api/health`,{headers:{Accept:'application/json'},credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(90000)});if(!r.ok)throw Error();const p=await r.json();if(p.status!=='ok'||p.service!=='alaada-people')throw Error();$('#apiDot').classList.add('ok');$('#apiStatus').textContent='Backend connected';}catch{$('#apiStatus').textContent='Backend offline · local records available';}}
+  installFeatures();load();bindEvents();renderAll();setView('overview');checkApi();
+})();
   </script>
 </body>
 </html>
