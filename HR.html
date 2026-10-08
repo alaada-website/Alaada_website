@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Alaada People - local-only HR directory and document tracker">
+  <title>Alaada People — HR workspace</title>
+  <style>
+    :root {
+      --ink: #10131d;
+      --ink-2: #171b28;
+      --ink-3: #202638;
+      --panel: #ffffff;
+      --paper: #f5f7fb;
+      --wire: #e5e9f2;
+      --text: #172033;
+      --muted: #68738a;
+      --gold: #f0a500;
+      --gold-2: #ffc247;
+      --teal: #04b98b;
+      --blue: #3d8fff;
+      --red: #e45a67;
+      --amber: #efaa27;
+      --shadow: 0 18px 55px rgba(16, 19, 29, .12);
+      --radius: 18px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
+    body { background: var(--paper); color: var(--text); font: 14px/1.5 var(--font); }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    a { color: inherit; }
+    .app-shell { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 248px; flex: 0 0 248px; padding: 22px 16px; color: #d6dbea;
+      background: linear-gradient(160deg, var(--ink), #121827 72%, #1a2032);
+      display: flex; flex-direction: column; gap: 28px;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px; }
+    .brand-mark {
+      width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px;
+      color: #261700; background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      font-size: 19px; font-weight: 850; box-shadow: 0 8px 24px rgba(240,165,0,.27);
+    }
+    .brand strong { display: block; color: #fff; font-size: 16px; letter-spacing: -.02em; }
+    .brand small { display: block; color: #858fa8; font-size: 11px; margin-top: 1px; }
+    .nav-label { padding: 0 11px 7px; color: #707b94; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .nav { display: grid; gap: 5px; }
+    .nav button {
+      display: flex; align-items: center; gap: 11px; width: 100%; border: 1px solid transparent; border-radius: 11px;
+      padding: 11px 12px; color: #aab4cb; background: transparent; text-align: left; transition: .16s ease;
+    }
+    .nav button:hover { background: rgba(255,255,255,.06); color: #fff; }
+    .nav button.active { border-color: rgba(240,165,0,.25); background: rgba(240,165,0,.13); color: #ffd171; }
+    .nav-icon { width: 20px; text-align: center; font-size: 16px; }
+    .sidebar-bottom { margin-top: auto; display: grid; gap: 12px; }
+    .local-note { padding: 14px; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; background: rgba(255,255,255,.045); }
+    .local-note strong { display: block; color: #f6f7fb; font-size: 12px; }
+    .local-note span { display: block; color: #8994ab; font-size: 11px; margin-top: 4px; }
+    .api-status { display: flex; align-items: center; gap: 7px; color: #8d99b1; font-size: 11px; padding: 0 5px; }
+    .api-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
+    .api-dot.ok { background: var(--teal); box-shadow: 0 0 9px rgba(4,185,139,.65); }
+
+    .content { min-width: 0; flex: 1; }
+    .topbar {
+      min-height: 76px; padding: 18px 34px; border-bottom: 1px solid var(--wire); background: rgba(255,255,255,.82);
+      display: flex; align-items: center; justify-content: space-between; gap: 20px; position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(16px);
+    }
+    .page-heading h1 { margin: 0; color: var(--ink); font-size: 21px; letter-spacing: -.035em; }
+    .page-heading p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .top-actions { display: flex; align-items: center; gap: 9px; }
+    .btn {
+      min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--wire);
+      border-radius: 10px; padding: 0 13px; background: #fff; color: var(--text); font-weight: 700; font-size: 12px; transition: .16s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #c9d1e0; box-shadow: 0 6px 15px rgba(16,19,29,.07); }
+    .btn.primary { border-color: transparent; color: #211400; background: linear-gradient(135deg, var(--gold-2), var(--gold)); box-shadow: 0 7px 16px rgba(240,165,0,.2); }
+    .btn.ghost { background: transparent; }
+    .btn.danger { color: #b93645; border-color: #f2c8cd; background: #fff8f8; }
+    .btn.small { min-height: 31px; padding: 0 10px; font-size: 11px; }
+    .main { max-width: 1550px; margin: 0 auto; padding: 30px 34px 48px; }
+    .view { display: none; animation: fade-in .18s ease; }
+    .view.active { display: block; }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .eyebrow { color: var(--gold); font-size: 11px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+    .section-title { display: flex; align-items: flex-end; justify-content: space-between; gap: 15px; margin: 0 0 18px; }
+    .section-title h2 { margin: 0; color: var(--ink); font-size: 19px; letter-spacing: -.03em; }
+    .section-title p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .muted { color: var(--muted); }
+
+    .hero {
+      display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 180px; margin-bottom: 24px;
+      padding: 28px 32px; overflow: hidden; border: 1px solid #f1dfae; border-radius: 20px;
+      background: radial-gradient(circle at 82% 20%, rgba(255,194,71,.37), transparent 27%), linear-gradient(135deg, #fffdf7, #fff8e9);
+    }
+    .hero h2 { max-width: 650px; margin: 5px 0 7px; color: var(--ink); font-size: 28px; line-height: 1.13; letter-spacing: -.055em; }
+    .hero p { max-width: 600px; margin: 0; color: #6d5d38; font-size: 13px; }
+    .hero-illustration { display: grid; place-items: center; min-width: 145px; height: 120px; border-radius: 30px; transform: rotate(4deg); background: linear-gradient(145deg, #182033, #28334e); box-shadow: 0 20px 35px rgba(22,29,47,.2); }
+    .hero-illustration span { color: var(--gold-2); font-size: 55px; transform: rotate(-4deg); }
+
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; margin-bottom: 28px; }
+    .stat-card { min-height: 120px; padding: 17px 18px; border: 1px solid var(--wire); border-radius: var(--radius); background: var(--panel); box-shadow: 0 5px 18px rgba(18,27,47,.035); }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .stat-icon { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 10px; color: #8c5d00; background: #fff3d0; font-size: 15px; }
+    .stat-value { display: block; margin-top: 15px; color: var(--ink); font-size: 28px; line-height: 1; letter-spacing: -.055em; }
+    .stat-foot { display: block; margin-top: 7px; color: var(--muted); font-size: 11px; }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); gap: 20px; align-items: start; }
+    .card { border: 1px solid var(--wire); border-radius: var(--radius); background: var(--panel); box-shadow: 0 5px 18px rgba(18,27,47,.035); }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 19px; border-bottom: 1px solid var(--wire); }
+    .card-head h3 { margin: 0; color: var(--ink); font-size: 14px; }
+    .card-head span { color: var(--muted); font-size: 11px; }
+    .card-body { padding: 18px 19px; }
+    .mini-table { width: 100%; border-collapse: collapse; }
+    .mini-table th { padding: 0 8px 9px; color: #8b96aa; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
+    .mini-table td { padding: 12px 8px; border-top: 1px solid #eef1f6; color: var(--text); font-size: 12px; vertical-align: middle; }
+    .mini-table th:first-child, .mini-table td:first-child { padding-left: 0; }
+    .mini-table th:last-child, .mini-table td:last-child { padding-right: 0; text-align: right; }
+    .person { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .avatar { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: 10px; color: #7b5100; background: #fff1c8; font-size: 11px; font-weight: 850; }
+    .person strong { display: block; overflow: hidden; color: var(--ink); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .person small { display: block; color: var(--muted); font-size: 10px; }
+    .badge { display: inline-flex; align-items: center; width: fit-content; border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 800; white-space: nowrap; }
+    .badge.active { color: #08785d; background: #dff8ef; }
+    .badge.inactive { color: #68738a; background: #edf0f5; }
+    .badge.leave { color: #996506; background: #fff0ca; }
+    .badge.expiring { color: #a54b00; background: #ffebd7; }
+    .badge.missing { color: #a13b46; background: #ffe6e8; }
+    .empty { padding: 30px 15px; color: var(--muted); text-align: center; }
+    .empty strong { display: block; color: var(--text); font-size: 13px; }
+    .empty span { display: block; margin-top: 4px; font-size: 12px; }
+    .empty .btn { margin-top: 14px; }
+    .watch-list { display: grid; gap: 11px; }
+    .watch-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eef1f6; }
+    .watch-item:last-child { border-bottom: 0; padding-bottom: 0; }
+    .watch-bullet { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 10px; color: #a54b00; background: #fff0df; font-size: 14px; }
+    .watch-item strong { display: block; color: var(--ink); font-size: 12px; }
+    .watch-item span { display: block; color: var(--muted); font-size: 10px; }
+
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .search { position: relative; }
+    .search input { width: min(330px, 42vw); padding-left: 35px; }
+    .search span { position: absolute; top: 8px; left: 12px; color: #99a2b5; }
+    .field, .select, textarea, input[type="date"], input[type="email"], input[type="text"], input[type="tel"] { min-height: 38px; width: 100%; border: 1px solid #dce2ec; border-radius: 9px; outline: 0; padding: 0 11px; color: var(--text); background: #fff; transition: .15s ease; }
+    textarea { min-height: 88px; padding-top: 10px; resize: vertical; }
+    .field:focus, .select:focus, textarea:focus, input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(240,165,0,.13); }
+    .directory-card { overflow: hidden; }
+    .table-scroll { overflow: auto; }
+    .data-table { width: 100%; min-width: 1040px; border-collapse: collapse; }
+    .data-table th { padding: 12px 16px; border-bottom: 1px solid var(--wire); color: #8994aa; font-size: 10px; font-weight: 850; letter-spacing: .07em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+    .data-table td { padding: 13px 16px; border-bottom: 1px solid #eef1f6; color: var(--text); font-size: 12px; vertical-align: middle; }
+    .data-table tbody tr { transition: .12s ease; }
+    .data-table tbody tr:hover { background: #fffdf7; }
+    .data-table tbody tr:last-child td { border-bottom: 0; }
+    .data-table .sl { width: 55px; color: #95a0b4; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .data-table .actions { white-space: nowrap; text-align: right; }
+    .icon-btn { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 1px solid transparent; border-radius: 8px; color: #69768e; background: transparent; }
+    .icon-btn:hover { border-color: var(--wire); color: var(--ink); background: #fff; }
+    .icon-btn.delete:hover { border-color: #f2c8cd; color: var(--red); background: #fff5f6; }
+    .filter-pill { display: inline-flex; align-items: center; gap: 6px; color: #717d94; font-size: 11px; font-weight: 700; }
+    .filter-pill .select { min-height: 36px; width: auto; padding-right: 30px; font-size: 11px; }
+
+    .document-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .doc-card { padding: 18px; border: 1px solid var(--wire); border-radius: var(--radius); background: var(--panel); }
+    .doc-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .doc-card-head strong { color: var(--ink); font-size: 13px; }
+    .doc-card-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: #895e09; background: #fff1c8; }
+    .doc-count { margin: 18px 0 2px; color: var(--ink); font-size: 28px; font-weight: 800; letter-spacing: -.05em; }
+    .doc-caption { color: var(--muted); font-size: 11px; }
+    .progress { height: 6px; margin-top: 13px; overflow: hidden; border-radius: 99px; background: #eef1f6; }
+    .progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--gold), var(--teal)); }
+    .absence-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .absence-item { display: flex; align-items: center; gap: 11px; padding: 13px; border: 1px solid var(--wire); border-radius: 13px; background: #fff; }
+    .date-block { display: grid; place-items: center; width: 42px; height: 45px; border-radius: 10px; color: #9a6400; background: #fff2cf; line-height: 1; }
+    .date-block b { font-size: 17px; }
+    .date-block small { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .absence-item strong { display: block; color: var(--ink); font-size: 12px; }
+    .absence-item span { display: block; color: var(--muted); font-size: 10px; }
+
+    .modal-backdrop { display: none; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 30; padding: 22px; background: rgba(16,19,29,.5); backdrop-filter: blur(4px); }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(820px, 100%); max-height: calc(100vh - 44px); overflow: auto; border: 1px solid #fff; border-radius: 20px; background: #fff; box-shadow: var(--shadow); }
+    .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 24px 17px; border-bottom: 1px solid var(--wire); }
+    .modal-head h2 { margin: 0; color: var(--ink); font-size: 20px; letter-spacing: -.04em; }
+    .modal-head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .modal-close { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; color: var(--muted); background: #f4f6f9; font-size: 18px; }
+    .modal-close:hover { color: var(--ink); background: #e9edf3; }
+    .modal-body { padding: 21px 24px; }
+    .form-section { margin-bottom: 21px; }
+    .form-section:last-child { margin-bottom: 0; }
+    .form-section-title { display: flex; align-items: center; gap: 8px; margin: 0 0 11px; color: var(--ink); font-size: 12px; }
+    .form-section-title::before { width: 4px; height: 15px; border-radius: 99px; background: var(--gold); content: ""; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 15px; }
+    .form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .field-wrap label { display: block; margin: 0 0 5px; color: #657189; font-size: 11px; font-weight: 750; }
+    .field-wrap label span { color: var(--red); }
+    .modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 24px; border-top: 1px solid var(--wire); background: #fbfcfe; }
+    .modal-foot-note { color: var(--muted); font-size: 11px; }
+    .modal-actions { display: flex; gap: 9px; }
+    .hidden { display: none !important; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 60; max-width: 360px; padding: 12px 15px; border: 1px solid #bdeedf; border-radius: 12px; color: #096f57; background: #effdf8; box-shadow: var(--shadow); font-size: 12px; font-weight: 700; transform: translateY(15px); opacity: 0; pointer-events: none; transition: .2s ease; }
+    .toast.show { transform: none; opacity: 1; }
+    .toast.error { border-color: #f3c3c8; color: #a13b46; background: #fff5f6; }
+    .privacy-strip { display: flex; align-items: center; gap: 8px; margin-top: 20px; padding: 11px 13px; border: 1px dashed #dfc47a; border-radius: 11px; color: #7d672e; background: #fffaf0; font-size: 11px; }
+
+    @media (max-width: 1100px) {
+      .sidebar { width: 212px; flex-basis: 212px; }
+      .main { padding-inline: 24px; }
+      .topbar { padding-inline: 24px; }
+      .document-grid { grid-template-columns: repeat(3, minmax(175px, 1fr)); overflow: auto; }
+    }
+    @media (max-width: 820px) {
+      .app-shell { display: block; }
+      .sidebar { width: 100%; min-height: auto; padding: 13px 16px; gap: 13px; }
+      .sidebar-bottom, .nav-label, .local-note { display: none; }
+      .nav { display: flex; gap: 4px; overflow-x: auto; }
+      .nav button { width: auto; flex: 0 0 auto; padding: 8px 10px; }
+      .nav button span:last-child { display: none; }
+      .topbar { align-items: flex-start; padding: 17px 18px; }
+      .top-actions .btn:not(.primary) { display: none; }
+      .main { padding: 22px 18px 38px; }
+      .hero { min-height: auto; padding: 22px; }
+      .hero h2 { font-size: 23px; }
+      .hero-illustration { display: none; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+      .absence-list { grid-template-columns: 1fr; }
+      .modal-foot { align-items: flex-start; flex-direction: column; }
+      .modal-actions { width: 100%; }
+      .modal-actions .btn { flex: 1; }
+    }
+    @media (max-width: 480px) {
+      .topbar { display: block; }
+      .top-actions { margin-top: 13px; }
+      .top-actions .btn.primary { width: 100%; }
+      .stats { gap: 10px; }
+      .stat-card { padding: 14px; }
+      .stat-value { font-size: 24px; }
+      .toolbar { display: block; }
+      .toolbar-left, .toolbar-right { margin-bottom: 9px; }
+      .search, .search input { width: 100%; }
+      .filter-pill { flex: 1; }
+      .filter-pill .select { width: 100%; }
+      .modal-backdrop { padding: 0; }
+      .modal { max-height: 100vh; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">A</div>
+        <div><strong>Alaada People</strong><small>Local HR workspace</small></div>
+      </div>
+      <div>
+        <div class="nav-label">Workspace</div>
+        <nav class="nav" aria-label="Primary navigation">
+          <button class="active" data-view="overview"><span class="nav-icon">⌂</span><span>Overview</span></button>
+          <button data-view="directory"><span class="nav-icon">♙</span><span>People directory</span></button>
+          <button data-view="absences"><span class="nav-icon">◷</span><span>Absences</span></button>
+          <button data-view="documents"><span class="nav-icon">▣</span><span>Documents</span></button>
+        </nav>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="local-note"><strong>Private by default</strong><span>Records stay in this browser's local storage. No account or server database is used.</span></div>
+        <div class="api-status"><i class="api-dot" id="apiDot"></i><span id="apiStatus">FastAPI status: checking…</span></div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <div class="page-heading"><h1 id="pageTitle">Overview</h1><p id="pageSubtitle">A calm view of your people records and upcoming actions.</p></div>
+        <div class="top-actions">
+          <button class="btn" id="exportJsonBtn" type="button">⇩ Export JSON</button>
+          <button class="btn" id="exportCsvBtn" type="button">⇩ Export CSV</button>
+          <button class="btn primary" id="addEmployeeBtn" type="button">＋ Add employee</button>
+        </div>
+      </header>
+
+      <main class="main">
+        <section class="view active" id="view-overview">
+          <div class="hero">
+            <div><div class="eyebrow">People operations</div><h2>Keep every people detail in one clear place.</h2><p>Track contact details, identity documents, visas, leave dates and employee notes without leaving your local workspace.</p></div>
+            <div class="hero-illustration" aria-hidden="true"><span>♙</span></div>
+          </div>
+          <div class="stats">
+            <article class="stat-card"><div class="stat-top"><span>Total people</span><span class="stat-icon">♙</span></div><b class="stat-value" id="statTotal">0</b><span class="stat-foot">All saved employee records</span></article>
+            <article class="stat-card"><div class="stat-top"><span>Active employees</span><span class="stat-icon">✓</span></div><b class="stat-value" id="statActive">0</b><span class="stat-foot" id="statActiveFoot">0% of your directory</span></article>
+            <article class="stat-card"><div class="stat-top"><span>Document watch</span><span class="stat-icon">▣</span></div><b class="stat-value" id="statDocs">0</b><span class="stat-foot">Missing or expiring soon</span></article>
+            <article class="stat-card"><div class="stat-top"><span>Upcoming absence</span><span class="stat-icon">◷</span></div><b class="stat-value" id="statAbsences">0</b><span class="stat-foot">Within the next 30 days</span></article>
+          </div>
+          <div class="dashboard-grid">
+            <section class="card"><div class="card-head"><h3>Recently added</h3><button class="btn small ghost" type="button" data-go="directory">View directory →</button></div><div class="card-body" id="recentEmployees"></div></section>
+            <section class="card"><div class="card-head"><h3>Needs attention</h3><span id="attentionCount">0 items</span></div><div class="card-body" id="attentionList"></div></section>
+          </div>
+        </section>
+
+        <section class="view" id="view-directory">
+          <div class="section-title"><div><div class="eyebrow">Employee records</div><h2>People directory</h2><p>Search and maintain your local employee register.</p></div><button class="btn primary" type="button" data-open-add>＋ Add employee</button></div>
+          <div class="toolbar"><div class="toolbar-left"><label class="search"><span>⌕</span><input id="directorySearch" type="search" placeholder="Search name, email, phone…" autocomplete="off"></label><label class="filter-pill">Status <select class="select" id="statusFilter"><option value="all">All statuses</option><option value="active">Active</option><option value="on-leave">On leave</option><option value="inactive">Inactive</option></select></label></div><div class="toolbar-right"><span class="muted" id="directoryCount">0 records</span></div></div>
+          <section class="card directory-card"><div class="table-scroll"><table class="data-table"><thead><tr><th class="sl">Sl no.</th><th>Employee</th><th>Contact</th><th>Documents</th><th>Absence</th><th>Status</th><th class="actions">Actions</th></tr></thead><tbody id="directoryRows"></tbody></table></div></section>
+          <div class="privacy-strip">⌁ <span>Local-only mode: exports are created on this device and no employee data is sent to a remote service.</span></div>
+        </section>
+
+        <section class="view" id="view-absences">
+          <div class="section-title"><div><div class="eyebrow">Time away</div><h2>Absences</h2><p>See recorded absence dates and reasons at a glance.</p></div><button class="btn primary" type="button" data-open-add>＋ Add employee</button></div>
+          <div class="stats"><article class="stat-card"><div class="stat-top"><span>Next 7 days</span><span class="stat-icon">◷</span></div><b class="stat-value" id="absenceWeek">0</b><span class="stat-foot">Scheduled absence dates</span></article><article class="stat-card"><div class="stat-top"><span>Next 30 days</span><span class="stat-icon">↗</span></div><b class="stat-value" id="absenceMonth">0</b><span class="stat-foot">Scheduled absence dates</span></article><article class="stat-card"><div class="stat-top"><span>Recorded dates</span><span class="stat-icon">▤</span></div><b class="stat-value" id="absenceRecorded">0</b><span class="stat-foot">People with an absence date</span></article></div>
+          <section class="card"><div class="card-head"><h3>Absence calendar list</h3><span id="absenceRangeLabel">Sorted by date</span></div><div class="card-body"><div class="absence-list" id="absenceList"></div></div></section>
+        </section>
+
+        <section class="view" id="view-documents">
+          <div class="section-title"><div><div class="eyebrow">Compliance snapshot</div><h2>Documents</h2><p>Track identity documents without uploading them anywhere.</p></div><button class="btn primary" type="button" data-open-add>＋ Add employee</button></div>
+          <div class="document-grid"><article class="doc-card"><div class="doc-card-head"><strong>Passport</strong><span class="doc-card-icon">⌁</span></div><div class="doc-count" id="passportCount">0/0</div><div class="doc-caption">records complete</div><div class="progress"><span id="passportProgress" style="width:0%"></span></div></article><article class="doc-card"><div class="doc-card-head"><strong>Visa</strong><span class="doc-card-icon">◈</span></div><div class="doc-count" id="visaCount">0/0</div><div class="doc-caption">records complete</div><div class="progress"><span id="visaProgress" style="width:0%"></span></div></article><article class="doc-card"><div class="doc-card-head"><strong>Aadhaar card</strong><span class="doc-card-icon">▤</span></div><div class="doc-count" id="aadhaarCount">0/0</div><div class="doc-caption">records complete</div><div class="progress"><span id="aadhaarProgress" style="width:0%"></span></div></article></div>
+          <section class="card directory-card"><div class="card-head"><h3>Document register</h3><span>Numbers are masked in the table</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Employee</th><th>Passport</th><th>Visa</th><th>Aadhaar card</th><th>Actions</th></tr></thead><tbody id="documentRows"></tbody></table></div></section>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="employeeModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <form class="modal" id="employeeForm">
+      <div class="modal-head"><div><h2 id="modalTitle">Add employee</h2><p>All fields stay on this device in browser local storage.</p></div><button class="modal-close" id="closeModalBtn" type="button" aria-label="Close">×</button></div>
+      <div class="modal-body">
+        <input id="employeeRecordId" type="hidden">
+        <section class="form-section"><h3 class="form-section-title">Basic information</h3><div class="form-grid three"><div class="field-wrap"><label for="serialNumber">Sl no.</label><input class="field" id="serialNumber" type="text" readonly></div><div class="field-wrap"><label for="employeeName">Full name <span>*</span></label><input class="field" id="employeeName" type="text" required maxlength="100" placeholder="e.g. Arzo Das"></div><div class="field-wrap"><label for="employeeStatus">Status</label><select class="select" id="employeeStatus"><option value="active">Active</option><option value="on-leave">On leave</option><option value="inactive">Inactive</option></select></div></div><div class="form-grid" style="margin-top:13px"><div class="field-wrap"><label for="designation">Designation</label><input class="field" id="designation" type="text" maxlength="80" placeholder="e.g. Product manager"></div><div class="field-wrap"><label for="department">Department</label><input class="field" id="department" type="text" maxlength="80" placeholder="e.g. Operations"></div><div class="field-wrap"><label for="joiningDate">Joining date</label><input class="field" id="joiningDate" type="date"></div><div class="field-wrap"><label for="employmentType">Employment type</label><select class="select" id="employmentType"><option value="full-time">Full-time</option><option value="part-time">Part-time</option><option value="contract">Contract</option><option value="intern">Intern</option></select></div></div></section>
+        <section class="form-section"><h3 class="form-section-title">Contact details</h3><div class="form-grid"><div class="field-wrap"><label for="address">Address</label><textarea id="address" maxlength="500" placeholder="Full residential address"></textarea></div><div><div class="field-wrap"><label for="phone">Phone</label><input class="field" id="phone" type="tel" maxlength="30" placeholder="+91 …"></div><div class="field-wrap" style="margin-top:13px"><label for="email">Email</label><input class="field" id="email" type="email" maxlength="150" placeholder="name@company.com"></div></div></div><div class="form-grid three" style="margin-top:13px"><div class="field-wrap"><label for="emergencyContact">Emergency contact</label><input class="field" id="emergencyContact" type="text" maxlength="120" placeholder="Name and phone"></div><div class="field-wrap"><label for="bloodGroup">Blood group</label><select class="select" id="bloodGroup"><option value="">Not provided</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div><div class="field-wrap"><label for="absenceDate">Date of absence</label><input class="field" id="absenceDate" type="date"></div></div></section>
+        <section class="form-section"><h3 class="form-section-title">Identity documents</h3><div class="form-grid three"><div class="field-wrap"><label for="passportNumber">Passport number</label><input class="field" id="passportNumber" type="text" maxlength="40" placeholder="Passport ID"></div><div class="field-wrap"><label for="passportExpiry">Passport expiry</label><input class="field" id="passportExpiry" type="date"></div><div class="field-wrap"><label for="visaNumber">Visa number</label><input class="field" id="visaNumber" type="text" maxlength="40" placeholder="Visa ID"></div><div class="field-wrap"><label for="visaExpiry">Visa expiry</label><input class="field" id="visaExpiry" type="date"></div><div class="field-wrap"><label for="aadhaarNumber">Aadhaar card number</label><input class="field" id="aadhaarNumber" type="text" inputmode="numeric" maxlength="20" placeholder="12-digit number"></div><div class="field-wrap"><label for="absenceReason">Absence reason</label><input class="field" id="absenceReason" type="text" maxlength="160" placeholder="Optional note"></div></div></section>
+        <section class="form-section"><h3 class="form-section-title">Notes</h3><div class="field-wrap"><label for="notes">Internal notes</label><textarea id="notes" maxlength="1000" placeholder="Anything the HR team should remember"></textarea></div></section>
+      </div>
+      <div class="modal-foot"><span class="modal-foot-note">Fields marked * are required.</span><div class="modal-actions"><button class="btn" id="cancelModalBtn" type="button">Cancel</button><button class="btn primary" type="submit">Save employee</button></div></div>
+    </form>
+  </div>
+  <input class="hidden" id="importInput" type="file" accept="application/json,.json">
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    (() => {
+      'use strict';
+      const STORAGE_KEY = 'alaada_hr_employees_v1';
+      const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+        ? '' : 'https://alaada-hr-backend.onrender.com';
+      const state = { employees: [], view: 'overview', search: '', status: 'all', editingId: null };
+      const $ = (selector) => document.querySelector(selector);
+      const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+      const today = () => new Date().toISOString().slice(0, 10);
+      const makeId = () => `employee_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+      const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || '?';
+      const formatDate = (value, fallback = '—') => { if (!value) return fallback; const date = new Date(`${value}T00:00:00`); return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }); };
+      const dateParts = (value) => { if (!value) return { day: '—', month: '' }; const date = new Date(`${value}T00:00:00`); return { day: String(date.getDate()).padStart(2, '0'), month: date.toLocaleDateString(undefined, { month: 'short' }) }; };
+      const statusLabel = (value) => ({ active: 'Active', 'on-leave': 'On leave', inactive: 'Inactive' }[value] || 'Active');
+      const badge = (type, label) => `<span class="badge ${type}">${esc(label)}</span>`;
+      const documentState = (employee, numberKey, expiryKey) => {
+        const number = String(employee[numberKey] || '').trim();
+        const expiry = employee[expiryKey] || '';
+        if (!number) return { type: 'missing', label: 'Missing' };
+        if (expiry) {
+          const days = Math.ceil((new Date(`${expiry}T23:59:59`) - new Date()) / 86400000);
+          if (days < 0) return { type: 'missing', label: 'Expired' };
+          if (days <= 60) return { type: 'expiring', label: `Expires ${formatDate(expiry)}` };
+        }
+        return { type: 'active', label: expiry ? `Valid to ${formatDate(expiry)}` : 'Number saved' };
+      };
+      const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state.employees));
+      const load = () => {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          state.employees = Array.isArray(parsed) ? parsed.filter((record) => record && typeof record === 'object').map(normalizeEmployee) : [];
+        } catch (error) { state.employees = []; showToast('Saved local records could not be read; a fresh directory is ready.', true); }
+      };
+      const normalizeEmployee = (record) => ({
+        id: record.id || makeId(), serialNumber: Number(record.serialNumber) || 0, name: String(record.name || '').trim(), status: ['active', 'on-leave', 'inactive'].includes(record.status) ? record.status : 'active',
+        designation: String(record.designation || ''), department: String(record.department || ''), joiningDate: String(record.joiningDate || ''), employmentType: String(record.employmentType || 'full-time'), address: String(record.address || ''), phone: String(record.phone || ''), email: String(record.email || ''), emergencyContact: String(record.emergencyContact || ''), bloodGroup: String(record.bloodGroup || ''), absenceDate: String(record.absenceDate || ''), absenceReason: String(record.absenceReason || ''), passportNumber: String(record.passportNumber || ''), passportExpiry: String(record.passportExpiry || ''), visaNumber: String(record.visaNumber || ''), visaExpiry: String(record.visaExpiry || ''), aadhaarNumber: String(record.aadhaarNumber || ''), notes: String(record.notes || ''), createdAt: record.createdAt || new Date().toISOString(), updatedAt: record.updatedAt || new Date().toISOString()
+      });
+      const assignSerial = () => state.employees.reduce((max, item) => Math.max(max, Number(item.serialNumber) || 0), 0) + 1;
+      const sortedEmployees = (employees = state.employees) => [...employees].sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
+      const filteredEmployees = () => sortedEmployees(state.employees.filter((employee) => {
+        const query = state.search.trim().toLowerCase();
+        const haystack = [employee.name, employee.email, employee.phone, employee.designation, employee.department, employee.address].join(' ').toLowerCase();
+        return (!query || haystack.includes(query)) && (state.status === 'all' || employee.status === state.status);
+      }));
+      const withinDays = (date, days) => { if (!date) return false; const diff = Math.ceil((new Date(`${date}T23:59:59`) - new Date()) / 86400000); return diff >= 0 && diff <= days; };
+      const documentAlerts = (employee) => [documentState(employee, 'passportNumber', 'passportExpiry'), documentState(employee, 'visaNumber', 'visaExpiry')].filter((item) => item.type !== 'active').length + (!employee.aadhaarNumber ? 1 : 0);
+      const allDocumentAlerts = () => state.employees.reduce((total, employee) => total + documentAlerts(employee), 0);
+
+      function showToast(message, error = false) { const toast = $('#toast'); toast.textContent = message; toast.className = `toast show${error ? ' error' : ''}`; clearTimeout(showToast.timer); showToast.timer = setTimeout(() => { toast.className = 'toast'; }, 2800); }
+      function renderStats() {
+        const total = state.employees.length; const active = state.employees.filter((employee) => employee.status === 'active').length; const alerts = allDocumentAlerts(); const upcoming = state.employees.filter((employee) => withinDays(employee.absenceDate, 30)).length;
+        $('#statTotal').textContent = total; $('#statActive').textContent = active; $('#statActiveFoot').textContent = total ? `${Math.round(active / total * 100)}% of your directory` : '0% of your directory'; $('#statDocs').textContent = alerts; $('#statAbsences').textContent = upcoming;
+        $('#absenceWeek').textContent = state.employees.filter((employee) => withinDays(employee.absenceDate, 7)).length; $('#absenceMonth').textContent = upcoming; $('#absenceRecorded').textContent = state.employees.filter((employee) => employee.absenceDate).length;
+      }
+      function renderRecent() {
+        const target = $('#recentEmployees'); const recent = [...state.employees].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+        if (!recent.length) { target.innerHTML = `<div class="empty"><strong>Your directory is ready.</strong><span>Add your first employee to start tracking records.</span><button class="btn primary small" type="button" data-open-add>Add employee</button></div>`; return; }
+        target.innerHTML = `<table class="mini-table"><thead><tr><th>Employee</th><th>Department</th><th>Status</th></tr></thead><tbody>${recent.map((employee) => `<tr><td><div class="person"><span class="avatar">${esc(initials(employee.name))}</span><span><strong>${esc(employee.name)}</strong><small>${esc(employee.designation || 'No designation')}</small></span></div></td><td>${esc(employee.department || '—')}</td><td>${badge(employee.status === 'on-leave' ? 'leave' : employee.status, statusLabel(employee.status))}</td></tr>`).join('')}</tbody></table>`;
+      }
+      function renderAttention() {
+        const target = $('#attentionList'); const rows = [];
+        state.employees.forEach((employee) => { if (documentAlerts(employee)) rows.push({ icon: '▣', title: employee.name, detail: `${documentAlerts(employee)} document item${documentAlerts(employee) === 1 ? '' : 's'} need attention` }); if (withinDays(employee.absenceDate, 30)) rows.push({ icon: '◷', title: employee.name, detail: `Absence on ${formatDate(employee.absenceDate)}` }); });
+        $('#attentionCount').textContent = `${rows.length} item${rows.length === 1 ? '' : 's'}`;
+        target.innerHTML = rows.length ? `<div class="watch-list">${rows.slice(0, 7).map((row) => `<div class="watch-item"><span class="watch-bullet">${row.icon}</span><span><strong>${esc(row.title)}</strong><span>${esc(row.detail)}</span></span></div>`).join('')}</div>` : `<div class="empty"><strong>Nothing urgent here.</strong><span>Missing documents and upcoming absences will show up here.</span></div>`;
+      }
+      function renderDirectory() {
+        const rows = $('#directoryRows'); const employees = filteredEmployees(); $('#directoryCount').textContent = `${employees.length} record${employees.length === 1 ? '' : 's'}`;
+        rows.innerHTML = employees.length ? employees.map((employee) => { const passport = documentState(employee, 'passportNumber', 'passportExpiry'); const visa = documentState(employee, 'visaNumber', 'visaExpiry'); return `<tr><td class="sl">${esc(employee.serialNumber || '—')}</td><td><div class="person"><span class="avatar">${esc(initials(employee.name))}</span><span><strong>${esc(employee.name)}</strong><small>${esc([employee.designation, employee.department].filter(Boolean).join(' · ') || 'No role details')}</small></span></div></td><td><strong>${esc(employee.phone || '—')}</strong><small class="muted">${esc(employee.email || '—')}</small></td><td><div style="display:grid;gap:4px">${badge(passport.type, `Passport: ${passport.type === 'active' ? 'OK' : passport.label}`)}${badge(visa.type, `Visa: ${visa.type === 'active' ? 'OK' : visa.label}`)}</div></td><td>${employee.absenceDate ? `<strong>${esc(formatDate(employee.absenceDate))}</strong><small class="muted">${esc(employee.absenceReason || 'Scheduled')}</small>` : '<span class="muted">—</span>'}</td><td>${badge(employee.status === 'on-leave' ? 'leave' : employee.status, statusLabel(employee.status))}</td><td class="actions"><button class="icon-btn" type="button" data-edit="${esc(employee.id)}" title="Edit">✎</button><button class="icon-btn delete" type="button" data-delete="${esc(employee.id)}" title="Delete">⌫</button></td></tr>`; }).join('') : `<tr><td colspan="7"><div class="empty"><strong>No matching employees.</strong><span>Adjust the search or add a new employee.</span><button class="btn primary small" type="button" data-open-add>Add employee</button></div></td></tr>`;
+      }
+      function mask(value) { const clean = String(value || '').replace(/\s+/g, ''); if (!clean) return '—'; return clean.length <= 4 ? `••••${clean}` : `••••••${clean.slice(-4)}`; }
+      function renderDocuments() {
+        const total = state.employees.length; const passport = state.employees.filter((employee) => employee.passportNumber).length; const visa = state.employees.filter((employee) => employee.visaNumber).length; const aadhaar = state.employees.filter((employee) => employee.aadhaarNumber).length;
+        [['passport', passport], ['visa', visa], ['aadhaar', aadhaar]].forEach(([key, count]) => { $(`#${key}Count`).textContent = `${count}/${total}`; $(`#${key}Progress`).style.width = total ? `${count / total * 100}%` : '0%'; });
+        $('#documentRows').innerHTML = total ? sortedEmployees().map((employee) => { const passportState = documentState(employee, 'passportNumber', 'passportExpiry'); const visaState = documentState(employee, 'visaNumber', 'visaExpiry'); return `<tr><td><div class="person"><span class="avatar">${esc(initials(employee.name))}</span><span><strong>${esc(employee.name)}</strong><small>${esc(employee.department || 'No department')}</small></span></div></td><td><strong>${esc(mask(employee.passportNumber))}</strong><small class="muted">${esc(passportState.label)}</small></td><td><strong>${esc(mask(employee.visaNumber))}</strong><small class="muted">${esc(visaState.label)}</small></td><td><strong>${esc(mask(employee.aadhaarNumber))}</strong><small class="muted">${employee.aadhaarNumber ? 'Number saved' : 'Missing'}</small></td><td class="actions"><button class="icon-btn" type="button" data-edit="${esc(employee.id)}" title="Edit">✎</button></td></tr>`; }).join('') : `<tr><td colspan="5"><div class="empty"><strong>No document records yet.</strong><span>Add an employee to begin your document register.</span><button class="btn primary small" type="button" data-open-add>Add employee</button></div></td></tr>`;
+      }
+      function renderAbsences() {
+        const target = $('#absenceList'); const list = state.employees.filter((employee) => employee.absenceDate).sort((a, b) => a.absenceDate.localeCompare(b.absenceDate));
+        target.innerHTML = list.length ? list.map((employee) => { const parts = dateParts(employee.absenceDate); return `<article class="absence-item"><span class="date-block"><b>${esc(parts.day)}</b><small>${esc(parts.month)}</small></span><span><strong>${esc(employee.name)}</strong><span>${esc(employee.absenceReason || 'Absence recorded')} · ${esc(employee.department || 'No department')}</span></span><button class="icon-btn" type="button" data-edit="${esc(employee.id)}" title="Edit absence" style="margin-left:auto">✎</button></article>`; }).join('') : `<div class="empty" style="grid-column:1/-1"><strong>No absence dates recorded.</strong><span>Add an absence date to an employee record and it will appear here.</span></div>`;
+      }
+      function renderAll() { renderStats(); renderRecent(); renderAttention(); renderDirectory(); renderDocuments(); renderAbsences(); bindDynamicButtons(); }
+      function openModal(employee = null) {
+        state.editingId = employee ? employee.id : null; $('#modalTitle').textContent = employee ? 'Edit employee' : 'Add employee'; $('#serialNumber').value = employee ? employee.serialNumber : assignSerial(); $('#employeeRecordId').value = employee ? employee.id : '';
+        const fields = ['name', 'status', 'designation', 'department', 'joiningDate', 'employmentType', 'address', 'phone', 'email', 'emergencyContact', 'bloodGroup', 'absenceDate', 'passportNumber', 'passportExpiry', 'visaNumber', 'visaExpiry', 'aadhaarNumber', 'absenceReason', 'notes']; const fieldIds = { name: 'employeeName', status: 'employeeStatus' }; fields.forEach((field) => { const element = $(`#${fieldIds[field] || field}`); if (element) element.value = employee?.[field] || (field === 'status' ? 'active' : field === 'employmentType' ? 'full-time' : ''); }); $('#employeeModal').classList.add('open'); setTimeout(() => $('#employeeName').focus(), 30); }
+      function closeModal() { $('#employeeModal').classList.remove('open'); state.editingId = null; $('#employeeForm').reset(); }
+      function formRecord() { return normalizeEmployee({ id: state.editingId || makeId(), serialNumber: Number($('#serialNumber').value) || assignSerial(), name: $('#employeeName').value, status: $('#employeeStatus').value, designation: $('#designation').value, department: $('#department').value, joiningDate: $('#joiningDate').value, employmentType: $('#employmentType').value, address: $('#address').value, phone: $('#phone').value, email: $('#email').value, emergencyContact: $('#emergencyContact').value, bloodGroup: $('#bloodGroup').value, absenceDate: $('#absenceDate').value, absenceReason: $('#absenceReason').value, passportNumber: $('#passportNumber').value, passportExpiry: $('#passportExpiry').value, visaNumber: $('#visaNumber').value, visaExpiry: $('#visaExpiry').value, aadhaarNumber: $('#aadhaarNumber').value, notes: $('#notes').value, createdAt: state.editingId ? (state.employees.find((employee) => employee.id === state.editingId)?.createdAt || new Date().toISOString()) : new Date().toISOString(), updatedAt: new Date().toISOString() }); }
+      function download(filename, content, mime) { const blob = new Blob([content], { type: mime }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = filename; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+      function exportJson() { download(`alaada-people-${today()}.json`, JSON.stringify({ exportedAt: new Date().toISOString(), source: 'Alaada People local HR workspace', employees: state.employees }, null, 2), 'application/json'); showToast('JSON backup exported to this device.'); }
+      function csvCell(value) { const text = String(value ?? ''); return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text; }
+      function exportCsv() { const columns = ['slNo', 'name', 'status', 'designation', 'department', 'joiningDate', 'employmentType', 'address', 'phone', 'email', 'emergencyContact', 'bloodGroup', 'absenceDate', 'absenceReason', 'passportNumber', 'passportExpiry', 'visaNumber', 'visaExpiry', 'aadhaarNumber', 'notes']; const lines = [columns.join(','), ...sortedEmployees().map((employee) => columns.map((column) => csvCell(column === 'slNo' ? employee.serialNumber : employee[column])).join(','))]; download(`alaada-people-${today()}.csv`, lines.join('\n'), 'text/csv;charset=utf-8'); showToast('CSV export created.'); }
+      function importJson(file) { const reader = new FileReader(); reader.onload = () => { try { const parsed = JSON.parse(reader.result); const imported = Array.isArray(parsed) ? parsed : parsed.employees; if (!Array.isArray(imported)) throw new Error('Expected an employees array'); const records = imported.map(normalizeEmployee).filter((employee) => employee.name); const replace = window.confirm(`Import ${records.length} employee record${records.length === 1 ? '' : 's'} and replace the current local directory?`); if (!replace) return; state.employees = records.map((employee, index) => ({ ...employee, serialNumber: employee.serialNumber || index + 1 })); save(); renderAll(); showToast(`${records.length} employee record${records.length === 1 ? '' : 's'} imported.`); } catch (error) { showToast('Import failed: choose a valid Alaada People JSON export.', true); } }; reader.readAsText(file); }
+      async function checkApi() {
+        if (window.location.protocol === 'file:') { $('#apiStatus').textContent = 'Local file mode'; return; }
+        try {
+          const response = await fetch(`${API_BASE}/api/health`, {
+            headers: { Accept: 'application/json' }, credentials: 'omit', cache: 'no-store',
+            signal: AbortSignal.timeout(90000)
+          });
+          if (!response.ok) throw new Error('API unavailable');
+          const payload = await response.json();
+          if (payload.status !== 'ok' || payload.service !== 'alaada-people') throw new Error('Unexpected service');
+          $('#apiDot').classList.add('ok'); $('#apiStatus').textContent = 'Backend connected';
+        } catch (error) { $('#apiStatus').textContent = 'Backend offline · local records available'; }
+      }
+      function setView(view) { state.view = view; $$('.nav button').forEach((button) => button.classList.toggle('active', button.dataset.view === view)); $$('.view').forEach((section) => section.classList.toggle('active', section.id === `view-${view}`)); const copy = { overview: ['Overview', 'A calm view of your people records and upcoming actions.'], directory: ['People directory', 'Search and maintain your local employee register.'], absences: ['Absences', 'See recorded absence dates and reasons at a glance.'], documents: ['Documents', 'Track identity documents without uploading them anywhere.'] }[view]; $('#pageTitle').textContent = copy[0]; $('#pageSubtitle').textContent = copy[1]; }
+      function bindDynamicButtons() { $$('[data-open-add]').forEach((button) => { button.onclick = () => openModal(); }); $$('[data-go="directory"]').forEach((button) => { button.onclick = () => setView('directory'); }); $$('[data-edit]').forEach((button) => { button.onclick = () => { const employee = state.employees.find((item) => item.id === button.dataset.edit); if (employee) openModal(employee); }; }); $$('[data-delete]').forEach((button) => { button.onclick = () => { const employee = state.employees.find((item) => item.id === button.dataset.delete); if (!employee) return; if (!window.confirm(`Delete ${employee.name}'s local employee record?`)) return; state.employees = state.employees.filter((item) => item.id !== employee.id); save(); renderAll(); showToast('Employee record deleted.'); }; }); }
+      function bindEvents() {
+        $$('.nav button').forEach((button) => button.addEventListener('click', () => setView(button.dataset.view))); $('#addEmployeeBtn').addEventListener('click', () => openModal()); $('#closeModalBtn').addEventListener('click', closeModal); $('#cancelModalBtn').addEventListener('click', closeModal); $('#employeeModal').addEventListener('click', (event) => { if (event.target === $('#employeeModal')) closeModal(); }); $('#employeeForm').addEventListener('submit', (event) => { event.preventDefault(); const record = formRecord(); if (!record.name) { showToast('Full name is required.', true); $('#employeeName').focus(); return; } if (record.email && !/^\S+@\S+\.\S+$/.test(record.email)) { showToast('Enter a valid email address or leave it blank.', true); $('#email').focus(); return; } if (record.aadhaarNumber && !/^[\d\s-]{4,20}$/.test(record.aadhaarNumber)) { showToast('Aadhaar card number should contain digits only.', true); $('#aadhaarNumber').focus(); return; } const existingIndex = state.employees.findIndex((employee) => employee.id === record.id); if (existingIndex >= 0) state.employees[existingIndex] = record; else state.employees.push(record); save(); closeModal(); renderAll(); showToast(existingIndex >= 0 ? 'Employee record updated.' : 'Employee added to your local directory.'); }); $('#directorySearch').addEventListener('input', (event) => { state.search = event.target.value; renderDirectory(); bindDynamicButtons(); }); $('#statusFilter').addEventListener('change', (event) => { state.status = event.target.value; renderDirectory(); bindDynamicButtons(); }); $('#exportJsonBtn').addEventListener('click', exportJson); $('#exportCsvBtn').addEventListener('click', exportCsv); $('#importInput').addEventListener('change', (event) => { if (event.target.files[0]) importJson(event.target.files[0]); event.target.value = ''; }); document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && $('#employeeModal').classList.contains('open')) closeModal(); if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setView('directory'); $('#directorySearch').focus(); } }); }
+      function addImportButton() { const toolbar = document.querySelector('#view-directory .toolbar-right'); const button = document.createElement('button'); button.className = 'btn small'; button.type = 'button'; button.textContent = '⇧ Import JSON'; button.addEventListener('click', () => $('#importInput').click()); toolbar.prepend(button); }
+      load(); bindEvents(); addImportButton(); renderAll(); checkApi();
+    })();
+  </script>
+</body>
+</html>
