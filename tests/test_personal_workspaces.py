@@ -513,7 +513,9 @@ def test_orbit_context_isolation_and_revocation_during_execution(tmp_path, revok
         assert len(messages)==(1 if revoked else 2)
         assert row['version']==(1 if revoked else 2)
     if not revoked:
-        assert reply(org,conversation).status_code==409
+        replay = reply(org,conversation)
+        assert replay.status_code==200 and replay.headers['x-alaada-replayed']=='true'
+        assert replay.json()==result.json()
         assert len(calls)==1
 
 
@@ -915,13 +917,13 @@ def test_analyser_signed_scope_persistence_and_revocation(tmp_path,scenario):
         if req.url.path=='/workspace-gateway/health':
             return httpx.Response(200,json={'ok':True},headers={} if scenario=='unsigned' else {'x-alaada-workspace-enforced':'v1'})
         if scenario=='revoked':users['alice']=m.Identity('alice')
-        return httpx.Response(200,json={'summary':'private report'},headers={'x-alaada-workspace-enforced':'v1'})
+        return httpx.Response(200,json={'ai_summary':'private report','summary':{key:{} for key in ('seo','security','accessibility','dom','resources')}},headers={'x-alaada-workspace-enforced':'v1'})
     app=m.create_app(tmp_path/'analyser.db',authenticate=auth,analyser_url='http://127.0.0.1',analyser_secret=secret,analyser_transport=httpx.MockTransport(backend))
     client=TestClient(app)
     personal=client.get('/api/workspaces',headers={'Authorization':'Bearer alice'}).json()['workspaces'][0]['id']
     org=app.state.store.organisation('team','Enterprise')
     def run(wid,user='alice'):
-        return client.post(f'/api/workspaces/{wid}/analyser/analyze',json={'url':'https://example.com'},headers={'Authorization':'Bearer '+user,'X-Alaada-Workspace':wid})
+        return client.post(f'/api/workspaces/{wid}/analyser/analyze',json={'url':'https://example.com'},headers={'Authorization':'Bearer '+user,'X-Alaada-Workspace':wid,'X-Alaada-Operation':'analysis-test-0001'})
     assert run(personal,'admin').status_code==403
     result=run(org)
     assert result.status_code=={'success':200,'revoked':403,'unsigned':502}[scenario],result.text
