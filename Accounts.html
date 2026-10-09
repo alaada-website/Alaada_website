@@ -3730,6 +3730,16 @@ function addDocLine(tbodyId, totalId){
   updateDocTotal(tbodyId, totalId);
 }
 function updateDocTotal(tbodyId, totalId){
+  if (tbodyId === 'si-lines-body' || tbodyId === 'pb-lines-body') {
+    const totalEl = document.getElementById(totalId);
+    try {
+      const lines = collectTradingLines(tbodyId, 'price', false);
+      const cents = lines.reduce((total,line)=>total + tradingLineCents(line.quantity,line.price),0n);
+      const text = `${cents / 100n}.${String(cents % 100n).padStart(2,'0')}`;
+      if (totalEl) totalEl.textContent = `Subtotal: ${text}`;
+      return text;
+    } catch(e) { if (totalEl) totalEl.textContent = e.message; return null; }
+  }
   const rows = document.querySelectorAll(`#${tbodyId} tr`);
   let total = 0;
   rows.forEach(r => { const q = parseFloat(r.querySelector('.dl-qty').value||0); const p = parseFloat(r.querySelector('.dl-price').value||0); total += q*p; });
@@ -4163,15 +4173,88 @@ async function cancelSalesOrderAction(id){
   catch(e){ errToast(e); }
 }
 async function openSalesInvoiceFormFromOrder(orderId){
-  try { const o = await api(`/companies/${STATE.companyId}/sales/orders/${orderId}`); openSalesInvoiceForm(o); }
-  catch(e){ errToast(e); }
+  const companyId=STATE.companyId,generation=STATE.companyGeneration;
+  try { const o = await api(`/companies/${companyId}/sales/orders/${orderId}`); if(sameCompanyGeneration(companyId,generation))openSalesInvoiceForm(o); }
+  catch(e){ if(sameCompanyGeneration(companyId,generation))errToast(e); }
 }
 
 /* ============================================================
    SALES INVOICES
    ============================================================ */
+const tradingForms = {}, tradingDetails = {}, tradingLists = {};
+const tradingSpecs = {
+  si:{path:'/sales/invoices',name:'Sales invoice',view:'sales-invoices',detail:openSalesInvoiceDetail,load:loadSalesInvoiceTable},
+  pb:{path:'/purchase/bills',name:'Purchase bill',view:'purchase-bills',detail:openPurchaseBillDetail,load:loadPurchaseBillTable},
+};
+function tradingMastersReady(keys){
+  if(!requireCompany())return false;
+  if(keys.some(key=>!['loaded','loaded_empty'].includes(STATE.loadStates[key]?.status))){
+    toast('Load the company masters before creating a document. Use Retry loading.','err');return false;
+  }
+  return true;
+}
+function tradingContext(slotId, modal=false){
+  const companyId=STATE.companyId, generation=STATE.companyGeneration, name=STATE.currentView, slot=document.getElementById(slotId);
+  return {companyId,slot,current:()=>!!slot && sameCompanyGeneration(companyId,generation) && STATE.currentView===name
+    && document.getElementById(slotId)===slot && (!modal || modalBackdrop.classList.contains('open'))};
+}
+function tradingLineCents(quantity,price){
+  const scaled=(value,places)=>{const [whole,fraction='']=value.split('.');return BigInt(whole)*10n**BigInt(places)+BigInt(fraction.padEnd(places,'0'));};
+  const product=scaled(quantity,6)*scaled(price,2), divisor=1000000n;
+  let cents=product/divisor; const remainder=product%divisor;
+  if(remainder*2n>divisor || (remainder*2n===divisor && cents%2n===1n)) cents++;
+  if(cents>999999999999999999n) throw new Error('Line total exceeds the supported amount.');
+  return cents;
+}
+function collectTradingLines(tbodyId,priceKey,required=true){
+  const lines=[];
+  for(const row of document.querySelectorAll(`#${tbodyId} tr`)){
+    const item_id=row.querySelector('.dl-item').value, description=row.querySelector('.dl-desc').value.trim()||null;
+    const q=row.querySelector('.dl-qty').value.trim(), p=row.querySelector('.dl-price').value.trim();
+    if(!q && !p && !description) continue; // Only entirely unused rows are omitted.
+    const item=STATE.stockItems.find(item=>item.id===item_id && item.status==='ACTIVE');
+    const unit=STATE.uoms.find(unit=>unit.id===item?.uom_id);
+    if(!item || !unit) throw new Error('Select an active item with a loaded unit of measure.');
+    const quantity=inventoryDecimal(q,unit.precision,'Quantity',{positive:true});
+    const price=inventoryDecimal(p,2,'Unit price',{maxWholeDigits:16});
+    // Trim insignificant zeros before fixed-point arithmetic, without Number().
+    const canonical=value=>value.includes('.')?value.replace(/0+$/,'').replace(/\.$/,''):value;
+    lines.push({item_id,description,quantity:canonical(quantity),[priceKey]:canonical(price)});
+  }
+  if(lines.length>40) throw new Error('Use at most 40 lines per invoice or bill.');
+  const cents=lines.reduce((total,line)=>total+tradingLineCents(line.quantity,line[priceKey]),0n);
+  if(cents>999999999999999999n) throw new Error('Document total exceeds the supported amount.');
+  if(required && !cents) throw new Error('Add line items with a positive document total.');
+  return lines;
+}
+async function submitTradingForm(prefix,build){
+  const context=tradingForms[prefix], spec=tradingSpecs[prefix];
+  if(!context?.current() || context.slot.disabled) return;
+  try {
+    const body=build(); context.slot.disabled=true;
+    const saved=await api(`/companies/${context.companyId}${spec.path}`,{method:'POST',body});
+    if(!context.current()) return;
+    closeModal();toast(spec.name+' saved as draft','ok');
+    spec.detail(saved.id);if(STATE.currentView===spec.view) spec.load();
+  } catch(e){if(context.current())errToast(e);}
+  finally {context.slot.disabled=false;}
+}
+async function postTradingDocument(prefix,id){
+  const context=tradingDetails[prefix],spec=tradingSpecs[prefix];
+  if(!context?.current() || context.id!==id || context.busy) return;
+  if(!confirm('Post this '+spec.name.toLowerCase()+'? This commits its accounting and stock movements together.'))return;
+  try {
+    context.busy=true;
+    const key=`trading-post:${context.companyId}:${prefix}:${id}`;
+    await api(`/companies/${context.companyId}${spec.path}/${id}/post`,{method:'POST',headers:{'Idempotency-Key':key,'X-Idempotency-Key':key}});
+    if(!context.current())return;
+    toast(spec.name+' posted','ok');refreshBalanceBeam();spec.detail(id);
+    if(STATE.currentView===spec.view)spec.load();
+  }catch(e){if(context.current())errToast(e);}
+  finally{context.busy=false;}
+}
 async function renderSalesInvoices(){
-  if (!requireCompany()) return;
+  if (!await prepareCompanyView([loadCustomers,loadLedgers,loadStockItems,loadWarehouses,loadUoms])) return;
   view().innerHTML = viewHead('Sales Invoices', 'Posting an invoice creates the voucher and moves stock out automatically.',
     `<button class="btn btn-blue" onclick="openSalesInvoiceForm()">+ New sales invoice</button>`) +
     `<div class="card card-pad" style="margin-bottom:16px;"><div class="form-row" style="margin-bottom:0;max-width:220px;"><label>Status</label>
@@ -4182,36 +4265,42 @@ async function renderSalesInvoices(){
 }
 VIEW_RENDERERS['sales-invoices'] = renderSalesInvoices;
 async function loadSalesInvoiceTable(){
+  const context=tradingContext('si-table');tradingLists.si=context;
+  const current=()=>context.current() && tradingLists.si===context;
+  if(!current())return;
   document.getElementById('si-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
-    const page = await api(`/companies/${STATE.companyId}/sales/invoices`, {qs:{page_size:100, status: document.getElementById('si-filter-status').value || undefined}});
-    const items = page.items, cur = STATE.company.base_currency;
+    const items = await apiAllItems(`/companies/${context.companyId}/sales/invoices`, {qs:{status:document.getElementById('si-filter-status').value||undefined},isCurrent:current});
+    if(!current())return;
+    const cur = STATE.company.base_currency;
     if (!items.length) { document.getElementById('si-table').innerHTML = emptyState('🧾','No sales invoices found','Create an invoice for a customer.',`<button class="btn btn-blue" onclick="openSalesInvoiceForm()">+ New sales invoice</button>`); return; }
     document.getElementById('si-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Invoice #</th><th>Date</th><th>Customer</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(i => `<tr class="row-link" onclick="openSalesInvoiceDetail('${i.id}')">
         <td class="mono">${esc(i.invoice_number)}</td><td>${fmtDate(i.invoice_date)}</td><td>${esc(customerName(i.customer_id))}</td>
         <td class="num">${money(i.total_amount,cur)}</td><td><span class="badge badge-${i.status.toLowerCase()}">${i.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('si-table').innerHTML = emptyState('⚠','Could not load sales invoices', esc(e.message)); }
+  } catch(e){ if(current()) context.slot.innerHTML = emptyState('⚠','Could not load sales invoices', esc(e.message)); }
 }
 function openSalesInvoiceForm(prefillOrder){
+  if (!tradingMastersReady(['customers','ledgers','stockItems','warehouses','uoms'])) return;
   if (!STATE.customers.length) return toast('Create a customer first','err');
   if (!STATE.stockItems.length) return toast('Create a stock item first','err');
   if (!STATE.warehouses.length) return toast('Create a warehouse first','err');
-  const salesLedgers = STATE.ledgers.filter(l=>l.status==='ACTIVE');
+  if (!STATE.customers.some(c=>c.status==='ACTIVE') || !STATE.warehouses.some(w=>w.status==='ACTIVE')) return toast('Create an active customer and warehouse first','err');
   openModal({
     title: prefillOrder ? `New invoice from ${prefillOrder.order_number}` : 'New sales invoice', wide:true,
     bodyHtml:`
       <div class="form-grid">
-        <div class="form-row"><label>Customer</label><select id="si-customer">${STATE.customers.map(c=>`<option value="${c.id}" ${prefillOrder&&prefillOrder.customer_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Customer</label><select id="si-customer">${STATE.customers.filter(c=>c.status==='ACTIVE').map(c=>`<option value="${c.id}" ${prefillOrder&&prefillOrder.customer_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Customer ledger (receivable)</label><select id="si-custledger">${ledgerOptionsHtml()}</select></div>
         <div class="form-row"><label>Sales ledger (income)</label><select id="si-salesledger">${ledgerOptionsHtml()}</select></div>
-        <div class="form-row"><label>Warehouse</label><select id="si-wh">${STATE.warehouses.map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Warehouse</label><select id="si-wh">${STATE.warehouses.filter(w=>w.status==='ACTIVE').map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Invoice date</label><input type="date" id="si-date" value="${todayStr()}"/></div>
       </div>
       <div class="form-row"><label>Narration (optional)</label><input type="text" id="si-narr" value="${prefillOrder?('Against order '+esc(prefillOrder.order_number)):''}"/></div>
       <div class="form-row"><label>Line items</label>${docLinesTableHtml('si-lines-body','Unit Price')}
         <button class="btn btn-ghost btn-sm" id="si-addline">+ Add line</button></div>
       <div class="totals-row balanced" id="si-total" style="justify-content:flex-start;">Subtotal: 0.00</div>
+      <p class="help-text">Base-currency amounts only. GST is not calculated or posted by this invoice form. Review any required tax entries separately before using it for tax invoices.</p>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="si-save">Save as draft</button>`,
     onMount:() => {
@@ -4230,35 +4319,32 @@ function openSalesInvoiceForm(prefillOrder){
       }
       document.getElementById('si-addline').onclick = () => addDocLine('si-lines-body','si-total');
       document.getElementById('si-save').onclick = submitSalesInvoiceForm;
+      tradingForms.si=tradingContext('si-save',true);
     }
   });
 }
 async function submitSalesInvoiceForm(){
-  const lines = collectDocLines('si-lines-body','unit_price');
-  if (!lines.length) return toast('Add at least one line item','err');
-  const payload = {
+  return submitTradingForm('si',()=>({
     invoice_date: document.getElementById('si-date').value,
     customer_id: document.getElementById('si-customer').value,
     customer_ledger_id: document.getElementById('si-custledger').value,
     sales_ledger_id: document.getElementById('si-salesledger').value,
     warehouse_id: document.getElementById('si-wh').value,
     narration: document.getElementById('si-narr').value.trim() || null,
-    lines,
-  };
-  try {
-    const inv = await api(`/companies/${STATE.companyId}/sales/invoices`, {method:'POST', body:payload});
-    toast('Sales invoice saved as draft ✓','ok'); closeModal(); openSalesInvoiceDetail(inv.id);
-    if (STATE.currentView==='sales-invoices') loadSalesInvoiceTable();
-  } catch(e){ errToast(e); }
+    lines:collectTradingLines('si-lines-body','unit_price'),
+  }));
 }
 async function openSalesInvoiceDetail(id){
   openModal({title:'Sales invoice', wide:true, ai:{enabled:false}, bodyHtml:`<div id="sid-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  const context=tradingContext('sid-body',true);context.id=id;tradingDetails.si=context;
   try {
-    const inv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}`);
+    const inv = await api(`/companies/${context.companyId}/sales/invoices/${id}`);
+    if(!context.current())return;
     let einv = null;
     if (inv.status === 'POSTED') {
-      try { einv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}/e-invoice`); } catch (_) { einv = null; }
+      try { einv = await api(`/companies/${context.companyId}/sales/invoices/${id}/e-invoice`); } catch (_) { einv = null; }
     }
+    if(!context.current())return;
     const cur = STATE.company.base_currency;
     document.getElementById('modal-title').textContent = `Sales Invoice · ${inv.invoice_number}`;
     const eInvBadge = einv ? `<span class="badge badge-${einv.status==='GENERATED'?'active':einv.status==='CANCELLED'?'cancelled':'draft'}">${esc(einv.status)}</span>` : '<span class="badge badge-draft">Not generated</span>';
@@ -4279,18 +4365,17 @@ async function openSalesInvoiceDetail(id){
       <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(inv.total_amount,cur)}</div>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
-    if (inv.status==='DRAFT') actions.push(`<button class="btn btn-teal" onclick="postSalesInvoiceAction('${inv.id}')">Post invoice</button>`);
+    if (inv.status==='DRAFT') actions.push(`<button class="btn btn-ghost" onclick="openApprovalSubmitForm({entityType:'SALES_INVOICE',entityId:'${inv.id}'})">Request approval</button>`, `<button class="btn btn-teal" onclick="postSalesInvoiceAction('${inv.id}')">Post invoice</button>`);
     if (inv.status==='POSTED' && !einv) actions.push(`<button class="btn btn-teal" onclick="generateEInvoiceAction('${inv.id}')">Generate IRN</button>`);
     if (einv) actions.push(`<button class="btn btn-ghost" onclick="showEInvoicePayload('${inv.id}')">Signed payload</button>`);
     if (einv && einv.status==='GENERATED') actions.push(`<button class="btn btn-danger" onclick="cancelEInvoiceAction('${inv.id}')">Cancel IRN</button>`);
     if (inv.status==='POSTED') actions.push(`<button class="btn btn-blue" onclick="closeModal();openSalesReturnFormFromInvoice('${inv.id}')">Create return</button>`);
     if (inv.voucher_id) actions.push(`<button class="btn btn-ghost" onclick="openVoucherDetail('${inv.voucher_id}')">View voucher</button>`);
     document.getElementById('modal-foot').innerHTML = actions.join('');
-  } catch(e){ document.getElementById('sid-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  } catch(e){ if(context.current()) context.slot.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function postSalesInvoiceAction(id){
-  try { await api(`/companies/${STATE.companyId}/sales/invoices/${id}/post`, {method:'POST'}); toast('Sales invoice posted ✓','ok'); refreshBalanceBeam(); openSalesInvoiceDetail(id); if(STATE.currentView==='sales-invoices') loadSalesInvoiceTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
-  catch(e){ errToast(e); }
+  return postTradingDocument('si',id);
 }
 async function generateEInvoiceAction(id){
   try {
@@ -4537,8 +4622,9 @@ async function cancelPurchaseOrderAction(id){
   catch(e){ errToast(e); }
 }
 async function openPurchaseBillFormFromOrder(orderId){
-  try { const o = await api(`/companies/${STATE.companyId}/purchase/orders/${orderId}`); openPurchaseBillForm(o); }
-  catch(e){ errToast(e); }
+  const companyId=STATE.companyId,generation=STATE.companyGeneration;
+  try { const o = await api(`/companies/${companyId}/purchase/orders/${orderId}`); if(sameCompanyGeneration(companyId,generation))openPurchaseBillForm(o); }
+  catch(e){ if(sameCompanyGeneration(companyId,generation))errToast(e); }
 }
 async function renderGoodsReceipts(){
   if (!requireCompany()) return;
@@ -4653,7 +4739,7 @@ async function cancelGoodsReceiptAction(id){
    PURCHASE BILLS
    ============================================================ */
 async function renderPurchaseBills(){
-  if (!requireCompany()) return;
+  if (!await prepareCompanyView([loadSuppliers,loadLedgers,loadStockItems,loadWarehouses,loadUoms])) return;
   view().innerHTML = viewHead('Purchase Bills', 'Posting a bill creates the voucher and moves stock in automatically.',
     `<button class="btn btn-blue" onclick="openPurchaseBillForm()">+ New purchase bill</button>`) +
     `<div class="card card-pad" style="margin-bottom:16px;"><div class="form-row" style="margin-bottom:0;max-width:220px;"><label>Status</label>
@@ -4664,35 +4750,42 @@ async function renderPurchaseBills(){
 }
 VIEW_RENDERERS['purchase-bills'] = renderPurchaseBills;
 async function loadPurchaseBillTable(){
+  const context=tradingContext('pb-table');tradingLists.pb=context;
+  const current=()=>context.current() && tradingLists.pb===context;
+  if(!current())return;
   document.getElementById('pb-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
-    const page = await api(`/companies/${STATE.companyId}/purchase/bills`, {qs:{page_size:100, status: document.getElementById('pb-filter-status').value || undefined}});
-    const items = page.items, cur = STATE.company.base_currency;
+    const items = await apiAllItems(`/companies/${context.companyId}/purchase/bills`, {qs:{status:document.getElementById('pb-filter-status').value||undefined},isCurrent:current});
+    if(!current())return;
+    const cur = STATE.company.base_currency;
     if (!items.length) { document.getElementById('pb-table').innerHTML = emptyState('🧾','No purchase bills found','Create a bill for a supplier.',`<button class="btn btn-blue" onclick="openPurchaseBillForm()">+ New purchase bill</button>`); return; }
     document.getElementById('pb-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Bill #</th><th>Date</th><th>Supplier</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(b => `<tr class="row-link" onclick="openPurchaseBillDetail('${b.id}')">
         <td class="mono">${esc(b.bill_number)}</td><td>${fmtDate(b.bill_date)}</td><td>${esc(supplierName(b.supplier_id))}</td>
         <td class="num">${money(b.total_amount,cur)}</td><td><span class="badge badge-${b.status.toLowerCase()}">${b.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('pb-table').innerHTML = emptyState('⚠','Could not load purchase bills', esc(e.message)); }
+  } catch(e){ if(current()) context.slot.innerHTML = emptyState('⚠','Could not load purchase bills', esc(e.message)); }
 }
 function openPurchaseBillForm(prefillOrder){
+  if (!tradingMastersReady(['suppliers','ledgers','stockItems','warehouses','uoms'])) return;
   if (!STATE.suppliers.length) return toast('Create a supplier first','err');
   if (!STATE.stockItems.length) return toast('Create a stock item first','err');
   if (!STATE.warehouses.length) return toast('Create a warehouse first','err');
+  if (!STATE.suppliers.some(s=>s.status==='ACTIVE') || !STATE.warehouses.some(w=>w.status==='ACTIVE')) return toast('Create an active supplier and warehouse first','err');
   openModal({
     title: prefillOrder ? `New bill from ${prefillOrder.order_number}` : 'New purchase bill', wide:true,
     bodyHtml:`
       <div class="form-grid">
-        <div class="form-row"><label>Supplier</label><select id="pb-supplier">${STATE.suppliers.map(s=>`<option value="${s.id}" ${prefillOrder&&prefillOrder.supplier_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Supplier</label><select id="pb-supplier">${STATE.suppliers.filter(s=>s.status==='ACTIVE').map(s=>`<option value="${s.id}" ${prefillOrder&&prefillOrder.supplier_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Supplier ledger (payable)</label><select id="pb-supledger">${ledgerOptionsHtml()}</select></div>
         <div class="form-row"><label>Purchase ledger (expense)</label><select id="pb-purledger">${ledgerOptionsHtml()}</select></div>
-        <div class="form-row"><label>Warehouse</label><select id="pb-wh">${STATE.warehouses.map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Warehouse</label><select id="pb-wh">${STATE.warehouses.filter(w=>w.status==='ACTIVE').map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Bill date</label><input type="date" id="pb-date" value="${todayStr()}"/></div>
       </div>
       <div class="form-row"><label>Narration (optional)</label><input type="text" id="pb-narr" value="${prefillOrder?('Against order '+esc(prefillOrder.order_number)):''}"/></div>
       <div class="form-row"><label>Line items</label>${docLinesTableHtml('pb-lines-body','Unit Cost')}
         <button class="btn btn-ghost btn-sm" id="pb-addline">+ Add line</button></div>
       <div class="totals-row balanced" id="pb-total" style="justify-content:flex-start;">Subtotal: 0.00</div>
+      <p class="help-text">Base-currency amounts only. GST is not calculated or posted by this bill form. Review any required tax entries separately.</p>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="pb-save">Save as draft</button>`,
     onMount:() => {
@@ -4711,31 +4804,27 @@ function openPurchaseBillForm(prefillOrder){
       }
       document.getElementById('pb-addline').onclick = () => addDocLine('pb-lines-body','pb-total');
       document.getElementById('pb-save').onclick = submitPurchaseBillForm;
+      tradingForms.pb=tradingContext('pb-save',true);
     }
   });
 }
 async function submitPurchaseBillForm(){
-  const lines = collectDocLines('pb-lines-body','unit_cost');
-  if (!lines.length) return toast('Add at least one line item','err');
-  const payload = {
+  return submitTradingForm('pb',()=>({
     bill_date: document.getElementById('pb-date').value,
     supplier_id: document.getElementById('pb-supplier').value,
     supplier_ledger_id: document.getElementById('pb-supledger').value,
     purchase_ledger_id: document.getElementById('pb-purledger').value,
     warehouse_id: document.getElementById('pb-wh').value,
     narration: document.getElementById('pb-narr').value.trim() || null,
-    lines,
-  };
-  try {
-    const b = await api(`/companies/${STATE.companyId}/purchase/bills`, {method:'POST', body:payload});
-    toast('Purchase bill saved as draft ✓','ok'); closeModal(); openPurchaseBillDetail(b.id);
-    if (STATE.currentView==='purchase-bills') loadPurchaseBillTable();
-  } catch(e){ errToast(e); }
+    lines:collectTradingLines('pb-lines-body','unit_cost'),
+  }));
 }
 async function openPurchaseBillDetail(id){
   openModal({title:'Purchase bill', wide:true, bodyHtml:`<div id="pbd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  const context=tradingContext('pbd-body',true);context.id=id;tradingDetails.pb=context;
   try {
-    const b = await api(`/companies/${STATE.companyId}/purchase/bills/${id}`);
+    const b = await api(`/companies/${context.companyId}/purchase/bills/${id}`);
+    if(!context.current())return;
     const cur = STATE.company.base_currency;
     document.getElementById('modal-title').textContent = `Purchase Bill · ${b.bill_number}`;
     document.getElementById('pbd-body').innerHTML = `
@@ -4750,15 +4839,14 @@ async function openPurchaseBillDetail(id){
       <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(b.total_amount,cur)}</div>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
-    if (b.status==='DRAFT') actions.push(`<button class="btn btn-teal" onclick="postPurchaseBillAction('${b.id}')">Post bill</button>`);
+    if (b.status==='DRAFT') actions.push(`<button class="btn btn-ghost" onclick="openApprovalSubmitForm({entityType:'PURCHASE_BILL',entityId:'${b.id}'})">Request approval</button>`, `<button class="btn btn-teal" onclick="postPurchaseBillAction('${b.id}')">Post bill</button>`);
     if (b.status==='POSTED') actions.push(`<button class="btn btn-blue" onclick="closeModal();openPurchaseReturnFormFromBill('${b.id}')">Create return</button>`);
     if (b.voucher_id) actions.push(`<button class="btn btn-ghost" onclick="openVoucherDetail('${b.voucher_id}')">View voucher</button>`);
     document.getElementById('modal-foot').innerHTML = actions.join('');
-  } catch(e){ document.getElementById('pbd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  } catch(e){ if(context.current()) context.slot.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function postPurchaseBillAction(id){
-  try { await api(`/companies/${STATE.companyId}/purchase/bills/${id}/post`, {method:'POST'}); toast('Purchase bill posted ✓','ok'); refreshBalanceBeam(); openPurchaseBillDetail(id); if(STATE.currentView==='purchase-bills') loadPurchaseBillTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
-  catch(e){ errToast(e); }
+  return postTradingDocument('pb',id);
 }
 
 /* ============================================================
