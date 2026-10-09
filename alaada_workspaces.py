@@ -298,6 +298,47 @@ class AppwriteIdentity:
             return Identity(account["$id"], teams, team_names)
 
 
+async def appwrite_team_members(token, team, user_id=None, *, transport=None):
+    """Read confirmed members as the caller, never from submitted names/emails."""
+    result, seen, offset, expected = [], set(), 0, None
+    async with httpx.AsyncClient(timeout=15, transport=transport) as client:
+        while True:
+            queries = [{'method': 'limit', 'values': [100]}, {'method': 'offset', 'values': [offset]}]
+            if user_id is not None:
+                queries.append({'method': 'equal', 'attribute': 'userId', 'values': [user_id]})
+            try:
+                response = await client.get(ENDPOINT + '/teams/' + quote(team, safe='') + '/memberships',
+                    headers={'X-Appwrite-Project': PROJECT, 'X-Appwrite-JWT': token},
+                    params=[('queries[]', json.dumps(query)) for query in queries])
+                if response.status_code in (401, 403):
+                    fail(403, 'Current Appwrite organisation membership is required.')
+                if response.status_code != 200:
+                    fail(503, 'Appwrite organisation members could not be verified.')
+                data = response.json()
+                rows, total = data['memberships'], data['total']
+                if (not isinstance(rows, list) or type(total) is not int or not 0 <= total <= 50000
+                        or expected is not None and total != expected or offset + len(rows) > total
+                        or not rows and offset < total):
+                    raise ValueError('Incomplete membership listing')
+                expected = total
+                for row in rows:
+                    uid = row['userId']
+                    if (not isinstance(uid, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,35}', uid)
+                            or uid in seen or row.get('teamId', team) != team
+                            or user_id is not None and uid != user_id or not isinstance(row.get('roles'), list)):
+                        raise ValueError('Invalid membership')
+                    seen.add(uid)
+                    if row.get('confirm') is True:
+                        roles = row['roles']
+                        role = 'admin' if 'owner' in roles or 'admin' in roles else ('editor' if 'editor' in roles else 'reader')
+                        result.append({'user_id': uid, 'name': str(row.get('userName') or uid)[:200], 'workspace_role': role})
+            except (httpx.HTTPError, ValueError, TypeError, KeyError):
+                fail(503, 'Appwrite organisation members could not be verified completely. Retry loading.')
+            offset += len(rows)
+            if offset >= total:
+                return sorted(result, key=lambda member: (member['name'].casefold(), member['user_id']))
+
+
 class SqlSession:
     """Structured repository operations shared by local SQL and TablesDB backends."""
     def __init__(self, connection):
@@ -770,7 +811,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                sheets_url=None, sheets_secret=None, sheets_transport=None,
                appwrite_api_key=None, appwrite_storage_bucket=None, appwrite_storage_transport=None,
                dodo_api_key=None, dodo_webhook_key=None, dodo_environment='live_mode',
-               dodo_products=None, dodo_checkout_enabled=False, dodo_client=None):
+               dodo_products=None, dodo_checkout_enabled=False, dodo_client=None, team_members=None):
     app = FastAPI(title="Alaada personal and organisation workspaces", docs_url=None, redoc_url=None)
     store = Store(path, limits, api_key=appwrite_api_key)
     if (store.postgres or store.tablesdb) and (not appwrite_api_key or not appwrite_storage_bucket):
@@ -779,6 +820,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     app.state.appwrite_api_key = appwrite_api_key
     app.state.appwrite_storage_bucket = appwrite_storage_bucket
     auth = authenticate or AppwriteIdentity()
+    verified_team_members = team_members or appwrite_team_members
     dodo_products = dict(dodo_products or {})
     if dodo_environment not in ('test_mode', 'live_mode'):
         raise ValueError('DODO_PAYMENTS_ENVIRONMENT must be test_mode or live_mode')
@@ -1591,7 +1633,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         method = request.method
         write = method not in ("GET", "HEAD")
         with store.db() as db:
-            store.workspace(db, user, wid, write=write)
+            account_workspace = dict(store.workspace(db, user, wid, write=write))
         if not accounts_url:
             fail(503, "The workspace-aware Accounts backend is not configured.")
         # Route ownership comes from this registry, never a client JSON field or email.
@@ -1623,6 +1665,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             if len(raw) > 1_000_000:
                 fail(413, "Accounts request exceeds the 1 MB gateway limit")
         raw = bytes(raw)
+        payload = None
         if raw and "application/json" in request.headers.get("content-type", ""):
             try:
                 payload = json.loads(raw)
@@ -1655,6 +1698,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                          "token": hashlib.sha256(token.encode()).hexdigest(), "iat": int(time.time())}
             operation_key = idempotency_key if verb not in ('GET', 'HEAD') else ''
             assertion['idempotency'] = operation_key
+            assertion.update(workspace_kind=account_workspace['kind'], workspace_team=account_workspace['team'],
+                workspace_role=store.role(user, account_workspace))
+            if member_target is not None and verb not in ('GET', 'HEAD'):
+                assertion['member_target'] = member_target
             encoded = base64.urlsafe_b64encode(json.dumps(assertion, separators=(",", ":")).encode()).decode()
             signature = hmac.new(accounts_secret.encode(), encoded.encode(), hashlib.sha256).hexdigest()
             headers = {"Authorization": bearer, "X-Alaada-Workspace": wid,
@@ -1666,6 +1713,15 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             response = await client.request(verb, accounts_url + target, headers=headers, content=content)
             return response
 
+        member_target = None
+        member_route = parts[2:] if company else []
+        membership_write = (method == 'POST' and member_route == ['members']
+            or method == 'PATCH' and len(member_route) == 2 and member_route[0] == 'members')
+        candidates = method == 'GET' and member_route == ['member-candidates']
+        if membership_write or candidates:
+            if account_workspace['kind'] != 'organisation':
+                fail(403, 'Company collaboration requires an organisation workspace.')
+
         try:
             async with httpx.AsyncClient(timeout=30, follow_redirects=False, transport=accounts_transport) as client:
                 handshake = await upstream(client, "GET", "/workspace-gateway/health")
@@ -1673,26 +1729,108 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     fail(503, "Accounts did not verify the workspace gateway contract. No product operation was sent.")
                 if is_health:
                     await revalidate()
-                    return {"status": "ok", "workspace": wid, "gateway": "v1"}
+                    return {"status": "ok", "workspace": wid, "gateway": "v1", "capabilities": handshake.json().get('capabilities', {})}
+                if membership_write or candidates:
+                    # Verify company manager access BEFORE exposing a directory or
+                    # resolving a target. A workspace admin is not a company admin.
+                    async def verify_company_manager():
+                        access = await upstream(client, 'GET', '/companies/' + company + '/members/me')
+                        if access.headers.get('x-alaada-workspace-enforced') != 'v1':
+                            fail(502, 'Accounts response lost workspace enforcement.')
+                        if access.status_code != 200 or access.json().get('can_manage') is not True:
+                            fail(403, 'Company owner or administrator permission is required.')
+                    await verify_company_manager()
+                    if candidates:
+                        if request.query_params:
+                            fail(422, 'Member candidates do not accept query parameters.')
+                        members = await verified_team_members(token, account_workspace['team'])
+                        await revalidate()
+                        await verify_company_manager()
+                        return {'items': members}
+                    if not isinstance(payload, dict):
+                        fail(422, 'A membership JSON object is required.')
+                    target = payload.get('user_id') if method == 'POST' else member_route[1]
+                    if not isinstance(target, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,35}', target):
+                        fail(422, 'A valid Appwrite user ID is required.')
+                    # Revocation must remain possible after a user leaves the team.
+                    if method == 'POST' or payload.get('status') != 'INACTIVE':
+                        matches = await verified_team_members(token, account_workspace['team'], target)
+                        member_target = next((member for member in matches if member['user_id'] == target), None)
+                        if member_target is None:
+                            fail(403, 'The target must be a confirmed member of this Appwrite organisation.')
+                        member_target = dict(member_target, team=account_workspace['team'])
+                    await revalidate()
                 if is_list:
                     try:
-                        page = max(1, int(request.query_params.get("page", "1")))
-                        size = max(1, min(100, int(request.query_params.get("page_size", "20"))))
+                        page = int(request.query_params.get('page', '1'))
+                        size = int(request.query_params.get('page_size', '20'))
+                        if (page < 1 or not 1 <= size <= 100 or set(request.query_params) - {'page', 'page_size'}
+                                or len(request.query_params.multi_items()) != len(request.query_params)):
+                            raise ValueError()
                     except ValueError:
                         fail(400, "Invalid company pagination")
                     with store.db() as db:
                         bindings = db.rows('accounts_bindings', {'workspace': wid}, columns=['company'], order=['created', 'company'])
-                    items = []
-                    for row in bindings[(page-1)*size:page*size]:
+                    visible = {}
+                    if handshake.json().get('capabilities', {}).get('company_memberships') is True:
+                        # Native Appwrite lists only current company memberships;
+                        # intersect with the central ownership registry as well.
+                        current_page, expected, seen = 1, None, set()
+                        while bindings:
+                            result = await upstream(client, 'GET', '/companies', query=f'page={current_page}&page_size=100')
+                            if result.status_code != 200 or result.headers.get('x-alaada-workspace-enforced') != 'v1':
+                                fail(502, 'Accounts company listing failed.')
+                            data = result.json()
+                            batch, total = data.get('items'), data.get('meta', {}).get('total')
+                            if (not isinstance(batch, list) or type(total) is not int or not 0 <= total <= 50000
+                                    or expected is not None and total != expected):
+                                fail(502, 'Accounts returned an inconsistent company listing.')
+                            expected = total
+                            for item in batch:
+                                cid = item.get('id') if isinstance(item, dict) else None
+                                if not isinstance(cid, str) or cid in seen:
+                                    fail(502, 'Accounts returned an invalid company listing.')
+                                seen.add(cid)
+                                visible[cid] = item
+                            if len(seen) > total or len(batch) > 100 or len(seen) < total and len(batch) != 100:
+                                fail(502, 'Accounts returned an incomplete company listing.')
+                            if len(seen) == total:
+                                break
+                            current_page += 1
+                    else:
+                        # Compatibility with the deployed gateway contract. Filter
+                        # all registrations before slicing or calculating totals.
+                        for row in bindings:
+                            result = await upstream(client, 'GET', '/companies/' + quote(row[0], safe=''))
+                            if result.headers.get('x-alaada-workspace-enforced') != 'v1':
+                                fail(502, 'Accounts response lost workspace enforcement.')
+                            if result.status_code == 200:
+                                item = result.json()
+                                if not isinstance(item, dict) or item.get('id') != row[0]:
+                                    fail(502, 'Accounts returned a conflicting company identifier.')
+                                visible[row[0]] = item
+                            elif result.status_code not in (403, 404):
+                                fail(502, 'Accounts company listing failed.')
+                    items = [visible[row[0]] for row in bindings if row[0] in visible]
+                    # Recheck selected companies after listing; never return an
+                    # earlier cached record following a concurrent revocation.
+                    selected = []
+                    for item in items[(page-1)*size:page*size]:
+                        row = (item['id'],)
                         result = await upstream(client, "GET", "/companies/" + quote(row[0], safe=""))
                         if result.headers.get("x-alaada-workspace-enforced") != "v1":
                             fail(502, "Accounts response lost workspace enforcement.")
                         if result.status_code == 200:
-                            items.append(result.json())
-                        elif result.status_code not in (403, 404):
+                            verified = result.json()
+                            if not isinstance(verified, dict) or verified.get('id') != item['id']:
+                                fail(502, 'Accounts returned a conflicting company identifier.')
+                            selected.append(verified)
+                        elif result.status_code in (403, 404):
+                            fail(409, 'Company access changed while loading. Retry the company list.')
+                        else:
                             fail(502, "Accounts company listing failed.")
                     await revalidate()
-                    return {"items": items, "total": len(bindings), "page": page, "page_size": size}
+                    return {"items": selected, "total": len(items), "page": page, "page_size": size}
                 operation = None
                 if write:
                     with store.db() as db:
