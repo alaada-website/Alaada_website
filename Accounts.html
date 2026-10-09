@@ -5869,11 +5869,13 @@ async function renderApprovals(){
 }
 
 let approvalLoadSequence = 0;
+let approvalRuleView = null;
 async function loadApprovals(){
   if (!requireCompany()) return;
   const body = document.getElementById('approvals-body');
   if (!body) return;
   const companyId = STATE.companyId, generation = STATE.companyGeneration, sequence = ++approvalLoadSequence;
+  approvalRuleView = null;
   const current = () => sameCompanyGeneration(companyId,generation) && STATE.currentView === 'approvals'
     && document.getElementById('approvals-body') === body && sequence === approvalLoadSequence;
   try {
@@ -5884,6 +5886,7 @@ async function loadApprovals(){
     if (!current()) return;
     const cur = STATE.company.base_currency || 'INR';
     const pending = all.filter(request=>request.status === 'PENDING');
+    approvalRuleView = {companyId, generation, rules};
     body.innerHTML = `
       <div class="grid three" style="margin-bottom:14px;">
         <div class="metric"><div class="muted">Active rules</div><strong>${rules.filter(r=>r.status==='ACTIVE').length}</strong></div>
@@ -5893,7 +5896,7 @@ async function loadApprovals(){
       <div class="grid two">
         <div class="card card-pad">
           <div class="section-title">Approval rules</div>
-          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Document</th><th class="num">Min amount</th><th>Approvals</th><th>Status</th></tr></thead><tbody>${rules.map(r=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.approver_role || '')}</div></td><td>${esc(r.entity_type)}</td><td class="num">${money(r.min_amount,cur)}</td><td>${r.required_approvals}</td><td><span class="pill">${esc(r.status)}</span></td></tr>`).join('')}</tbody></table></div>`
+          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Document</th><th class="num">Min amount</th><th>Approvals</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rules.map((r,index)=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.approver_role || '')}</div></td><td>${esc(r.entity_type)}</td><td class="num">${money(r.min_amount,cur)}</td><td>${r.required_approvals}</td><td><span class="pill">${esc(r.status)}</span></td><td><button class="btn btn-ghost btn-sm" onclick="openApprovalRuleForm(${index})">Edit rule</button></td></tr>`).join('')}</tbody></table></div>`
             : emptyState('✓','No approval rules','Create a threshold rule to require approval before posting.') }
         </div>
         <div class="card card-pad">
@@ -5913,10 +5916,17 @@ async function loadApprovals(){
   }
 }
 
-function openApprovalRuleForm(){
+function openApprovalRuleForm(index = null){
   if (!requireCompany()) return;
+  let rule = null;
+  if (index !== null) {
+    if (!Number.isInteger(index) || !approvalRuleView || !sameCompanyGeneration(approvalRuleView.companyId,approvalRuleView.generation)) return;
+    rule = approvalRuleView.rules[index];
+    if (!rule || !/^[A-Za-z0-9_-]+$/.test(rule.id)) return;
+  }
+  const idempotencyKey = `approval-rule:${crypto.randomUUID()}`;
   openModal({
-    title:'New approval rule',
+    title:rule ? 'Edit approval rule' : 'New approval rule',
     bodyHtml:`<div class="form-grid">
       <div class="form-row"><label>Name</label><input id="appr-rule-name" placeholder="Voucher above 50,000"/></div>
       <div class="form-row"><label>Document type</label><select id="appr-rule-entity"><option>VOUCHER</option><option>SALES_INVOICE</option><option>PURCHASE_BILL</option></select></div>
@@ -5924,22 +5934,33 @@ function openApprovalRuleForm(){
       <div class="form-row"><label>Required approvals</label><input id="appr-rule-count" type="number" min="1" max="10" value="1"/></div>
       <div class="form-row"><label>Approver company role</label><select id="appr-rule-role"><option value="">Any authorized independent member</option><option value="owner">Owner</option><option value="admin">Administrator</option><option value="editor">Editor</option></select></div>
       <div class="form-row"><label>Notes</label><textarea id="appr-rule-notes" rows="2"></textarea></div>
-    </div>`,
-    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-rule-save">Create rule</button>`,
+      ${rule ? '<div class="form-row"><label>Status</label><select id="appr-rule-status"><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></div>' : ''}
+    </div><p class="muted small">Only company owners and administrators can change rules. Independent approvals require an organisation workspace. Changing a rule invalidates approvals under its previous version.</p>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-rule-save">${rule ? 'Save rule' : 'Create rule'}</button>`,
     onMount:() => {
-      document.getElementById('appr-rule-save').onclick = async () => {
-        try {
-          await api(`/companies/${STATE.companyId}/automation/approval-rules`, {method:'POST', body:{
-            name: document.getElementById('appr-rule-name').value,
-            entity_type: document.getElementById('appr-rule-entity').value,
-            min_amount: document.getElementById('appr-rule-min').value || '0',
-            required_approvals: parseInt(document.getElementById('appr-rule-count').value || '1', 10),
-            approver_role: document.getElementById('appr-rule-role').value || null,
-            notes: document.getElementById('appr-rule-notes').value || null,
-          }});
-          closeModal(); toast('Approval rule created','ok'); loadApprovals();
-        } catch(e){ errToast(e); }
-      };
+      const field = name=>document.getElementById('appr-rule-' + name);
+      field('name').value = rule?.name || '';
+      field('entity').value = rule?.entity_type || 'VOUCHER';
+      field('name').disabled = field('entity').disabled = !!rule;
+      field('min').value = rule?.min_amount ?? '0';
+      field('count').value = String(rule?.required_approvals ?? 1);
+      field('role').value = rule?.approver_role || '';
+      field('notes').value = rule?.notes || '';
+      if (rule) field('status').value = rule.status;
+      bindCompanyForm('appr-rule-save',()=>{
+        const name = field('name').value.trim(), count = field('count').value.trim();
+        if (!name) throw new Error('Enter a rule name.');
+        if (!/^\d+$/.test(count) || Number(count) < 1 || Number(count) > 10) throw new Error('Required approvals must be a whole number from 1 to 10.');
+        const body = {min_amount:field('min').value.trim() || '0', required_approvals:Number(count),
+          approver_role:field('role').value || null, notes:field('notes').value.trim() || null};
+        if (rule) {
+          body.status = field('status').value;
+          if (Number.isInteger(rule.version)) body.version = rule.version;
+        } else Object.assign(body,{name,entity_type:field('entity').value});
+        return {path:'/automation/approval-rules' + (rule ? '/' + rule.id : ''), method:rule ? 'PATCH' : 'POST',body,
+          headers:{'Idempotency-Key':idempotencyKey,'X-Idempotency-Key':idempotencyKey},
+          message:rule ? 'Approval rule updated' : 'Approval rule created'};
+      },loadApprovals);
     }
   });
 }
@@ -5954,29 +5975,20 @@ function openApprovalSubmitForm(opts = {}){
     bodyHtml:`<div class="form-grid">
       <div class="form-row"><label>Document type</label><select id="appr-submit-entity"><option value="VOUCHER">Voucher</option><option value="SALES_INVOICE">Sales invoice</option><option value="PURCHASE_BILL">Purchase bill</option></select></div>
       <div class="form-row"><label>Document ID</label><input id="appr-submit-id" class="mono" placeholder="32-character id" value="${esc(entityId)}"/></div>
-      <div class="form-row"><label>Requested by</label><input id="appr-submit-by" value="accounts"/></div>
+      <p class="muted small">The requester is your signed-in Appwrite account, verified by the server.</p>
       <div class="form-row"><label>Note</label><textarea id="appr-submit-note" rows="2"></textarea></div>
     </div>`,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-submit-save">Submit</button>`,
     onMount:() => {
       document.getElementById('appr-submit-entity').value = entityType;
-      document.getElementById('appr-submit-save').onclick = async () => {
-        const submitBtn = document.getElementById('appr-submit-save');
-        if (submitBtn.disabled) return;
-        if (!document.getElementById('appr-submit-id').value.trim()) return toast('Select or enter the document ID before submitting.','err');
-        try {
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Submitting...';
-          await api(`/companies/${STATE.companyId}/automation/approval-requests`, {method:'POST', body:{
+      bindCompanyForm('appr-submit-save',()=>{
+        if (!document.getElementById('appr-submit-id').value.trim()) throw new Error('Select or enter the document ID before submitting.');
+        return {path:'/automation/approval-requests',body:{
             entity_type: document.getElementById('appr-submit-entity').value,
             entity_id: document.getElementById('appr-submit-id').value.trim(),
-            requested_by: document.getElementById('appr-submit-by').value || null,
             requested_note: document.getElementById('appr-submit-note').value || null,
-          }, headers:{'Idempotency-Key':idempotencyKey,'X-Idempotency-Key':idempotencyKey}});
-          closeModal(); toast('Approval request submitted','ok'); loadApprovals();
-        } catch(e){ errToast(e); }
-        finally { submitBtn.disabled = false; submitBtn.textContent = 'Submit'; }
-      };
+          }, headers:{'Idempotency-Key':idempotencyKey,'X-Idempotency-Key':idempotencyKey},message:'Approval request submitted'};
+      },loadApprovals);
     }
   });
 }
