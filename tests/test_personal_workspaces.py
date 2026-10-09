@@ -99,6 +99,18 @@ def create(env, workspace, who="alice", product="sheets", kind="workbook"):
                    {"product": product, "kind": kind, "title": "Private workbook", "payload": {"secret": "private"}}, workspace)
 
 
+def test_workspace_bootstrap_combines_verified_session_and_resources(env):
+    personal = env[3]
+    created = create(env, personal).json()
+    response = request(env, "alice", "GET", f"/workspaces/bootstrap?workspace={personal}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user"] == "alice"
+    assert data["active"] == personal
+    assert any(row["id"] == created["id"] for row in data["resources"])
+    assert env[0].get("/api/workspaces/client.js").headers["cache-control"].startswith("public, max-age=300")
+
+
 def confirm(env, rid, plan, event="event1"):
     raw = json.dumps({"event": event, "request": rid, "plan": plan}).encode()
     stamp = str(int(time.time()))
