@@ -842,16 +842,18 @@ let APPWRITE_JWT_PROMISE = null;
 
 async function fetchWithTimeout(input, init={}, timeoutMs=10000){
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(new DOMException('Accounts request timed out. Retry the connection.', 'TimeoutError')), timeoutMs);
   const externalSignal = init.signal;
+  const abort = () => controller.abort(externalSignal.reason);
   if (externalSignal) {
-    if (externalSignal.aborted) controller.abort();
-    else externalSignal.addEventListener('abort', () => controller.abort(), {once:true});
+    if (externalSignal.aborted) abort();
+    else externalSignal.addEventListener('abort', abort, {once:true});
   }
   try {
     return await window.AlaadaWorkspace.productFetch(input, {...init, signal:controller.signal});
   } finally {
     clearTimeout(timer);
+    externalSignal?.removeEventListener('abort', abort);
   }
 }
 
@@ -870,6 +872,16 @@ function appwriteAuthUrl(){
   return `${window.location.origin}/auth.html?next=${encodeURIComponent(next)}`;
 }
 
+async function accountsAuthJSON(response, field){
+  const text = await response.text();
+  let data;
+  try { data = text.trim() ? JSON.parse(text) : null; } catch {}
+  if (!response.ok) throw new ApiError(response.status === 401 ? 'Sign in to access Alaada Accounts.' : 'Appwrite could not verify the Accounts session.', response.status, data || {code:`HTTP_${response.status}`});
+  if (!text.trim()) throw new ApiError('Appwrite returned an empty response. Retry the connection.', 502, {code:'EMPTY_RESPONSE'});
+  if (!data || typeof data[field] !== 'string' || !data[field]) throw new ApiError('Appwrite returned an incomplete response. Retry the connection.', 502, {code:'MALFORMED_RESPONSE'});
+  return data;
+}
+
 async function ensureAccountsIdentity({redirect=true} = {}){
   await window.AlaadaWorkspace.ready;
   await window.AlaadaWorkspace.verify();
@@ -877,15 +889,16 @@ async function ensureAccountsIdentity({redirect=true} = {}){
   if (APPWRITE_USER) return APPWRITE_USER;
   try {
     const res = await appwriteRequest('/account');
-    if (!res.ok) throw new Error('not authenticated');
-    APPWRITE_USER = await res.json();
+    APPWRITE_USER = await accountsAuthJSON(res, '$id');
     return APPWRITE_USER;
   } catch(e) {
-    APPWRITE_USER = null;
-    APPWRITE_JWT = '';
-    APPWRITE_JWT_EXPIRES_AT = 0;
-    if (redirect) window.location.replace(appwriteAuthUrl());
-    throw new ApiError('Sign in to access Alaada Accounts.', 401, {});
+    if (e.status === 401) {
+      APPWRITE_USER = null;
+      APPWRITE_JWT = '';
+      APPWRITE_JWT_EXPIRES_AT = 0;
+      if (redirect) window.location.replace(appwriteAuthUrl());
+    }
+    throw normalizeConnectionError(e, APPWRITE_ENDPOINT);
   }
 }
 
@@ -896,13 +909,9 @@ async function getAppwriteJwt({force=false} = {}){
   APPWRITE_JWT_PROMISE = (async () => {
     await ensureAccountsIdentity();
     const res = await appwriteRequest('/account/jwts', {method:'POST', body:{duration:3600}});
-    if (!res.ok) {
-      APPWRITE_USER = null;
-      throw new ApiError('Could not create a secure Accounts session.', res.status, {});
-    }
-    const data = await res.json();
-    APPWRITE_JWT = data.jwt || '';
-    if (!APPWRITE_JWT) throw new ApiError('Appwrite did not return a JWT.', 401, data);
+    if (res.status === 401) APPWRITE_USER = null;
+    const data = await accountsAuthJSON(res, 'jwt');
+    APPWRITE_JWT = data.jwt;
     APPWRITE_JWT_EXPIRES_AT = Date.now() + 3600 * 1000;
     return APPWRITE_JWT;
   })().finally(() => { APPWRITE_JWT_PROMISE = null; });

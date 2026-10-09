@@ -9,6 +9,45 @@ const read=name=>fs.readFileSync(path.join(root,name),'utf8');
 function extract(source,start,end){const offset=source.indexOf(start);assert.ok(offset>=0,start);const finish=source.indexOf(end,offset);assert.ok(finish>offset,end);return source.slice(offset,finish+end.length);}
 function fn(file,name,sandbox={}){return vm.runInNewContext('('+extract(read(file),'function '+name+'(', '\n}')+')',sandbox);}
 
+function accountsIdentity(reply){
+  const redirects=[],requests=[];
+  class ApiError extends Error {constructor(message,status,data){super(message);this.status=status;this.data=data;}}
+  const window={location:{origin:'https://www.alaada.com',pathname:'/Accounts.html',search:'?workspace=personal',hash:'',replace:url=>redirects.push(url)},
+    AlaadaWorkspace:{ready:Promise.resolve(),verify:async()=>true,productFetch:async(url,options)=>{requests.push({url,options});return reply(url,options);}}};
+  const source=read('Accounts.html'),start=source.indexOf('const APPWRITE_ENDPOINT ='),end=source.indexOf('async function apiAuthHeaders(',start);
+  const context=vm.createContext({window,ApiError,AbortController,DOMException,setTimeout,clearTimeout,URL,Date,Error,
+    normalizeConnectionError:error=>error instanceof ApiError?error:new ApiError('Connection unavailable',0,{code:error.name==='TimeoutError'?'REQUEST_TIMEOUT':'NETWORK_ERROR'})});
+  vm.runInContext(source.slice(start,end),context);
+  return {redirects,requests,run:expression=>vm.runInContext(expression,context)};
+}
+
+for(const [body,status,expected] of [['',200,502],['<html>Bad gateway</html>',502,502],['',503,503],['{',200,502],['{}',200,502],['',403,403]]){
+  test(`Accounts auth does not redirect for an empty, malformed or non-auth failure (${status}, ${body})`,async()=>{
+    const env=accountsIdentity(()=>new Response(body,{status}));
+    await assert.rejects(env.run('ensureAccountsIdentity()'),error=>error.status===expected);
+    assert.equal(env.redirects.length,0);
+    assert.equal(env.requests.length,1);
+  });
+}
+test('Accounts auth redirects only on a confirmed 401',async()=>{
+  const env=accountsIdentity(()=>new Response('',{status:401}));
+  await assert.rejects(env.run('ensureAccountsIdentity()'),error=>error.status===401);
+  assert.equal(env.redirects.length,1);
+  assert.match(env.redirects[0],/auth\.html\?next=%2FAccounts\.html/);
+});
+test('Accounts auth preserves network errors and never calls them sign-in failures',async()=>{
+  const env=accountsIdentity(()=>{throw new TypeError('Failed to fetch');});
+  await assert.rejects(env.run('ensureAccountsIdentity()'),error=>error.status===0);
+  assert.equal(env.redirects.length,0);
+});
+test('Accounts empty JWT response is not accepted or automatically reissued',async()=>{
+  const env=accountsIdentity(url=>new Response(url.endsWith('/account')?JSON.stringify({$id:'alice'}):''));
+  await assert.rejects(env.run('getAppwriteJwt()'),error=>error.status===502&&error.data.code==='EMPTY_RESPONSE');
+  assert.equal(env.requests.filter(r=>r.options.method==='POST').length,1);
+  assert.equal(env.redirects.length,0);
+  assert.equal(env.run('APPWRITE_JWT'),'');
+});
+
 for(const file of ['auth.html','onboarding.html']){
   test(file+' preserves safe product return paths',()=>{
     const source=extract(read(file),'function safeNext(value)', '\n    }');
