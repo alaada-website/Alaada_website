@@ -368,7 +368,7 @@
   <div class="empty-sub">We'll check performance, SEO health, security headers, accessibility issues, resource load, DOM quality, and tech stack — then summarise it with Orbit AI.</div>
 </div>
 
-<script src="/workspace-product-client.js?v=9390da93e84a" data-product="analyser"></script>
+<script src="/workspace-product-client.js?v=36e9eb3ed9d4" data-product="analyser"></script>
 <script>
 const analyserState={ready:false,allowed:false,busy:false,sequence:0,reports:new Map()};
 const escapeReport=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -405,10 +405,11 @@ async function initializeAnalyser(){
     const workspace=window.AlaadaWorkspace;if(!workspace)throw Error('The workspace client did not load. Reload this page.');
     await workspace.ready;const permissions=await workspace.entitlements();
     analyserState.ready=true;
-    const available=permissions.products?.analyser?.capabilities?.analysis===true && permissions.role!=='reader';
+    const capabilities=permissions.products?.analyser?.capabilities;
+    const available=capabilities?.analysis===true && capabilities?.execution_receipts===true && permissions.role!=='reader';
     analyserState.allowed=available;
     document.getElementById('analyzeBtn').disabled=!available;
-    document.getElementById('analyser-status').textContent=available?'Ready in '+workspace.active.name:permissions.role==='reader'?'Read-only workspace: saved reports are available.':'Analysis execution is not connected for this workspace yet.';
+    document.getElementById('analyser-status').textContent=available?'Ready in '+workspace.active.name:permissions.role==='reader'?'Read-only workspace: saved reports are available.':capabilities?.analysis===true?'Analysis needs the updated workspace backend. Saved reports are available.':'Analysis execution is not connected for this workspace yet.';
     await loadSavedReports();
   }catch(error){analyserError(error.message);document.getElementById('analyser-status').textContent='Workspace connection unavailable. Reload to retry.';}
 }
@@ -679,7 +680,7 @@ async function analyze() {
     if(!current())return;
     const permissions=await workspace.entitlements();
     if(!current())return;
-    if(permissions.products?.analyser?.capabilities?.analysis!==true || permissions.role==='reader'){
+    if(permissions.products?.analyser?.capabilities?.analysis!==true || permissions.products?.analyser?.capabilities?.execution_receipts!==true || permissions.role==='reader'){
       analyserState.allowed=false;throw Error('This workspace cannot run analyses. You can still open its saved reports.');
     }
     const response=await workspace.productFetch('/analyze',{

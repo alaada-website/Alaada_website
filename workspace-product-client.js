@@ -8,7 +8,7 @@
   for(const name of ['orbit_name','orbit_email'])document.cookie=name+'=; Max-Age=0; Path=/; SameSite=Lax';
   const endpoint = 'https://sfo.cloud.appwrite.io/v1', project = '6972444700208a437da1';
   const nativeFetch = window.fetch.bind(window);
-  const values = new Map(), records = new Map(), requests = new Set(), sheetFlights = new Map(), accountFlights = new Map();
+  const values = new Map(), records = new Map(), requests = new Set(), sheetFlights = new Map(), accountFlights = new Map(), analyserFlights = new Map(), orbitFlights = new Map();
   const sheetRoutes = {'/api/ai/command':'ai-command','/api/ai/chat':'ai-chat','/api/ai/analyze':'ai-analyze',
     '/api/ai/anomalies':'anomalies','/api/ai/translate-batch':'translate','/api/analytics/run':'analytics','/api/analytics/predict':'predict'};
   let user = null, workspace = null, workspaces = [], pending = 0, tail = Promise.resolve(), failed = null;
@@ -123,12 +123,13 @@
       return response;
     } catch(error) { if([401,403].includes(error.status))freeze(error);show(error.message); throw error; }
   }
-  function enqueue(fn) {
+  function enqueue(fn, freezeOnError=true) {
     if(!verified)throw Error('A verified workspace is required.');
     if(failed)throw failed;
     pending++;if(selector)selector.disabled=true;show('Saving in '+workspace.name+'…');
     const task=tail.then(()=>{if(failed)throw failed;return fn();});
-    tail=task.catch(error=>{failed=error;show('Not saved: '+error.message+' Reload after exporting your changes.');}).finally(()=>{pending--;if(selector)selector.disabled=!!pending||!!failed||!!requests.size;if(!pending&&!failed)show('Saved in '+workspace.name);});
+    let taskFailed=false;
+    tail=task.catch(error=>{taskFailed=true;if(freezeOnError)failed=error;show(freezeOnError?'Not saved: '+error.message+' Reload after exporting your changes.':error.message);}).finally(()=>{pending--;if(selector)selector.disabled=!!pending||!!failed||!!requests.size;if(!pending&&!failed&&!taskFailed)show('Saved in '+workspace.name);});
     return task;
   }
   async function put(p,kind,key,data,title) {
@@ -185,15 +186,22 @@
     },
     async orbitReply(key){
       await W.ready;if(product!=='orbit')throw Error('Orbit page required');
+      const flightKey=JSON.stringify([workspace.id,String(key)]);
+      if(orbitFlights.has(flightKey))return orbitFlights.get(flightKey);
       for(const surface of surfaces)surface.inert=true;
-      try{return await enqueue(async()=>{
+      const operation=enqueue(async()=>{
+        const policy=await W.entitlements();
+        if(policy.products?.orbit?.capabilities?.execution_receipts!==true)throw Error('Orbit needs the updated workspace backend before a reply can be sent safely. Your draft is saved.');
         const mapKey=keyOf('orbit','conversation',String(key)),previous=records.get(mapKey);
         if(!previous)throw Error('Save the conversation first');
         const row=await api('/workspaces/'+workspace.id+'/orbit/reply','POST',{conversation:previous.id,version:previous.version});
+        if(row.id!==previous.id||row.product!=='orbit'||row.kind!=='conversation'||!Number.isInteger(row.version)||row.version<=previous.version||row.payload?.native_key!==String(key)||!Array.isArray(row.payload?.data?.messages))throw connectionError('Orbit',200,'MALFORMED_RESPONSE');
         records.set(mapKey,row);
         values.set('orbit_threads',JSON.stringify([...records.values()].filter(r=>r.product==='orbit'&&r.kind==='conversation').map(r=>r.payload.data)));
         return row.payload.data;
-      });}finally{if(verified&&!failed)for(const surface of surfaces)surface.inert=false;}
+      },false);
+      orbitFlights.set(flightKey,operation);
+      try{return await operation;}finally{orbitFlights.delete(flightKey);if(verified&&!failed)for(const surface of surfaces)surface.inert=false;}
     },
     async save(kind,key,data,title){await W.ready;return enqueue(()=>put(product,kind,String(key),data,title));},
     async remove(kind,key){await W.ready;return enqueue(async()=>{const mapKey=keyOf(product,kind,String(key)),row=records.get(mapKey);if(!row)throw Error('Saved resource unavailable');await api('/workspaces/'+workspace.id+'/resources/'+row.id,'DELETE',{version:row.version});records.delete(mapKey);});},
@@ -241,9 +249,40 @@
         try{return await operation;}finally{requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
       }
       if(product==='analyser' && target.pathname==='/analyze' && (options.method||'GET').toUpperCase()==='POST'){
-        const operation=api('/workspaces/'+workspace.id+'/analyser/analyze','POST',undefined,options);
-        requests.add(operation);selector.disabled=true;
-        try{return await operation;}finally{requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
+        if(!verified||failed)throw failed||Error('A verified workspace is required.');
+        if(typeof options.body!=='string')throw Error('Analysis requires a JSON request.');
+        const scope=JSON.stringify([user,workspace.id,target.pathname,options.body]);
+        if(analyserFlights.has(scope))return (await analyserFlights.get(scope)).clone();
+        const operation=(async()=>{
+          const policy=await W.entitlements();
+          if(policy.products?.analyser?.capabilities?.execution_receipts!==true)throw Error('Web Analyser needs the updated workspace backend before a scan can be sent safely.');
+          const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(scope)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+          const storageKey='alaada:analyser:operations:'+encodeURIComponent(user)+':'+encodeURIComponent(workspace.id);
+          let saved;
+          try{saved=JSON.parse(window.sessionStorage.getItem(storageKey)||'{}');}
+          catch{throw Error('Enable session storage before analysing so retries remain safe.');}
+          if(!saved||typeof saved!=='object'||Array.isArray(saved))throw Error('The analysis retry cache is invalid.');
+          if(!saved[digest]){
+            if(Object.keys(saved).length>=100)throw Error('Resolve pending analyses before starting more.');
+            saved[digest]=crypto.randomUUID();
+          }
+          const operationId=saved[digest];
+          if(!/^[A-Za-z0-9_-]{16,128}$/.test(operationId))throw Error('The analysis retry cache contains an invalid key.');
+          // Keep only opaque hashes and receipt IDs, never scanned URLs or data.
+          window.sessionStorage.setItem(storageKey,JSON.stringify(saved));
+          const headers=new Headers(options.headers||{});headers.set('X-Alaada-Operation',operationId);
+          const response=await api('/workspaces/'+workspace.id+'/analyser/analyze','POST',undefined,{...options,headers});
+          const result=await response.clone().json().catch(()=>null), summary=result?.summary;
+          const confirmed=response.ok&&response.headers.get('X-Alaada-Execution')==='succeeded'&&summary&&['seo','security','accessibility','dom','resources'].every(k=>summary[k]&&typeof summary[k]==='object'&&!Array.isArray(summary[k]));
+          if(confirmed){
+            const current=JSON.parse(window.sessionStorage.getItem(storageKey)||'{}');
+            if(current[digest]===operationId){delete current[digest];window.sessionStorage.setItem(storageKey,JSON.stringify(current));}
+          }
+          if(response.ok&&!confirmed)return new Response(JSON.stringify({detail:'Analysis completion was not confirmed. Your retry reference has been kept.',state:'unknown'}),{status:502,headers:{'Content-Type':'application/json'}});
+          return response;
+        })();
+        analyserFlights.set(scope,operation);requests.add(operation);selector.disabled=true;
+        try{return (await operation).clone();}finally{analyserFlights.delete(scope);requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
       }
       if(product==='accounts' && (target.pathname==='/health'||target.pathname==='/companies'||target.pathname.startsWith('/companies/'))){
         if(!verified||failed)throw failed||Error('A verified workspace is required.');

@@ -1032,7 +1032,7 @@ body {
 </head>
 <body data-alaada-product="orbit">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=9390da93e84a" data-product="orbit"></script>
+<script src="/workspace-product-client.js?v=36e9eb3ed9d4" data-product="orbit"></script>
 <script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 <div id="app">
 
@@ -1528,9 +1528,9 @@ function connectWS() {
     if(window.AlaadaWorkspace.active!==workspace)return;
     // The current signed adapter supports text only. Do not advertise legacy
     // upload/voice routes before their scoped contracts are implemented.
-    orbitCapabilities.text=policy.products?.orbit?.execution_available===true;
+    orbitCapabilities.text=policy.role!=='reader' && policy.products?.orbit?.execution_available===true && policy.products?.orbit?.capabilities?.execution_receipts===true;
     lockInput(busy);
-    setStatus(orbitCapabilities.text?'Text chat ready · voice and attachments are not connected yet.':'Text chat is not connected yet. You can keep drafting and read saved conversations.');
+    setStatus(orbitCapabilities.text?'Text chat ready · voice and attachments are not connected yet.':policy.role==='reader'?'Read-only workspace. Saved conversations are available.':policy.products?.orbit?.execution_available===true?'Text chat needs the updated workspace backend. Your drafts are kept.':'Text chat is not connected yet. You can keep drafting and read saved conversations.');
   }).catch(()=>{orbitCapabilities.text=false;lockInput(busy);setStatus('Workspace access could not be verified. Your draft has not been sent.');});
   return; // Execution uses the authenticated workspace API.
 

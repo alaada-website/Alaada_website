@@ -40,7 +40,7 @@ const json=data=>new Response(JSON.stringify(data));
 function analyser(overrides={}){
   const document=dom(),requests=[];
   const W={active:{id:'one',name:'Personal'},ready:Promise.resolve(),verify:async()=>true,
-    entitlements:async()=>({role:'owner',products:{analyser:{capabilities:{analysis:true}}}}),
+    entitlements:async()=>({role:'owner',products:{analyser:{capabilities:{analysis:true,execution_receipts:true}}}}),
     resources:async()=>[],productFetch:async(url,options)=>{requests.push({url,options});return json(report())},...overrides};
   const context=vm.createContext({window:{AlaadaWorkspace:W},document,URL,Map,Response,JSON,
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},requestAnimationFrame:fn=>fn()});
@@ -65,7 +65,7 @@ test('Analyser only sends one request through the workspace gateway and keeps it
   assert.doesNotMatch(script('website-analyzer.html'),/fetch\(['"]https:\/\/alaada-website-analyser/);
 });
 test('Read-only Analyser can list saved reports but cannot execute',async()=>{
-  const env=analyser({entitlements:async()=>({role:'reader',products:{analyser:{capabilities:{analysis:true}}}})});
+  const env=analyser({entitlements:async()=>({role:'reader',products:{analyser:{capabilities:{analysis:true,execution_receipts:true}}}})});
   await env.run('initializeAnalyser()');env.document.getElementById('urlInput').value='https://example.com';
   await env.run('analyze()');assert.equal(env.requests.length,0);assert.equal(env.document.getElementById('analyzeBtn').disabled,true);
   assert.equal(env.document.getElementById('saved-reports').hidden,false);
@@ -76,6 +76,12 @@ test('Analyser rejects unsupported URLs without clearing a draft',async()=>{
     env.document.getElementById('urlInput').value=url;await env.run('analyze()');
     assert.equal(env.document.getElementById('urlInput').value,url);
   }assert.equal(env.requests.length,0);
+});
+test('Legacy gateway cannot execute until durable receipt support is deployed',async()=>{
+  const env=analyser({entitlements:async()=>({role:'owner',products:{analyser:{capabilities:{analysis:true}}}})});
+  await env.run('initializeAnalyser()');env.document.getElementById('urlInput').value='https://example.com';
+  await env.run('analyze()');assert.equal(env.requests.length,0);assert.equal(env.document.getElementById('analyzeBtn').disabled,true);
+  assert.match(env.document.getElementById('analyser-status').textContent,/updated workspace backend/);
 });
 test('Analyser escapes every untrusted report surface and rejects malformed summaries',()=>{
   const env=analyser(),payload='<img src=x onerror=alert(1)>',data=report();

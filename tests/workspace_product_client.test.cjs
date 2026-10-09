@@ -28,6 +28,8 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
     if(String(url).endsWith('/account/jwts'))return json({jwt:'verified-token'});
     if(String(url).includes('/sheets/execute/'))return operationReply();
     if(String(url).includes('/accounts/'))return accountReply();
+    if(String(url).endsWith('/entitlements'))return json({role:'owner',products:{orbit:{execution_available:true,capabilities:{execution_receipts:true}},analyser:{capabilities:{analysis:true,execution_receipts:true}}}});
+    if(String(url).endsWith('/analyser/analyze'))return new Response(JSON.stringify({summary:{seo:{},security:{},accessibility:{},dom:{},resources:{}}}),{headers:{'Content-Type':'application/json','X-Alaada-Execution':'succeeded'}});
     if(url==='/api/workspaces')return json({...state,workspaces:revoked?state.workspaces.slice(0,1):state.workspaces});
     if(String(url).endsWith('/orbit/reply'))return json({id:'saved',product:'orbit',kind:'conversation',version:2,payload:{native_key:'first',data:{id:'first',title:'First',messages:[{role:'assistant',text:'Scoped reply'}]}}});
     if(options.method==='PUT'){
@@ -272,6 +274,42 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   await began;cancelAnalysis.abort();
   await assert.rejects(cancelledAnalysis,error=>error.name==='AbortError');
   assert.equal(targetCalls(stopped,'/analyser/analyze').length,1,'Cancellation never replays an analysis');
+  // Analyser keeps the same opaque receipt after empty/malformed/lost responses,
+  // including reloads; simultaneous clicks share one request.
+  const analyserOptions={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:'https://example.com/private-path'})};
+  for(const malformed of ['', '{}', '<html>Proxy failed</html>']){
+    const env=await boot('analyser','',[],new Map(),{fetch:url=>url.endsWith('/analyser/analyze')?new Response(malformed):undefined});
+    const responses=await Promise.all([env.W.productFetch('/analyze',analyserOptions),env.W.productFetch('/analyze',analyserOptions)]);
+    assert(responses.every(r=>r.status===502));assert.equal(targetCalls(env,'/analyser/analyze').length,1);
+    const receipt=targetCalls(env,'/analyser/analyze')[0].options.headers['X-Alaada-Operation'];
+    assert.match(receipt,/^[A-Za-z0-9_-]{16,128}$/);
+    assert(!JSON.stringify([...env.operationStorage]).includes('private-path'));
+    const reloaded=await boot('analyser','',[],env.operationStorage);
+    assert.equal((await reloaded.W.productFetch('/analyze',analyserOptions)).status,200);
+    assert.equal(targetCalls(reloaded,'/analyser/analyze')[0].options.headers['X-Alaada-Operation'],receipt);
+    await reloaded.W.productFetch('/analyze',analyserOptions);
+    assert.notEqual(targetCalls(reloaded,'/analyser/analyze')[1].options.headers['X-Alaada-Operation'],receipt);
+  }
+  for(const product of ['orbit','analyser']){
+    const legacy=await boot(product,'',[],new Map(),{fetch:url=>url.endsWith('/entitlements')?json({products:{[product]:{capabilities:{}}}}):undefined});
+    if(product==='orbit'){
+      await legacy.W.save('conversation','first',{messages:[{role:'user',text:'Hi'}]},'First');
+      await assert.rejects(legacy.W.orbitReply('first'),/updated workspace backend/);
+    }else await assert.rejects(legacy.W.productFetch('/analyze',analyserOptions),/updated workspace backend/);
+    assert.equal(targetCalls(legacy,product==='orbit'?'/orbit/reply':'/analyser/analyze').length,0);
+  }
+  for(const response of [new Response(''),json({}),new Response(JSON.stringify({detail:'Pending execution',state:'pending'}),{status:409})]){
+    let uncertain=true;
+    const env=await boot('orbit','',[],new Map(),{fetch:url=>url.endsWith('/orbit/reply')&&uncertain?response:undefined});
+    await env.W.save('conversation','first',{id:'first',messages:[{role:'user',text:'Hi'}]},'First');
+    const first=await Promise.allSettled([env.W.orbitReply('first'),env.W.orbitReply('first')]);
+    assert(first.every(r=>r.status==='rejected'));assert.equal(targetCalls(env,'/orbit/reply').length,1);
+    assert.equal(env.W.read('conversation','first').messages[0].text,'Hi');
+    assert.equal(env.document.body.children[1].inert,false,'An uncertain reply does not freeze saved drafts');
+    uncertain=false;const recovered=await env.W.orbitReply('first');
+    assert.equal(recovered.messages[0].text,'Scoped reply');
+    assert.deepEqual(JSON.parse(targetCalls(env,'/orbit/reply')[0].options.body),JSON.parse(targetCalls(env,'/orbit/reply')[1].options.body));
+  }
   console.log('Product client behavior passed for Orbit, Sheets, Accounts and Analyser');
   console.log('Empty/malformed responses, cold-start retries, auth denial, cancellation, timeouts, downloads and uncertain-write receipts passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
