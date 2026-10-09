@@ -25,7 +25,7 @@ function setup(){
     return {items:rows.slice((page-1)*100,page*100),meta:{total:rows.length}};
   };
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const context=vm.createContext({STATE:state,VIEW_RENDERERS:{},api,requireCompany:()=>!!state.companyId,
+  const context=vm.createContext({STATE:state,VIEW_RENDERERS:{},DEVELOPER_MODE:false,api,requireCompany:()=>!!state.companyId,
     document:{getElementById:id=>nodes[id],querySelectorAll:()=>controls},
     sameCompanyGeneration:(id,generation)=>state.companyId===id&&state.companyGeneration===generation,
     view:()=>({innerHTML:''}),viewHead:()=>'',emptyState:(symbol,title,message,buttons='')=>title+message+buttons,
@@ -135,4 +135,16 @@ test('Uncertain deliveries are not reported as successful sends',async()=>{
   env.intercept((path,options)=>options.method==='POST'?[{status:'UNKNOWN'}]:undefined);
   await env.context.deliverPendingNotifications();
   assert.equal(env.messages[0].type,'err');assert.match(env.messages[0].message,/0 accepted; 0 failed; 1 uncertain/);
+});
+
+test('Business-mode delivery diagnostics show a reference without provider internals',async()=>{
+  const env=setup();env.data.attempts=[{id:'delivery-reference',status:'UNKNOWN',channel:'EMAIL',provider:'internal-provider-name',
+    error_message:'Internal failure <script>unsafe</script>',attempted_at:'2026-10-03T00:00:00Z'}];
+  await env.context.loadNotifications();
+  assert.match(env.body.innerHTML,/delivery-reference/);
+  assert.doesNotMatch(env.body.innerHTML,/internal-provider-name|Internal failure|Developer diagnostics/);
+  env.context.DEVELOPER_MODE=true;await env.context.loadNotifications();
+  assert.match(env.body.innerHTML,/Developer diagnostics/);
+  assert.match(env.body.innerHTML,/internal-provider-name/);
+  assert.doesNotMatch(env.body.innerHTML,/<script>/);
 });
