@@ -2487,22 +2487,92 @@ PRODUCT_CLIENT = r'''
   const sheetRoutes = {'/api/ai/command':'ai-command','/api/ai/chat':'ai-chat','/api/ai/analyze':'ai-analyze',
     '/api/ai/anomalies':'anomalies','/api/ai/translate-batch':'translate','/api/analytics/run':'analytics','/api/analytics/predict':'predict'};
   let user = null, workspace = null, workspaces = [], pending = 0, tail = Promise.resolve(), failed = null;
-  let bar, status, selector, gate, label, verified = false, surfaces=[], beforeSwitch=async()=>{};
+  let bar, status, selector, gate, label, signin, verified = false, surfaces=[], beforeSwitch=async()=>{};
   const readyDOM = document.readyState === 'loading' ? new Promise(r => document.addEventListener('DOMContentLoaded',r,{once:true})) : Promise.resolve();
   const keyOf = (p,k,key) => JSON.stringify([p,k,key]);
   function show(message) { if(status)status.textContent=message; }
-  function freeze(message) {
-    verified=false; failed=Error(message); values.clear(); records.clear();
+  function freeze(error) {
+    failed=error instanceof Error?error:Error(String(error));
+    const message=failed.message;
+    verified=false; values.clear(); records.clear();
     for(const surface of surfaces)surface.inert=true;
     if(label)label.textContent='No verified workspace';
-    if(gate){gate.hidden=false;gate.textContent=message+' Reload or sign in to continue.';}
+    if(gate){
+      gate.hidden=false;gate.textContent=message;
+      const help=document.createElement('p');
+      help.textContent=failed.status===401?'Sign in to continue.':failed.status===403?'Check your access in Manage workspaces.':'Reload to retry the connection. Your sign-in has not been cleared.';
+      const retry=document.createElement('button');retry.type='button';retry.textContent='Retry connection';retry.onclick=()=>location.reload();
+      gate.append(help,retry);
+    }
+    if(signin&&failed.status===401)signin.hidden=false;
     if(selector)selector.disabled=true;
     show(message);
   }
+  function connectionError(service, status=0, code='NETWORK_ERROR', detail='') {
+    const messages={
+      EMPTY_RESPONSE:service+' returned an empty response. It may still be starting.',
+      MALFORMED_RESPONSE:service+' returned an unreadable response. It may still be starting.',
+      REQUEST_TIMEOUT:service+' took too long to respond. It may still be starting.',
+      NETWORK_ERROR:service+' could not be reached. Check your connection and retry.'
+    };
+    const message=status===401?'Your Appwrite sign-in has expired.':status===403?'Access to this workspace was denied.':
+      detail||messages[code]||service+' request failed (HTTP '+status+').';
+    const error=Error(message);error.status=status;error.code=code;
+    error.retryable=![401,403].includes(status)&&(status===0||status===408||status===429||status>=500||['EMPTY_RESPONSE','MALFORMED_RESPONSE'].includes(code));
+    return error;
+  }
+  async function readJSON(response, service, allowHttpError=false) {
+    const text=await response.text();
+    let data;
+    try{data=text.trim()?JSON.parse(text):null;}catch{}
+    if(!response.ok&&!allowHttpError){
+      const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
+      throw connectionError(service,response.status,'HTTP_'+response.status,detail.slice(0,300));
+    }
+    if(!text.trim())throw connectionError(service,response.status,'EMPTY_RESPONSE');
+    if(!data||typeof data!=='object')throw connectionError(service,response.status,'MALFORMED_RESPONSE');
+    return data;
+  }
+  async function request(url, options, service, raw=false) {
+    // Only safe reads retry automatically. An uncertain write keeps its receipt
+    // and is never repeated here (including Appwrite JWT creation).
+    const attempts=!raw&&(options.method||'GET')==='GET'?3:1;
+    for(let attempt=0;attempt<attempts;attempt++){
+      const controller=new AbortController(), external=options.signal;
+      const abort=()=>controller.abort(external.reason);
+      if(external?.aborted)throw external.reason||new DOMException('Request cancelled','AbortError');
+      external?.addEventListener('abort',abort,{once:true});
+      let timedOut=false;
+      const timer=setTimeout(()=>{timedOut=true;controller.abort();},25000);
+      try{
+        const response=await nativeFetch(url,{...options,signal:controller.signal});
+        if(!raw)return await readJSON(response,service);
+        // Downloads and deliberate 204/HEAD replies must keep their original body.
+        const type=(response.headers.get('Content-Type')||'').toLowerCase();
+        if(response.ok&&(response.status===204||options.method==='HEAD'||
+          response.headers.has('Content-Disposition')||/^(application\/(pdf|octet-stream|zip|vnd\.)|text\/csv|image\/)/.test(type)))return response;
+        try{await readJSON(response.clone(),service,true);return response;}
+        catch(error){
+          if(typeof error.code!=='string')throw error;
+          // Never treat an empty 2xx write as a confirmed save: callers retain
+          // their idempotency key and display a retryable error instead.
+          return new Response(JSON.stringify({detail:error.message,code:error.code}),{status:response.ok?502:response.status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
+        }
+      }catch(cause){
+        if(external?.aborted)throw external.reason||new DOMException('Request cancelled','AbortError');
+        const error=timedOut?connectionError(service,0,'REQUEST_TIMEOUT'):cause.code?cause:connectionError(service);
+        if(!error.retryable||attempt===attempts-1)throw error;
+        show(service+' is taking longer to respond. Retrying '+(attempt+2)+' of '+attempts+'…');
+        await new Promise(resolve=>setTimeout(resolve,1000*(attempt+1)));
+      }finally{clearTimeout(timer);external?.removeEventListener('abort',abort);}
+    }
+  }
   async function appwrite(path, method='GET') {
-    const r=await nativeFetch(endpoint+path,{method,credentials:'include',cache:'no-store',headers:{'X-Appwrite-Project':project,'Content-Type':'application/json'},...(method==='POST'?{body:'{}'}:{})});
-    if(!r.ok){freeze('Appwrite sign-in required');throw Error('Appwrite sign-in required');}
-    return r.json();
+    try{
+      const data=await request(endpoint+path,{method,credentials:'include',cache:'no-store',headers:{'X-Appwrite-Project':project,'Content-Type':'application/json'},...(method==='POST'?{body:'{}'}:{})},'Appwrite');
+      if(typeof data[path==='/account'?'$id':'jwt']!=='string'||!data[path==='/account'?'$id':'jwt'])throw connectionError('Appwrite',200,'MALFORMED_RESPONSE');
+      return data;
+    }catch(error){if([401,403].includes(error.status))freeze(error);throw error;}
   }
   async function api(path, method='GET', body, rawOptions=null) {
     try {
@@ -2512,14 +2582,14 @@ PRODUCT_CLIENT = r'''
       const contentType=rawOptions?new Headers(rawOptions.headers||{}).get('Content-Type'):'application/json';
       const operationId=rawOptions?new Headers(rawOptions.headers||{}).get('X-Alaada-Operation'):null;
       const idempotencyKey=rawOptions?new Headers(rawOptions.headers||{}).get('Idempotency-Key'):null;
-      const response=await nativeFetch('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))});
+      const response=await request('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))},'Alaada workspace service',!!rawOptions);
       const latest=await appwrite('/account');
       if(latest.$id!==account.$id){freeze('The signed-in account changed during the request.');throw failed;}
-      if(rawOptions){if([401,403].includes(response.status))freeze('Product access was denied. Reopen a verified workspace.');return response;}
-      const data=await response.json();
-      if(!response.ok){if([401,403].includes(response.status))freeze('Workspace permission expired or was revoked.');throw Error(data.detail||'Workspace request failed');}
-      return data;
-    } catch(error) { show(error.message); throw error; }
+      if(rawOptions){if([401,403].includes(response.status))freeze(connectionError('Alaada workspace service',response.status));return response;}
+      if(path==='/workspaces'&&(response.user!==account.$id||!Array.isArray(response.workspaces)||response.workspaces.some(w=>!w||typeof w.id!=='string'||!w.id)))throw connectionError('Alaada workspace service',200,'MALFORMED_RESPONSE');
+      if(path.endsWith('/resources')&&method==='GET'&&!Array.isArray(response))throw connectionError('Alaada workspace service',200,'MALFORMED_RESPONSE');
+      return response;
+    } catch(error) { if([401,403].includes(error.status))freeze(error);show(error.message); throw error; }
   }
   function enqueue(fn) {
     if(!verified)throw Error('A verified workspace is required.');
@@ -2611,8 +2681,8 @@ PRODUCT_CLIENT = r'''
           window.sessionStorage.setItem(storageKey,JSON.stringify(saved));
           const headers=new Headers(options.headers||{});headers.set('X-Alaada-Operation',saved[digest]);
           const response=await api('/workspaces/'+workspace.id+'/sheets/execute/'+sheetRoutes[target.pathname],'POST',undefined,{...options,headers});
-          const result=await response.clone().json().catch(()=>({}));
-          if((response.ok&&result.success!==false)||result.state==='rejected'){
+          const result=await response.clone().json().catch(()=>null);
+          if((response.ok&&result&&result.success!==false)||result?.state==='rejected'){
             const current=JSON.parse(window.sessionStorage.getItem(storageKey)||'{}');
             if(current[digest]===saved[digest]){delete current[digest];window.sessionStorage.setItem(storageKey,JSON.stringify(current));}
           }
@@ -2685,12 +2755,16 @@ PRODUCT_CLIENT = r'''
     label=document.createElement('strong');label.textContent='Verifying workspace…';
     selector=document.createElement('select');selector.setAttribute('aria-label','Active workspace');selector.disabled=true;
     const manage=document.createElement('a');manage.href='/workspaces';manage.textContent='Manage workspaces';manage.style.color='#90e3da';
-    const signin=document.createElement('a');
+    signin=document.createElement('a');
     signin.href='/auth.html?next='+encodeURIComponent(location.pathname+location.search);signin.textContent='Sign in';signin.style.color='#fff';
     status=document.createElement('span');status.setAttribute('role','status');
     bar.append(label,selector,manage,signin,status);document.body.prepend(bar);
     gate=document.createElement('div');gate.style.cssText='position:fixed;inset:46px 0 0;z-index:2147483646;background:#0e1423;color:#fff;padding:10vh 10vw;font:20px system-ui';gate.textContent='Verifying your private workspace…';document.body.append(gate);
     document.body.style.paddingTop='46px';
+    // Warm the known Free service without credentials while Appwrite verifies
+    // the session. This is a best-effort public health read, never authority.
+    const wake=new AbortController(),wakeTimer=setTimeout(()=>wake.abort(),25000);
+    nativeFetch('https://alaada-workspaces.onrender.com/health',{mode:'no-cors',cache:'no-store',signal:wake.signal}).catch(()=>{}).finally(()=>clearTimeout(wakeTimer));
     try {
       const session=await api('/workspaces');user=session.user;workspaces=session.workspaces;
       const requested=new URL(location.href).searchParams.get('workspace');
@@ -2710,11 +2784,11 @@ PRODUCT_CLIENT = r'''
       selector.onchange=async()=>{const next=selector.value;selector.value=workspace.id;if(!confirm('Switch workspace? Current workbook changes will be saved; other unsaved form input will be discarded. The product will reload in the destination workspace.'))return;try{selector.disabled=true;await beforeSwitch();await W.flush();const url=new URL(location.href);url.searchParams.set('workspace',next);location.assign(url.href);}catch(error){show(error.message);selector.disabled=!!failed;}};
       verified=true;selector.disabled=false;gate.hidden=true;signin.hidden=true;for(const surface of surfaces)surface.inert=false;show('Private workspace verified');
       return W;
-    }catch(error){freeze(error.message);throw error;}
+    }catch(error){freeze(error);throw error;}
   })();
   W.ready.catch(()=>{});
   window.addEventListener('beforeunload',event=>{if(pending||failed&&verified){event.preventDefault();event.returnValue='Workspace changes have not been saved.';}});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(gate)gate.hidden=false;for(const surface of surfaces)surface.inert=true;}else if(verified){W.verify().then(()=>{if(verified){gate.hidden=true;for(const surface of surfaces)surface.inert=false;}}).catch(error=>freeze(error.message));}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(gate)gate.hidden=false;for(const surface of surfaces)surface.inert=true;}else if(verified){W.verify().then(()=>{if(verified){gate.hidden=true;for(const surface of surfaces)surface.inert=false;}}).catch(error=>freeze(error));}});
   window.AlaadaProduct={product,ready:()=>W.ready.then(()=>true)};
 })();
 '''

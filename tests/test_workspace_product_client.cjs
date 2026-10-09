@@ -1,9 +1,10 @@
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
-const source = fs.readFileSync(process.argv[2], 'utf8').replaceAll('__ENDPOINT__','https://sfo.cloud.appwrite.io/v1').replaceAll('__PROJECT__','project');
+const source = fs.readFileSync(process.argv[2] || require('node:path').join(__dirname,'..','workspace-product-client.js'), 'utf8').replaceAll('__ENDPOINT__','https://sfo.cloud.appwrite.io/v1').replaceAll('__PROJECT__','project');
 
-async function boot(product, requested='', seed=[], operationStorage=new Map()) {
+const json=data=>new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}});
+async function boot(product, requested='', seed=[], operationStorage=new Map(), config={}) {
   const requests=[], navigation=[], events={},cookies=[]; let currentUser='alice', revoked=false;
   let operationReply=()=>new Response(JSON.stringify({success:true,reply:'Scoped result'}),{status:200});
   let accountReply=()=>new Response(JSON.stringify({id:'company-id'}),{status:201});
@@ -16,29 +17,33 @@ async function boot(product, requested='', seed=[], operationStorage=new Map()) 
   const document={readyState:'complete',currentScript:{dataset:{product}},body:new Element('body'),
     createElement:tag=>new Element(tag),addEventListener:(type,fn)=>events[type]=fn,hidden:false};
   Object.defineProperty(document,'cookie',{set:value=>cookies.push(value),get:()=>''});
+  document.body.append(new Element('main'));
   const location={href:'https://alaada.test/'+product+'.html'+requested,origin:'https://alaada.test',pathname:'/'+product+'.html',search:requested,assign:url=>navigation.push(url)};
   const state={user:'alice',workspaces:[{id:'personal',name:'Personal',kind:'personal'},{id:'company',name:'Company',kind:'organisation'}]};
   const fetch=async(url,options={})=>{
     requests.push({url:String(url),options});
-    if(String(url).endsWith('/account'))return {ok:true,json:async()=>({$id:currentUser})};
-    if(String(url).endsWith('/account/jwts'))return {ok:true,json:async()=>({jwt:'verified-token'})};
+    const overridden=await config.fetch?.(String(url),options,requests);
+    if(overridden!==undefined)return overridden;
+    if(String(url).endsWith('/account'))return json({$id:currentUser});
+    if(String(url).endsWith('/account/jwts'))return json({jwt:'verified-token'});
     if(String(url).includes('/sheets/execute/'))return operationReply();
     if(String(url).includes('/accounts/'))return accountReply();
-    if(url==='/api/workspaces')return {ok:true,json:async()=>({...state,workspaces:revoked?state.workspaces.slice(0,1):state.workspaces})};
-    if(String(url).endsWith('/orbit/reply'))return {ok:true,json:async()=>({id:'saved',product:'orbit',kind:'conversation',version:2,payload:{native_key:'first',data:{id:'first',title:'First',messages:[{role:'assistant',text:'Scoped reply'}]}}})};
+    if(url==='/api/workspaces')return json({...state,workspaces:revoked?state.workspaces.slice(0,1):state.workspaces});
+    if(String(url).endsWith('/orbit/reply'))return json({id:'saved',product:'orbit',kind:'conversation',version:2,payload:{native_key:'first',data:{id:'first',title:'First',messages:[{role:'assistant',text:'Scoped reply'}]}}});
     if(options.method==='PUT'){
       const body=JSON.parse(options.body),parts=url.split('/');
-      return {ok:true,json:async()=>({id:'saved',product:parts[5],kind:parts[7],version:body.version+1,payload:{native_key:decodeURIComponent(parts[8]),data:body.payload}})};
+      return json({id:'saved',product:parts[5],kind:parts[7],version:body.version+1,payload:{native_key:decodeURIComponent(parts[8]),data:body.payload}});
     }
-    return {ok:true,json:async()=>seed};
+    return json(seed);
   };
   const window={fetch,addEventListener:(type,fn)=>events[type]=fn,
     sessionStorage:{getItem:key=>operationStorage.get(key)||null,setItem:(key,value)=>operationStorage.set(key,value)}};
-  const context=vm.createContext({window,document,location,URL,Headers,Response,TextEncoder,Uint8Array,crypto:require('node:crypto').webcrypto,Map,Set,Promise,Error,JSON,encodeURIComponent,confirm:()=>true,console,
+  const context=vm.createContext({window,document,location,URL,Headers,Response,AbortController,DOMException,TextEncoder,Uint8Array,crypto:require('node:crypto').webcrypto,Map,Set,Promise,Error,JSON,encodeURIComponent,confirm:()=>true,console,
+    setTimeout:(fn,ms)=>setTimeout(fn,ms===25000?(config.timeoutMs??ms):0),clearTimeout,
     localStorage:{getItem(){throw Error('Legacy storage must never be read');}}});
   vm.runInContext(source,context);
   const W=window.AlaadaWorkspace;
-  await W.ready;
+  if(config.failure)await assert.rejects(W.ready,config.failure);else await W.ready;
   return {W,requests,navigation,document,events,cookies,operationStorage,setOperationReply:fn=>operationReply=fn,setAccountReply:fn=>accountReply=fn,setUser:u=>currentUser=u,revoke:()=>revoked=true};
 }
 
@@ -162,5 +167,76 @@ async function boot(product, requested='', seed=[], operationStorage=new Map()) 
   const deletion=analyser.requests.find(r=>r.options.method==='DELETE');
   assert.equal(deletion.options.headers['X-Alaada-Workspace'],'company');
   assert.equal(JSON.parse(deletion.options.body).version,1);
+  // Actual browser Responses exercise empty bodies, proxy HTML and streaming
+  // failures; JSON-only doubles previously concealed the startup crash.
+  const targetCalls=(env,suffix)=>env.requests.filter(r=>r.url.endsWith(suffix));
+  let cold=0;
+  const recovered=await boot('accounts','',[],new Map(),{fetch:url=>{
+    if(url==='/api/workspaces'&&++cold===1)return new Response('');
+  }});
+  assert.equal(cold,2);
+  assert.equal(recovered.W.active.id,'personal');
+  assert.equal(recovered.document.body.children.at(-1).hidden,true);
+  for(const [body,status,code] of [['',200,'EMPTY_RESPONSE'],['<html>Proxy unavailable</html>',502,'HTTP_502'],['{',200,'MALFORMED_RESPONSE']]){
+    const unavailable=await boot('accounts','',[],new Map(),{failure:error=>error.code===code,fetch:url=>url==='/api/workspaces'?new Response(body,{status}):undefined});
+    assert.equal(targetCalls(unavailable,'/api/workspaces').length,3);
+    const gate=unavailable.document.body.children.at(-1);
+    assert.equal(gate.hidden,false);
+    assert.equal(unavailable.document.body.children[1].inert,true);
+    assert.doesNotMatch(gate.textContent,/Unexpected end|execute 'json'|expired/);
+    assert.match(gate.children.at(-2).textContent,/sign-in has not been cleared/);
+    assert.equal(gate.children.at(-1).textContent,'Retry connection');
+    assert.equal(targetCalls(unavailable,'/resources').length,0);
+  }
+  for(const status of [401,403]){
+    const denied=await boot('accounts','',[],new Map(),{failure:error=>error.status===status,fetch:url=>url==='/api/workspaces'?new Response('',{status}):undefined});
+    assert.equal(targetCalls(denied,'/api/workspaces').length,1);
+    assert.match(denied.document.body.children.at(-1).textContent,status===401?/sign-in has expired/:/Access.*denied/);
+  }
+  const emptyIdentity=await boot('orbit','',[],new Map(),{failure:/Appwrite returned an empty response/,fetch:url=>url.endsWith('/account')?new Response(''):undefined});
+  assert.equal(targetCalls(emptyIdentity,'/account').length,3);
+  assert.equal(targetCalls(emptyIdentity,'/api/workspaces').length,0);
+  const jwtFailure=await boot('sheets','',[],new Map(),{failure:/Appwrite returned an empty response/,fetch:url=>url.endsWith('/account/jwts')?new Response(''):undefined});
+  assert.equal(targetCalls(jwtFailure,'/account/jwts').length,1,'POSTs are not retried automatically');
+  assert.equal(targetCalls(jwtFailure,'/api/workspaces').length,0);
+  await boot('accounts','',[],new Map(),{failure:/unreadable response/,fetch:url=>url.endsWith('/account/jwts')?json({}):undefined});
+  await boot('accounts','',[],new Map(),{failure:/unreadable response/,fetch:url=>url==='/api/workspaces'?json({user:'someone-else',workspaces:[]}):undefined});
+  await boot('accounts','',[],new Map(),{failure:/unreadable response/,fetch:url=>url.endsWith('/resources')?json({}):undefined});
+  const timeout=await boot('accounts','',[],new Map(),{timeoutMs:5,failure:error=>error.code==='REQUEST_TIMEOUT',fetch:(url,options)=>{
+    if(url==='/api/workspaces')return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true}));
+  }});
+  assert.equal(targetCalls(timeout,'/api/workspaces').length,3);
+  const network=await boot('accounts','',[],new Map(),{failure:error=>error.code==='NETWORK_ERROR',fetch:url=>{
+    if(url==='/api/workspaces')throw new TypeError('Failed to fetch');
+  }});
+  assert.equal(targetCalls(network,'/api/workspaces').length,3);
+  const uncertain=await boot('accounts');
+  uncertain.setAccountReply(()=>new Response(''));
+  const malformedWrite=await uncertain.W.productFetch('/companies',accountOptions);
+  assert.equal(malformedWrite.status,502);
+  assert.equal((await malformedWrite.json()).code,'EMPTY_RESPONSE');
+  assert.equal(accountAttempts(uncertain).length,1);
+  const retainedKey=accountAttempts(uncertain)[0].options.headers['Idempotency-Key'];
+  uncertain.setAccountReply(()=>json({id:'saved-company'}));
+  await uncertain.W.productFetch('/companies',accountOptions);
+  assert.equal(accountAttempts(uncertain).at(-1).options.headers['Idempotency-Key'],retainedKey);
+  uncertain.setAccountReply(()=>new Response(JSON.stringify({detail:{code:'INTEGRATION_UNAVAILABLE',message:'Not connected'}}),{status:503}));
+  assert.equal((await (await uncertain.W.productFetch('/health')).json()).detail.code,'INTEGRATION_UNAVAILABLE');
+  uncertain.setAccountReply(()=>new Response('a,b\n1,2',{headers:{'Content-Type':'text/csv','Content-Disposition':'attachment; filename=report.csv'}}));
+  assert.equal(await (await uncertain.W.productFetch('/companies/id/report')).text(),'a,b\n1,2');
+  uncertain.setAccountReply(()=>new Response(null,{status:204}));
+  assert.equal((await uncertain.W.productFetch('/companies/id',{method:'DELETE'})).status,204);
+  const cancelled=new AbortController();cancelled.abort();
+  const beforeCancel=accountAttempts(uncertain).length;
+  await assert.rejects(uncertain.W.productFetch('/companies',{...accountOptions,signal:cancelled.signal}),error=>error.name==='AbortError');
+  assert.equal(accountAttempts(uncertain).length,beforeCancel);
+  const uncertainSheets=await boot('sheets');
+  uncertainSheets.setOperationReply(()=>new Response(''));
+  assert.equal((await uncertainSheets.W.productFetch('/api/ai/chat',chatOptions)).status,502);
+  await uncertainSheets.W.productFetch('/api/ai/chat',chatOptions);
+  const sheetAttempts=targetCalls(uncertainSheets,'/sheets/execute/ai-chat');
+  assert.equal(sheetAttempts.length,2);
+  assert.equal(sheetAttempts[0].options.headers['X-Alaada-Operation'],sheetAttempts[1].options.headers['X-Alaada-Operation']);
   console.log('Product client behavior passed for Orbit, Sheets, Accounts and Analyser');
+  console.log('Empty/malformed responses, cold-start retries, auth denial, cancellation, timeouts, downloads and uncertain-write receipts passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
