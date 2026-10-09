@@ -58,7 +58,7 @@
     if(!data||typeof data!=='object')throw connectionError(service,response.status,'MALFORMED_RESPONSE');
     return data;
   }
-  async function request(url, options, service, raw=false) {
+  async function request(url, options, service, raw=false, timeoutMs=25000) {
     // Only safe reads retry automatically. An uncertain write keeps its receipt
     // and is never repeated here (including Appwrite JWT creation).
     const attempts=!raw&&(options.method||'GET')==='GET'?3:1;
@@ -68,7 +68,7 @@
       if(external?.aborted)throw external.reason||new DOMException('Request cancelled','AbortError');
       external?.addEventListener('abort',abort,{once:true});
       let timedOut=false;
-      const timer=setTimeout(()=>{timedOut=true;controller.abort();},25000);
+      const timer=setTimeout(()=>{timedOut=true;controller.abort();},timeoutMs);
       try{
         const response=await nativeFetch(url,{...options,signal:controller.signal});
         if(!raw)return await readJSON(response,service);
@@ -107,7 +107,10 @@
       const contentType=rawOptions?new Headers(rawOptions.headers||{}).get('Content-Type'):'application/json';
       const operationId=rawOptions?new Headers(rawOptions.headers||{}).get('X-Alaada-Operation'):null;
       const idempotencyKey=rawOptions?new Headers(rawOptions.headers||{}).get('Idempotency-Key'):null;
-      const response=await request('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))},'Alaada workspace service',!!rawOptions);
+      // Allow the gateway's bounded 30-second delivery call to return its
+      // outcome before the browser gives up. The caller can still cancel sooner.
+      const timeoutMs=method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:25000;
+      const response=await request('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))},'Alaada workspace service',!!rawOptions,timeoutMs);
       const latest=await appwrite('/account');
       if(latest.$id!==account.$id){freeze('The signed-in account changed during the request.');throw failed;}
       if(rawOptions){if([401,403].includes(response.status))freeze(connectionError('Alaada workspace service',response.status));return response;}
