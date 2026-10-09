@@ -973,7 +973,9 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
     if (res.status !== 401 || attempt === 1 || !APPWRITE_AUTH_REQUIRED) break;
     APPWRITE_JWT = '';
     APPWRITE_JWT_EXPIRES_AT = 0;
-    opts.headers = {...headers};
+    // Keep body metadata and retry keys when refreshing only the credential.
+    delete opts.headers.Authorization;
+    delete opts.headers.authorization;
     await getAppwriteJwt({force:true});
   }
   if (raw) return res;
@@ -981,7 +983,7 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
   const text = await res.text();
   try { data = text ? JSON.parse(text) : null; } catch(e){ data = text || null; }
   if (!res.ok) {
-    const msg = (data && data.error && data.error.message) || (typeof data === 'string' && data) || `Request failed (${res.status})`;
+    const msg = (data && data.error && data.error.message) || (data && typeof data.detail === 'string' && data.detail) || (typeof data === 'string' && data) || `Request failed (${res.status})`;
     throw new ApiError(msg, res.status, data);
   }
   const selectedCompanyPath = STATE.companyId ? `/companies/${STATE.companyId}` : null;
