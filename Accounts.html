@@ -995,6 +995,35 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
 }
 class ApiError extends Error { constructor(msg, status, data){ super(msg); this.status=status; this.data=data; } }
 
+async function apiAllItems(path, {qs={}, isCurrent=()=>true}={}) {
+  const items = [], seen = new Set();
+  let expectedTotal = null;
+  for (let page = 1; page <= 500; page++) {
+    if (!isCurrent()) return null;
+    const result = await api(path, {qs:{...qs, page, page_size:100}});
+    if (!isCurrent()) return null;
+    if (!result || !Array.isArray(result.items)) throw new Error('The server returned an invalid list. Retry loading.');
+    const total = result.meta?.total ?? result.total;
+    if (total !== undefined) {
+      if (!Number.isSafeInteger(total) || total < 0 || (expectedTotal !== null && total !== expectedTotal)) {
+        throw new Error('The list changed while loading. Retry to load a complete list.');
+      }
+      expectedTotal = total;
+    }
+    for (const item of result.items) {
+      if (!item || typeof item.id !== 'string' || seen.has(item.id)) throw new Error('The list changed while loading. Retry loading.');
+      seen.add(item.id); items.push(item);
+    }
+    if (expectedTotal !== null && items.length > expectedTotal) throw new Error('Invalid list total. Retry loading.');
+    if (expectedTotal !== null && items.length === expectedTotal) return items;
+    if (result.items.length < 100) {
+      if (expectedTotal !== null) throw new Error('The list is incomplete. Retry loading.');
+      return items;
+    }
+  }
+  throw new Error('This list is too large to load completely. Narrow the selection.');
+}
+
 /* ============================================================
    LOCAL DEVICE BACKUPS
    ============================================================ */
@@ -1396,11 +1425,32 @@ async function copyText(text){
 /* ============================================================
    FORMAT HELPERS
    ============================================================ */
+function moneyCents(v){
+  if (v === null || v === undefined || v === '') return null;
+  const match = String(v).trim().match(/^(-?)(\d+)(?:\.(\d*))?(?:e([+-]?\d+))?$/i);
+  if (!match || match[2].length + (match[3] || '').length > 100) return null;
+  const exponent = Number(match[4] || 0);
+  if (!Number.isInteger(exponent) || Math.abs(exponent) > 100) return null;
+  const digits = BigInt(match[2] + (match[3] || ''));
+  const shift = 2 + exponent - (match[3] || '').length;
+  const cents = shift >= 0 ? digits * (10n ** BigInt(shift))
+    : (digits + (10n ** BigInt(-shift)) / 2n) / (10n ** BigInt(-shift));
+  return match[1] ? -cents : cents;
+}
+function sumMoneyAmounts(values){
+  const amounts = values.map(moneyCents);
+  if (amounts.some(amount=>amount === null)) return null;
+  const total = amounts.reduce((sum,amount)=>sum+amount,0n), abs = total < 0n ? -total : total;
+  return (total < 0n ? '-' : '') + String(abs / 100n) + '.' + String(abs % 100n).padStart(2,'0');
+}
 function money(v, currency){
-  const n = Number(v || 0);
-  const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
-  const sym = currency === 'USD' ? '$' : (currency === 'EUR' ? '€' : '₹');
-  return (n < 0 ? '−' : '') + sym + abs;
+  const cents = moneyCents(v);
+  if (cents === null) return '—';
+  const positive = cents < 0n ? -cents : cents;
+  const abs = (positive / 100n).toLocaleString('en-IN') + '.' + String(positive % 100n).padStart(2,'0');
+  const code = /^[A-Z]{3}$/.test(currency || '') ? currency : 'INR';
+  const sym = {USD:'$',EUR:'€',INR:'₹',GBP:'£'}[code] || code + ' ';
+  return (cents < 0n ? '−' : '') + sym + abs;
 }
 function fmtDate(d){ if(!d) return '—'; const dt = new Date(d); if(isNaN(dt)) return d; return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -1945,12 +1995,13 @@ startAutoConnect();
 async function loadCompanies() {
   setLoadState('companies', 'loading');
   try {
-    const page = await api('/companies', {qs:{page:1, page_size:100}});
-    STATE.companies = page.items || [];
+    STATE.companies = await apiAllItems('/companies');
     setLoadState('companies', STATE.companies.length ? 'loaded' : 'loaded_empty');
   } catch(e) {
     setLoadState('companies', 'failed', {message:e.message || 'Request failed', status:e.status || 'network', code:errorCodeFromError(e)});
     errToast(e);
+    renderCompanyMenu();
+    return;
   }
   const selectedStillExists = STATE.companies.some(company => company.id === STATE.companyId);
   if (!selectedStillExists) {
@@ -1960,7 +2011,7 @@ async function loadCompanies() {
   }
   renderCompanyMenu();
   if (STATE.companyId) await selectCompany(STATE.companyId, {silentNav:true});
-  else { STATE.company = null; document.getElementById('co-current').textContent = 'No company'; updateBackupReminder(); }
+  else { ++STATE.companyGeneration; clearCompanyScopedData(); document.getElementById('co-current').textContent = 'No company'; navigate(STATE.currentView); updateBackupReminder(); }
 }
 
 function renderCompanyMenu(){
@@ -1991,9 +2042,15 @@ document.getElementById('co-new-btn').onclick = () => { document.getElementById(
 
 async function selectCompany(id, {silentNav=false} = {}) {
   const generation = ++STATE.companyGeneration;
+  const changedCompany = STATE.company?.id !== id;
+  closeModal();
+  if (changedCompany) clearCompanyScopedData();
+  STATE.company = null;
   STATE.companyId = id;
   window.AlaadaWorkspace.storage.setItem(LS.company, id);
   clearCompanyScopedLoadStates();
+  document.getElementById('co-current').textContent = 'Loading company…';
+  view().innerHTML = '<div class="loading-row"><span class="spin"></span> Loading company…</div>';
   try {
     const company = await api(`/companies/${id}`);
     if (!sameCompanyGeneration(id, generation)) return;
@@ -2003,6 +2060,7 @@ async function selectCompany(id, {silentNav=false} = {}) {
     if (e.status === 404) {
       try {
         const backup = await getLocalBackup(id);
+        if (!sameCompanyGeneration(id, generation)) return;
         if (backup) {
           STATE.offlineBackup = backup;
           toast('Company missing in cloud database. Review recovery options before restoring.', 'err');
@@ -2011,7 +2069,12 @@ async function selectCompany(id, {silentNav=false} = {}) {
         }
       } catch(inner){ console.warn(inner); }
     }
-    errToast(e); STATE.company = null; updateBackupReminder(); return;
+    if (!sameCompanyGeneration(id, generation)) return;
+    clearCompanyScopedData();
+    document.getElementById('co-current').textContent = 'Company unavailable';
+    view().innerHTML = emptyState('⚠','Could not load company',esc(e.message),
+      '<button class="btn btn-ghost" onclick="retryCompanyScopedLoaders()">Retry loading</button>');
+    errToast(e); updateBackupReminder(); return;
   }
   document.getElementById('co-current').textContent = STATE.company.name;
   renderCompanyMenu();
@@ -2022,7 +2085,7 @@ async function selectCompany(id, {silentNav=false} = {}) {
   ]);
   if (!sameCompanyGeneration(id, generation)) return;
   if (scopedResults.some(result => result.status === 'rejected')) {
-    toast('Some company data could not be loaded. Existing data was kept; use Retry loading before creating new records.', 'err');
+    toast('Some company data could not be loaded. Use Retry loading before creating new records.', 'err');
   }
   ensureLocalBackupForSelectedCompany();
   refreshBalanceBeam();
@@ -2044,12 +2107,19 @@ function failedLoadState(key) {
 function clearCompanyScopedLoadStates() {
   STATE.loadStates = {};
 }
+function clearCompanyScopedData() {
+  for (const key of ['groups','ledgers','voucherTypes','financialYears','customers','suppliers',
+    'categories','uoms','warehouses','stockItems','gstRates','taxClassifications']) STATE[key] = [];
+  STATE.company = null;
+  STATE.offlineBackup = null;
+  clearCompanyScopedLoadStates();
+}
 function failedLoaderNoticeHtml(keys, retryAction='retryCompanyScopedLoaders()') {
   const failures = keys.map(key => [key, failedLoadState(key)]).filter(([,state]) => state);
   if (!failures.length) return '';
   return `<div class="card card-pad" style="margin-bottom:16px;border-color:rgba(214,58,58,.35);">
     <div style="font-weight:900;color:var(--red);margin-bottom:6px;">Some company data could not be loaded</div>
-    <div class="help-text">Alaada kept the last available data instead of treating this as empty. Retry before creating new records.</div>
+    <div class="help-text">This is a loading failure, not an empty list. Only previously loaded data for this same company may be shown. Retry before creating new records.</div>
     <div class="grid grid-2" style="margin-top:12px;">
       ${failures.map(([key,state]) => `<div class="kv"><span class="k">${esc(key)}</span><span class="v">${esc(state.message || 'Load failed')}</span></div>`).join('')}
     </div>
@@ -2064,9 +2134,11 @@ async function loadCompanyScopedState(key, pathBuilder, {items=false, fallback=[
   if (!companyId) return;
   setLoadState(key, 'loading', {companyId});
   try {
-    const data = await api(pathBuilder(companyId));
+    const data = items
+      ? await apiAllItems(pathBuilder(companyId), {isCurrent:()=>sameCompanyGeneration(companyId, generation)})
+      : await api(pathBuilder(companyId));
     if (!sameCompanyGeneration(companyId, generation)) return;
-    STATE[key] = items ? (data.items || []) : data;
+    STATE[key] = data;
     setLoadState(key, Array.isArray(STATE[key]) && STATE[key].length === 0 ? 'loaded_empty' : 'loaded', {companyId});
   } catch(e) {
     if (!sameCompanyGeneration(companyId, generation)) return;
@@ -2076,15 +2148,15 @@ async function loadCompanyScopedState(key, pathBuilder, {items=false, fallback=[
   }
 }
 async function loadGroups(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('groups', id=>`/companies/${id}/account-groups`, {}, generation, companyId); }
-async function loadLedgers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('ledgers', id=>`/companies/${id}/ledgers?page_size=500`, {items:true}, generation, companyId); }
+async function loadLedgers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('ledgers', id=>`/companies/${id}/ledgers`, {items:true}, generation, companyId); }
 async function loadVoucherTypes(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('voucherTypes', id=>`/companies/${id}/voucher-types`, {}, generation, companyId); }
 async function loadFinancialYears(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('financialYears', id=>`/companies/${id}/financial-years`, {}, generation, companyId); }
-async function loadCustomers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('customers', id=>`/companies/${id}/customers?page_size=500`, {items:true}, generation, companyId); }
-async function loadSuppliers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('suppliers', id=>`/companies/${id}/suppliers?page_size=500`, {items:true}, generation, companyId); }
+async function loadCustomers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('customers', id=>`/companies/${id}/customers`, {items:true}, generation, companyId); }
+async function loadSuppliers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('suppliers', id=>`/companies/${id}/suppliers`, {items:true}, generation, companyId); }
 async function loadCategories(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('categories', id=>`/companies/${id}/inventory/categories`, {}, generation, companyId); }
 async function loadUoms(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('uoms', id=>`/companies/${id}/inventory/uoms`, {}, generation, companyId); }
 async function loadWarehouses(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('warehouses', id=>`/companies/${id}/inventory/warehouses`, {}, generation, companyId); }
-async function loadStockItems(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('stockItems', id=>`/companies/${id}/inventory/items?page_size=500`, {items:true}, generation, companyId); }
+async function loadStockItems(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('stockItems', id=>`/companies/${id}/inventory/items`, {items:true}, generation, companyId); }
 async function loadGstRates(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('gstRates', id=>`/companies/${id}/gst/rates`, {}, generation, companyId); }
 async function loadTaxClassifications(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('taxClassifications', id=>`/companies/${id}/gst/classifications`, {}, generation, companyId); }
 
@@ -2097,6 +2169,11 @@ function uomSymbol(id){ const u = STATE.uoms.find(x=>x.id===id); return u ? u.sy
 function categoryName(id){ const c = STATE.categories.find(x=>x.id===id); return c ? c.name : '—'; }
 
 function requireCompany(){
+  if (STATE.companyId && (!STATE.company || STATE.company.id !== STATE.companyId)) {
+    view().innerHTML = emptyState('🏢','Company not loaded','Wait for loading to finish, or retry if it failed.',
+      '<button class="btn btn-ghost" onclick="retryCompanyScopedLoaders()">Retry loading</button>');
+    return false;
+  }
   if (!STATE.companyId) {
     view().innerHTML = emptyState('🏢','No company selected','Create a company to start recording ledgers and vouchers.',
       `<button class="btn btn-blue" onclick="openCompanyForm()">+ Create company</button>`);
@@ -2109,13 +2186,15 @@ function requireCompany(){
    BALANCE BEAM (signature element) — reflects trial balance
    ============================================================ */
 async function refreshBalanceBeam(){
+  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   const label = document.getElementById('beam-label');
   const bar = document.getElementById('beam-bar');
   const panL = document.getElementById('beam-pan-l');
   const panR = document.getElementById('beam-pan-r');
   if (!STATE.companyId) { label.textContent='—'; label.className=''; return; }
   try {
-    const tb = await api(`/companies/${STATE.companyId}/reports/trial-balance`);
+    const tb = await api(`/companies/${companyId}/reports/trial-balance`);
+    if (!sameCompanyGeneration(companyId, generation)) return;
     const d = tb.total_debit, c = tb.total_credit;
     const balanced = tb.is_balanced;
     label.textContent = balanced ? 'Books balanced' : 'Out of balance';
@@ -2124,7 +2203,7 @@ async function refreshBalanceBeam(){
     bar.style.transform = `rotate(${tilt}deg)`;
     panL.style.transform = `rotate(${tilt}deg)`;
     panR.style.transform = `rotate(${tilt}deg)`;
-  } catch(e) { label.textContent='—'; label.className=''; }
+  } catch(e) { if (sameCompanyGeneration(companyId, generation)) { label.textContent='—'; label.className=''; } }
 }
 document.getElementById('balance-beam').onclick = () => navigate('report-trial-balance');
 
@@ -2182,14 +2261,19 @@ function viewHead(title, sub, actionsHtml){
    ============================================================ */
 async function renderDashboard(){
   if (!requireCompany()) return;
+  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   view().innerHTML = viewHead(STATE.company.name, `Fiscal overview · ${esc(STATE.company.base_currency||'INR')} · as of ${fmtDate(todayStr())}`,
     `<button class="btn btn-ghost btn-sm" data-seed-demo-btn onclick="seedDemo()">✦ Seed demo data</button>
      <button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`) +
     `${failedLoaderNoticeHtml(['groups','ledgers','voucherTypes','financialYears','customers','suppliers','categories','uoms','warehouses','stockItems','gstRates','taxClassifications'])}
     <div id="seed-demo-status"></div><div id="dash-body"><div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading dashboard…</td></tr></tbody></table></div></div>`;
+  const slot = document.getElementById('dash-body');
+  const isCurrent = () => sameCompanyGeneration(companyId, generation) && document.getElementById('dash-body') === slot;
   try {
-    const d = await api(`/companies/${STATE.companyId}/dashboard`);
+    const d = await api(`/companies/${companyId}/dashboard`);
+    if (!isCurrent()) return;
     const cur = STATE.company.base_currency;
+    const metric = field => d[field] == null ? 'Unavailable' : money(d[field],cur);
     const body = `<div class="dashboard-shell">
       <div class="grid grid-4" style="margin-bottom:18px;">
         <div class="stat-card c-blue"><div class="stat-label">Total Assets</div><div class="stat-value">${money(d.total_assets,cur)}</div></div>
@@ -2204,19 +2288,19 @@ async function renderDashboard(){
         <div class="stat-card c-red"><div class="stat-label">Total Expenses (YTD)</div><div class="stat-value">${money(d.total_expenses,cur)}</div></div>
       </div>
       <div class="grid grid-4" style="margin-bottom:22px;">
-        <div class="stat-card c-blue" style="cursor:pointer;" onclick="navigate('customers')"><div class="stat-label">Receivables</div><div class="stat-value">${money(d.outstanding_receivables,cur)}</div></div>
-        <div class="stat-card c-gold" style="cursor:pointer;" onclick="navigate('suppliers')"><div class="stat-label">Payables</div><div class="stat-value">${money(d.outstanding_payables,cur)}</div></div>
-        <div class="stat-card c-teal" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Inventory Value</div><div class="stat-value">${money(d.inventory_value,cur)}</div></div>
-        <div class="stat-card ${(d.low_stock_items||[]).length?'c-red':'c-ink'}" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Low Stock Items</div><div class="stat-value">${(d.low_stock_items||[]).length}</div></div>
+        <div class="stat-card c-blue" style="cursor:pointer;" onclick="navigate('customers')"><div class="stat-label">Receivables</div><div class="stat-value">${metric('outstanding_receivables')}</div></div>
+        <div class="stat-card c-gold" style="cursor:pointer;" onclick="navigate('suppliers')"><div class="stat-label">Payables</div><div class="stat-value">${metric('outstanding_payables')}</div></div>
+        <div class="stat-card c-teal" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Inventory Value</div><div class="stat-value">${metric('inventory_value')}</div></div>
+        <div class="stat-card ${(d.low_stock_items||[]).length?'c-red':'c-ink'}" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Low Stock Items</div><div class="stat-value">${d.low_stock_items == null ? 'Unavailable' : d.low_stock_items.length}</div></div>
       </div>
       <div class="grid grid-2" style="margin-bottom:22px;">
         <div class="card card-pad">
           <div style="font-weight:800;margin-bottom:10px;">Top customers (YTD sales)</div>
-          ${(d.top_customers&&d.top_customers.length) ? d.top_customers.map(c=>`<div class="kv"><span class="k">${esc(c.customer_name)}</span><span class="v">${money(c.total_sales,cur)}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No posted sales invoices yet.</div>'}
+          ${(d.top_customers&&d.top_customers.length) ? d.top_customers.map(c=>`<div class="kv"><span class="k">${esc(c.customer_name)}</span><span class="v">${money(c.total_sales,cur)}</span></div>`).join('') : `<div style="font-size:.8rem;color:var(--ink3);">${d.top_customers == null ? 'Sales invoice data is not available yet.' : 'No posted sales invoices yet.'}</div>`}
         </div>
         <div class="card card-pad">
           <div style="font-weight:800;margin-bottom:10px;">Top suppliers (YTD purchases)</div>
-          ${(d.top_suppliers&&d.top_suppliers.length) ? d.top_suppliers.map(s=>`<div class="kv"><span class="k">${esc(s.supplier_name)}</span><span class="v">${money(s.total_purchases,cur)}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No posted purchase bills yet.</div>'}
+          ${(d.top_suppliers&&d.top_suppliers.length) ? d.top_suppliers.map(s=>`<div class="kv"><span class="k">${esc(s.supplier_name)}</span><span class="v">${money(s.total_purchases,cur)}</span></div>`).join('') : `<div style="font-size:.8rem;color:var(--ink3);">${d.top_suppliers == null ? 'Purchase bill data is not available yet.' : 'No posted purchase bills yet.'}</div>`}
         </div>
       </div>
       ${(d.low_stock_items&&d.low_stock_items.length) ? `
@@ -2225,14 +2309,14 @@ async function renderDashboard(){
       <div class="table-wrap" style="margin-bottom:22px;"><table><thead><tr><th>Item</th><th>Warehouse</th><th class="num">Quantity</th><th class="num">Reorder Level</th></tr></thead>
       <tbody>${d.low_stock_items.map(r=>`<tr><td>${esc(r.item_name)}${r.sku?` <span class="pill">${esc(r.sku)}</span>`:''}</td><td>${esc(r.warehouse_name)}</td><td class="num">${r.quantity}</td><td class="num">${r.reorder_level}</td></tr>`).join('')}</tbody></table></div>` : ''}
       <div class="view-head dashboard-section-head"><div class="view-title">Recent orders &amp; documents</div></div>
-      ${renderRecentOrdersTable(d.recent_orders, cur)}
+      ${d.recent_orders == null ? emptyState('📦','Orders unavailable','Sales and purchase documents are not available from this backend yet.') : renderRecentOrdersTable(d.recent_orders, cur)}
       <div class="view-head dashboard-section-head" style="margin-top:22px;"><div class="view-title">Recent activity</div>
         <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('vouchers')">View all vouchers →</button></div></div>
       ${renderRecentTable(d.recent_transactions, cur)}
     </div>`;
-    document.getElementById('dash-body').innerHTML = body;
+    slot.innerHTML = body;
   } catch(e) {
-    document.getElementById('dash-body').innerHTML = emptyState('⚠','Could not load dashboard', esc(e.message), `<button class="btn btn-ghost" onclick="navigate('dashboard')">Retry</button>`);
+    if (isCurrent()) slot.innerHTML = emptyState('⚠','Could not load dashboard', esc(e.message), `<button class="btn btn-ghost" onclick="navigate('dashboard')">Retry</button>`);
   }
 }
 function renderRecentOrdersTable(items, cur){
@@ -2811,11 +2895,16 @@ async function submitVoucherForm(){
 }
 
 async function openVoucherDetail(id){
+  if (!requireCompany()) return;
+  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   openModal({title:'Voucher', wide:true, ai:{enabled:false}, bodyHtml:`<div id="vd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
+  const slot = document.getElementById('vd-body');
+  const isCurrent = () => sameCompanyGeneration(companyId, generation) && document.getElementById('vd-body') === slot;
   try {
-    const v = await api(`/companies/${STATE.companyId}/vouchers/${id}`);
+    const v = await api(`/companies/${companyId}/vouchers/${id}`);
+    if (!isCurrent()) return;
     const cur = STATE.company.base_currency;
-    const total = v.lines.reduce((s,l)=>s+parseFloat(l.debit||0),0);
+    const total = sumMoneyAmounts(v.lines.map(line=>line.debit));
     document.getElementById('modal-title').textContent = `${voucherTypeName(v.voucher_type_id)} · ${v.voucher_number}`;
     document.getElementById('vd-body').innerHTML = `
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(v.date)}</span></div>
@@ -2832,9 +2921,14 @@ async function openVoucherDetail(id){
     if (v.status==='DRAFT') actions += `<button class="btn btn-ghost" onclick="openApprovalSubmitForm({entityType:'VOUCHER', entityId:'${v.id}'})">Submit for approval</button><button class="btn btn-danger" onclick="deleteVoucherAction('${v.id}')">Delete</button><button class="btn btn-teal" onclick="postVoucherAction('${v.id}')">Post voucher</button>`;
     if (v.status==='POSTED') actions += `<button class="btn btn-danger" onclick="cancelVoucherAction('${v.id}')">Cancel (reverse)</button>`;
     foot.innerHTML = actions;
-  } catch(e){ document.getElementById('vd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  } catch(e){ if (isCurrent()) slot.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 const voucherActionInFlight = new Set();
+function refreshVoucherViews(){
+  if (STATE.currentView==='vouchers') loadVoucherTable();
+  if (STATE.currentView==='payments') loadPaymentTable();
+  if (STATE.currentView==='dashboard') renderDashboard();
+}
 function confirmVoucherAction({title, body, confirmLabel, danger=false, onConfirm}){
   openModal({
     title,
@@ -2849,62 +2943,71 @@ function confirmVoucherAction({title, body, confirmLabel, danger=false, onConfir
   });
 }
 async function postVoucherAction(id){
+  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   confirmVoucherAction({
     title:'Post voucher',
     body:'Posting makes this draft part of the official books. Review the debit and credit lines first; Alaada will not post it until you confirm here.',
     confirmLabel:'Post voucher',
     onConfirm: async () => {
+      if (!sameCompanyGeneration(companyId, generation)) return;
       const key = `post:${id}`;
       if (voucherActionInFlight.has(key)) return;
       const btn = document.getElementById('voucher-confirm-action');
-      const idem = `voucher-post:${STATE.companyId}:${id}`;
+      const idem = `voucher-post:${companyId}:${id}`;
       try {
         voucherActionInFlight.add(key);
         if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
-        await api(`/companies/${STATE.companyId}/vouchers/${id}/post`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
-        toast('Voucher posted','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); if(STATE.currentView==='dashboard') renderDashboard();
-      } catch(e){ errToast(e); }
+        await api(`/companies/${companyId}/vouchers/${id}/post`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
+        if (!sameCompanyGeneration(companyId, generation)) return;
+        toast('Voucher posted','ok'); closeModal(); refreshBalanceBeam(); refreshVoucherViews();
+      } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
       finally { voucherActionInFlight.delete(key); if (btn) { btn.disabled = false; btn.textContent = 'Post voucher'; } }
     }
   });
 }
 async function cancelVoucherAction(id){
+  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   confirmVoucherAction({
     title:'Cancel posted voucher',
     body:'A reversal entry will be created and the original voucher will remain in the audit trail.',
     confirmLabel:'Cancel and reverse',
     danger:true,
     onConfirm: async () => {
+      if (!sameCompanyGeneration(companyId, generation)) return;
       const key = `cancel:${id}`;
       if (voucherActionInFlight.has(key)) return;
       const btn = document.getElementById('voucher-confirm-action');
-      const idem = `voucher-cancel:${STATE.companyId}:${id}`;
+      const idem = `voucher-cancel:${companyId}:${id}`;
       try {
         voucherActionInFlight.add(key);
         if (btn) { btn.disabled = true; btn.textContent = 'Cancelling...'; }
-        await api(`/companies/${STATE.companyId}/vouchers/${id}/cancel`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
-        toast('Voucher cancelled and reversed','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable();
-      } catch(e){ errToast(e); }
+        await api(`/companies/${companyId}/vouchers/${id}/cancel`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
+        if (!sameCompanyGeneration(companyId, generation)) return;
+        toast('Voucher cancelled and reversed','ok'); closeModal(); refreshBalanceBeam(); refreshVoucherViews();
+      } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
       finally { voucherActionInFlight.delete(key); if (btn) { btn.disabled = false; btn.textContent = 'Cancel and reverse'; } }
     }
   });
 }
 async function deleteVoucherAction(id){
+  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   confirmVoucherAction({
     title:'Delete draft voucher',
     body:'This only deletes the unposted draft. Posted accounting records cannot be deleted from here.',
     confirmLabel:'Delete draft',
     danger:true,
     onConfirm: async () => {
+      if (!sameCompanyGeneration(companyId, generation)) return;
       const key = `delete:${id}`;
       if (voucherActionInFlight.has(key)) return;
       const btn = document.getElementById('voucher-confirm-action');
       try {
         voucherActionInFlight.add(key);
         if (btn) { btn.disabled = true; btn.textContent = 'Deleting...'; }
-        await api(`/companies/${STATE.companyId}/vouchers/${id}`, {method:'DELETE'});
-        toast('Draft deleted','ok'); closeModal(); if(STATE.currentView==='vouchers') loadVoucherTable();
-      } catch(e){ errToast(e); }
+        await api(`/companies/${companyId}/vouchers/${id}`, {method:'DELETE'});
+        if (!sameCompanyGeneration(companyId, generation)) return;
+        toast('Draft deleted','ok'); closeModal(); refreshVoucherViews();
+      } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
       finally { voucherActionInFlight.delete(key); if (btn) { btn.disabled = false; btn.textContent = 'Delete draft'; } }
     }
   });
@@ -2919,9 +3022,11 @@ const PAYMENT_KIND_LABEL = {
   BANK_RECEIPT:'Bank Receipt', BANK_PAYMENT:'Bank Payment',
 };
 let paymentFilters = {payment_kind:''};
+let paymentLoadGeneration = 0;
+let paymentFormCompany = null;
 async function renderPayments(){
   if (!requireCompany()) return;
-  view().innerHTML = viewHead('Payments', 'Customer receipts, supplier payments, and cash/bank movements — each one posts a voucher automatically.',
+  view().innerHTML = viewHead('Payments', 'Customer receipts and supplier payments — posted only after required approval and accounting checks.',
     `<button class="btn btn-blue" onclick="openPaymentForm()">+ New payment</button>`) +
     `<div class="card card-pad" style="margin-bottom:16px;">
       <div class="form-row" style="margin-bottom:0;max-width:280px;"><label>Kind</label>
@@ -2934,27 +3039,34 @@ async function renderPayments(){
 }
 VIEW_RENDERERS['payments'] = renderPayments;
 async function loadPaymentTable(){
-  const qs = {page:1, page_size:100, payment_kind: document.getElementById('pf-kind').value || undefined};
+  const companyId = STATE.companyId, generation = STATE.companyGeneration, requestId = ++paymentLoadGeneration;
+  const slot = document.getElementById('payment-table');
+  const isCurrent = () => sameCompanyGeneration(companyId, generation) && requestId === paymentLoadGeneration && document.getElementById('payment-table') === slot;
+  const qs = {payment_kind: document.getElementById('pf-kind').value || undefined};
   document.getElementById('payment-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading payments…</td></tr></tbody></table></div>`;
   try {
-    const page = await api(`/companies/${STATE.companyId}/payments`, {qs});
-    const items = page.items;
+    const items = await apiAllItems(`/companies/${companyId}/payments`, {qs, isCurrent});
+    if (!isCurrent()) return;
     const cur = STATE.company.base_currency;
     if (!items.length) { document.getElementById('payment-table').innerHTML = emptyState('💸','No payments recorded','Record a receipt or payment to see it here.',`<button class="btn btn-blue" onclick="openPaymentForm()">+ New payment</button>`); return; }
     document.getElementById('payment-table').innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Date</th><th>Kind</th><th>Party</th><th class="num">Amount</th><th>Reference</th><th>Narration</th><th></th></tr></thead>
+      <thead><tr><th>Date</th><th>Kind</th><th>Party</th><th class="num">Amount</th><th>Status</th><th>Reference</th><th>Narration</th><th></th></tr></thead>
       <tbody>${items.map(p => `<tr>
         <td>${fmtDate(p.payment_date)}</td>
         <td><span class="pill">${esc(PAYMENT_KIND_LABEL[p.payment_kind]||p.payment_kind)}</span></td>
         <td>${esc(p.customer_id ? customerName(p.customer_id) : (p.supplier_id ? supplierName(p.supplier_id) : '—'))}</td>
         <td class="num">${money(p.amount, cur)}</td>
+        <td>${esc(p.status || 'POSTED')}</td>
         <td class="mono">${esc(p.reference_number||'—')}</td>
         <td>${esc(p.narration||'—')}</td>
         <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="openVoucherDetail('${p.voucher_id}')">View voucher</button></td>
       </tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ document.getElementById('payment-table').innerHTML = emptyState('⚠','Could not load payments', esc(e.message)); }
+  } catch(e){ if (isCurrent()) slot.innerHTML = emptyState('⚠','Could not load payments', esc(e.message)); }
 }
 function openPaymentForm(){
+  if (!requireCompany()) return;
+  if (['ledgers','customers','suppliers'].some(key=>!['loaded','loaded_empty'].includes(STATE.loadStates[key]?.status))) return toast('Load company ledgers and parties before recording a payment. Use Retry loading.','err');
+  paymentFormCompany = {companyId:STATE.companyId, generation:STATE.companyGeneration};
   if (!STATE.ledgers.length) return toast('Create at least one ledger before recording payments','err');
   const cashBankOpts = STATE.ledgers.filter(l=>l.status==='ACTIVE' && l.cash_bank_type).map(l=>`<option value="${l.id}">${esc(l.name)} (${l.cash_bank_type})</option>`).join('') || `<option value="">— tag a ledger as Cash/Bank first —</option>`;
   const partyLedgerOpts = ledgerOptionsHtml();
@@ -2970,8 +3082,8 @@ function openPaymentForm(){
         <div class="form-row"><label>Reference no. (optional)</label><input type="text" id="pm-ref"/></div>
         <div class="form-row"><label>Cash / Bank ledger</label><select id="pm-cashbank">${cashBankOpts}</select></div>
         <div class="form-row"><label>Counterparty ledger</label><select id="pm-counterparty">${partyLedgerOpts}</select></div>
-        <div class="form-row" id="pm-customer-row" style="display:none;"><label>Customer</label><select id="pm-customer"><option value="">— select —</option>${STATE.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
-        <div class="form-row" id="pm-supplier-row" style="display:none;"><label>Supplier</label><select id="pm-supplier"><option value="">— select —</option>${STATE.suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></div>
+        <div class="form-row" id="pm-customer-row" style="display:none;"><label>Customer</label><select id="pm-customer"><option value="">— select —</option>${STATE.customers.filter(c=>c.status==='ACTIVE').map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row" id="pm-supplier-row" style="display:none;"><label>Supplier</label><select id="pm-supplier"><option value="">— select —</option>${STATE.suppliers.filter(s=>s.status==='ACTIVE').map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></div>
       </div>
       <div class="form-row"><label>Narration (optional)</label><input type="text" id="pm-narr"/></div>
     `,
@@ -2989,12 +3101,17 @@ function openPaymentForm(){
   });
 }
 async function submitPaymentForm(){
+  if (!paymentFormCompany || !sameCompanyGeneration(paymentFormCompany.companyId, paymentFormCompany.generation)) return;
+  const {companyId, generation} = paymentFormCompany;
+  const button = document.getElementById('pm-save');
+  if (!button || button.disabled) return;
   const payment_kind = document.getElementById('pm-kind').value;
-  const amount = parseFloat(document.getElementById('pm-amount').value || '0');
+  const amount = document.getElementById('pm-amount').value.trim();
   const cash_bank_ledger_id = document.getElementById('pm-cashbank').value;
   const counterparty_ledger_id = document.getElementById('pm-counterparty').value;
   if (!cash_bank_ledger_id) return toast('Choose a cash/bank ledger — tag one as Cash or Bank under Ledgers first','err');
-  if (amount <= 0) return toast('Amount must be greater than zero','err');
+  if (!/^\d{1,16}(\.\d{1,2})?$/.test(amount) || !/[1-9]/.test(amount)) return toast('Enter a positive amount with at most two decimal places.','err');
+  if (cash_bank_ledger_id === counterparty_ledger_id) return toast('Choose two different ledgers.','err');
   const payload = {
     payment_kind, amount, cash_bank_ledger_id, counterparty_ledger_id,
     payment_date: document.getElementById('pm-date').value,
@@ -3003,11 +3120,15 @@ async function submitPaymentForm(){
     customer_id: payment_kind==='CUSTOMER_RECEIPT' ? (document.getElementById('pm-customer').value || null) : null,
     supplier_id: payment_kind==='SUPPLIER_PAYMENT' ? (document.getElementById('pm-supplier').value || null) : null,
   };
+  button.disabled = true;
   try {
-    await api(`/companies/${STATE.companyId}/payments`, {method:'POST', body:payload});
-    toast('Payment recorded ✓','ok'); closeModal(); refreshBalanceBeam();
+    const result = await api(`/companies/${companyId}/payments`, {method:'POST', body:payload});
+    if (!sameCompanyGeneration(companyId, generation) || document.getElementById('pm-save') !== button) return;
+    toast(result.status === 'PENDING_APPROVAL' ? 'Payment saved; approval required before posting.' : 'Payment recorded ✓','ok');
+    closeModal(); refreshBalanceBeam();
     if (STATE.currentView==='payments') loadPaymentTable();
-  } catch(e){ errToast(e); }
+  } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
+  finally { button.disabled = false; }
 }
 
 /* ============================================================
@@ -5623,7 +5744,7 @@ function openApprovalRuleForm(){
       <div class="form-row"><label>Document type</label><select id="appr-rule-entity"><option>VOUCHER</option><option>SALES_INVOICE</option><option>PURCHASE_BILL</option></select></div>
       <div class="form-row"><label>Minimum amount</label><input id="appr-rule-min" type="number" step="0.01" value="0"/></div>
       <div class="form-row"><label>Required approvals</label><input id="appr-rule-count" type="number" min="1" max="10" value="1"/></div>
-      <div class="form-row"><label>Approver role</label><input id="appr-rule-role" placeholder="Finance Manager"/></div>
+      <div class="form-row"><label>Approver company role</label><select id="appr-rule-role"><option value="">Any authorized independent member</option><option value="owner">Owner</option><option value="admin">Administrator</option><option value="editor">Editor</option></select></div>
       <div class="form-row"><label>Notes</label><textarea id="appr-rule-notes" rows="2"></textarea></div>
     </div>`,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-rule-save">Create rule</button>`,
@@ -5647,6 +5768,7 @@ function openApprovalRuleForm(){
 
 function openApprovalSubmitForm(opts = {}){
   if (!requireCompany()) return;
+  const idempotencyKey = `approval-submit:${crypto.randomUUID()}`;
   const entityType = opts.entityType || 'VOUCHER';
   const entityId = opts.entityId || '';
   openModal({
@@ -5662,7 +5784,7 @@ function openApprovalSubmitForm(opts = {}){
       document.getElementById('appr-submit-entity').value = entityType;
       document.getElementById('appr-submit-save').onclick = async () => {
         const submitBtn = document.getElementById('appr-submit-save');
-        const idempotencyKey = `approval-submit:${STATE.companyId}:${document.getElementById('appr-submit-entity').value}:${document.getElementById('appr-submit-id').value.trim()}`;
+        if (submitBtn.disabled) return;
         if (!document.getElementById('appr-submit-id').value.trim()) return toast('Select or enter the document ID before submitting.','err');
         try {
           submitBtn.disabled = true;
