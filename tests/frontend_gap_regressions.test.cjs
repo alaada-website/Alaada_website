@@ -6,6 +6,13 @@ const vm=require('node:vm');
 const root=path.resolve(__dirname,'..');
 const read=name=>fs.readFileSync(path.join(root,name),'utf8');
 
+test('Product pages bust the four-hour workspace script cache when its content changes',()=>{
+  const version=require('node:crypto').createHash('sha256').update(read('workspace-product-client.js').replace(/\r\n/g,'\n')).digest('hex').slice(0,12);
+  for(const file of ['Accounts.html','Orbit.html','Spreadsheets.html']){
+    assert.ok(read(file).includes(`/workspace-product-client.js?v=${version}"`),file);
+  }
+});
+
 function extract(source,start,end){const offset=source.indexOf(start);assert.ok(offset>=0,start);const finish=source.indexOf(end,offset);assert.ok(finish>offset,end);return source.slice(offset,finish+end.length);}
 function fn(file,name,sandbox={}){return vm.runInNewContext('('+extract(read(file),'function '+name+'(', '\n}')+')',sandbox);}
 
