@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-alaada-fast>
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -289,6 +289,9 @@
   .empty-state{text-align:center;padding:60px 24px;color:var(--ink3);}
   .empty-state h3{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--ink2);margin-bottom:8px;}
   .empty-state p{font-size:.86rem;line-height:1.7;}
+  /* Keep the marketing pages responsive without making every hover feel animated. */
+  html[data-alaada-fast] *{transition-duration:.12s!important;animation-duration:.24s!important;animation-delay:0s!important}
+  html[data-alaada-fast] .reveal{opacity:1!important;transform:none!important;transition:none!important}
   </style>
 </head>
 <body>

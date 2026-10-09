@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-alaada-fast>
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -1092,6 +1092,9 @@
     font-size:.72rem;
     color:rgba(255,255,255,.2);
   }
+  /* Keep the marketing pages responsive without making every hover feel animated. */
+  html[data-alaada-fast] *{transition-duration:.12s!important;animation-duration:.24s!important;animation-delay:0s!important}
+  html[data-alaada-fast] .reveal{opacity:1!important;transform:none!important;transition:none!important}
   </style>
 </head>
 

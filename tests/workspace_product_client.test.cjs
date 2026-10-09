@@ -30,6 +30,11 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
     if(String(url).includes('/accounts/'))return accountReply();
     if(String(url).endsWith('/entitlements'))return json({role:'owner',products:{orbit:{execution_available:true,capabilities:{execution_receipts:true}},analyser:{capabilities:{analysis:true,execution_receipts:true}}}});
     if(String(url).endsWith('/analyser/analyze'))return new Response(JSON.stringify({summary:{seo:{},security:{},accessibility:{},dom:{},resources:{}}}),{headers:{'Content-Type':'application/json','X-Alaada-Execution':'succeeded'}});
+    if(String(url).startsWith('/api/workspaces/bootstrap')){
+      const workspaces=revoked?state.workspaces.slice(0,1):state.workspaces;
+      const active=String(url).includes('workspace=company')?'company':'personal';
+      return json({...state,workspaces,active:workspaces.some(item=>item.id===active)?active:null,resources:seed});
+    }
     if(url==='/api/workspaces')return json({...state,workspaces:revoked?state.workspaces.slice(0,1):state.workspaces});
     if(String(url).endsWith('/orbit/reply'))return json({id:'saved',product:'orbit',kind:'conversation',version:2,payload:{native_key:'first',data:{id:'first',title:'First',messages:[{role:'assistant',text:'Scoped reply'}]}}});
     if(options.method==='PUT'){
@@ -53,7 +58,8 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   for(const [product,kind] of [['orbit','conversation'],['sheets','workbook'],['accounts','ledger'],['analyser','report']]) {
     const env=await boot(product);
     assert.equal(env.W.active.id,'personal');
-    assert.deepEqual(env.cookies,['orbit_name=; Max-Age=0; Path=/; SameSite=Lax','orbit_email=; Max-Age=0; Path=/; SameSite=Lax']);
+    assert.deepEqual(env.cookies.slice(0,2),['orbit_name=; Max-Age=0; Path=/; SameSite=Lax','orbit_email=; Max-Age=0; Path=/; SameSite=Lax']);
+    assert.match(env.cookies.at(-1),/^alaada_active_workspace=personal;/);
     assert.equal(env.W.storage.getItem('legacy-data'),null);
     await env.W.save(kind,'resource-1',{value:product},'Private resource');
     await env.W.flush();
@@ -174,14 +180,14 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   const targetCalls=(env,suffix)=>env.requests.filter(r=>r.url.endsWith(suffix));
   let cold=0;
   const recovered=await boot('accounts','',[],new Map(),{fetch:url=>{
-    if(url==='/api/workspaces'&&++cold===1)return new Response('');
+    if(String(url).startsWith('/api/workspaces/bootstrap')&&++cold===1)return new Response('');
   }});
   assert.equal(cold,2);
   assert.equal(recovered.W.active.id,'personal');
   assert.equal(recovered.document.body.children.at(-1).hidden,true);
   for(const [body,status,code] of [['',200,'EMPTY_RESPONSE'],['<html>Proxy unavailable</html>',502,'HTTP_502'],['{',200,'MALFORMED_RESPONSE']]){
-    const unavailable=await boot('accounts','',[],new Map(),{failure:error=>error.code===code,fetch:url=>url==='/api/workspaces'?new Response(body,{status}):undefined});
-    assert.equal(targetCalls(unavailable,'/api/workspaces').length,3);
+    const unavailable=await boot('accounts','',[],new Map(),{failure:error=>error.code===code,fetch:url=>String(url).startsWith('/api/workspaces/bootstrap')?new Response(body,{status}):undefined});
+    assert.equal(targetCalls(unavailable,'/api/workspaces/bootstrap').length,3);
     const gate=unavailable.document.body.children.at(-1);
     assert.equal(gate.hidden,false);
     assert.equal(unavailable.document.body.children[1].inert,true);
@@ -191,27 +197,27 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
     assert.equal(targetCalls(unavailable,'/resources').length,0);
   }
   for(const status of [401,403]){
-    const denied=await boot('accounts','',[],new Map(),{failure:error=>error.status===status,fetch:url=>url==='/api/workspaces'?new Response('',{status}):undefined});
-    assert.equal(targetCalls(denied,'/api/workspaces').length,1);
+    const denied=await boot('accounts','',[],new Map(),{failure:error=>error.status===status,fetch:url=>String(url).startsWith('/api/workspaces/bootstrap')?new Response('',{status}):undefined});
+    assert.equal(targetCalls(denied,'/api/workspaces/bootstrap').length,1);
     assert.match(denied.document.body.children.at(-1).textContent,status===401?/sign-in has expired/:/Access.*denied/);
   }
   const emptyIdentity=await boot('orbit','',[],new Map(),{failure:/Appwrite returned an empty response/,fetch:url=>url.endsWith('/account')?new Response(''):undefined});
   assert.equal(targetCalls(emptyIdentity,'/account').length,3);
-  assert.equal(targetCalls(emptyIdentity,'/api/workspaces').length,0);
+  assert.equal(targetCalls(emptyIdentity,'/api/workspaces/bootstrap').length,0);
   const jwtFailure=await boot('sheets','',[],new Map(),{failure:/Appwrite returned an empty response/,fetch:url=>url.endsWith('/account/jwts')?new Response(''):undefined});
   assert.equal(targetCalls(jwtFailure,'/account/jwts').length,1,'POSTs are not retried automatically');
-  assert.equal(targetCalls(jwtFailure,'/api/workspaces').length,0);
+  assert.equal(targetCalls(jwtFailure,'/api/workspaces/bootstrap').length,0);
   await boot('accounts','',[],new Map(),{failure:/unreadable response/,fetch:url=>url.endsWith('/account/jwts')?json({}):undefined});
-  await boot('accounts','',[],new Map(),{failure:/unreadable response/,fetch:url=>url==='/api/workspaces'?json({user:'someone-else',workspaces:[]}):undefined});
-  await boot('accounts','',[],new Map(),{failure:/unreadable response/,fetch:url=>url.endsWith('/resources')?json({}):undefined});
+  await boot('accounts','',[],new Map(),{failure:/unreadable response/,fetch:url=>String(url).startsWith('/api/workspaces/bootstrap')?json({user:'someone-else',workspaces:[]}):undefined});
+  await boot('accounts','',[],new Map(),{failure:/unreadable response/,fetch:url=>String(url).startsWith('/api/workspaces/bootstrap')?json({user:'alice',workspaces:[{id:'personal',name:'Personal',kind:'personal'}],active:'personal',resources:{}}):url.endsWith('/resources')?json({}):undefined});
   const timeout=await boot('accounts','',[],new Map(),{timeoutMs:5,failure:error=>error.code==='REQUEST_TIMEOUT',fetch:(url,options)=>{
-    if(url==='/api/workspaces')return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true}));
+    if(String(url).startsWith('/api/workspaces/bootstrap'))return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true}));
   }});
-  assert.equal(targetCalls(timeout,'/api/workspaces').length,3);
+  assert.equal(targetCalls(timeout,'/api/workspaces/bootstrap').length,3);
   const network=await boot('accounts','',[],new Map(),{failure:error=>error.code==='NETWORK_ERROR',fetch:url=>{
-    if(url==='/api/workspaces')throw new TypeError('Failed to fetch');
+    if(String(url).startsWith('/api/workspaces/bootstrap'))throw new TypeError('Failed to fetch');
   }});
-  assert.equal(targetCalls(network,'/api/workspaces').length,3);
+  assert.equal(targetCalls(network,'/api/workspaces/bootstrap').length,3);
   const uncertain=await boot('accounts');
   uncertain.setAccountReply(()=>new Response(''));
   const malformedWrite=await uncertain.W.productFetch('/companies',accountOptions);
@@ -250,10 +256,10 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   const fresh=await boot('analyser','?workspace=company',reportSeed);
   const reportRows=await fresh.W.resources('analyser','report');
   assert.deepEqual(Array.from(reportRows,row=>row.id),['report-1']);
-  assert.equal(targetCalls(fresh,'/api/workspaces/company/resources').length,2,'Saved reports use a fresh authorized listing');
+  assert.equal(targetCalls(fresh,'/api/workspaces/company/resources').length,1,'Saved reports use a fresh authorized listing');
   assert.equal(fresh.W.list('monitor').length,1,'Fresh reads do not erase cached product records');
   fresh.setUser('bob');await assert.rejects(fresh.W.resources('analyser','report'),/account changed/);
-  assert.equal(targetCalls(fresh,'/api/workspaces/company/resources').length,2);
+  assert.equal(targetCalls(fresh,'/api/workspaces/company/resources').length,1);
   for(const [product,path,budget] of [
     ['analyser','/analyze',210000],['sheets','/api/ai/chat',150000],['sheets','/api/formula/eval',90000]
   ]){
