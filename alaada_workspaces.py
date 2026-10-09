@@ -1646,6 +1646,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             async with client.stream(method, analyser_url + path, content=raw, headers={
                     'Content-Type': 'application/json', 'X-Alaada-Workspace': wid,
                     'X-Alaada-Gateway-Context': encoded, 'X-Alaada-Gateway-Signature': signature}) as response:
+                # A Free instance can wake after this short-lived signature has
+                # expired. Only the non-executing readiness read may be retried.
+                if method == 'GET' and response.status_code == 401:
+                    return 401, b''
                 if response.headers.get('x-alaada-workspace-enforced') != 'v1':
                     fail(502, 'Analyser did not verify workspace enforcement.')
                 content = bytearray()
@@ -1658,6 +1662,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         try:
             async with asyncio.timeout(180), httpx.AsyncClient(timeout=90, follow_redirects=False, transport=analyser_transport) as client:
                 code, _ = await call(client, 'GET', '/workspace-gateway/health')
+                if code == 401:
+                    code, _ = await call(client, 'GET', '/workspace-gateway/health')
                 if code != 200:
                     fail(503, 'Analyser gateway is unavailable. No analysis was sent.')
                 latest = await identity(request)

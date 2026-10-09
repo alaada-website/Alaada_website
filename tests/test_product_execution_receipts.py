@@ -12,6 +12,46 @@ import pytest
 from fastapi.testclient import TestClient
 from test_personal_workspaces import m
 
+@pytest.mark.parametrize('second_status', [200, 401])
+def test_cold_start_re_signs_health_without_repeating_execution(tmp_path, monkeypatch, second_status):
+    clock = [1000]
+    monkeypatch.setattr(m.time, 'time', lambda: clock[0])
+    attempts = []
+    scans = []
+    secret = 'test-cold-start-gateway-secret-32'
+    async def authenticate(token):
+        return m.Identity('alice')
+    def provider(req):
+        claim = json.loads(base64.urlsafe_b64decode(req.headers['x-alaada-gateway-context']))
+        assert hmac.compare_digest(req.headers['x-alaada-gateway-signature'],
+            hmac.new(secret.encode(), req.headers['x-alaada-gateway-context'].encode(), hashlib.sha256).hexdigest())
+        if req.method == 'GET':
+            attempts.append(claim['iat'])
+            if len(attempts) == 1:
+                clock[0] += 50  # Render wake-up exceeds the provider's 15-second signature TTL.
+                assert abs(clock[0] - claim['iat']) > 15
+                return httpx.Response(401, json={'error': 'Expired gateway context'})
+            assert abs(clock[0] - claim['iat']) <= 15
+            return httpx.Response(second_status, json={'ok': True},
+                headers={'X-Alaada-Workspace-Enforced': 'v1'} if second_status == 200 else {})
+        scans.append(claim)
+        return httpx.Response(200, json={'summary': {key: {} for key in
+            ('seo', 'security', 'accessibility', 'dom', 'resources')}},
+            headers={'X-Alaada-Workspace-Enforced': 'v1'})
+    app = m.create_app(tmp_path / 'cold.db', authenticate=authenticate,
+        analyser_url='https://analyser.invalid', analyser_secret=secret, analyser_transport=httpx.MockTransport(provider))
+    client = TestClient(app)
+    wid = client.get('/api/workspaces', headers={'Authorization': 'Bearer alice'}).json()['workspaces'][0]['id']
+    response = client.post(f'/api/workspaces/{wid}/analyser/analyze',
+        headers={'Authorization': 'Bearer alice', 'X-Alaada-Workspace': wid, 'X-Alaada-Operation': 'cold-start-operation-001'},
+        json={'url': 'https://example.com'})
+    assert response.status_code == (200 if second_status == 200 else 503), response.text
+    assert attempts == [1000, 1050]
+    with app.state.store.db() as db:
+        assert len(scans) == len(db.rows('product_operations', {})) == (1 if second_status == 200 else 0)
+        assert sum(row['amount'] for row in db.rows('usage', {})) == len(scans)
+
+
 
 @pytest.fixture(params=['orbit', 'analyser'])
 def execution(request, tmp_path):
