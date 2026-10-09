@@ -39,7 +39,7 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   const window={fetch,addEventListener:(type,fn)=>events[type]=fn,
     sessionStorage:{getItem:key=>operationStorage.get(key)||null,setItem:(key,value)=>operationStorage.set(key,value)}};
   const context=vm.createContext({window,document,location,URL,Headers,Response,AbortController,DOMException,TextEncoder,Uint8Array,crypto:require('node:crypto').webcrypto,Map,Set,Promise,Error,JSON,encodeURIComponent,confirm:()=>true,console,
-    setTimeout:(fn,ms)=>setTimeout(fn,ms===25000?(config.timeoutMs??ms):0),clearTimeout,
+    setTimeout:(fn,ms)=>{config.timers?.push(ms);return setTimeout(fn,ms>=25000?(config.timeoutMs??ms):0);},clearTimeout,
     localStorage:{getItem(){throw Error('Legacy storage must never be read');}}});
   vm.runInContext(source,context);
   const W=window.AlaadaWorkspace;
@@ -237,6 +237,9 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   const sheetAttempts=targetCalls(uncertainSheets,'/sheets/execute/ai-chat');
   assert.equal(sheetAttempts.length,2);
   assert.equal(sheetAttempts[0].options.headers['X-Alaada-Operation'],sheetAttempts[1].options.headers['X-Alaada-Operation']);
+  const timers=[],delivery=await boot('accounts','',[],new Map(),{timers});
+  await delivery.W.productFetch('/companies/company-id/automation/notifications/deliver-pending',{method:'POST',body:'{"limit":10}'});
+  assert.ok(timers.includes(35000),'Notification delivery waits for the bounded gateway response');
   console.log('Product client behavior passed for Orbit, Sheets, Accounts and Analyser');
   console.log('Empty/malformed responses, cold-start retries, auth denial, cancellation, timeouts, downloads and uncertain-write receipts passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
