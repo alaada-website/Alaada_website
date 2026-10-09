@@ -960,7 +960,7 @@ let STATE = {
 /* ============================================================
    API WRAPPER
    ============================================================ */
-async function api(path, {method='GET', body=null, qs=null, raw=false, headers={}, formData=null} = {}) {
+async function api(path, {method='GET', body=null, qs=null, raw=false, headers={}, formData=null, timeoutMs=10000} = {}) {
   let url = API_BASE.replace(/\/$/,'') + path;
   if (qs) {
     const params = Object.entries(qs).filter(([,v]) => v !== undefined && v !== null && v !== '');
@@ -977,9 +977,9 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       opts.headers = await apiAuthHeaders(opts.headers);
-      res = await fetchWithTimeout(url, opts, 10000);
+      res = await fetchWithTimeout(url, opts, timeoutMs);
     } catch(e) {
-      if (e && e.name === 'AbortError') throw new ApiError('The Accounts API timed out after 10 seconds.', 0, {code:'REQUEST_TIMEOUT', endpoint:url});
+      if (e && ['AbortError','TimeoutError'].includes(e.name)) throw new ApiError(`The Accounts API timed out after ${Math.ceil(timeoutMs/1000)} seconds.`, 0, {code:'REQUEST_TIMEOUT', endpoint:url});
       if (e instanceof ApiError) throw e;
       throw new ApiError('Could not reach the API. Check the URL and that the server is running.', 0, {code:'NETWORK_OR_CORS', endpoint:url});
     }
@@ -6022,49 +6022,87 @@ VIEW_RENDERERS['approvals'] = renderApprovals;
 /* ============================================================
    NOTIFICATIONS (low cash alerts and event notification queue)
    ============================================================ */
+let notificationView = null, notificationLoadSequence = 0;
+const notificationFlights = new Map();
+function currentNotificationView(snapshot=notificationView){
+  return !!snapshot && notificationView === snapshot && sameCompanyGeneration(snapshot.companyId,snapshot.generation)
+    && STATE.currentView === 'notifications' && document.getElementById('notifications-body') === snapshot.body;
+}
+function notificationControls(){
+  const snapshot=notificationView, current=currentNotificationView(snapshot);
+  const busy=current && notificationFlights.has(JSON.stringify([snapshot.companyId,snapshot.generation]));
+  for (const button of document.querySelectorAll('[data-notification-write]')) {
+    button.disabled=!current || busy || !(button.dataset.notificationWrite === 'manage' ? snapshot.access.can_manage : snapshot.access.can_write);
+  }
+}
+function notificationDeliveryStatus(notice){
+  const states=Object.values(notice.delivery_state || {}).map(item=>item.status);
+  if (states.length) return ['SENDING','PENDING','FAILED','UNKNOWN','DEAD_LETTER'].find(status=>states.includes(status)) || 'SENT';
+  return notice.status === 'READ' && notice.channel !== 'IN_APP' ? 'PENDING' : notice.status;
+}
+function notificationCanSend(notice){
+  if (notice.status === 'DISMISSED' || (notice.status === 'READ' && notice.channel === 'IN_APP')) return false;
+  const states=Object.values(notice.delivery_state || {});
+  return states.length ? states.some(item=>item.status === 'PENDING' || (item.status === 'FAILED' && (item.next_at || 0)*1000 <= Date.now()))
+    : notificationDeliveryStatus(notice) === 'PENDING';
+}
+function notificationDeliveryNote(status){
+  return ({SENDING:'Delivery is in progress. Do not resend.', UNKNOWN:'The provider outcome is unknown. Check the provider before any further send; automatic resend is blocked.',
+    FAILED:'Delivery was rejected or the channel is not configured. Correct the problem; retries respect server backoff.',
+    DEAD_LETTER:'Automatic retries stopped after repeated failures. Administrator review is required.',
+    SENT:'Accepted by the delivery channel. This does not prove inbox delivery or that the recipient read it.',
+    SKIPPED:'Preview only. Nothing was sent.', PENDING:'Waiting for delivery.'})[status] || 'Delivery status recorded.';
+}
 async function renderNotifications(){
   if (!requireCompany()) return;
   view().innerHTML = viewHead('Notifications', 'Low cash alerts, business event notifications, and delivery queue.',
     `<button class="btn btn-ghost btn-sm" onclick="loadNotifications()">Refresh</button>
-     <button class="btn btn-ghost btn-sm" onclick="runDueNotifications()">Run alerts</button>
-     <button class="btn btn-ghost btn-sm" onclick="deliverPendingNotifications()">Send pending</button>
-     <button class="btn btn-blue btn-sm" onclick="openNotificationRuleForm()">New rule</button>`) +
+     <button class="btn btn-ghost btn-sm" data-notification-write="manage" disabled onclick="runDueNotifications()">Run alerts</button>
+     <button class="btn btn-ghost btn-sm" data-notification-write="manage" disabled onclick="deliverPendingNotifications()">Send pending</button>
+     <button class="btn btn-blue btn-sm" data-notification-write="manage" disabled onclick="openNotificationRuleForm()">New rule</button>`) +
     `<div id="notifications-body">${emptyState('•','Loading notifications','Fetching rules and queue.')}</div>`;
-  loadNotifications();
+  await loadNotifications();
 }
 
 async function loadNotifications(){
   if (!requireCompany()) return;
   const body = document.getElementById('notifications-body');
   if (!body) return;
+  const companyId=STATE.companyId, generation=STATE.companyGeneration, sequence=++notificationLoadSequence;
+  const current=()=>sameCompanyGeneration(companyId,generation) && STATE.currentView === 'notifications'
+    && document.getElementById('notifications-body') === body && sequence === notificationLoadSequence;
+  notificationView=null; notificationControls();
   try {
-    const [rulesPage, pendingPage, allPage, attemptsPage] = await Promise.all([
-      api(`/companies/${STATE.companyId}/automation/notification-rules`, {qs:{page_size:100}}),
-      api(`/companies/${STATE.companyId}/automation/notifications`, {qs:{page_size:100, status:'PENDING'}}),
-      api(`/companies/${STATE.companyId}/automation/notifications`, {qs:{page_size:100}}),
-      api(`/companies/${STATE.companyId}/automation/notification-delivery-attempts`, {qs:{page_size:100}}),
+    const [rules, all, attempts, access] = await Promise.all([
+      apiAllItems(`/companies/${companyId}/automation/notification-rules`, {isCurrent:current}),
+      apiAllItems(`/companies/${companyId}/automation/notifications`, {isCurrent:current}),
+      apiAllItems(`/companies/${companyId}/automation/notification-delivery-attempts`, {isCurrent:current}),
+      api(`/companies/${companyId}/members/me`),
     ]);
+    if (!current()) return;
+    if (!access || typeof access.can_manage !== 'boolean' || typeof access.can_write !== 'boolean') throw new Error('Company permissions could not be verified. Refresh after the Appwrite backend is updated.');
     const cur = STATE.company.base_currency || 'INR';
-    const rules = rulesPage.items || [];
-    const pending = pendingPage.items || [];
-    const all = allPage.items || [];
-    const attempts = attemptsPage.items || [];
+    notificationView={companyId,generation,body,rules,all,attempts,access};
+    const queue=all.map((notice,index)=>({notice,index})).filter(({notice})=>notice.status !== 'DISMISSED'
+      && ['PENDING','FAILED','SENDING','UNKNOWN','DEAD_LETTER'].includes(notificationDeliveryStatus(notice)));
     body.innerHTML = `
+      <p class="muted small">This is the company's shared inbox. Read and dismiss apply to everyone in this company. Dismiss stops queued deliveries, but cannot recall a message already accepted by a provider. Alerts and delivery batches run when an authorised member clicks the controls above.</p>
+      ${!access.can_manage ? '<p class="muted small">Only a company owner or administrator can change rules, run alerts, or send messages.</p>' : ''}
       <div class="grid four" style="margin-bottom:14px;">
         <div class="metric"><div class="muted">Active rules</div><strong>${rules.filter(r=>r.status==='ACTIVE').length}</strong></div>
-        <div class="metric"><div class="muted">Pending</div><strong>${pending.length}</strong></div>
+        <div class="metric"><div class="muted">Queued / needs attention</div><strong>${queue.length}</strong></div>
         <div class="metric"><div class="muted">Critical</div><strong>${all.filter(n=>n.severity==='CRITICAL').length}</strong></div>
-        <div class="metric"><div class="muted">Sent attempts</div><strong>${attempts.filter(a=>a.status==='SENT').length}</strong></div>
+        <div class="metric"><div class="muted">Accepted attempts</div><strong>${attempts.filter(a=>a.status==='SENT').length}</strong></div>
       </div>
       <div class="grid two">
         <div class="card card-pad">
           <div class="section-title">Notification rules</div>
-          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Channel</th><th class="num">Threshold</th><th>Status</th></tr></thead><tbody>${rules.map(r=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.event_type || r.notes || '')}</div></td><td>${esc(r.rule_type)}</td><td>${esc(r.channel)}</td><td class="num">${r.threshold_amount ? money(r.threshold_amount,cur) : '-'}</td><td><span class="pill">${esc(r.status)}</span></td></tr>`).join('')}</tbody></table></div>`
+          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Channel</th><th class="num">Threshold</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rules.map((r,index)=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.event_type || r.notes || '')}</div></td><td>${esc(r.rule_type)}</td><td>${esc(r.channel)}</td><td class="num">${r.threshold_amount != null ? money(r.threshold_amount,cur) : '-'}</td><td><span class="pill">${esc(r.status)}</span></td><td>${access.can_manage ? `<button class="btn btn-ghost btn-sm" data-notification-write="manage" onclick="openNotificationRuleForm(${index})">Edit rule</button>` : 'Read only'}</td></tr>`).join('')}</tbody></table></div>`
             : emptyState('•','No notification rules','Create a low cash or business event rule.') }
         </div>
         <div class="card card-pad">
-          <div class="section-title">Pending queue</div>
-          ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>Notification</th><th>Severity</th><th>Channel</th><th class="num">Actions</th></tr></thead><tbody>${pending.map(n=>`<tr><td><strong>${esc(n.title)}</strong><div class="muted small">${esc(n.message)}</div></td><td><span class="pill">${esc(n.severity)}</span></td><td>${esc(n.channel)}</td><td class="num"><button class="btn btn-ghost btn-sm" onclick="deliverNotification('${n.id}')">Send</button><button class="btn btn-ghost btn-sm" onclick="markNotificationRead('${n.id}')">Read</button><button class="btn btn-ghost btn-sm" onclick="dismissNotification('${n.id}')">Dismiss</button></td></tr>`).join('')}</tbody></table></div>`
+          <div class="section-title">Delivery queue and exceptions</div>
+          ${queue.length ? `<div class="table-wrap"><table><thead><tr><th>Notification</th><th>Severity</th><th>Delivery</th><th class="num">Actions</th></tr></thead><tbody>${queue.map(({notice:n,index})=>`<tr><td><strong>${esc(n.title)}</strong><div class="muted small">${esc(n.message)}</div></td><td><span class="pill">${esc(n.severity)}</span></td><td>${esc(n.channel)} · ${esc(notificationDeliveryStatus(n))}<div class="muted small">${esc(notificationDeliveryNote(notificationDeliveryStatus(n)))}</div></td><td class="num">${access.can_manage && notificationCanSend(n) ? `<button class="btn btn-ghost btn-sm" data-notification-write="manage" onclick="deliverNotification(${index})">Send / retry eligible</button>` : ''}${access.can_write ? `${n.status !== 'READ' ? `<button class="btn btn-ghost btn-sm" data-notification-write="write" onclick="markNotificationRead(${index})">Read</button>` : ''}<button class="btn btn-ghost btn-sm" data-notification-write="write" onclick="dismissNotification(${index})">Dismiss</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`
             : emptyState('✓','No pending notifications','Run alerts to evaluate active rules.') }
         </div>
       </div>
@@ -6075,91 +6113,96 @@ async function loadNotifications(){
       </div>
       <div class="card card-pad" style="margin-top:14px;">
         <div class="section-title">Delivery attempts</div>
-        ${attempts.length ? `<div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Channel</th><th>Status</th><th>Recipient</th><th>Delivery note</th></tr></thead><tbody>${attempts.map(a=>`<tr><td>${new Date(a.attempted_at).toLocaleString('en-IN')}</td><td>${esc(a.channel)}</td><td><span class="pill">${esc(a.status)}</span></td><td>${esc(a.recipient || '')}</td><td class="muted small">${a.status==='FAILED' ? 'Delivery failed. Retry or check channel settings.' : 'Delivery status recorded.'}${DEVELOPER_MODE ? `<details style="margin-top:6px;"><summary style="cursor:pointer;">Developer diagnostics</summary><pre>${esc(JSON.stringify({provider:a.provider,error_message:a.error_message}, null, 2))}</pre></details>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+        ${attempts.length ? `<div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Channel</th><th>Status</th><th>Recipient</th><th>Delivery note</th></tr></thead><tbody>${attempts.map(a=>`<tr><td>${new Date(a.attempted_at).toLocaleString('en-IN')}</td><td>${esc(a.channel)}</td><td><span class="pill">${esc(a.status)}</span></td><td>${esc(a.recipient || '')}</td><td class="muted small">${esc(notificationDeliveryNote(a.status))}<details style="margin-top:6px;"><summary style="cursor:pointer;">Delivery details</summary><pre>${esc(JSON.stringify({attempt:a.id,notification:a.notification_id,provider:a.provider,error_message:a.error_message}, null, 2))}</pre></details></td></tr>`).join('')}</tbody></table></div>`
           : emptyState('•','No delivery attempts','Send pending notifications to create delivery history.') }
       </div>`;
+    notificationControls();
   } catch(e) {
-    body.innerHTML = emptyState('⚠','Could not load notifications', esc(e.message));
+    if (current()) { notificationView=null; notificationControls(); body.innerHTML = emptyState('⚠','Could not load notifications', esc(e.message), '<button class="btn btn-ghost" onclick="loadNotifications()">Retry loading</button>'); }
   }
 }
 
-function openNotificationRuleForm(){
-  if (!requireCompany()) return;
+function openNotificationRuleForm(index=null){
+  const snapshot=notificationView;
+  if (!currentNotificationView(snapshot) || !snapshot.access.can_manage) return;
+  const rule=index === null ? null : Number.isInteger(index) ? snapshot.rules[index] : null;
+  if (index !== null && !rule) return;
   openModal({
-    title:'New notification rule',
+    title:rule ? 'Edit notification rule' : 'New notification rule',
     bodyHtml:`<div class="form-grid">
-      <div class="form-row"><label>Name</label><input id="notif-rule-name" placeholder="Low cash below 1,00,000"/></div>
-      <div class="form-row"><label>Type</label><select id="notif-rule-type"><option>LOW_CASH</option><option>BUSINESS_EVENT</option></select></div>
-      <div class="form-row"><label>Channel</label><select id="notif-rule-channel"><option>IN_APP</option><option>EMAIL</option><option>SMS</option><option>WHATSAPP</option></select></div>
-      <div class="form-row"><label>Severity</label><select id="notif-rule-severity"><option>WARNING</option><option>INFO</option><option>CRITICAL</option></select></div>
-      <div class="form-row"><label>Threshold amount</label><input id="notif-rule-threshold" type="number" step="0.01" value="100000"/></div>
-      <div class="form-row"><label>Business event type</label><input id="notif-rule-event" placeholder="sales_invoice.posted"/></div>
-      <div class="form-row"><label>Recipients</label><input id="notif-rule-recipients" placeholder="finance@example.com"/></div>
-      <div class="form-row"><label>Notes</label><textarea id="notif-rule-notes" rows="2"></textarea></div>
-    </div>`,
-    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="notif-rule-save">Create rule</button>`,
+      <div class="form-row"><label for="notif-rule-name">Name</label><input id="notif-rule-name" maxlength="200" ${rule ? 'disabled' : ''} placeholder="Low cash below 1,00,000"/></div>
+      <div class="form-row"><label for="notif-rule-type">Type</label><select id="notif-rule-type" ${rule ? 'disabled' : ''}><option>LOW_CASH</option><option>BUSINESS_EVENT</option></select></div>
+      <div class="form-row"><label for="notif-rule-channel">Channel</label><select id="notif-rule-channel"><option>IN_APP</option><option>EMAIL</option><option>SMS</option><option>WHATSAPP</option></select></div>
+      <div class="form-row"><label for="notif-rule-severity">Severity</label><select id="notif-rule-severity"><option>WARNING</option><option>INFO</option><option>CRITICAL</option></select></div>
+      <div class="form-row"><label for="notif-rule-threshold">Threshold amount</label><input id="notif-rule-threshold" inputmode="decimal"/></div>
+      <div class="form-row"><label for="notif-rule-event">Business event type</label><input id="notif-rule-event" maxlength="120" placeholder="voucher.posted"/></div>
+      <div class="form-row"><label for="notif-rule-recipients">Recipients</label><textarea id="notif-rule-recipients" rows="2" maxlength="4000" placeholder="finance@example.com"></textarea></div>
+      <div class="form-row"><label for="notif-rule-notes">Notes</label><textarea id="notif-rule-notes" rows="2"></textarea></div>
+      ${rule ? '<div class="form-row"><label for="notif-rule-status">Status</label><select id="notif-rule-status"><option>ACTIVE</option><option>INACTIVE</option></select></div>' : ''}
+    </div><p class="muted small">Separate recipients with commas, semicolons, or new lines (up to 20). Email may use the company email when blank. SMS and WhatsApp need international phone numbers. External channels require server-side provider configuration. Changing a rule affects future alerts, not messages already queued.</p>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="notif-rule-save">${rule ? 'Save rule' : 'Create rule'}</button>`,
     onMount:() => {
-      document.getElementById('notif-rule-save').onclick = async () => {
-        try {
-          const type = document.getElementById('notif-rule-type').value;
-          await api(`/companies/${STATE.companyId}/automation/notification-rules`, {method:'POST', body:{
-            name: document.getElementById('notif-rule-name').value,
-            rule_type: type,
-            channel: document.getElementById('notif-rule-channel').value,
-            severity: document.getElementById('notif-rule-severity').value,
-            threshold_amount: type === 'LOW_CASH' ? (document.getElementById('notif-rule-threshold').value || '0') : null,
-            event_type: type === 'BUSINESS_EVENT' ? document.getElementById('notif-rule-event').value.trim() : null,
-            recipients: document.getElementById('notif-rule-recipients').value || null,
-            notes: document.getElementById('notif-rule-notes').value || null,
-          }});
-          closeModal(); toast('Notification rule created','ok'); loadNotifications();
-        } catch(e){ errToast(e); }
-      };
+      const field=name=>document.getElementById('notif-rule-'+name);
+      for (const [name,value] of Object.entries({name:rule?.name || '',type:rule?.rule_type || 'LOW_CASH',channel:rule?.channel || 'IN_APP',
+        severity:rule?.severity || 'WARNING',threshold:rule?.threshold_amount ?? '100000',event:rule?.event_type || '',recipients:rule?.recipients || '',notes:rule?.notes || ''})) field(name).value=value;
+      if (rule) field('status').value=rule.status;
+      const updateFields=()=>{field('threshold').disabled=field('type').value !== 'LOW_CASH';field('event').disabled=field('type').value !== 'BUSINESS_EVENT';};
+      field('type').onchange=updateFields; updateFields();
+      bindCompanyForm('notif-rule-save',()=>{
+        if (!currentNotificationView(snapshot)) throw new Error('Notification rules changed. Refresh and reopen the form.');
+        const type=rule?.rule_type || field('type').value, name=field('name').value.trim();
+        if (!name || name.length>200 || !['LOW_CASH','BUSINESS_EVENT'].includes(type)) throw new Error('Enter a name and a valid rule type.');
+        const event=field('event').value.trim();
+        if (type === 'BUSINESS_EVENT' && (!event || event.length>120)) throw new Error('Enter a business event type.');
+        const body={channel:field('channel').value,severity:field('severity').value,
+          threshold_amount:type === 'LOW_CASH' ? inventoryDecimal(field('threshold').value,2,'Threshold') : null,
+          event_type:type === 'BUSINESS_EVENT' ? event : null,recipients:field('recipients').value.trim() || null,notes:field('notes').value || null};
+        if (rule) { body.status=field('status').value; if (Number.isInteger(rule.version)) body.version=rule.version; }
+        else Object.assign(body,{name,rule_type:type});
+        // The shared Appwrite client persists an opaque retry key for this exact
+        // request, including across reloads; no recipient data is stored there.
+        return {path:'/automation/notification-rules'+(rule ? '/'+encodeURIComponent(rule.id) : ''),method:rule ? 'PATCH' : 'POST',body,message:'Notification rule saved'};
+      },async()=>{if (currentNotificationView(snapshot)) await loadNotifications();});
     }
   });
 }
 
-async function runDueNotifications(){
-  if (!requireCompany()) return;
-  try {
-    const rows = await api(`/companies/${STATE.companyId}/automation/notifications/run-due`, {method:'POST', body:{as_of:todayStr(), limit:50}});
-    toast(`${rows.length} notification${rows.length===1?'':'s'} generated`,'ok');
-    loadNotifications();
-  } catch(e){ errToast(e); }
+async function notificationAction(action,index=null){
+  const snapshot=notificationView;
+  if (!currentNotificationView(snapshot) || !['run-due','deliver-pending','deliver','read','dismiss'].includes(action)) return;
+  const marking=['read','dismiss'].includes(action);
+  if (!(marking ? snapshot.access.can_write : snapshot.access.can_manage)) return;
+  const row=Number.isInteger(index) ? snapshot.all[index] : null;
+  if (['deliver','read','dismiss'].includes(action) && (!row || row.status === 'DISMISSED')) return;
+  if (action === 'deliver' && !notificationCanSend(row)) return toast('This delivery is not eligible to send. Refresh and review its delivery details.','err');
+  const scope=JSON.stringify([snapshot.companyId,snapshot.generation]);
+  if (notificationFlights.has(scope)) return notificationFlights.get(scope);
+  const operation=(async()=>{
+    try {
+      const suffix=row ? encodeURIComponent(row.id)+'/'+action : action;
+      const body=action === 'run-due' ? {as_of:todayStr(),limit:10} : action === 'deliver-pending' ? {limit:10} : null;
+      const result=await api(`/companies/${snapshot.companyId}/automation/notifications/${suffix}`,{method:'POST',body,timeoutMs:40000});
+      if (!currentNotificationView(snapshot)) return;
+      if (marking) toast(action === 'read' ? 'Marked read in the shared company inbox' : 'Notification dismissed; queued deliveries stopped','ok');
+      else if (!Array.isArray(result)) throw new Error('The server returned an incomplete result. Refresh before retrying.');
+      else if (action === 'run-due') toast(`${result.length} alerts generated. Run again to evaluate remaining events.`,'ok');
+      else {
+        const accepted=result.filter(item=>item.status === 'SENT').length, failed=result.filter(item=>['FAILED','DEAD_LETTER'].includes(item.status)).length,
+          uncertain=result.filter(item=>['UNKNOWN','SENDING'].includes(item.status)).length;
+        toast(result.length ? `${accepted} accepted; ${failed} failed; ${uncertain} uncertain or in progress. Review the queue for remaining recipients.`
+          : 'Nothing was sent. Remaining deliveries may be waiting for retry or require review.',failed || uncertain ? 'err' : 'ok');
+      }
+      await loadNotifications();
+    } catch(e) { if (currentNotificationView(snapshot)) errToast(e); }
+  })();
+  notificationFlights.set(scope,operation); notificationControls();
+  try { return await operation; } finally { notificationFlights.delete(scope); notificationControls(); }
 }
-
-async function deliverPendingNotifications(){
-  if (!requireCompany()) return;
-  try {
-    const rows = await api(`/companies/${STATE.companyId}/automation/notifications/deliver-pending`, {method:'POST', body:{limit:50}});
-    toast(`${rows.length} delivery attempt${rows.length===1?'':'s'} recorded`,'ok');
-    loadNotifications();
-  } catch(e){ errToast(e); }
-}
-
-async function deliverNotification(notificationId){
-  try {
-    const rows = await api(`/companies/${STATE.companyId}/automation/notifications/${notificationId}/deliver`, {method:'POST'});
-    toast(`${rows.length} delivery attempt${rows.length===1?'':'s'} recorded`,'ok');
-    loadNotifications();
-  } catch(e){ errToast(e); }
-}
-
-async function markNotificationRead(notificationId){
-  try {
-    await api(`/companies/${STATE.companyId}/automation/notifications/${notificationId}/read`, {method:'POST'});
-    toast('Notification marked read','ok');
-    loadNotifications();
-  } catch(e){ errToast(e); }
-}
-
-async function dismissNotification(notificationId){
-  try {
-    await api(`/companies/${STATE.companyId}/automation/notifications/${notificationId}/dismiss`, {method:'POST'});
-    toast('Notification dismissed','ok');
-    loadNotifications();
-  } catch(e){ errToast(e); }
-}
+async function runDueNotifications(){return notificationAction('run-due');}
+async function deliverPendingNotifications(){return notificationAction('deliver-pending');}
+async function deliverNotification(index){return notificationAction('deliver',index);}
+async function markNotificationRead(index){return notificationAction('read',index);}
+async function dismissNotification(index){return notificationAction('dismiss',index);}
 VIEW_RENDERERS['notifications'] = renderNotifications;
 
 /* ============================================================
