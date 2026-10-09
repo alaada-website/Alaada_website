@@ -240,6 +240,38 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   const timers=[],delivery=await boot('accounts','',[],new Map(),{timers});
   await delivery.W.productFetch('/companies/company-id/automation/notifications/deliver-pending',{method:'POST',body:'{"limit":10}'});
   assert.ok(timers.includes(35000),'Notification delivery waits for the bounded gateway response');
+  const reportSeed=[
+    {id:'report-1',product:'analyser',kind:'report',payload:{native_key:'report-1',data:{result:{summary:{}}}}},
+    {id:'monitor-1',product:'analyser',kind:'monitor',payload:{native_key:'monitor-1',data:{}}},
+    {id:'other',product:'sheets',kind:'workbook',payload:{native_key:'other',data:{}}}
+  ];
+  const fresh=await boot('analyser','?workspace=company',reportSeed);
+  const reportRows=await fresh.W.resources('analyser','report');
+  assert.deepEqual(Array.from(reportRows,row=>row.id),['report-1']);
+  assert.equal(targetCalls(fresh,'/api/workspaces/company/resources').length,2,'Saved reports use a fresh authorized listing');
+  assert.equal(fresh.W.list('monitor').length,1,'Fresh reads do not erase cached product records');
+  fresh.setUser('bob');await assert.rejects(fresh.W.resources('analyser','report'),/account changed/);
+  assert.equal(targetCalls(fresh,'/api/workspaces/company/resources').length,2);
+  for(const [product,path,budget] of [
+    ['analyser','/analyze',210000],['sheets','/api/ai/chat',150000],['sheets','/api/formula/eval',90000]
+  ]){
+    const deadlines=[],env=await boot(product,'',[],new Map(),{timers:deadlines});
+    const response=await env.W.productFetch(path,{method:'POST',body:'{}'});
+    assert.equal(response.status,200);assert.ok(deadlines.includes(budget),path+' includes gateway readiness and execution');
+  }
+  const orbitDeadlines=[],slowOrbit=await boot('orbit','',[],new Map(),{timers:orbitDeadlines});
+  await slowOrbit.W.save('conversation','first',{messages:[{role:'user',text:'Hi'}]},'First');
+  await slowOrbit.W.orbitReply('first');
+  assert.ok(orbitDeadlines.includes(120000));
+  await slowOrbit.W.entitlements();assert.ok(orbitDeadlines.includes(90000));
+  let started;const began=new Promise(resolve=>started=resolve);
+  const stopped=await boot('analyser','',[],new Map(),{fetch:(url,options)=>{
+    if(url.endsWith('/analyser/analyze')){started();return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true}));}
+  }});
+  const cancelAnalysis=new AbortController(),cancelledAnalysis=stopped.W.productFetch('/analyze',{method:'POST',body:'{}',signal:cancelAnalysis.signal});
+  await began;cancelAnalysis.abort();
+  await assert.rejects(cancelledAnalysis,error=>error.name==='AbortError');
+  assert.equal(targetCalls(stopped,'/analyser/analyze').length,1,'Cancellation never replays an analysis');
   console.log('Product client behavior passed for Orbit, Sheets, Accounts and Analyser');
   console.log('Empty/malformed responses, cold-start retries, auth denial, cancellation, timeouts, downloads and uncertain-write receipts passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});

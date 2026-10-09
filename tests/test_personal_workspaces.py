@@ -322,6 +322,14 @@ def test_product_client_javascript_behavior(tmp_path):
     assert result.returncode==0, result.stdout+result.stderr
 
 
+def test_workspace_manager_javascript_behavior(tmp_path):
+    source = tmp_path / 'manager.html'
+    source.write_text(m.UI, encoding='utf-8')
+    result = subprocess.run(['node', str(Path(__file__).with_name('test_workspace_manager.cjs')), str(source)],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 def test_native_transfer_preserves_a_resumable_key_without_overwrite(env):
     personal,org=env[3],env[2]
     path=f"/workspaces/{personal}/products/sheets/records/workbook/book"

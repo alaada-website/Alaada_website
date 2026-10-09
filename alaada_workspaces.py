@@ -2391,9 +2391,33 @@ const inboxSection=document.createElement('section');inboxSection.innerHTML='<h2
 let preferences=null;
 const preferenceSection=document.createElement('section');preferenceSection.innerHTML='<h2>Private account preferences</h2><p>These belong to your Appwrite account, independently of the active organisation. Sharing, ownership and subscription notices remain enabled.</p><button id="loadPreferences">Load my preferences</button><label><input type="checkbox" id="personalActivity" disabled> Personal activity notifications</label><label><input type="checkbox" id="organisationActivity" disabled> My organisation activity notifications</label><button id="savePreferences">Save my preferences</button>';$('app').append(preferenceSection);
 function notificationTitle(action){const labels={'file:upload':'File uploaded','accounts:create':'Accounts company created','orbit:reply':'Orbit reply saved','analyser:complete':'Analysis report saved','share:read':'Read access granted','share:write':'Edit access granted','share:revoke':'Sharing permission revoked','copy:in':'Resource copied into this workspace','copy:out':'Resource copied to another workspace','move:in':'Resource moved into this workspace','move:out':'Resource moved to another workspace'};if(action.startsWith('subscription:requested:'))return 'Personal plan change requested: '+action.split(':')[2];if(action.startsWith('subscription:confirmed:'))return 'Personal plan confirmed: '+action.split(':')[2];return labels[action]||'Workspace activity';}
-async function aw(path,method='GET'){const r=await fetch(EP+path,{method,credentials:'include',headers:{'X-Appwrite-Project':PID,'Content-Type':'application/json'},...(method==='POST'?{body:'{}'}:{})});if(!r.ok)throw Error('Appwrite sign-in required.');return r.status===204?{}:r.json()}
+async function readManagerResponse(response,service,allowEmpty=false){
+  const raw=await response.text();let data;try{data=raw.trim()?JSON.parse(raw):null}catch{}
+  if(!response.ok){const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';const error=Error(detail.slice(0,300)||service+' request failed (HTTP '+response.status+').');error.status=response.status;throw error;}
+  if(response.status===204&&allowEmpty)return {};
+  if(!data||typeof data!=='object'){const error=Error(service+' returned an empty or unreadable response. Reload to check the result before retrying.');error.status=502;throw error;}
+  return data;
+}
+async function aw(path,method='GET'){
+  const r=await fetch(EP+path,{method,credentials:'include',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000),headers:{'X-Appwrite-Project':PID,'Content-Type':'application/json'},...(method==='POST'?{body:'{}'}:{})});
+  const result=await readManagerResponse(r,'Appwrite',method==='DELETE');
+  const field=path==='/account'?'$id':path==='/account/jwts'?'jwt':null;
+  if(field&&(typeof result[field]!=='string'||!result[field].trim())){const error=Error('Appwrite returned an incomplete account or session. Reload and retry.');error.status=502;throw error;}
+  return result;
+}
 function hidePrivate(){epoch++;preferences=null;$('personalActivity').checked=false;$('organisationActivity').checked=false;selected=null;dirty=false;state=null;active=null;$('inboxItems').replaceChildren();$('resources').replaceChildren();$('shared').replaceChildren();$('title').value='';$('payload').value='{}';$('plan').textContent='';$('ownership').textContent='';$('workspace').replaceChildren();$('active').textContent='No verified active workspace';$('app').hidden=true;$('login').hidden=false}
-async function api(path,method='GET',data,wid=active?.id){let jwt;try{jwt=await aw('/account/jwts','POST')}catch(e){hidePrivate();throw e}const r=await fetch('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'Content-Type':'application/json','X-Alaada-Workspace':wid||''},...(data?{body:JSON.stringify(data)}:{})});const result=await r.json();if(!r.ok){if(r.status===401||r.status===403)hidePrivate();throw Error(result.detail||'Request failed')}return result}
+async function api(path,method='GET',data,wid=active?.id){
+  try{
+    const account=await aw('/account');
+    if(state&&state.user!==account.$id){hidePrivate();throw Error('Your signed-in account changed. Reload before continuing.');}
+    const jwt=await aw('/account/jwts','POST');
+    const r=await fetch('/api'+path,{method,cache:'no-store',redirect:'error',signal:AbortSignal.timeout(40000),headers:{Authorization:'Bearer '+jwt.jwt,'Content-Type':'application/json','X-Alaada-Workspace':wid||''},...(data!==undefined?{body:JSON.stringify(data)}:{})});
+    const result=await readManagerResponse(r,'Workspace service',method==='DELETE');
+    if((await aw('/account')).$id!==account.$id){hidePrivate();throw Error('Your signed-in account changed during the request. Reload before continuing.');}
+    if(path==='/workspaces'&&(result.user!==account.$id||!Array.isArray(result.workspaces)||!result.workspaces.some(w=>w.kind==='personal')||!result.kinds||typeof result.kinds!=='object'))throw Error('Workspace identity or configuration could not be verified. Reload to retry.');
+    return result;
+  }catch(error){if([401,403].includes(error.status))hidePrivate();throw error;}
+}
 function button(label,fn){const b=document.createElement('button');b.textContent=label;b.className='item';b.onclick=()=>run(fn);return b}
 function lock(value){busy=value;document.querySelectorAll('button,select,input,textarea').forEach(e=>e.disabled=value)}
 async function run(fn){if(busy)return;lock(true);message('');try{await fn()}catch(e){message(e.message)}finally{lock(false)}}
@@ -2582,9 +2606,13 @@ PRODUCT_CLIENT = r'''
       const contentType=rawOptions?new Headers(rawOptions.headers||{}).get('Content-Type'):'application/json';
       const operationId=rawOptions?new Headers(rawOptions.headers||{}).get('X-Alaada-Operation'):null;
       const idempotencyKey=rawOptions?new Headers(rawOptions.headers||{}).get('Idempotency-Key'):null;
-      // Allow the gateway's bounded 30-second delivery call to return its
-      // outcome before the browser gives up. The caller can still cancel sooner.
-      const timeoutMs=method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:25000;
+      // Product execution can outlive a short identity/read request. Leave time
+      // for the bounded gateway call and persistence; caller cancellation wins.
+      const timeoutMs=method==='POST'&&/\/analyser\/analyze$/.test(path)?210000:
+        method==='POST'&&/\/orbit\/reply$/.test(path)?120000:
+        method==='POST'&&/\/sheets\/execute\//.test(path)?150000:
+        (method==='POST'&&/\/sheets\/formula$/.test(path)||method==='GET'&&/\/entitlements$/.test(path))?90000:
+        method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:25000;
       const response=await request('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))},'Alaada workspace service',!!rawOptions,timeoutMs);
       const latest=await appwrite('/account');
       if(latest.$id!==account.$id){freeze('The signed-in account changed during the request.');throw failed;}
@@ -2642,6 +2670,18 @@ PRODUCT_CLIENT = r'''
     beforeSwitch(callback){beforeSwitch=callback;},
     async verify(){const data=await api('/workspaces');if(!data.workspaces.some(w=>w.id===workspace.id)){freeze('Workspace membership was removed.');throw failed;}return true;},
     async entitlements(){await W.ready;return api('/workspaces/'+workspace.id+'/entitlements');},
+    async resources(p=product,kind){
+      await W.ready;if(!verified||failed)throw failed||Error('A verified workspace is required.');
+      const active=workspace;
+      const operation=api('/workspaces/'+active.id+'/resources');
+      requests.add(operation);selector.disabled=true;
+      try{
+        const rows=await operation;
+        if(workspace!==active)throw Error('The workspace changed. Reload the saved reports.');
+        // A fresh listing must not overwrite unsaved product state in records.
+        return rows.filter(row=>row.product===p&&(!kind||row.kind===kind));
+      }finally{requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
+    },
     async orbitReply(key){
       await W.ready;if(product!=='orbit')throw Error('Orbit page required');
       for(const surface of surfaces)surface.inert=true;
