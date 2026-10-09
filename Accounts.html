@@ -4866,9 +4866,59 @@ async function postPurchaseReturnAction(id){
   catch(e){ errToast(e); }
 }
 
+let companyViewSequence = 0;
+async function prepareCompanyView(loaders){
+  if (!requireCompany()) return null;
+  const companyId = STATE.companyId, generation = STATE.companyGeneration, name = STATE.currentView;
+  const sequence = ++companyViewSequence;
+  const current = () => sameCompanyGeneration(companyId, generation) && STATE.currentView === name && sequence === companyViewSequence;
+  view().innerHTML = '<div class="loading-row"><span class="spin"></span> Loading company data…</div>';
+  const results = await Promise.allSettled(loaders.map(load=>load(generation, companyId)));
+  if (!current()) return null;
+  const failed = results.find(result=>result.status === 'rejected');
+  if (failed) {
+    view().innerHTML = emptyState('⚠','Could not load company data',esc(failed.reason?.message || 'Request failed'),
+      '<button class="btn btn-ghost" onclick="navigate(STATE.currentView)">Retry loading</button>');
+    return null;
+  }
+  return {current};
+}
+function bindCompanyForm(buttonId, buildRequest, afterSave){
+  const companyId = STATE.companyId, generation = STATE.companyGeneration, name = STATE.currentView;
+  const button = document.getElementById(buttonId);
+  const current = () => sameCompanyGeneration(companyId, generation) && STATE.currentView === name
+    && document.getElementById(buttonId) === button && modalBackdrop.classList.contains('open');
+  button.onclick = async () => {
+    if (!current() || button.disabled) return;
+    let request;
+    try {
+      request = buildRequest();
+      if (!request) return;
+      button.disabled = true;
+      await api(`/companies/${companyId}${request.path}`, {method:request.method || 'POST', body:request.body});
+    } catch(e) { if (current()) errToast(e); return; }
+    finally { button.disabled = false; }
+    if (!current()) return;
+    closeModal(); toast(request.message || 'Saved ✓','ok');
+    try { await afterSave(generation, companyId); }
+    catch(e) { if (sameCompanyGeneration(companyId, generation)) toast('Saved, but the view could not refresh. Retry loading.','err'); }
+  };
+}
+function inventoryDecimal(value, precision, label, {positive=false, maxWholeDigits=15}={}){
+  const cleaned = String(value).trim();
+  if (!Number.isInteger(precision) || precision < 0 || precision > 6 || !/^\d+(?:\.\d+)?$/.test(cleaned)
+      || cleaned.split('.')[0].length > maxWholeDigits || (cleaned.split('.')[1] || '').replace(/0+$/,'').length > precision
+      || (positive && !/[1-9]/.test(cleaned))) throw new Error(label + ' must be a valid ' + (positive ? 'positive ' : 'nonnegative ') + 'decimal within the unit precision.');
+  return cleaned;
+}
+async function refreshCompanyAfterSave(loaders, generation, companyId){
+  await Promise.all(loaders.map(load=>load(generation, companyId)));
+  if (sameCompanyGeneration(companyId, generation)) navigate(STATE.currentView);
+}
 async function renderInventorySetup(){
   if (!requireCompany()) return;
-  await Promise.all([loadCategories(), loadUoms(), loadWarehouses()]);
+  const loaded = await prepareCompanyView([loadCategories, loadUoms, loadWarehouses]);
+  if (!loaded?.current()) return;
   view().innerHTML = viewHead('Categories, UOM &amp; Warehouses', 'Master data that stock items and movements rely on.', '') +
     `<div class="grid grid-3">
       <div class="card card-pad">
@@ -4887,21 +4937,20 @@ async function renderInventorySetup(){
 }
 VIEW_RENDERERS['inventory-setup'] = renderInventorySetup;
 function openCategoryForm(){
+  if (!requireCompany()) return;
   openModal({
     title:'New item category',
     bodyHtml:`<div class="form-row"><label>Name</label><input type="text" id="cat-name" placeholder="e.g. Electronics"/></div><div class="form-row"><label>Description (optional)</label><textarea id="cat-desc" rows="2"></textarea></div>`,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="cat-save">Create category</button>`,
-    onMount:() => document.getElementById('cat-save').onclick = async () => {
+    onMount:() => bindCompanyForm('cat-save', () => {
       const name = document.getElementById('cat-name').value.trim();
       if (!name) return toast('Category name is required','err');
-      try {
-        await api(`/companies/${STATE.companyId}/inventory/categories`, {method:'POST', body:{name, description: document.getElementById('cat-desc').value.trim() || null}});
-        toast('Category created ✓','ok'); closeModal(); renderInventorySetup();
-      } catch(e){ errToast(e); }
-    }
+      return {path:'/inventory/categories', body:{name, description:document.getElementById('cat-desc').value.trim() || null}, message:'Category created ✓'};
+    }, (generation, companyId)=>refreshCompanyAfterSave([loadCategories], generation, companyId))
   });
 }
 function openUomForm(){
+  if (!requireCompany()) return;
   openModal({
     title:'New unit of measure',
     bodyHtml:`
@@ -4912,18 +4961,18 @@ function openUomForm(){
       <div class="form-row"><label>Decimal precision</label><input type="number" id="uom-precision" value="2" min="0" max="6"/></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="uom-save">Create unit</button>`,
-    onMount:() => document.getElementById('uom-save').onclick = async () => {
+    onMount:() => bindCompanyForm('uom-save', () => {
       const name = document.getElementById('uom-name').value.trim();
       const symbol = document.getElementById('uom-symbol').value.trim();
       if (!name || !symbol) return toast('Name and symbol are both required','err');
-      try {
-        await api(`/companies/${STATE.companyId}/inventory/uoms`, {method:'POST', body:{name, symbol, precision: parseInt(document.getElementById('uom-precision').value||'2',10)}});
-        toast('Unit created ✓','ok'); closeModal(); renderInventorySetup();
-      } catch(e){ errToast(e); }
-    }
+      const precision = document.getElementById('uom-precision').value.trim();
+      if (!/^[0-6]$/.test(precision)) throw new Error('Unit precision must be a whole number from zero to six.');
+      return {path:'/inventory/uoms', body:{name,symbol,precision:Number(precision)}, message:'Unit created ✓'};
+    }, (generation, companyId)=>refreshCompanyAfterSave([loadUoms], generation, companyId))
   });
 }
 function openWarehouseForm(){
+  if (!requireCompany()) return;
   openModal({
     title:'New warehouse',
     bodyHtml:`
@@ -4933,18 +4982,15 @@ function openWarehouseForm(){
       <div class="form-row"><label class="check-row"><input type="checkbox" id="wh-default"/> Set as default warehouse</label></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="wh-save">Create warehouse</button>`,
-    onMount:() => document.getElementById('wh-save').onclick = async () => {
+    onMount:() => bindCompanyForm('wh-save', () => {
       const name = document.getElementById('wh-name').value.trim();
       if (!name) return toast('Warehouse name is required','err');
-      try {
-        await api(`/companies/${STATE.companyId}/inventory/warehouses`, {method:'POST', body:{
+      return {path:'/inventory/warehouses', message:'Warehouse created ✓', body:{
           name, code: document.getElementById('wh-code').value.trim() || null,
           address: document.getElementById('wh-addr').value.trim() || null,
           is_default: document.getElementById('wh-default').checked,
-        }});
-        toast('Warehouse created ✓','ok'); closeModal(); renderInventorySetup();
-      } catch(e){ errToast(e); }
-    }
+      }};
+    }, (generation, companyId)=>refreshCompanyAfterSave([loadWarehouses], generation, companyId))
   });
 }
 
@@ -4953,7 +4999,8 @@ function openWarehouseForm(){
    ============================================================ */
 async function renderInventoryItems(){
   if (!requireCompany()) return;
-  await Promise.all([loadStockItems(), loadCategories(), loadUoms()]);
+  const loaded = await prepareCompanyView([loadStockItems, loadCategories, loadUoms]);
+  if (!loaded?.current()) return;
   view().innerHTML = viewHead('Items', `${STATE.stockItems.length} item${STATE.stockItems.length===1?'':'s'} in ${esc(STATE.company.name)}`,
     `<input type="search" id="item-search" placeholder="Search items…" style="width:200px;">
      <button class="btn btn-blue" onclick="openItemForm()">+ New item</button>`) +
@@ -4980,6 +5027,7 @@ function renderItemTable(q){
     </tr>`).join('')}</tbody></table></div>`;
 }
 function openItemForm(existing){
+  if (!requireCompany()) return;
   const it = existing || {};
   if (!STATE.uoms.length) return toast('Create a unit of measure first (Inventory → Categories, UOM & Warehouses)','err');
   openModal({
@@ -4992,41 +5040,53 @@ function openItemForm(existing){
         <div class="form-row"><label>Unit of measure *</label><select id="it-uom">${STATE.uoms.map(u=>`<option value="${u.id}" ${it.uom_id===u.id?'selected':''}>${esc(u.name)} (${esc(u.symbol)})</option>`).join('')}</select></div>
         <div class="form-row"><label>HSN/SAC (optional)</label><input type="text" id="it-hsn" value="${esc(it.hsn_sac||'')}"/></div>
         <div class="form-row"><label>GST rate %</label><input type="number" step="0.01" id="it-gst" value="${it.gst_rate||0}"/></div>
-        <div class="form-row"><label>Reorder level</label><input type="number" step="0.01" id="it-reorder" value="${it.reorder_level||0}"/></div>
+        <div class="form-row"><label>Reorder level (unit precision)</label><input type="number" step="any" id="it-reorder" value="${it.reorder_level||0}"/></div>
       </div>
       <div class="form-row"><label class="check-row"><input type="checkbox" id="it-negstock" ${it.allow_negative_stock?'checked':''}/> Allow negative stock</label></div>
       <div class="form-row"><label>Description (optional)</label><textarea id="it-desc" rows="2">${esc(it.description||'')}</textarea></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="it-save">${existing?'Save changes':'Create item'}</button>`,
-    onMount:() => document.getElementById('it-save').onclick = () => submitItemForm(existing && existing.id)
+    onMount:() => bindCompanyForm('it-save', () => itemFormRequest(existing && existing.id),
+      (generation, companyId)=>refreshCompanyAfterSave([loadStockItems], generation, companyId))
   });
 }
-async function submitItemForm(id){
+function itemFormRequest(id){
   const name = document.getElementById('it-name').value.trim();
   if (!name) return toast('Item name is required','err');
+  const uom = STATE.uoms.find(unit=>unit.id === document.getElementById('it-uom').value);
+  if (!uom) throw new Error('Select a valid unit of measure.');
   const payload = {
     name,
     sku: document.getElementById('it-sku').value.trim() || null,
     category_id: document.getElementById('it-cat').value || null,
     uom_id: document.getElementById('it-uom').value,
     hsn_sac: document.getElementById('it-hsn').value.trim() || null,
-    gst_rate: parseFloat(document.getElementById('it-gst').value || '0'),
-    reorder_level: parseFloat(document.getElementById('it-reorder').value || '0'),
+    gst_rate: inventoryDecimal(document.getElementById('it-gst').value || '0', 2, 'Tax rate', {maxWholeDigits:3}),
+    reorder_level: inventoryDecimal(document.getElementById('it-reorder').value || '0', uom.precision, 'Reorder level'),
     allow_negative_stock: document.getElementById('it-negstock').checked,
     description: document.getElementById('it-desc').value.trim() || null,
   };
-  try {
-    if (id) await api(`/companies/${STATE.companyId}/inventory/items/${id}`, {method:'PATCH', body:payload});
-    else await api(`/companies/${STATE.companyId}/inventory/items`, {method:'POST', body:payload});
-    toast(id?'Item updated ✓':'Item created ✓','ok'); closeModal(); await loadStockItems(); renderInventoryItems();
-  } catch(e){ errToast(e); }
+  if (Number(payload.gst_rate) > 100) throw new Error('Tax rate must be between zero and 100.');
+  return {path:'/inventory/items' + (id ? '/' + id : ''), method:id?'PATCH':'POST', body:payload, message:id?'Item updated ✓':'Item created ✓'};
 }
 async function openItemDetail(id){
+  if (!requireCompany()) return;
+  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   const it = STATE.stockItems.find(x=>x.id===id); if (!it) return;
   openModal({title:it.name, wide:true, bodyHtml:`<div id="item-detail-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
-  let stockRows = [];
-  try { stockRows = await api(`/companies/${STATE.companyId}/inventory/current-stock`, {qs:{item_id:id}}); } catch(e){ stockRows = []; }
-  document.getElementById('item-detail-body').innerHTML = `
+  const slot = document.getElementById('item-detail-body');
+  const current = () => sameCompanyGeneration(companyId, generation) && document.getElementById('item-detail-body') === slot && modalBackdrop.classList.contains('open');
+  let stockRows;
+  try {
+    stockRows = await api(`/companies/${companyId}/inventory/current-stock`, {qs:{item_id:id}});
+    if (!current()) return;
+    if (!Array.isArray(stockRows)) throw new Error('Invalid stock response. Retry loading.');
+  } catch(e){
+    if (current()) slot.innerHTML = emptyState('⚠','Could not load stock',esc(e.message),
+      `<button class="btn btn-ghost" onclick="openItemDetail('${id}')">Retry loading</button>`);
+    return;
+  }
+  slot.innerHTML = `
     <div class="kv"><span class="k">SKU</span><span class="v">${esc(it.sku||'—')}</span></div>
     <div class="kv"><span class="k">Category</span><span class="v">${esc(categoryName(it.category_id))}</span></div>
     <div class="kv"><span class="k">UOM</span><span class="v">${esc(uomSymbol(it.uom_id))}</span></div>
@@ -5043,51 +5103,65 @@ async function openItemDetail(id){
   const foot = document.getElementById('modal-foot');
   foot.innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Close</button>
     ${it.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveItemAction('${it.id}')">Archive</button>`:''}
-    <button class="btn btn-teal" onclick="openStockMovementForm('${it.id}')">+ Stock movement</button>
+    ${it.status==='ACTIVE'?`<button class="btn btn-teal" onclick="openStockMovementForm('${it.id}')">+ Stock movement</button>`:''}
     <button class="btn btn-blue" onclick="closeModal();openItemForm(STATE.stockItems.find(x=>x.id==='${it.id}'))">Edit</button>`;
 }
 async function archiveItemAction(id){
+  if (!requireCompany()) return;
+  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   if (!confirm('Archive this item?')) return;
-  try { await api(`/companies/${STATE.companyId}/inventory/items/${id}/archive`, {method:'POST'}); toast('Item archived','ok'); closeModal(); await loadStockItems(); renderInventoryItems(); }
-  catch(e){ errToast(e); }
+  try {
+    await api(`/companies/${companyId}/inventory/items/${id}/archive`, {method:'POST'});
+    if (!sameCompanyGeneration(companyId, generation)) return;
+    toast('Item archived','ok'); closeModal();
+    await refreshCompanyAfterSave([loadStockItems], generation, companyId);
+  } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
 }
 function openStockMovementForm(itemId){
-  if (!STATE.warehouses.length) return toast('Create a warehouse first','err');
+  if (!requireCompany()) return;
+  const item = STATE.stockItems.find(row=>row.id === itemId);
+  const uom = item && STATE.uoms.find(row=>row.id === item.uom_id);
+  if (!item || item.status !== 'ACTIVE' || !uom) return toast('Load an active item and its unit before recording stock.','err');
+  if (!STATE.warehouses.some(row=>row.status === 'ACTIVE')) return toast('Create an active warehouse first','err');
   openModal({
     title:'Record stock movement', wide:true,
     bodyHtml:`
       <div class="form-grid">
         <div class="form-row"><label>Warehouse</label><select id="sm-wh">${STATE.warehouses.filter(w=>w.status==='ACTIVE').map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select></div>
-        <div class="form-row"><label>Movement type</label><select id="sm-type"><option value="OPENING">Opening</option><option value="ADJUSTMENT_IN">Adjustment In</option><option value="ADJUSTMENT_OUT">Adjustment Out</option></select></div>
+        <div class="form-row"><label>Movement type</label><select id="sm-type"><option value="OPENING">Opening (first movement only)</option><option value="ADJUSTMENT_IN" selected>Adjustment In</option><option value="ADJUSTMENT_OUT">Adjustment Out</option></select></div>
         <div class="form-row"><label>Date</label><input type="date" id="sm-date" value="${todayStr()}"/></div>
-        <div class="form-row"><label>Quantity</label><input type="number" step="0.001" id="sm-qty" placeholder="0"/></div>
+        <div class="form-row"><label>Quantity (${esc(uom.symbol)}, up to ${uom.precision} decimals)</label><input type="text" inputmode="decimal" id="sm-qty" placeholder="0"/></div>
       </div>
       <div class="form-row"><label>Narration (optional)</label><input type="text" id="sm-narr"/></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="sm-save">Record movement</button>`,
-    onMount:() => document.getElementById('sm-save').onclick = async () => {
-      const quantity = parseFloat(document.getElementById('sm-qty').value || '0');
-      if (quantity <= 0) return toast('Quantity must be greater than zero','err');
-      try {
-        await api(`/companies/${STATE.companyId}/inventory/stock-movements`, {method:'POST', body:{
+    onMount:() => bindCompanyForm('sm-save', () => {
+      const quantity = inventoryDecimal(document.getElementById('sm-qty').value, uom.precision, 'Quantity', {positive:true});
+      const warehouse = STATE.warehouses.find(row=>row.id === document.getElementById('sm-wh').value && row.status === 'ACTIVE');
+      if (!warehouse) throw new Error('Select an active warehouse.');
+      return {path:'/inventory/stock-movements', message:'Stock movement recorded ✓', body:{
           item_id: itemId, warehouse_id: document.getElementById('sm-wh').value,
           movement_date: document.getElementById('sm-date').value,
           movement_type: document.getElementById('sm-type').value,
           quantity, narration: document.getElementById('sm-narr').value.trim() || null,
-        }});
-        toast('Stock movement recorded ✓','ok'); closeModal(); openItemDetail(itemId);
-      } catch(e){ errToast(e); }
-    }
+      }};
+    }, () => openItemDetail(itemId))
   });
 }
 async function viewStockLedger(itemId, warehouseId){
+  if (!requireCompany()) return;
+  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   openModal({title:'Stock ledger', wide:true, bodyHtml:`<div id="sl-body"><span class="spin"></span> Loading…</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
+  const slot = document.getElementById('sl-body');
+  const current = () => sameCompanyGeneration(companyId, generation) && document.getElementById('sl-body') === slot && modalBackdrop.classList.contains('open');
   try {
-    const rows = await api(`/companies/${STATE.companyId}/inventory/items/${itemId}/stock-ledger`, {qs:{warehouse_id: warehouseId}});
+    const rows = await api(`/companies/${companyId}/inventory/items/${itemId}/stock-ledger`, {qs:{warehouse_id: warehouseId}});
+    if (!current()) return;
+    if (!Array.isArray(rows)) throw new Error('Invalid stock ledger response.');
     document.getElementById('sl-body').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th class="num">In</th><th class="num">Out</th><th>Narration</th></tr></thead>
       <tbody>${rows.map(r=>`<tr><td>${fmtDate(r.movement_date)}</td><td>${esc(r.movement_type)}</td><td class="num">${r.quantity_in>0?r.quantity_in:''}</td><td class="num">${r.quantity_out>0?r.quantity_out:''}</td><td>${esc(r.narration||'—')}</td></tr>`).join('')}</tbody></table></div>`
       : emptyState('📄','No movements yet','');
-  } catch(e){ document.getElementById('sl-body').innerHTML = emptyState('⚠','Could not load stock ledger', esc(e.message)); }
+  } catch(e){ if (current()) slot.innerHTML = emptyState('⚠','Could not load stock ledger', esc(e.message)); }
 }
 
 /* ============================================================
@@ -5095,7 +5169,8 @@ async function viewStockLedger(itemId, warehouseId){
    ============================================================ */
 async function renderInventoryStock(){
   if (!requireCompany()) return;
-  await Promise.all([loadWarehouses(), loadStockItems()]);
+  const loaded = await prepareCompanyView([loadWarehouses, loadStockItems]);
+  if (!loaded?.current()) return;
   const whOpts = STATE.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('');
   view().innerHTML = viewHead('Current Stock', 'Live quantities across all warehouses.',
     `<select id="stk-wh"><option value="">All warehouses</option>${whOpts}</select><button class="btn btn-ghost btn-sm" onclick="loadStockTable()">Refresh</button>`) +
@@ -5104,11 +5179,18 @@ async function renderInventoryStock(){
   loadStockTable();
 }
 VIEW_RENDERERS['inventory-stock'] = renderInventoryStock;
+let stockTableSequence = 0;
 async function loadStockTable(){
+  const companyId = STATE.companyId, generation = STATE.companyGeneration, sequence = ++stockTableSequence;
+  const slot = document.getElementById('stock-table');
+  if (!slot || !document.getElementById('stk-wh')) return;
+  const current = () => sameCompanyGeneration(companyId, generation) && document.getElementById('stock-table') === slot && sequence === stockTableSequence;
   const warehouse_id = document.getElementById('stk-wh').value || undefined;
   document.getElementById('stock-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
-    const rows = await api(`/companies/${STATE.companyId}/inventory/current-stock`, {qs:{warehouse_id}});
+    const rows = await api(`/companies/${companyId}/inventory/current-stock`, {qs:{warehouse_id}});
+    if (!current()) return;
+    if (!Array.isArray(rows)) throw new Error('Invalid stock response.');
     document.getElementById('stock-table').innerHTML = rows.length ? `<div class="table-wrap"><table>
       <thead><tr><th>Item</th><th>SKU</th><th>Warehouse</th><th class="num">Quantity</th><th class="num">Reorder Level</th><th>Status</th></tr></thead>
       <tbody>${rows.map(r => `<tr class="row-link" onclick="openItemDetail('${r.item_id}')">
@@ -5116,7 +5198,7 @@ async function loadStockTable(){
         <td class="num ${r.is_low_stock?'neg':''}">${r.quantity}</td><td class="num">${r.reorder_level}</td>
         <td>${r.is_low_stock?'<span class="badge badge-cancelled">Low</span>':'<span class="badge badge-active">OK</span>'}</td></tr>`).join('')}</tbody></table></div>`
       : emptyState('📦','No stock movements yet','Record stock movements from an item’s detail view, or post purchase bills to receive stock.');
-  } catch(e){ document.getElementById('stock-table').innerHTML = emptyState('⚠','Could not load stock', esc(e.message)); }
+  } catch(e){ if (current()) slot.innerHTML = emptyState('⚠','Could not load stock', esc(e.message)); }
 }
 
 /* ============================================================
@@ -5124,7 +5206,8 @@ async function loadStockTable(){
    ============================================================ */
 async function renderGstRates(){
   if (!requireCompany()) return;
-  await loadGstRates();
+  const loaded = await prepareCompanyView([loadGstRates]);
+  if (!loaded?.current()) return;
   view().innerHTML = viewHead('GST Tax Rates', 'Standard tax rates used when preparing GST returns.',
     `<button class="btn btn-blue" onclick="openGstRateForm()">+ New rate</button>`) +
     (STATE.gstRates.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th class="num">Rate %</th><th>Description</th><th>Status</th><th></th></tr></thead>
@@ -5137,6 +5220,7 @@ async function renderGstRates(){
 }
 VIEW_RENDERERS['gst-rates'] = renderGstRates;
 function openGstRateForm(existing){
+  if (!requireCompany()) return;
   const r = existing || {};
   openModal({
     title: existing?'Edit GST rate':'New GST rate',
@@ -5149,17 +5233,14 @@ function openGstRateForm(existing){
       ${existing?`<div class="form-row"><label class="check-row"><input type="checkbox" id="gr-active" ${r.is_active?'checked':''}/> Active</label></div>`:''}
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="gr-save">${existing?'Save changes':'Create rate'}</button>`,
-    onMount:() => document.getElementById('gr-save').onclick = async () => {
+    onMount:() => bindCompanyForm('gr-save', () => {
       const name = document.getElementById('gr-name').value.trim();
       if (!name) return toast('Name is required','err');
-      const payload = { name, rate_percent: parseFloat(document.getElementById('gr-rate').value||'0'), description: document.getElementById('gr-desc').value.trim() || null };
+      const payload = {name, rate_percent:inventoryDecimal(document.getElementById('gr-rate').value || '0',2,'Tax rate',{maxWholeDigits:3}), description:document.getElementById('gr-desc').value.trim() || null};
+      if (Number(payload.rate_percent) > 100) throw new Error('Tax rate must be between zero and 100.');
       if (existing) payload.is_active = document.getElementById('gr-active').checked;
-      try {
-        if (existing) await api(`/companies/${STATE.companyId}/gst/rates/${existing.id}`, {method:'PATCH', body:payload});
-        else await api(`/companies/${STATE.companyId}/gst/rates`, {method:'POST', body:payload});
-        toast(existing?'Rate updated ✓':'Rate created ✓','ok'); closeModal(); renderGstRates();
-      } catch(e){ errToast(e); }
-    }
+      return {path:'/gst/rates'+(existing?'/'+existing.id:''), method:existing?'PATCH':'POST', body:payload, message:existing?'Rate updated ✓':'Rate created ✓'};
+    }, (generation, companyId)=>refreshCompanyAfterSave([loadGstRates], generation, companyId))
   });
 }
 function editGstRateAction(id){ const r = STATE.gstRates.find(x=>x.id===id); if (r) openGstRateForm(r); }
@@ -5169,7 +5250,8 @@ function editGstRateAction(id){ const r = STATE.gstRates.find(x=>x.id===id); if 
    ============================================================ */
 async function renderGstClassifications(){
   if (!requireCompany()) return;
-  await Promise.all([loadTaxClassifications(), loadGstRates()]);
+  const loaded = await prepareCompanyView([loadTaxClassifications, loadGstRates]);
+  if (!loaded?.current()) return;
   view().innerHTML = viewHead('HSN / SAC Classifications', 'Product (HSN) and service (SAC) tax classification codes.',
     `<button class="btn btn-blue" onclick="openTaxClassificationForm()">+ New classification</button>`) +
     (STATE.taxClassifications.length ? `<div class="table-wrap"><table><thead><tr><th>Type</th><th>Code</th><th>Description</th><th>GST rate</th><th>Status</th><th></th></tr></thead>
@@ -5183,6 +5265,7 @@ async function renderGstClassifications(){
 }
 VIEW_RENDERERS['gst-classifications'] = renderGstClassifications;
 function openTaxClassificationForm(existing){
+  if (!requireCompany()) return;
   const c = existing || {};
   openModal({
     title: existing?'Edit classification':'New classification',
@@ -5196,18 +5279,14 @@ function openTaxClassificationForm(existing){
       ${existing?`<div class="form-row"><label class="check-row"><input type="checkbox" id="tc-active" ${c.is_active?'checked':''}/> Active</label></div>`:''}
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="tc-save">${existing?'Save changes':'Create classification'}</button>`,
-    onMount:() => document.getElementById('tc-save').onclick = async () => {
+    onMount:() => bindCompanyForm('tc-save', () => {
       const code = document.getElementById('tc-code').value.trim();
       const description = document.getElementById('tc-desc').value.trim();
       if (!code || !description) return toast('Code and description are required','err');
       const payload = { classification_type: document.getElementById('tc-type').value, code, description, gst_rate_id: document.getElementById('tc-rate').value || null };
       if (existing) payload.is_active = document.getElementById('tc-active').checked;
-      try {
-        if (existing) await api(`/companies/${STATE.companyId}/gst/classifications/${existing.id}`, {method:'PATCH', body:payload});
-        else await api(`/companies/${STATE.companyId}/gst/classifications`, {method:'POST', body:payload});
-        toast(existing?'Classification updated ✓':'Classification created ✓','ok'); closeModal(); renderGstClassifications();
-      } catch(e){ errToast(e); }
-    }
+      return {path:'/gst/classifications'+(existing?'/'+existing.id:''), method:existing?'PATCH':'POST', body:payload, message:existing?'Classification updated ✓':'Classification created ✓'};
+    }, (generation, companyId)=>refreshCompanyAfterSave([loadTaxClassifications], generation, companyId))
   });
 }
 function editTaxClassificationAction(id){ const c = STATE.taxClassifications.find(x=>x.id===id); if (c) openTaxClassificationForm(c); }
