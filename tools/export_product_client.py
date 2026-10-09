@@ -1,6 +1,8 @@
 """Package the browser client from the monolith without importing the server."""
 import argparse
 import ast
+import hashlib
+import re
 from pathlib import Path
 
 
@@ -37,8 +39,22 @@ def main():
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--test-output", type=Path)
     parser.add_argument("--mirror-source", type=Path)
+    parser.add_argument("--page", action="append", default=[], type=Path,
+                        help="Stamp an existing HTML script URL with the client content hash")
     args = parser.parse_args()
     client = render(args.source, args.endpoint, args.project)
+    version = hashlib.sha256(client.encode("utf-8")).hexdigest()[:12]
+    for page in args.page:
+        old = page.read_text(encoding="utf-8")
+        updated, count = re.subn(r'(/workspace-product-client\.js)(?:\?v=[A-Za-z0-9_-]+)?(?=["\'])',
+                                rf'\g<1>?v={version}', old)
+        if count != 1:
+            parser.exit(1, f"Expected exactly one shared client script in {page}.\n")
+        if args.check:
+            if updated != old:
+                parser.exit(1, f"Stale workspace script URL in {page}.\n")
+        else:
+            page.write_text(updated, encoding="utf-8", newline="\n")
     if args.check:
         if not args.output.is_file() or args.output.read_text(encoding="utf-8") != client:
             parser.exit(1, "Published workspace client differs from the monolith.\n")
