@@ -2644,6 +2644,7 @@ PRODUCT_CLIENT = r'''
   const nativeFetch = window.fetch.bind(window);
   const values = new Map(), records = new Map(), requests = new Set(), sheetFlights = new Map(), accountFlights = new Map(), analyserFlights = new Map(), orbitFlights = new Map();
   const ACTIVE_WORKSPACE_COOKIE = 'alaada_active_workspace';
+  const WORKSPACE_HINT_COOKIE = 'alaada_workspace_hint';
   const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
   let accountFlight = null, jwtFlight = null, cachedJwt = null, cachedJwtExpiresAt = 0;
   const sheetRoutes = {'/api/ai/command':'ai-command','/api/ai/chat':'ai-chat','/api/ai/analyze':'ai-analyze',
@@ -2654,8 +2655,19 @@ PRODUCT_CLIENT = r'''
   const keyOf = (p,k,key) => JSON.stringify([p,k,key]);
   const cookieGet = name => {try{const item=document.cookie.split(';').map(value=>value.trim()).find(value=>value.startsWith(name+'='));return item?decodeURIComponent(item.slice(name.length+1)):'';}catch{return ''}};
   const cookieSet = (name,value,maxAge=COOKIE_MAX_AGE) => {try{document.cookie=name+'='+encodeURIComponent(String(value))+'; Max-Age='+maxAge+'; Path=/; SameSite=Lax; Secure';}catch{}};
+  const readWorkspaceHint = () => {
+    try {
+      const hint = JSON.parse(cookieGet(WORKSPACE_HINT_COOKIE) || 'null');
+      if(!hint || typeof hint.id !== 'string' || !hint.id || typeof hint.name !== 'string' || !hint.name)return null;
+      return {id:hint.id.slice(0,128),name:hint.name.slice(0,200),kind:hint.kind==='organisation'?'organisation':'personal'};
+    } catch { return null; }
+  };
+  const saveWorkspaceHint = value => {
+    if(!value?.id || !value?.name)return;
+    cookieSet(WORKSPACE_HINT_COOKIE,JSON.stringify({id:String(value.id),name:String(value.name),kind:value.kind==='organisation'?'organisation':'personal'}));
+  };
   if(document.documentElement && document.documentElement.dataset)document.documentElement.dataset.alaadaFast='1';
-  if(document.head && document.createElement){const style=document.createElement('style');style.textContent='html[data-alaada-fast] *{transition-duration:.12s!important;animation-duration:.12s!important;animation-delay:0s!important}html[data-alaada-fast] .spin,html[data-alaada-fast] .spinner,html[data-alaada-fast] [class*="spinner"],html[data-alaada-fast] [class*="loading"]{animation-duration:.7s!important}html[data-alaada-fast] .reveal,html[data-alaada-fast] [data-reveal]{opacity:1!important;transform:none!important;transition:none!important}';document.head.append(style)}
+  if(document.head && document.createElement){const style=document.createElement('style');style.textContent='html[data-alaada-fast],html[data-alaada-fast] *{scroll-behavior:auto!important;transition:none!important;animation:none!important}html[data-alaada-fast] .spin,html[data-alaada-fast] .spinner,html[data-alaada-fast] [class*="spinner"],html[data-alaada-fast] [class*="loading"]{animation-duration:.7s!important;animation-iteration-count:infinite!important}html[data-alaada-fast] .reveal,html[data-alaada-fast] [data-reveal]{opacity:1!important;transform:none!important;transition:none!important}';document.head.append(style)}
   function show(message) { if(status)status.textContent=message; }
   function freeze(error) {
     clearAuthCache();
@@ -2994,22 +3006,24 @@ PRODUCT_CLIENT = r'''
   };
   W.ready=(async()=>{
     await readyDOM;
-    surfaces=[...document.body.children];for(const surface of surfaces)surface.inert=true;
+    surfaces=[...document.body.children];
     bar=document.createElement('aside');bar.id='alaada-workspace-bar';
-    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(17,36,58,.97);box-shadow:0 2px 12px rgba(0,0,0,.16);color:#fff;padding:8px 16px;display:flex;gap:12px;align-items:center;font:14px system-ui;min-height:44px';
-    label=document.createElement('strong');label.textContent='Verifying workspace…';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#11243a;color:#fff;padding:6px 14px;display:flex;gap:10px;align-items:center;font:13px system-ui;min-height:36px';
+    const cachedHint=readWorkspaceHint();
+    workspace=cachedHint;
+    label=document.createElement('strong');label.textContent=cachedHint?'Active: '+cachedHint.name+' · checking…':'Checking workspace…';
     selector=document.createElement('select');selector.setAttribute('aria-label','Active workspace');selector.disabled=true;
     const manage=document.createElement('a');manage.href='/workspaces';manage.textContent='Manage workspaces';manage.style.color='#90e3da';
     signin=document.createElement('a');
     signin.href='/auth.html?next='+encodeURIComponent(location.pathname+location.search);signin.textContent='Sign in';signin.style.color='#fff';
     status=document.createElement('span');status.setAttribute('role','status');
     bar.append(label,selector,manage,signin,status);document.body.prepend(bar);
-    gate=document.createElement('div');gate.setAttribute('role','status');gate.setAttribute('aria-live','polite');gate.style.cssText='position:fixed;inset:44px 0 0;z-index:2147483646;background:rgba(14,20,35,.92);color:#fff;padding:10vh 10vw;font:20px system-ui;transition:none';gate.textContent='Verifying your private workspace…';document.body.append(gate);
-    document.body.style.paddingTop='44px';
+    gate=document.createElement('div');gate.setAttribute('role','status');gate.setAttribute('aria-live','polite');gate.hidden=true;gate.style.cssText='position:fixed;inset:36px 0 0;z-index:2147483646;background:rgba(14,20,35,.94);color:#fff;padding:10vh 10vw;font:20px system-ui;transition:none';gate.textContent='Verifying your private workspace…';document.body.append(gate);
+    document.body.style.paddingTop='36px';
     if(document.head&&document.createElement){for(const href of [new URL(endpoint).origin,'https://alaada-workspaces.onrender.com']){const link=document.createElement('link');link.rel='preconnect';link.href=href;link.crossOrigin='anonymous';document.head.append(link)}}
     // Warm the known Free service without credentials while Appwrite verifies
     // the session. This is a best-effort public health read, never authority.
-    const wake=new AbortController(),wakeTimer=setTimeout(()=>wake.abort(),25000);
+    const wake=new AbortController(),wakeTimer=setTimeout(()=>wake.abort(),10000);
     nativeFetch('https://alaada-workspaces.onrender.com/health',{mode:'no-cors',cache:'no-store',signal:wake.signal}).catch(()=>{}).finally(()=>clearTimeout(wakeTimer));
     try {
       const requested=new URL(location.href).searchParams.get('workspace');
@@ -3033,13 +3047,14 @@ PRODUCT_CLIENT = r'''
       label.textContent='Active: '+workspace.name+' · '+workspace.kind;
       selector.onchange=async()=>{const next=selector.value;selector.value=workspace.id;if(!confirm('Switch workspace? Current workbook changes will be saved; other unsaved form input will be discarded. The product will reload in the destination workspace.'))return;try{selector.disabled=true;await beforeSwitch();await W.flush();cookieSet(ACTIVE_WORKSPACE_COOKIE,next);const url=new URL(location.href);url.searchParams.set('workspace',next);location.assign(url.href);}catch(error){show(error.message);selector.disabled=!!failed;}};
       verified=true;selector.disabled=false;gate.hidden=true;signin.hidden=true;for(const surface of surfaces)surface.inert=false;show('Private workspace verified');
+      saveWorkspaceHint(workspace);
       cookieSet(ACTIVE_WORKSPACE_COOKIE,workspace.id);
       return W;
     }catch(error){freeze(error);throw error;}
   })();
   W.ready.catch(()=>{});
   window.addEventListener('beforeunload',event=>{if(pending||failed&&verified){event.preventDefault();event.returnValue='Workspace changes have not been saved.';}});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(gate)gate.hidden=false;for(const surface of surfaces)surface.inert=true;}else if(verified){W.verify().then(()=>{if(verified){gate.hidden=true;for(const surface of surfaces)surface.inert=false;}}).catch(error=>freeze(error));}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden||!verified)return;W.verify().catch(error=>freeze(error));});
   window.AlaadaProduct={product,ready:()=>W.ready.then(()=>true)};
 })();
 '''
