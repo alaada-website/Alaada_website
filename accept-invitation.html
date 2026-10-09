@@ -25,9 +25,68 @@
     // The invitation secret stays in tab-scoped storage, never in a login URL.
     function authUrl(){return '/auth.html?next=%2Faccept-invitation.html'}
     function persistAndClean(){if(invite.teamId&&invite.membershipId&&invite.userId&&invite.secret){sessionStorage.setItem(KEY,JSON.stringify(invite));history.replaceState(null,'',location.pathname)}else if(fragment.get('teamId')&&(fragment.get('inviteId')||fragment.get('membershipId'))){Object.assign(invite,{teamId:fragment.get('teamId'),membershipId:fragment.get('membershipId')||fragment.get('inviteId'),userId:fragment.get('userId'),secret:fragment.get('secret')});if(invite.teamId&&invite.membershipId&&invite.userId&&invite.secret){sessionStorage.setItem(KEY,JSON.stringify(invite));history.replaceState(null,'',location.pathname)}}$('sign-in').href=authUrl()}
-    async function appwrite(path,method='GET',body){const response=await fetch(ENDPOINT+path,{method,credentials:'include',headers:{'X-Appwrite-Project':PROJECT,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const data=response.status===204?{}:await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||`Appwrite request failed (${response.status})`);return data}
+    async function readUMSResponse(response,service,allowEmpty=false){
+      let data=null;const raw=await response.text();
+      try{data=raw.trim()?JSON.parse(raw):null}catch{}
+      if(!response.ok){
+        const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
+        const error=new Error(detail.slice(0,300)||service+' request failed (HTTP '+response.status+').');
+        error.status=response.status;error.code=response.status;throw error;
+      }
+      if(response.status===204 && allowEmpty)return {};
+      if(!data || typeof data!=='object'){
+        const error=new Error(service+(raw.trim()?' returned an unreadable response.':' returned an empty response.')+' Reload to check the result before retrying.');
+        error.status=502;error.code=502;error.reason=raw.trim()?'MALFORMED_RESPONSE':'EMPTY_RESPONSE';throw error;
+      }
+      return data;
+    }
+    function verifyAppwriteShape(data,path){
+      const field=path==='/account'?'$id':path==='/account/jwts'?'jwt':null;
+      if(field && (typeof data[field]!=='string'||!data[field].trim())){
+        const error=new Error('Appwrite returned an incomplete '+(field==='jwt'?'session token':'account')+'. Reload and retry.');
+        error.status=502;error.code=502;throw error;
+      }
+      return data;
+    }
+    async function appwrite(path,method='GET',body){const response=await fetch(ENDPOINT+path,{method,credentials:'include',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000),headers:{'X-Appwrite-Project':PROJECT,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});return verifyAppwriteShape(await readUMSResponse(response,'Appwrite',method==='DELETE'),path)}
     function showError(message){$('message').textContent=message;$('message').className='error'}
-    async function boot(){persistAndClean();if(!invite.teamId||!invite.membershipId||!invite.userId||!invite.secret){showError('This invitation link is incomplete or expired. Ask the Enterprise workspace owner to send a new invitation.');return}let account;try{account=await appwrite('/account')}catch{account=null}if(!account){$('message').textContent='Sign in with the email address that received this invitation. Your personal workspace and subscription remain separate.';$('sign-in').classList.remove('hidden');return}if(account.$id!==invite.userId){$('message').textContent=`You are signed in as ${account.email}. Sign out and use the account that received this invitation.`;$('switch-account').classList.remove('hidden');$('switch-account').onclick=async()=>{const button=$('switch-account');button.disabled=true;try{await appwrite('/account/sessions/current','DELETE')}catch{}location.href=authUrl()};return}$('message').textContent=`Signed in as ${account.email}. Accepting this invitation will add an Enterprise workspace while keeping your personal workspace separate.`;$('accept').classList.remove('hidden');$('accept').onclick=async()=>{const button=$('accept');button.disabled=true;button.textContent='Accepting…';try{await appwrite(`/teams/${encodeURIComponent(invite.teamId)}/memberships/${encodeURIComponent(invite.membershipId)}/status`,'PATCH',{userId:invite.userId,secret:invite.secret});sessionStorage.removeItem(KEY);$('message').textContent='Invitation accepted. Connecting your Enterprise workspace…';button.classList.add('hidden');let workspaceId='';try{const jwt=await appwrite('/account/jwts','POST'),response=await fetch('/api/workspaces',{cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt}});if(response.ok){const data=await response.json(),workspace=(data.workspaces||[]).find(item=>item.kind==='organisation'&&item.team===invite.teamId);workspaceId=workspace?.id||''}}catch{}location.assign('/account.html'+(workspaceId?'?workspace='+encodeURIComponent(workspaceId):''))}catch(error){showError(error.message||'Could not accept this invitation. Request a fresh invitation and try again.');button.disabled=false;button.textContent='Accept invitation'}}}
+    async function boot(){
+      persistAndClean();
+      if(!invite.teamId||!invite.membershipId||!invite.userId||!invite.secret){showError('This invitation link is incomplete or expired. Ask the Enterprise workspace owner to send a new invitation.');return}
+      let account;
+      try{account=await appwrite('/account')}catch(error){if(error.status!==401)throw error;}
+      if(!account){$('message').textContent='Sign in with the email address that received this invitation. Your personal workspace and subscription remain separate.';$('sign-in').classList.remove('hidden');return}
+      if(account.$id!==invite.userId){
+        $('message').textContent=`You are signed in as ${account.email}. Sign out and use the account that received this invitation.`;
+        $('switch-account').classList.remove('hidden');
+        $('switch-account').onclick=async()=>{
+          const button=$('switch-account');if(button.disabled)return;button.disabled=true;
+          try{await appwrite('/account/sessions/current','DELETE');location.href=authUrl()}
+          catch(error){if(error.status===401)location.href=authUrl();else showError('Could not confirm sign-out. '+error.message);}
+          finally{button.disabled=false}
+        };return;
+      }
+      $('message').textContent=`Signed in as ${account.email}. Accepting this invitation will add an Enterprise workspace while keeping your personal workspace separate.`;
+      $('accept').classList.remove('hidden');
+      $('accept').onclick=async()=>{
+        const button=$('accept');if(button.disabled)return;button.disabled=true;button.textContent='Accepting…';
+        try{
+          if((await appwrite('/account')).$id!==invite.userId)throw Error('Your account changed. Reload before accepting this invitation.');
+          const membership=await appwrite(`/teams/${encodeURIComponent(invite.teamId)}/memberships/${encodeURIComponent(invite.membershipId)}/status`,'PATCH',{userId:invite.userId,secret:invite.secret});
+          if(membership.$id!==invite.membershipId||membership.teamId!==invite.teamId||membership.userId!==invite.userId||membership.confirm!==true)throw Error('Appwrite did not confirm this membership. Reload to check your invitation.');
+          if((await appwrite('/account')).$id!==invite.userId)throw Error('Your account changed. Reload to check your invitation.');
+          sessionStorage.removeItem(KEY);$('message').textContent='Invitation accepted. Connecting your Enterprise workspace…';button.classList.add('hidden');
+          let workspaceId='';
+          try{
+            const jwt=await appwrite('/account/jwts','POST'),response=await fetch('/api/workspaces',{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(40000),headers:{Authorization:'Bearer '+jwt.jwt}});
+            const data=await readUMSResponse(response,'Workspace service');
+            if(data.user!==invite.userId||!Array.isArray(data.workspaces))throw Error('Workspace identity could not be verified.');
+            workspaceId=data.workspaces.find(item=>item.kind==='organisation'&&item.team===invite.teamId)?.id||'';
+          }catch{/* The account page can reconnect after confirmed membership acceptance. */}
+          location.assign('/account.html'+(workspaceId?'?workspace='+encodeURIComponent(workspaceId):''));
+        }catch(error){showError(error.message||'Could not accept this invitation. Request a fresh invitation and try again.');button.disabled=false;button.textContent='Accept invitation'}
+      };
+    }
     boot().catch(error=>showError(error.message||'Could not load this invitation.'));
   </script>
 </body>

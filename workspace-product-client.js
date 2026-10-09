@@ -107,9 +107,13 @@
       const contentType=rawOptions?new Headers(rawOptions.headers||{}).get('Content-Type'):'application/json';
       const operationId=rawOptions?new Headers(rawOptions.headers||{}).get('X-Alaada-Operation'):null;
       const idempotencyKey=rawOptions?new Headers(rawOptions.headers||{}).get('Idempotency-Key'):null;
-      // Allow the gateway's bounded 30-second delivery call to return its
-      // outcome before the browser gives up. The caller can still cancel sooner.
-      const timeoutMs=method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:25000;
+      // Product execution can outlive a short identity/read request. Leave time
+      // for the bounded gateway call and persistence; caller cancellation wins.
+      const timeoutMs=method==='POST'&&/\/analyser\/analyze$/.test(path)?210000:
+        method==='POST'&&/\/orbit\/reply$/.test(path)?120000:
+        method==='POST'&&/\/sheets\/execute\//.test(path)?150000:
+        (method==='POST'&&/\/sheets\/formula$/.test(path)||method==='GET'&&/\/entitlements$/.test(path))?90000:
+        method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:25000;
       const response=await request('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))},'Alaada workspace service',!!rawOptions,timeoutMs);
       const latest=await appwrite('/account');
       if(latest.$id!==account.$id){freeze('The signed-in account changed during the request.');throw failed;}
@@ -167,6 +171,18 @@
     beforeSwitch(callback){beforeSwitch=callback;},
     async verify(){const data=await api('/workspaces');if(!data.workspaces.some(w=>w.id===workspace.id)){freeze('Workspace membership was removed.');throw failed;}return true;},
     async entitlements(){await W.ready;return api('/workspaces/'+workspace.id+'/entitlements');},
+    async resources(p=product,kind){
+      await W.ready;if(!verified||failed)throw failed||Error('A verified workspace is required.');
+      const active=workspace;
+      const operation=api('/workspaces/'+active.id+'/resources');
+      requests.add(operation);selector.disabled=true;
+      try{
+        const rows=await operation;
+        if(workspace!==active)throw Error('The workspace changed. Reload the saved reports.');
+        // A fresh listing must not overwrite unsaved product state in records.
+        return rows.filter(row=>row.product===p&&(!kind||row.kind===kind));
+      }finally{requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
+    },
     async orbitReply(key){
       await W.ready;if(product!=='orbit')throw Error('Orbit page required');
       for(const surface of surfaces)surface.inert=true;

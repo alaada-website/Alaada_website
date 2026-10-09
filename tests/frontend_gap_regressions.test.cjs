@@ -8,7 +8,7 @@ const read=name=>fs.readFileSync(path.join(root,name),'utf8');
 
 test('Product pages bust the four-hour workspace script cache when its content changes',()=>{
   const version=require('node:crypto').createHash('sha256').update(read('workspace-product-client.js').replace(/\r\n/g,'\n')).digest('hex').slice(0,12);
-  for(const file of ['Accounts.html','Orbit.html','Spreadsheets.html']){
+  for(const file of ['Accounts.html','Orbit.html','Spreadsheets.html','website-analyzer.html']){
     assert.ok(read(file).includes(`/workspace-product-client.js?v=${version}"`),file);
   }
 });
@@ -65,7 +65,7 @@ for(const file of ['auth.html','onboarding.html']){
   });
 }
 
-for(const file of ['auth.html','onboarding.html','account.html','admin.html','accept-invitation.html','Accounts.html','Orbit.html','Spreadsheets.html','premium.html']){
+for(const file of ['auth.html','onboarding.html','account.html','admin.html','accept-invitation.html','Accounts.html','Orbit.html','Spreadsheets.html','premium.html','website-analyzer.html']){
   test(file+' inline scripts parse',()=>{
     for(const match of read(file).matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)){
       if(/\bsrc\s*=|application\/ld\+json|application\/json/i.test(match[1]))continue;

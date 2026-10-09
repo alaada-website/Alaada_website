@@ -51,13 +51,36 @@
     const magicComplete=Boolean(verificationUserId&&verificationSecret&&params.get('magic')==='complete');
     if(params.has('userId')&&params.has('secret'))history.replaceState(null,'','/auth.html');
     function mode(){ $('title').textContent=recovering?'Choose a new password':signup?'Create your Alaada account':'Welcome back';$('subtitle').textContent=recovering?'Your new password will protect this Appwrite account.':signup?'Create one Alaada identity. Your private personal workspace is provisioned when you sign in.':'One Appwrite account for your personal and organisation workspaces.';$('name-wrap').classList.toggle('hidden',!signup||recovering);$('email').closest('.field').classList.toggle('hidden',recovering);$('google').classList.toggle('hidden',recovering);$('forgot').classList.toggle('hidden',recovering);$('magic').classList.toggle('hidden',recovering);$('password').closest('.field').classList.toggle('hidden',magicComplete);$('password').required=!magicComplete;$('password').autocomplete=signup||recovering?'new-password':'current-password';$('submit').textContent=recovering?'Set new password':signup?'Create account':'Sign in';$('mode-copy').textContent=signup?'Already have an account?':'New to Alaada?';$('mode').textContent=signup?'Sign in':'Create an account';$('mode-copy').classList.toggle('hidden',recovering);$('mode').classList.toggle('hidden',recovering);$('continue').classList.add('hidden');status('') }
+    async function readUMSResponse(response,service,allowEmpty=false){
+      let data=null;const raw=await response.text();
+      try{data=raw.trim()?JSON.parse(raw):null}catch{}
+      if(!response.ok){
+        const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
+        const error=new Error(detail.slice(0,300)||service+' request failed (HTTP '+response.status+').');
+        error.status=response.status;error.code=response.status;throw error;
+      }
+      if(response.status===204 && allowEmpty)return {};
+      if(!data || typeof data!=='object'){
+        const error=new Error(service+(raw.trim()?' returned an unreadable response.':' returned an empty response.')+' Reload to check the result before retrying.');
+        error.status=502;error.code=502;error.reason=raw.trim()?'MALFORMED_RESPONSE':'EMPTY_RESPONSE';throw error;
+      }
+      return data;
+    }
+    function verifyAppwriteShape(data,path){
+      const field=path==='/account'?'$id':path==='/account/jwts'?'jwt':null;
+      if(field && (typeof data[field]!=='string'||!data[field].trim())){
+        const error=new Error('Appwrite returned an incomplete '+(field==='jwt'?'session token':'account')+'. Reload and retry.');
+        error.status=502;error.code=502;throw error;
+      }
+      return data;
+    }
     async function api(path,method='GET',data){
       const options={method,credentials:'include',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000),headers:{'X-Appwrite-Project':PROJECT}};
       if(data!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(data)}
-      const response=await fetch(ENDPOINT+path,options);let body={};try{body=await response.json()}catch{}
-      if(!response.ok){const error=new Error(body.message||body.response?.message||`Appwrite request failed (${response.status})`);error.code=body.code;throw error}return body
+      const response=await fetch(ENDPOINT+path,options);
+      return verifyAppwriteShape(await readUMSResponse(response,'Appwrite',method==='DELETE'),path);
     }
-    async function finishSignIn(){try{const account=await api('/account');location.replace(destination(account))}catch{status('Alaada could not verify the Appwrite session. Check your email and password, then try again.',true)}}
+    async function finishSignIn(){try{const account=await api('/account');location.replace(destination(account))}catch(error){status(error.status===401?'Sign in to continue.':error.message||'The sign-in service is temporarily unavailable. Retry without signing out.',true)}}
     function showContinue(text,error=false,account={}){status(text,error);$('continue').href=destination(account);$('continue').classList.remove('hidden')}
     $('mode').addEventListener('click',()=>{if(busy)return;signup=!signup;mode()});
     $('google').addEventListener('click',()=>{const success=new URL('/auth.html?oauth=complete&next='+encodeURIComponent(next),location.origin).href;const failure=new URL('/auth.html?oauth=failed&next='+encodeURIComponent(next),location.origin).href;location.assign(`${ENDPOINT}/account/sessions/oauth2/google?project=${encodeURIComponent(PROJECT)}&success=${encodeURIComponent(success)}&failure=${encodeURIComponent(failure)}`)});

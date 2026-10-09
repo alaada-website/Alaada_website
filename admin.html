@@ -6,9 +6,32 @@
 <script>
 (()=>{'use strict';
 const endpoint='https://sfo.cloud.appwrite.io/v1',project='6972444700208a437da1',$=id=>document.getElementById(id);let requestEpoch=0;
-async function aw(path,method='GET'){const response=await fetch(endpoint+path,{method,credentials:'include',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000),headers:{'X-Appwrite-Project':project}});if(!response.ok){const error=new Error(response.status===401?'Sign in to continue.':'Your session could not be verified.');error.status=response.status;throw error}return response.json()}
+    async function readUMSResponse(response,service,allowEmpty=false){
+      let data=null;const raw=await response.text();
+      try{data=raw.trim()?JSON.parse(raw):null}catch{}
+      if(!response.ok){
+        const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
+        const error=new Error(detail.slice(0,300)||service+' request failed (HTTP '+response.status+').');
+        error.status=response.status;error.code=response.status;throw error;
+      }
+      if(response.status===204 && allowEmpty)return {};
+      if(!data || typeof data!=='object'){
+        const error=new Error(service+(raw.trim()?' returned an unreadable response.':' returned an empty response.')+' Reload to check the result before retrying.');
+        error.status=502;error.code=502;error.reason=raw.trim()?'MALFORMED_RESPONSE':'EMPTY_RESPONSE';throw error;
+      }
+      return data;
+    }
+    function verifyAppwriteShape(data,path){
+      const field=path==='/account'?'$id':path==='/account/jwts'?'jwt':null;
+      if(field && (typeof data[field]!=='string'||!data[field].trim())){
+        const error=new Error('Appwrite returned an incomplete '+(field==='jwt'?'session token':'account')+'. Reload and retry.');
+        error.status=502;error.code=502;throw error;
+      }
+      return data;
+    }
+async function aw(path,method='GET'){const response=await fetch(endpoint+path,{method,credentials:'include',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000),headers:{'X-Appwrite-Project':project}});return verifyAppwriteShape(await readUMSResponse(response,'Appwrite'),path)}
 async function boot(){const epoch=++requestEpoch;$('metrics').replaceChildren();$('limit-note').textContent='';$('status').className='muted';$('status').textContent='Verifying administrator access…';$('refresh').disabled=true;$('sign-in').classList.add('hidden');
-try{const account=await aw('/account'),token=await aw('/account/jwts','POST');const response=await fetch('/api/admin/overview',{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(30000),headers:{Authorization:'Bearer '+token.jwt}}),data=await response.json().catch(()=>({}));if(!response.ok)throw Error(typeof data.detail==='string'?data.detail:'The administrator service is unavailable.');if((await aw('/account')).$id!==account.$id)throw Error('Your signed-in account changed. Reload to continue.');if(epoch!==requestEpoch)return;
+try{const account=await aw('/account'),token=await aw('/account/jwts','POST');const response=await fetch('/api/admin/overview',{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(30000),headers:{Authorization:'Bearer '+token.jwt}}),data=await readUMSResponse(response,'Administrator service');if(typeof data.admin_role!=='string'||!data.admin_role||!data.totals||typeof data.totals!=='object'||Array.isArray(data.totals)||!Array.isArray(data.capped))throw Error('The administrator service returned an incomplete overview. Retry loading.');if((await aw('/account')).$id!==account.$id)throw Error('Your signed-in account changed. Reload to continue.');if(epoch!==requestEpoch)return;
 for(const [name,value] of Object.entries(data.totals||{})){if(!Number.isSafeInteger(value)||value<0)continue;const tile=document.createElement('div');tile.className='metric';const label=document.createElement('span'),count=document.createElement('b');label.textContent=name.replaceAll('_',' ');count.textContent=(data.capped?.includes(name)?'≥ ':'')+value;tile.append(label,count);$('metrics').append(tile)}$('status').textContent='Verified Appwrite platform administrator.';if(data.capped?.length)$('limit-note').textContent='Large totals are bounded at 1,000 to keep this overview responsive.';
 }catch(error){if(epoch!==requestEpoch)return;$('metrics').replaceChildren();$('status').textContent=error.message;$('status').className='error';if(error.status===401)$('sign-in').classList.remove('hidden')}finally{if(epoch===requestEpoch)$('refresh').disabled=false}}
 $('refresh').addEventListener('click',boot);document.addEventListener('visibilitychange',()=>{requestEpoch++;$('metrics').replaceChildren();if(!document.hidden)boot()});boot();

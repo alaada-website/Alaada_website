@@ -47,30 +47,54 @@
     const next=safeNext(params.get('next')||'/account.html');
     let checkoutReady=false;
     function message(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error);$('status').classList.toggle('ok',!error&&!!text)}
-    async function appwrite(path,method='GET',data){
-      const options={method,credentials:'include',cache:'no-store',headers:{'X-Appwrite-Project':PROJECT}};
-      if(data!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(data)}
-      const response=await fetch(ENDPOINT+path,options);let body={};try{body=await response.json()}catch{}
-      if(!response.ok)throw new Error(body.message||`Appwrite request failed (${response.status})`);
-      return body;
+    async function readUMSResponse(response,service,allowEmpty=false){
+      let data=null;const raw=await response.text();
+      try{data=raw.trim()?JSON.parse(raw):null}catch{}
+      if(!response.ok){
+        const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
+        const error=new Error(detail.slice(0,300)||service+' request failed (HTTP '+response.status+').');
+        error.status=response.status;error.code=response.status;throw error;
+      }
+      if(response.status===204 && allowEmpty)return {};
+      if(!data || typeof data!=='object'){
+        const error=new Error(service+(raw.trim()?' returned an unreadable response.':' returned an empty response.')+' Reload to check the result before retrying.');
+        error.status=502;error.code=502;error.reason=raw.trim()?'MALFORMED_RESPONSE':'EMPTY_RESPONSE';throw error;
+      }
+      return data;
     }
-    async function workspaceContext(){
-      const token=await appwrite('/account/jwts','POST',{});
-      const response=await fetch('/api/workspaces',{cache:'no-store',headers:{Authorization:'Bearer '+token.jwt}});
-      let body={};try{body=await response.json()}catch{}
-      if(!response.ok)throw new Error(body.detail||`Personal workspace could not be checked (${response.status})`);
+    function verifyAppwriteShape(data,path){
+      const field=path==='/account'?'$id':path==='/account/jwts'?'jwt':null;
+      if(field && (typeof data[field]!=='string'||!data[field].trim())){
+        const error=new Error('Appwrite returned an incomplete '+(field==='jwt'?'session token':'account')+'. Reload and retry.');
+        error.status=502;error.code=502;throw error;
+      }
+      return data;
+    }
+    async function appwrite(path,method='GET',data){
+      const options={method,credentials:'include',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000),headers:{'X-Appwrite-Project':PROJECT}};
+      if(data!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(data)}
+      const response=await fetch(ENDPOINT+path,options);
+      return verifyAppwriteShape(await readUMSResponse(response,'Appwrite',method==='DELETE'),path);
+    }
+    async function workspaceContext(expectedUser){
+      const current=await appwrite('/account'),token=await appwrite('/account/jwts','POST',{});
+      if(current.$id!==expectedUser)throw new Error('Your signed-in account changed. Reload before continuing.');
+      const response=await fetch('/api/workspaces',{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(40000),headers:{Authorization:'Bearer '+token.jwt}});
+      const body=await readUMSResponse(response,'Workspace service');
+      if(body.user!==current.$id || !Array.isArray(body.workspaces))throw new Error('Workspace identity could not be verified. Reload before continuing.');
       const personal=(body.workspaces||[]).find(workspace=>workspace.kind==='personal');
       if(!personal)throw new Error('Your private personal workspace is still being prepared. Wait a moment and retry.');
-      let subscription={plan:personal.plan||'Free'};
-      const subResponse=await fetch('/api/workspaces/'+encodeURIComponent(personal.id)+'/subscription',{cache:'no-store',headers:{Authorization:'Bearer '+token.jwt,'X-Alaada-Workspace':personal.id}});
-      if(subResponse.ok)subscription=await subResponse.json();
+      const subResponse=await fetch('/api/workspaces/'+encodeURIComponent(personal.id)+'/subscription',{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(40000),headers:{Authorization:'Bearer '+token.jwt,'X-Alaada-Workspace':personal.id}});
+      const subscription=await readUMSResponse(subResponse,'Subscription service');
+      if(!['Free','Pro','Elite'].includes(subscription.plan))throw new Error('Your current subscription could not be verified. Reload before continuing.');
+      if((await appwrite('/account')).$id!==current.$id)throw new Error('Your signed-in account changed. Reload before continuing.');
       return {token:token.jwt,personal,subscription};
     }
     async function boot(){
       try{
         const account=await appwrite('/account');
         if(account.prefs?.onboarding_completed){location.replace(next);return}
-        const context=await workspaceContext();
+        const context=await workspaceContext(account.$id);
         const name=(account.name||'').trim().split(/\s+/).filter(Boolean);
         $('first').value=name.shift()||'';$('last').value=name.join(' ');
         const prefs=account.prefs||{};$('account-type').value=prefs.account_type==='enterprise'?'enterprise':'personal';$('classification').value=prefs.classification||'individual';
@@ -82,7 +106,7 @@
         $('form').classList.remove('hidden');$('loading').classList.add('hidden');
         window.__alaadaOnboarding={account,workspace:context.personal};
       }catch(error){
-        const unauthorised=/401|403|session|unauthorized|unauthorised/i.test(error.message);
+        const unauthorised=error.status===401;
         $('loading').textContent=unauthorised?'Sign in to finish setting up your Alaada account.':error.message||'Your private workspace is temporarily unavailable.';
         if(unauthorised){const link=document.createElement('a');link.href='/auth.html?next='+encodeURIComponent(location.pathname+location.search);link.textContent='Sign in';link.className='primary';link.style.display='inline-block';link.style.marginTop='14px';$('loading').append(document.createElement('br'),link)}
         else {const retry=document.createElement('button');retry.type='button';retry.textContent='Retry';retry.className='primary';retry.style.marginTop='14px';retry.onclick=()=>{retry.disabled=true;boot().finally(()=>retry.disabled=false)};$('loading').append(document.createElement('br'),retry)}
@@ -90,16 +114,17 @@
     }
     $('account-type').addEventListener('change',()=>{$('business-note').classList.toggle('hidden',$('account-type').value!=='enterprise');if($('account-type').value==='enterprise')$('classification').value='enterprise_member';else if($('classification').value==='enterprise_member')$('classification').value='individual'});
     $('form').addEventListener('submit',async event=>{
-      event.preventDefault();const first=$('first').value.trim(),last=$('last').value.trim();
+      event.preventDefault();if($('submit').disabled)return;const first=$('first').value.trim(),last=$('last').value.trim();
       if(!first)return message('Enter your first name to continue.',true);
       const button=$('submit');button.disabled=true;message('Saving your profile and private workspace…');
       try{
         const account=await appwrite('/account');
         if(!window.__alaadaOnboarding||account.$id!==window.__alaadaOnboarding.account.$id)throw new Error('Your signed-in account changed. Reload this page before continuing.');
-        const context=await workspaceContext();
+        const context=await workspaceContext(account.$id);
         const displayName=[first,last].filter(Boolean).join(' ').slice(0,128);
         await appwrite('/account/name','PUT',{name:displayName});
         const latest=await appwrite('/account');
+        if(latest.$id!==account.$id)throw new Error('Your signed-in account changed. Reload before saving preferences.');
         const prefs={...(latest.prefs||{}),onboarding_completed:true,account_type:$('account-type').value,classification:$('classification').value,personal_plan:context.subscription.plan||'Free',onboarding_completed_at:new Date().toISOString()};
         await appwrite('/account/prefs','PUT',{prefs});
         message(`Your profile is ready. Active workspace: ${context.personal.name} · Personal.`);

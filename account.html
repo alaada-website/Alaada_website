@@ -32,19 +32,42 @@
     let inboxEpoch=0,inboxBefore=null,inboxBusy=false;
     const idOf=workspace=>workspace?.id||workspace?.$id;
     function msg(id,text,error=false){const el=$(id);el.textContent=text;el.classList.toggle('error',error)}
+    async function readUMSResponse(response,service,allowEmpty=false){
+      let data=null;const raw=await response.text();
+      try{data=raw.trim()?JSON.parse(raw):null}catch{}
+      if(!response.ok){
+        const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
+        const error=new Error(detail.slice(0,300)||service+' request failed (HTTP '+response.status+').');
+        error.status=response.status;error.code=response.status;throw error;
+      }
+      if(response.status===204 && allowEmpty)return {};
+      if(!data || typeof data!=='object'){
+        const error=new Error(service+(raw.trim()?' returned an unreadable response.':' returned an empty response.')+' Reload to check the result before retrying.');
+        error.status=502;error.code=502;error.reason=raw.trim()?'MALFORMED_RESPONSE':'EMPTY_RESPONSE';throw error;
+      }
+      return data;
+    }
+    function verifyAppwriteShape(data,path){
+      const field=path==='/account'?'$id':path==='/account/jwts'?'jwt':null;
+      if(field && (typeof data[field]!=='string'||!data[field].trim())){
+        const error=new Error('Appwrite returned an incomplete '+(field==='jwt'?'session token':'account')+'. Reload and retry.');
+        error.status=502;error.code=502;throw error;
+      }
+      return data;
+    }
     async function aw(path,method='GET',data){
       const options={method,credentials:'include',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000),headers:{'X-Appwrite-Project':PROJECT}};
       if(data!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(data)}
-      const response=await fetch(ENDPOINT+path,options),out=await response.json().catch(()=>({}));
-      if(!response.ok){const error=new Error(out.message||`Sign-in service failed (${response.status})`);error.code=response.status;throw error}return out;
+      const response=await fetch(ENDPOINT+path,options);
+      return verifyAppwriteShape(await readUMSResponse(response,'Appwrite',method==='DELETE'),path);
     }
     async function backend(path,method='GET',data,wid){
       const current=await aw('/account');
       if(!account||current.$id!==account.$id)throw new Error('Your signed-in account changed. Reload before continuing.');
       const token=await aw('/account/jwts','POST',{}),headers={Authorization:`Bearer ${token.jwt}`,'Content-Type':'application/json'};
       if(wid)headers['X-Alaada-Workspace']=wid;
-      const response=await fetch('/api'+path,{method,headers,cache:'no-store',redirect:'error',signal:AbortSignal.timeout(40000),...(data===undefined?{}:{body:JSON.stringify(data)})}),out=await response.json().catch(()=>({}));
-      if(!response.ok)throw new Error(typeof out.detail==='string'?out.detail:`Workspace service failed (${response.status})`);
+      const response=await fetch('/api'+path,{method,headers,cache:'no-store',redirect:'error',signal:AbortSignal.timeout(40000),...(data===undefined?{}:{body:JSON.stringify(data)})});
+      const out=await readUMSResponse(response,'Workspace service',method==='DELETE');
       await currentAccount();return out;
     }
     function lockAccount(message){$('app').classList.add('hidden');$('failure').classList.remove('hidden');$('failure-message').textContent=message;account=null;workspaces=[];active=null;personal=null;subscription=null}

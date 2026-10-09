@@ -308,7 +308,7 @@
   <div class="page-header-inner">
     <div class="page-eyebrow"><span>✦</span> Web Intelligence</div>
     <h1 class="page-title">Analyse any website.<br><span>Instantly.</span></h1>
-    <p class="page-sub">Performance, SEO, Security, Accessibility and more — all in one clear report. Free, no sign-in required.</p>
+    <p class="page-sub">Performance, SEO, Security, Accessibility and more — saved privately in your selected Alaada workspace.</p>
   </div>
 </div>
 
@@ -321,6 +321,7 @@
         <input
           type="url"
           id="urlInput"
+          aria-label="Public website URL to analyse"
           placeholder="https://yourwebsite.com"
           autocomplete="off"
           autocorrect="off"
@@ -329,20 +330,25 @@
           inputmode="url"
         />
       </div>
-      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()" disabled>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span class="btn-label">Analyse</span>
       </button>
     </div>
     <div class="search-hint">
-      <span class="hint-item">⚡ ~10 seconds</span>
-      <span class="hint-item">🔒 Data not stored</span>
+      <span class="hint-item" id="analyser-status" role="status" aria-live="polite">Checking workspace access…</span>
+      <span class="hint-item">🔒 Private Appwrite report storage</span>
       <span class="hint-item">↵ Press Enter</span>
     </div>
   </div>
 </div>
 
 <!-- LOADING -->
+<div class="search-wrap" id="saved-reports" hidden>
+  <label for="report-select">Saved reports in this workspace</label>
+  <select id="report-select" aria-label="Open a saved analysis report"><option value="">Choose a report</option></select>
+  <button type="button" id="refresh-reports" onclick="loadSavedReports()">Refresh reports</button>
+</div>
 <div id="loading-state">
   <div class="loading-card">
     <div class="loading-spinner"></div>
@@ -362,7 +368,50 @@
   <div class="empty-sub">We'll check performance, SEO health, security headers, accessibility issues, resource load, DOM quality, and tech stack — then summarise it with Orbit AI.</div>
 </div>
 
+<script src="/workspace-product-client.js?v=9390da93e84a" data-product="analyser"></script>
 <script>
+const analyserState={ready:false,allowed:false,busy:false,sequence:0,reports:new Map()};
+const escapeReport=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+function analyserError(message){
+  const results=document.getElementById('results');
+  results.innerHTML='<div class="error-card"><span class="error-icon">⚠️</span><div><div class="error-title">Analysis unavailable</div><div class="error-msg">'+escapeReport(message)+'</div></div></div>';
+  results.style.display='block';
+}
+async function loadSavedReports(){
+  const workspace=window.AlaadaWorkspace;
+  if(!analyserState.ready || analyserState.busy)return;
+  const active=workspace.active,sequence=++analyserState.sequence;
+  document.getElementById('refresh-reports').disabled=true;
+  document.getElementById('report-select').disabled=true;
+  try{
+    await workspace.verify();
+    if(workspace.active!==active||sequence!==analyserState.sequence)return;
+    const response=await workspace.resources('analyser','report');
+    if(workspace.active!==active||sequence!==analyserState.sequence)return;
+    const select=document.getElementById('report-select');select.replaceChildren();
+    const empty=document.createElement('option');empty.value='';empty.textContent='Choose a report';select.append(empty);
+    analyserState.reports.clear();
+    for(const row of response){
+      if(!row.payload?.data?.result)continue;
+      analyserState.reports.set(row.id,row.payload.data);
+      const option=document.createElement('option');option.value=row.id;option.textContent=row.title||row.payload.data.url||'Analysis report';select.append(option);
+    }
+    document.getElementById('saved-reports').hidden=false;
+  }catch(error){if(workspace.active===active && sequence===analyserState.sequence)document.getElementById('analyser-status').textContent='Reports could not refresh: '+error.message;}
+  finally{if(sequence===analyserState.sequence){document.getElementById('refresh-reports').disabled=false;document.getElementById('report-select').disabled=false;}}
+}
+async function initializeAnalyser(){
+  try{
+    const workspace=window.AlaadaWorkspace;if(!workspace)throw Error('The workspace client did not load. Reload this page.');
+    await workspace.ready;const permissions=await workspace.entitlements();
+    analyserState.ready=true;
+    const available=permissions.products?.analyser?.capabilities?.analysis===true && permissions.role!=='reader';
+    analyserState.allowed=available;
+    document.getElementById('analyzeBtn').disabled=!available;
+    document.getElementById('analyser-status').textContent=available?'Ready in '+workspace.active.name:permissions.role==='reader'?'Read-only workspace: saved reports are available.':'Analysis execution is not connected for this workspace yet.';
+    await loadSavedReports();
+  }catch(error){analyserError(error.message);document.getElementById('analyser-status').textContent='Workspace connection unavailable. Reload to retry.';}
+}
 /* ── LOADING SIMULATION ─────────────────── */
 const loadingSteps = [
   [0,  'Fetching page content…'],
@@ -375,8 +424,10 @@ const loadingSteps = [
   [95, 'Finalising report…'],
 ];
 let loadingInterval = null;
+let loadingHide = null;
 
 function startLoading() {
+  clearInterval(loadingInterval);clearTimeout(loadingHide);
   const bar = document.getElementById('loading-bar');
   const status = document.getElementById('loading-status');
   document.getElementById('loading-state').style.display = 'block';
@@ -396,7 +447,7 @@ function startLoading() {
 function stopLoading() {
   clearInterval(loadingInterval);
   document.getElementById('loading-bar').style.width = '100%';
-  setTimeout(() => { document.getElementById('loading-state').style.display = 'none'; }, 400);
+  loadingHide=setTimeout(() => { document.getElementById('loading-state').style.display = 'none'; }, 400);
 }
 
 /* ── SCORE HELPERS ─────────────────────── */
@@ -404,7 +455,8 @@ function scoreColor(s) {
   return s >= 70 ? '#16a34a' : s >= 40 ? '#d4930a' : '#e03333';
 }
 function scoreTag(s) {
-  if (s === undefined || s === null) return '';
+  if (typeof s !== 'number' || !Number.isFinite(s)) return '<span class="score-tag">Not available</span>';
+  s=Math.max(0,Math.min(100,s));
   const cls = s >= 70 ? 'tag-good' : s >= 40 ? 'tag-mid' : 'tag-bad';
   const label = s >= 70 ? 'Good' : s >= 40 ? 'Average' : 'Poor';
   return `<span class="score-tag ${cls}">${s}/100 · ${label}</span>`;
@@ -414,6 +466,8 @@ function ringOffset(score) {
   return circ - (score / 100) * circ;
 }
 function scoreRing(score, color) {
+  if(typeof score!=='number'||!Number.isFinite(score))return '<div class="score-num-label">—</div>';
+  score=Math.max(0,Math.min(100,score));
   const circ = (2 * Math.PI * 26).toFixed(1);
   return `
     <div class="score-ring-wrap">
@@ -428,17 +482,20 @@ function scoreRing(score, color) {
 }
 function drRow(label, value, status) {
   const cls = status === 'good' ? 'good' : status === 'bad' ? 'bad' : status === 'mid' ? 'mid' : '';
-  return `<div class="detail-row"><span class="dr-label">${label}</span><span class="dr-value ${cls}">${value}</span></div>`;
+  return `<div class="detail-row"><span class="dr-label">${escapeReport(label)}</span><span class="dr-value ${cls}">${escapeReport(value)}</span></div>`;
 }
 function issueItem(text, type) {
   const cls = type === 'ok' ? 'ok' : type === 'warn' ? 'warn' : '';
   const icon = type === 'ok' ? '✓' : type === 'warn' ? '⚠' : '✗';
-  return `<div class="issue-item ${cls}"><span style="flex-shrink:0;font-size:.8rem;font-weight:700;">${icon}</span>${text}</div>`;
+  return `<div class="issue-item ${cls}"><span style="flex-shrink:0;font-size:.8rem;font-weight:700;">${icon}</span>${escapeReport(text)}</div>`;
 }
 
 /* ── RENDER RESULT ─────────────────────── */
 function renderResult(data) {
+  if(!data || typeof data.summary!=='object' || !data.summary)throw Error('The analysis service returned an incomplete report. Your URL has been kept.');
   const s = data.summary;
+  for(const key of ['seo','security','accessibility','dom','resources'])if(!s[key]||typeof s[key]!=='object')throw Error('The analysis report is missing '+key+' results.');
+  for(const [object,key] of [[s.seo,'issues'],[s.security,'issues'],[s.accessibility,'issues'],[s.dom,'repetition_warnings'],[s.tech_stack,'detected']])if(object?.[key]!==undefined&&!Array.isArray(object[key]))throw Error('The analysis report has invalid '+key+' results.');
   let html = '';
 
   // Score cards row
@@ -466,7 +523,7 @@ function renderResult(data) {
       <div class="ai-header">
         <div class="ai-badge"><span class="ai-dot"></span>Orbit AI Summary</div>
       </div>
-      <div class="ai-summary-text">${data.ai_summary.replace(/\n/g,'<br>')}</div>
+      <div class="ai-summary-text">${escapeReport(data.ai_summary||'No AI summary was provided.').replace(/\n/g,'<br>')}</div>
     </div>`;
 
   // Detail grid
@@ -481,12 +538,12 @@ function renderResult(data) {
         <div class="detail-title">Page Overview</div>
       </div>
       <div class="overview-grid">
-        <div class="overview-stat"><strong>${s.html_size_kb} KB</strong><span>HTML Size</span></div>
-        <div class="overview-stat"><strong>${t?.total_ms ?? '—'} ms</strong><span>Load Time</span></div>
-        <div class="overview-stat"><strong>${s.resources.images_count}</strong><span>Images</span></div>
-        <div class="overview-stat"><strong>${s.resources.scripts_count}</strong><span>Scripts</span></div>
-        <div class="overview-stat"><strong>${s.resources.css_count}</strong><span>CSS Files</span></div>
-        <div class="overview-stat"><strong>${s.resources.fonts_count}</strong><span>Fonts</span></div>
+        <div class="overview-stat"><strong>${escapeReport(s.html_size_kb)} KB</strong><span>HTML Size</span></div>
+        <div class="overview-stat"><strong>${escapeReport(t?.total_ms ?? '—')} ms</strong><span>Load Time</span></div>
+        <div class="overview-stat"><strong>${escapeReport(s.resources.images_count)}</strong><span>Images</span></div>
+        <div class="overview-stat"><strong>${escapeReport(s.resources.scripts_count)}</strong><span>Scripts</span></div>
+        <div class="overview-stat"><strong>${escapeReport(s.resources.css_count)}</strong><span>CSS Files</span></div>
+        <div class="overview-stat"><strong>${escapeReport(s.resources.fonts_count)}</strong><span>Fonts</span></div>
       </div>
       <div class="detail-rows" style="margin-top:12px;">
         ${drRow('Title', s.title || '❌ Missing', s.title ? 'good' : 'bad')}
@@ -582,7 +639,7 @@ function renderResult(data) {
         <div class="detail-title">Tech Stack Detected</div>
       </div>
       <div class="tech-pills">
-        ${techs.length ? techs.map(t => `<span class="tech-pill">${t}</span>`).join('') : '<span style="font-size:.8rem;color:var(--ink3);">No recognisable tech stack detected</span>'}
+        ${techs.length ? techs.map(t => `<span class="tech-pill">${escapeReport(t)}</span>`).join('') : '<span style="font-size:.8rem;color:var(--ink3);">No recognisable tech stack detected</span>'}
       </div>
     </div>`;
 
@@ -602,69 +659,80 @@ function animateRings() {
 
 /* ── MAIN ANALYZE ─────────────────────── */
 async function analyze() {
-  const url = document.getElementById('urlInput').value.trim();
-  const btn = document.getElementById('analyzeBtn');
-  const results = document.getElementById('results');
-
-  if (!url) {
-    document.getElementById('urlInput').focus();
-    document.querySelector('.url-input-wrap').style.borderColor = 'var(--red)';
-    setTimeout(() => document.querySelector('.url-input-wrap').style.borderColor = '', 1200);
-    return;
-  }
-
-  btn.disabled = true;
-  startLoading();
-
-  // Dismiss keyboard on mobile after submit
-  document.getElementById('urlInput').blur();
-
-  try {
-    const res = await fetch('https://alaada-website-analyser-2.onrender.com/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
-    });
-    const data = await res.json();
-    stopLoading();
-
-    if (data.error) {
-      results.innerHTML = `
-        <div class="error-card">
-          <span class="error-icon">⚠️</span>
-          <div>
-            <div class="error-title">Analysis failed</div>
-            <div class="error-msg">${data.error}<br><br>Please check the URL and try again. Make sure it starts with https://</div>
-          </div>
-        </div>`;
-    } else {
-      results.innerHTML = renderResult(data);
-      animateRings();
+  if(analyserState.busy || !analyserState.ready || !analyserState.allowed)return;
+  const input=document.getElementById('urlInput'),btn=document.getElementById('analyzeBtn');
+  let url;
+  try{
+    const target=new URL(input.value.trim());
+    if(!['https:','http:'].includes(target.protocol)||!target.hostname||target.username||target.password)throw Error();
+    url=target.href;
+  }catch{analyserError('Enter a complete http:// or https:// URL without embedded passwords.');input.focus();return;}
+  const workspace=window.AlaadaWorkspace,active=workspace.active,sequence=++analyserState.sequence;
+  const current=()=>workspace.active===active&&sequence===analyserState.sequence;
+  analyserState.busy=true;btn.disabled=true;
+  document.getElementById('refresh-reports').disabled=true;
+  document.getElementById('report-select').disabled=true;
+  startLoading();input.blur();
+  let completed=false;
+  try{
+    await workspace.verify();
+    if(!current())return;
+    const permissions=await workspace.entitlements();
+    if(!current())return;
+    if(permissions.products?.analyser?.capabilities?.analysis!==true || permissions.role==='reader'){
+      analyserState.allowed=false;throw Error('This workspace cannot run analyses. You can still open its saved reports.');
     }
-    results.style.display = 'block';
-    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  } catch (err) {
+    const response=await workspace.productFetch('/analyze',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})
+    });
+    const raw=await response.text();let data;
+    try{data=raw.trim()?JSON.parse(raw):null}catch{}
+    if(!current())return;
+    if(!response.ok||!data||data.error){
+      const message=typeof data?.detail==='string'?data.detail:typeof data?.detail?.message==='string'?data.detail.message:typeof data?.error==='string'?data.error:typeof data?.message==='string'?data.message:'The analysis service returned an incomplete response (HTTP '+response.status+').';
+      throw Error(message+' Your URL has been kept. Refresh saved reports before running the analysis again.');
+    }
+    const rendered=renderResult(data);
+    await workspace.verify();if(!current())return;
+    const results=document.getElementById('results');
+    results.innerHTML=rendered;results.style.display='block';
+    animateRings();results.scrollIntoView({behavior:'smooth',block:'start'});
+    document.getElementById('analyser-status').textContent='Report saved in '+active.name+'.';
+    completed=true;
+  }catch(error){
+    if(current())analyserError(error.message+' If the connection was interrupted, refresh saved reports before retrying.');
+  }finally{
     stopLoading();
-    results.innerHTML = `
-      <div class="error-card">
-        <span class="error-icon">⚠️</span>
-        <div>
-          <div class="error-title">Connection error</div>
-          <div class="error-msg">Could not reach the analysis server. Please try again in a moment.<br><small style="opacity:.6">${err.message}</small></div>
-        </div>
-      </div>`;
-    results.style.display = 'block';
-  } finally {
-    btn.disabled = false;
+    if(current()){
+      analyserState.busy=false;btn.disabled=!analyserState.allowed;
+      document.getElementById('refresh-reports').disabled=false;
+      document.getElementById('report-select').disabled=false;
+    }
   }
+  if(completed&&current())await loadSavedReports();
 }
 
-/* ── ENTER KEY ─────────────────────────── */
+async function openSavedReport(){
+  if(!analyserState.ready||analyserState.busy||document.getElementById('report-select').disabled)return;
+  const report=analyserState.reports.get(document.getElementById('report-select').value);
+  if(!report)return;
+  const workspace=window.AlaadaWorkspace,active=workspace.active,sequence=++analyserState.sequence;
+  try{
+    await workspace.verify();
+    if(workspace.active!==active||sequence!==analyserState.sequence)return;
+    const results=document.getElementById('results');
+    results.innerHTML=renderResult(report.result);results.style.display='block';
+    document.getElementById('empty-state').style.display='none';
+    animateRings();
+  }catch(error){if(workspace.active===active&&sequence===analyserState.sequence)analyserError(error.message);}
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('urlInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') analyze();
+    if(e.key==='Enter'){e.preventDefault();analyze();}
   });
+  document.getElementById('report-select').addEventListener('change',openSavedReport);
+  initializeAnalyser();
 });
 </script>
 </body>
