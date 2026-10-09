@@ -634,6 +634,10 @@ select{cursor:pointer;}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg>
         AI Assistant
       </div>
+      <div class="side-link" data-view="company-access">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg>
+        Company Access
+      </div>
       <div class="side-link" data-view="approvals">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-5"/><path d="M21 12a9 9 0 1 1-6.2-8.56"/><path d="M16 3h5v5"/></svg>
         Approvals
@@ -4895,7 +4899,7 @@ function bindCompanyForm(buttonId, buildRequest, afterSave){
       request = buildRequest();
       if (!request) return;
       button.disabled = true;
-      await api(`/companies/${companyId}${request.path}`, {method:request.method || 'POST', body:request.body});
+      await api(`/companies/${companyId}${request.path}`, {method:request.method || 'POST', body:request.body, headers:request.headers || {}});
     } catch(e) { if (current()) errToast(e); return; }
     finally { button.disabled = false; }
     if (!current()) return;
@@ -5762,6 +5766,98 @@ VIEW_RENDERERS['ai-assistant'] = renderAiAssistant;
 /* ============================================================
    APPROVAL WORKFLOW (threshold rules and approval queue)
    ============================================================ */
+/* ============================================================
+   COMPANY ACCESS (verified Appwrite organisation members)
+   ============================================================ */
+let companyAccessView = null, companyAccessSequence = 0;
+async function renderCompanyAccess(){
+  if (!requireCompany()) return;
+  const companyId = STATE.companyId, generation = STATE.companyGeneration, sequence = ++companyAccessSequence;
+  const current = () => sameCompanyGeneration(companyId, generation) && STATE.currentView === 'company-access' && sequence === companyAccessSequence;
+  companyAccessView = null;
+  view().innerHTML = viewHead('Company access', 'Appwrite identity, company roles and independent approvers.') +
+    emptyState('…','Loading company access','Checking your current permissions.');
+  try {
+    const access = await api(`/companies/${companyId}/members/me`);
+    if (!current()) return;
+    if (!access.collaboration_available) {
+      view().innerHTML = viewHead('Company access', 'Your personal workspace stays private.') +
+        emptyState('✓','Personal company','Manage shared companies in an organisation workspace. Personal company data is not shared automatically.');
+      return;
+    }
+    if (!access.can_manage) {
+      view().innerHTML = viewHead('Company access', 'Your company role: ' + esc(access.role)) +
+        emptyState('✓','Managed by your company owner','Only company owners and administrators can change access. Organisation membership alone does not grant company access.');
+      return;
+    }
+    const members = await apiAllItems(`/companies/${companyId}/members`, {isCurrent:current});
+    if (!current()) return;
+    let candidates = [], directoryError = '';
+    try {
+      const directory = await api(`/companies/${companyId}/member-candidates`);
+      if (!Array.isArray(directory.items) || directory.items.some(member => !member || !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,35}$/.test(member.user_id)
+          || !['admin','editor','reader'].includes(member.workspace_role))) throw new Error('Invalid organisation directory. Retry loading.');
+      candidates = directory.items;
+    } catch(e) { directoryError = e.message || 'Organisation directory unavailable.'; }
+    if (!current()) return;
+    companyAccessView = {companyId,generation,access,members,candidates,directoryError};
+    const names = new Map(candidates.map(member=>[member.user_id,member.name || member.user_id]));
+    view().innerHTML = viewHead('Company access', 'Only confirmed members of this Appwrite organisation can receive access.',
+      `<button class="btn btn-ghost btn-sm" onclick="renderCompanyAccess()">Refresh</button>
+       <button class="btn btn-blue btn-sm" onclick="openCompanyMemberForm()" ${directoryError ? 'disabled' : ''}>Add member</button>`) +
+      (directoryError ? `<div class="card card-pad" role="alert">Could not verify the organisation directory: ${esc(directoryError)} You can still revoke existing access. Refresh before granting access.</div>` : '') +
+      `<div class="card card-pad"><p class="muted">Owners manage ownership. Administrators manage members and accounting controls. Editors enter transactions; viewers have read-only access. Approvers must be independent members with the role required by the approval rule. Appwrite workspace permissions also apply.</p>
+      <div class="table-wrap"><table><thead><tr><th>Member</th><th>Company role</th><th>Status</th><th>Actions</th></tr></thead><tbody>${members.map((member,index)=>`<tr>
+        <td><strong>${esc(names.get(member.user_id) || member.user_id)}</strong><div class="mono small">${esc(member.user_id)}${member.user_id === access.user_id ? ' · You' : ''}</div></td>
+        <td>${esc(member.role)}</td><td>${esc(member.status)}</td><td>${access.role === 'owner' || member.role !== 'owner'
+          ? `<button class="btn btn-ghost btn-sm" onclick="openCompanyMemberForm(${index})">Edit access</button>` : 'Owner-managed'}</td></tr>`).join('')}</tbody></table></div></div>`;
+  } catch(e) {
+    if (current()) view().innerHTML = emptyState('⚠','Could not load company access',esc(e.message),
+      '<button class="btn btn-ghost" onclick="renderCompanyAccess()">Retry loading</button>');
+  }
+}
+function openCompanyMemberForm(index=null){
+  const snapshot = companyAccessView;
+  if (!snapshot || !sameCompanyGeneration(snapshot.companyId,snapshot.generation) || STATE.currentView !== 'company-access') return;
+  const existing = index === null ? null : snapshot.members[index];
+  if (index !== null && !existing) return;
+  if (!snapshot.access.can_manage || (existing?.role === 'owner' && snapshot.access.role !== 'owner')) return;
+  const candidates = snapshot.candidates.filter(member=>!snapshot.members.some(record=>record.user_id === member.user_id));
+  if (!existing && !candidates.length) return toast('No unassigned confirmed organisation members. Ask the Appwrite team owner to invite a member and have them accept first.','err');
+  const roles = snapshot.access.role === 'owner' ? ['viewer','editor','admin','owner'] : ['viewer','editor','admin'];
+  openModal({
+    title:existing ? 'Edit company access' : 'Add company member',
+    bodyHtml:`<div class="form-grid">
+      ${existing ? `<p>Appwrite account: <strong class="mono">${esc(existing.user_id)}</strong></p>`
+        : `<div class="form-row"><label for="member-user">Confirmed organisation member</label><select id="member-user">${candidates.map(member=>`<option value="${esc(member.user_id)}">${esc(member.name || member.user_id)} · ${esc(member.user_id)} (${esc(member.workspace_role)})</option>`).join('')}</select></div>`}
+      <div class="form-row"><label for="member-role">Company role</label><select id="member-role">${roles.map(role=>`<option value="${role}">${role}</option>`).join('')}</select></div>
+      ${existing ? '<div class="form-row"><label for="member-status">Access</label><select id="member-status"><option value="ACTIVE">Active</option><option value="INACTIVE">Revoked</option></select></div>' : ''}
+      <p class="muted small">This changes access to this company only. It does not create an account or invite anyone to the organisation. At least one active owner must remain.</p>
+    </div>`,
+    footHtml:'<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="member-save">Save access</button>',
+    onMount:()=>{
+      document.getElementById('member-role').value = existing?.role || 'viewer';
+      if (existing) document.getElementById('member-status').value = existing.status;
+      bindCompanyForm('member-save',()=>{
+        if (companyAccessView !== snapshot) throw new Error('Company access changed. Reopen this form.');
+        const userId = existing?.user_id || document.getElementById('member-user').value;
+        const role = document.getElementById('member-role').value;
+        const status = existing ? document.getElementById('member-status').value : 'ACTIVE';
+        const verified = snapshot.candidates.find(member=>member.user_id === userId);
+        if (status === 'ACTIVE' && !verified) throw new Error('Refresh the organisation directory before granting active access.');
+        if (status === 'ACTIVE' && role !== 'viewer' && verified.workspace_role === 'reader') throw new Error('This organisation member has read-only access. Choose viewer.');
+        if (!roles.includes(role) || !['ACTIVE','INACTIVE'].includes(status)) throw new Error('Select a valid role and access status.');
+        return {path:'/members' + (existing ? '/' + encodeURIComponent(userId) : ''), method:existing ? 'PATCH' : 'POST',
+          body:existing ? {role,status,version:existing.version} : {user_id:userId,role}, message:'Company access saved'};
+      },async()=>{
+        if (existing?.user_id === snapshot.access.user_id) await loadCompanies();
+        if (sameCompanyGeneration(snapshot.companyId,snapshot.generation) && STATE.currentView === 'company-access') await renderCompanyAccess();
+      });
+    }
+  });
+}
+VIEW_RENDERERS['company-access'] = renderCompanyAccess;
+
 async function renderApprovals(){
   if (!requireCompany()) return;
   view().innerHTML = viewHead('Approvals', 'Threshold rules, document approval queue, and posting controls.',
@@ -5772,20 +5868,22 @@ async function renderApprovals(){
   loadApprovals();
 }
 
+let approvalLoadSequence = 0;
 async function loadApprovals(){
   if (!requireCompany()) return;
   const body = document.getElementById('approvals-body');
   if (!body) return;
+  const companyId = STATE.companyId, generation = STATE.companyGeneration, sequence = ++approvalLoadSequence;
+  const current = () => sameCompanyGeneration(companyId,generation) && STATE.currentView === 'approvals'
+    && document.getElementById('approvals-body') === body && sequence === approvalLoadSequence;
   try {
-    const [rulesPage, pendingPage, allPage] = await Promise.all([
-      api(`/companies/${STATE.companyId}/automation/approval-rules`, {qs:{page_size:100}}),
-      api(`/companies/${STATE.companyId}/automation/approval-requests`, {qs:{page_size:100, status:'PENDING'}}),
-      api(`/companies/${STATE.companyId}/automation/approval-requests`, {qs:{page_size:100}}),
+    const [rules, all] = await Promise.all([
+      apiAllItems(`/companies/${companyId}/automation/approval-rules`, {isCurrent:current}),
+      apiAllItems(`/companies/${companyId}/automation/approval-requests`, {isCurrent:current}),
     ]);
+    if (!current()) return;
     const cur = STATE.company.base_currency || 'INR';
-    const rules = rulesPage.items || [];
-    const pending = pendingPage.items || [];
-    const all = allPage.items || [];
+    const pending = all.filter(request=>request.status === 'PENDING');
     body.innerHTML = `
       <div class="grid three" style="margin-bottom:14px;">
         <div class="metric"><div class="muted">Active rules</div><strong>${rules.filter(r=>r.status==='ACTIVE').length}</strong></div>
@@ -5810,7 +5908,8 @@ async function loadApprovals(){
           : emptyState('✓','No approval requests','Submit a draft voucher, sales invoice, or purchase bill for approval.') }
       </div>`;
   } catch(e) {
-    body.innerHTML = emptyState('⚠','Could not load approvals', esc(e.message));
+    if (current()) body.innerHTML = emptyState('⚠','Could not load approvals', esc(e.message),
+      '<button class="btn btn-ghost" onclick="loadApprovals()">Retry loading</button>');
   }
 }
 
@@ -5882,15 +5981,20 @@ function openApprovalSubmitForm(opts = {}){
   });
 }
 
-async function decideApproval(requestId, action){
-  const decidedBy = window.prompt('Approver name', 'finance.manager@example.com');
-  if (!decidedBy) return;
-  const note = window.prompt('Decision note', action === 'approve' ? 'Approved' : 'Rejected');
-  try {
-    await api(`/companies/${STATE.companyId}/automation/approval-requests/${requestId}/${action}`, {method:'POST', body:{decided_by:decidedBy, note:note || null}});
-    toast(`Approval ${action}d`,'ok');
-    loadApprovals();
-  } catch(e){ errToast(e); }
+function decideApproval(requestId, action){
+  if (!requireCompany() || !['approve','reject'].includes(action) || !/^[A-Za-z0-9_-]+$/.test(requestId)) return;
+  const idempotencyKey = `approval-decision:${crypto.randomUUID()}`;
+  openModal({
+    title:action === 'approve' ? 'Approve document' : 'Reject document',
+    bodyHtml:'<p>This decision is recorded against your signed-in Appwrite account. The server checks your current role and independent approver permission.</p><div class="form-row"><label for="approval-decision-note">Decision note</label><textarea id="approval-decision-note" rows="3"></textarea></div>',
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="approval-decision-save">${action === 'approve' ? 'Approve' : 'Reject'}</button>`,
+    onMount:()=>bindCompanyForm('approval-decision-save',()=>({
+      path:`/automation/approval-requests/${requestId}/${action}`,
+      body:{note:document.getElementById('approval-decision-note').value.trim() || null},
+      headers:{'Idempotency-Key':idempotencyKey,'X-Idempotency-Key':idempotencyKey},
+      message:action === 'approve' ? 'Approval recorded' : 'Rejection recorded',
+    }),loadApprovals)
+  });
 }
 VIEW_RENDERERS['approvals'] = renderApprovals;
 
