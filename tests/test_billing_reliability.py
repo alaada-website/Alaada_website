@@ -142,6 +142,57 @@ def test_accounts_gateway_preserves_and_signs_idempotency_key(tmp_path):
     assert seen == []
 
 
+def test_accounts_retry_reserves_quota_and_emits_company_notification_once(tmp_path):
+    from fastapi.testclient import TestClient
+    received, reply_status = [], [201]
+    async def auth(token):
+        return m.Identity('alice')
+    async def upstream(req):
+        marker = {'x-alaada-workspace-enforced': 'v1'}
+        if req.method == 'GET':
+            return httpx.Response(200, json={'status': 'ok'}, headers=marker)
+        received.append(req.headers['idempotency-key'])
+        return httpx.Response(reply_status[0], json={'id': 'retry-created-company'}, headers=marker)
+    application = m.create_app(tmp_path / 'accounts-quota.db', authenticate=auth,
+        accounts_url='http://127.0.0.1', accounts_secret='accounts-gateway-secret-more-than-32-characters',
+        accounts_transport=httpx.MockTransport(upstream))
+    client = TestClient(application)
+    wid = client.get('/api/workspaces', headers={'Authorization': 'Bearer alice'}).json()['workspaces'][0]['id']
+    headers = {'Authorization': 'Bearer alice', 'X-Alaada-Workspace': wid, 'Idempotency-Key': 'retry-quota-company-key'}
+    path = f'/api/workspaces/{wid}/accounts/companies'
+    for _ in range(3):
+        assert client.post(path, headers=headers, json={'name': 'Business'}).status_code == 201
+    assert len(received) == 3  # A receipt never bypasses backend authorization.
+    with application.state.store.db() as db:
+        assert db.one('usage', {'workspace': wid, 'product': 'accounts'})['amount'] == 1
+        assert len(db.rows('notifications', {'workspace': wid, 'action': 'accounts:create'})) == 1
+        assert len(db.rows('accounts_bindings', {'workspace': wid})) == 1
+    assert client.post(path, headers=headers, json={'name': 'Changed input'}).status_code == 409
+    assert len(received) == 3
+    reply_status[0] = 403
+    assert client.post(path, headers=headers, json={'name': 'Business'}).status_code == 403
+    # Revoked access on replay neither leaks a cached response nor refunds an
+    # already completed operation's legitimate usage.
+    with application.state.store.db() as db:
+        assert db.one('usage', {'workspace': wid, 'product': 'accounts'})['amount'] == 1
+    headers['Idempotency-Key'] = 'uncertain-quota-company-key'
+    reply_status[0] = 503
+    assert client.post(path, headers=headers, json={'name': 'Business'}).status_code == 503
+    reply_status[0] = 201
+    assert client.post(path, headers=headers, json={'name': 'Business'}).status_code == 201
+    with application.state.store.db() as db:
+        assert db.one('usage', {'workspace': wid, 'product': 'accounts'})['amount'] == 2
+    headers['Idempotency-Key'] = 'rejected-quota-company-key'
+    reply_status[0] = 422
+    assert client.post(path, headers=headers, json={'name': 'Business'}).status_code == 422
+    with application.state.store.db() as db:
+        assert db.one('usage', {'workspace': wid, 'product': 'accounts'})['amount'] == 2
+    reply_status[0] = 201
+    assert client.post(path, headers=headers, json={'name': 'Business'}).status_code == 201
+    with application.state.store.db() as db:
+        assert db.one('usage', {'workspace': wid, 'product': 'accounts'})['amount'] == 3
+
+
 def test_public_billing_readiness_uses_same_origin_api_rewrite(env):
     direct = env[0].get('/health')
     frontend = env[0].get('/api/health')

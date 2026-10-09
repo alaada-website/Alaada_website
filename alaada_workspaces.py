@@ -1693,36 +1693,70 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                             fail(502, "Accounts company listing failed.")
                     await revalidate()
                     return {"items": items, "total": len(bindings), "page": page, "page_size": size}
+                operation = None
                 if write:
                     with store.db() as db:
-                        quota_month = store.quota(db, wid, "accounts")
+                        store.workspace(db, user, wid, write=True)
+                        if idempotency_key:
+                            # The Accounts backend owns the business receipt.
+                            # This reservation owns quota/audit only; always call
+                            # the backend again to recheck current company access.
+                            operation_id = hashlib.sha256(('accounts:' + idempotency_key).encode()).hexdigest()
+                            operation, fresh = store.reserve_operation(db, user, wid, 'accounts',
+                                method + ' /' + upstream_path, operation_id,
+                                {'body': hashlib.sha256(raw).hexdigest(), 'query': request.url.query,
+                                 'content_type': request.headers.get('content-type', '')})
+                            if operation['state'] == 'retryable':
+                                month = store.quota(db, wid, 'accounts')
+                                values = {'state': 'pending', 'month': month, 'status': None,
+                                          'response': None, 'updated': int(time.time())}
+                                db.update('product_operations', {'id': operation['id']}, values)
+                                operation = dict(operation, **values)
+                        else:
+                            quota_month = store.quota(db, wid, "accounts")
                 result = await upstream(client, method, "/" + upstream_path, raw, request.url.query, request.headers.get("content-type"))
                 if result.headers.get("x-alaada-workspace-enforced") != "v1":
                     fail(502, "Accounts response lost its workspace enforcement marker.")
                 if 300 <= result.status_code < 400:
                     fail(502, "Accounts redirects are not permitted.")
-                if write and 400 <= result.status_code < 500:
+                if operation and result.status_code in (400, 401, 403, 404, 405, 413, 415, 422):
+                    with store.db() as db:
+                        current = db.one('product_operations', {'id': operation['id']})
+                        if current and current['state'] == 'pending':
+                            store.finish_operation(db, current, 'retryable', result.status_code, {}, refund=True)
+                elif write and not operation and 400 <= result.status_code < 500:
                     with store.db() as db:
                         key = {'workspace': wid, 'product': 'accounts', 'month': quota_month}
                         usage = db.one('usage', key)
                         if usage:
                             db.update('usage', key, {'amount': max(0, usage['amount'] - 1)})
+                cid = None
                 if is_create and 200 <= result.status_code < 300:
                     created = result.json()
                     cid = created.get("id")
                     if not isinstance(cid, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", cid):
                         fail(502, "Accounts returned an invalid company identifier.")
-                    with store.db() as db:
-                        existing = db.one('accounts_bindings', {'company': cid}, columns=['workspace'])
-                        if existing and existing[0] != wid:
-                            fail(409, "Company is already owned by another workspace.")
-                        db.ensure('accounts_bindings', {'company': cid}, {'company': cid, 'workspace': wid, 'created_by': user.user, 'created': int(time.time())})
-                        store.audit(db, user, wid, "accounts:create", cid)
-                elif write and result.is_success:
-                    with store.db() as db:
-                        store.audit(db, user, wid, "accounts:" + method.lower(), company)
-                # Never forward cookies or gateway credentials to the browser.
                 await revalidate()
+                if write and result.is_success:
+                    with store.db() as db:
+                        store.workspace(db, user, wid, write=True)
+                        if cid:
+                            existing = db.one('accounts_bindings', {'company': cid}, columns=['workspace'])
+                            if existing and existing[0] != wid:
+                                fail(409, "Company is already owned by another workspace.")
+                            db.ensure('accounts_bindings', {'company': cid}, {'company': cid, 'workspace': wid, 'created_by': user.user, 'created': int(time.time())})
+                        current = db.one('product_operations', {'id': operation['id']}) if operation else None
+                        if not current or current['state'] != 'completed':
+                            if current and current['state'] == 'retryable':
+                                # A simultaneous success takes precedence over a
+                                # rejected attempt; restore its refunded quota once.
+                                month = store.quota(db, wid, 'accounts')
+                                db.update('product_operations', {'id': current['id']}, {'state': 'pending', 'month': month})
+                                current = dict(current, state='pending', month=month)
+                            store.audit(db, user, wid, 'accounts:create' if cid else 'accounts:' + method.lower(), cid or company)
+                            if current:
+                                store.finish_operation(db, current, 'completed', result.status_code, {'company': cid or company})
+                # Never forward cookies or gateway credentials to the browser.
                 return Response(result.content, status_code=result.status_code,
                                 headers={k: v for k, v in result.headers.items() if k in ("content-type", "content-disposition")})
         except (ValueError, UnicodeDecodeError):
@@ -2311,7 +2345,7 @@ PRODUCT_CLIENT = r'''
   for(const name of ['orbit_name','orbit_email'])document.cookie=name+'=; Max-Age=0; Path=/; SameSite=Lax';
   const endpoint = '__ENDPOINT__', project = '__PROJECT__';
   const nativeFetch = window.fetch.bind(window);
-  const values = new Map(), records = new Map(), requests = new Set(), sheetFlights = new Map();
+  const values = new Map(), records = new Map(), requests = new Set(), sheetFlights = new Map(), accountFlights = new Map();
   const sheetRoutes = {'/api/ai/command':'ai-command','/api/ai/chat':'ai-chat','/api/ai/analyze':'ai-analyze',
     '/api/ai/anomalies':'anomalies','/api/ai/translate-batch':'translate','/api/analytics/run':'analytics','/api/analytics/predict':'predict'};
   let user = null, workspace = null, workspaces = [], pending = 0, tail = Promise.resolve(), failed = null;
@@ -2339,7 +2373,8 @@ PRODUCT_CLIENT = r'''
       const jwt=await appwrite('/account/jwts','POST');
       const contentType=rawOptions?new Headers(rawOptions.headers||{}).get('Content-Type'):'application/json';
       const operationId=rawOptions?new Headers(rawOptions.headers||{}).get('X-Alaada-Operation'):null;
-      const response=await nativeFetch('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))});
+      const idempotencyKey=rawOptions?new Headers(rawOptions.headers||{}).get('Idempotency-Key'):null;
+      const response=await nativeFetch('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))});
       const latest=await appwrite('/account');
       if(latest.$id!==account.$id){freeze('The signed-in account changed during the request.');throw failed;}
       if(rawOptions){if([401,403].includes(response.status))freeze('Product access was denied. Reopen a verified workspace.');return response;}
@@ -2459,9 +2494,47 @@ PRODUCT_CLIENT = r'''
         try{return await operation;}finally{requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
       }
       if(product==='accounts' && (target.pathname==='/health'||target.pathname==='/companies'||target.pathname.startsWith('/companies/'))){
-        const operation=api('/workspaces/'+workspace.id+'/accounts'+target.pathname+target.search,options.method||'GET',undefined,options);
+        if(!verified||failed)throw failed||Error('A verified workspace is required.');
+        const method=(options.method||'GET').toUpperCase(), write=!['GET','HEAD'].includes(method);
+        const headers=new Headers(options.headers||{});
+        const explicit=headers.get('Idempotency-Key')||headers.get('X-Idempotency-Key');
+        if(headers.has('Idempotency-Key')&&headers.has('X-Idempotency-Key')&&headers.get('Idempotency-Key')!==headers.get('X-Idempotency-Key'))throw Error('Conflicting Accounts retry keys.');
+        if(explicit&&!/^[A-Za-z0-9_.:-]{16,180}$/.test(explicit))throw Error('Invalid Accounts retry key.');
+        if(write&&!explicit&&options.body!=null&&typeof options.body!=='string')throw Error('This upload needs an explicit retry key before it can be sent safely.');
+        const scope=write?JSON.stringify([user,workspace.id,method,target.pathname,target.search,explicit||'',typeof options.body==='string'?options.body:null]):null;
+        if(scope&&accountFlights.has(scope))return (await accountFlights.get(scope)).clone();
+        const operation=(async()=>{
+          let storageKey, digest, operationKey=explicit;
+          if(write&&!operationKey){
+            digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(scope)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+            storageKey='alaada:accounts:operations:'+encodeURIComponent(user)+':'+encodeURIComponent(workspace.id);
+            let saved;
+            try{saved=JSON.parse(window.sessionStorage.getItem(storageKey)||'{}');}
+            catch{throw Error('Enable session storage before saving Accounts changes so retries remain safe.');}
+            if(!saved||typeof saved!=='object'||Array.isArray(saved))throw Error('The Accounts retry cache is invalid.');
+            if(!saved[digest]){
+              if(Object.keys(saved).length>=100)throw Error('Resolve pending Accounts operations before starting more.');
+              saved[digest]=crypto.randomUUID();
+            }
+            operationKey=saved[digest];
+            if(!/^[A-Za-z0-9_.:-]{16,180}$/.test(operationKey))throw Error('The Accounts retry cache contains an invalid key.');
+            // Only opaque hashes/keys are stored, never financial data or tokens.
+            window.sessionStorage.setItem(storageKey,JSON.stringify(saved));
+          }
+          if(write)headers.set('Idempotency-Key',operationKey);
+          else headers.delete('Idempotency-Key');
+          const response=await api('/workspaces/'+workspace.id+'/accounts'+target.pathname+target.search,method,undefined,{...options,headers});
+          // Keep uncertain/conflicting outcomes retryable after reload. A fresh
+          // successful user action receives a fresh key, even with identical data.
+          if(storageKey&&(response.ok||[400,403,404,405,413,415,422].includes(response.status))){
+            const current=JSON.parse(window.sessionStorage.getItem(storageKey)||'{}');
+            if(current[digest]===operationKey){delete current[digest];window.sessionStorage.setItem(storageKey,JSON.stringify(current));}
+          }
+          return response;
+        })();
+        if(scope)accountFlights.set(scope,operation);
         requests.add(operation);selector.disabled=true;
-        try{return await operation;}finally{requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
+        try{return (await operation).clone();}finally{if(scope)accountFlights.delete(scope);requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
       }
       throw Error('This product backend is not connected to the active workspace. No request was sent.');
     }

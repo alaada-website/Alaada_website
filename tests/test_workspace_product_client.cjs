@@ -6,6 +6,7 @@ const source = fs.readFileSync(process.argv[2], 'utf8').replaceAll('__ENDPOINT__
 async function boot(product, requested='', seed=[], operationStorage=new Map()) {
   const requests=[], navigation=[], events={},cookies=[]; let currentUser='alice', revoked=false;
   let operationReply=()=>new Response(JSON.stringify({success:true,reply:'Scoped result'}),{status:200});
+  let accountReply=()=>new Response(JSON.stringify({id:'company-id'}),{status:201});
   class Element {
     constructor(tag){this.tagName=tag;this.children=[];this.style={};this.hidden=false;this.disabled=false;this.textContent='';this.value='';}
     append(...items){this.children.push(...items);for(const item of items)if(item.selected)this.value=item.value;}
@@ -22,6 +23,7 @@ async function boot(product, requested='', seed=[], operationStorage=new Map()) 
     if(String(url).endsWith('/account'))return {ok:true,json:async()=>({$id:currentUser})};
     if(String(url).endsWith('/account/jwts'))return {ok:true,json:async()=>({jwt:'verified-token'})};
     if(String(url).includes('/sheets/execute/'))return operationReply();
+    if(String(url).includes('/accounts/'))return accountReply();
     if(url==='/api/workspaces')return {ok:true,json:async()=>({...state,workspaces:revoked?state.workspaces.slice(0,1):state.workspaces})};
     if(String(url).endsWith('/orbit/reply'))return {ok:true,json:async()=>({id:'saved',product:'orbit',kind:'conversation',version:2,payload:{native_key:'first',data:{id:'first',title:'First',messages:[{role:'assistant',text:'Scoped reply'}]}}})};
     if(options.method==='PUT'){
@@ -37,7 +39,7 @@ async function boot(product, requested='', seed=[], operationStorage=new Map()) 
   vm.runInContext(source,context);
   const W=window.AlaadaWorkspace;
   await W.ready;
-  return {W,requests,navigation,document,events,cookies,operationStorage,setOperationReply:fn=>operationReply=fn,setUser:u=>currentUser=u,revoke:()=>revoked=true};
+  return {W,requests,navigation,document,events,cookies,operationStorage,setOperationReply:fn=>operationReply=fn,setAccountReply:fn=>accountReply=fn,setUser:u=>currentUser=u,revoke:()=>revoked=true};
 }
 
 (async()=>{
@@ -96,6 +98,27 @@ async function boot(product, requested='', seed=[], operationStorage=new Map()) 
   assert.equal(forwarded.options.headers['X-Alaada-Workspace'],'personal');
   assert.equal(forwarded.options.body,JSON.stringify({name:'Cash'}));
   assert(!accounts.requests.some(r=>r.url.startsWith('https://accounts-0o52.onrender.com')));
+  assert.match(forwarded.options.headers['Idempotency-Key'],/^[A-Za-z0-9_.:-]{16,180}$/);
+  const accountOptions={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Private business'})};
+  const accountAttempts=env=>env.requests.filter(r=>r.url.endsWith('/accounts/companies'));
+  accounts.setAccountReply(()=>new Response('{}',{status:503}));
+  await accounts.W.productFetch('/companies',accountOptions);
+  const uncertainKey=accountAttempts(accounts).at(-1).options.headers['Idempotency-Key'];
+  await accounts.W.productFetch('/companies',accountOptions);
+  assert.equal(accountAttempts(accounts).at(-1).options.headers['Idempotency-Key'],uncertainKey);
+  const accountsReloaded=await boot('accounts','',[],accounts.operationStorage);
+  await Promise.all([accountsReloaded.W.productFetch('/companies',accountOptions),accountsReloaded.W.productFetch('/companies',accountOptions)]);
+  assert.equal(accountAttempts(accountsReloaded).length,1);
+  assert.equal(accountAttempts(accountsReloaded)[0].options.headers['Idempotency-Key'],uncertainKey);
+  await accountsReloaded.W.productFetch('/companies',accountOptions);
+  assert.notEqual(accountAttempts(accountsReloaded).at(-1).options.headers['Idempotency-Key'],uncertainKey);
+  assert(!JSON.stringify([...accounts.operationStorage]).includes('Private business'));
+  const supplied='voucher-post:company-id:voucher-id';
+  await accountsReloaded.W.productFetch('/companies/company-id/vouchers/voucher-id/post',{
+    method:'POST',headers:{'Idempotency-Key':supplied,'X-Idempotency-Key':supplied,Authorization:'attacker'}});
+  assert.equal(accountsReloaded.requests.filter(r=>r.url.endsWith('/post')).at(-1).options.headers['Idempotency-Key'],supplied);
+  await assert.rejects(accountsReloaded.W.productFetch('/companies',{
+    method:'POST',headers:{'Idempotency-Key':supplied,'X-Idempotency-Key':'different-request-key'}}),/Conflicting/);
   const analyser=await boot('analyser','?workspace=company');
   await analyser.W.productFetch('https://legacy-analyser.example/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:'https://example.com'})});
   const analysis=analyser.requests.find(r=>r.url.endsWith('/analyser/analyze'));
