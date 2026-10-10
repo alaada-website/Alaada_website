@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-alaada-fast>
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -755,9 +755,50 @@
   color:var(--ink3);
   margin-top:2px;
 }
-  /* Keep the marketing pages responsive without making every hover feel animated. */
-  html[data-alaada-fast],html[data-alaada-fast] *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
-  html[data-alaada-fast] .reveal{opacity:1!important;transform:none!important;transition:none!important}
+
+  /* Corrected responsive layout, navigation and accessibility */
+  html{scroll-padding-top:78px}
+  :focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+  .nav-menu-toggle{display:none;width:42px;height:42px;flex-direction:column;justify-content:center;gap:5px;align-items:center;background:var(--white);border:1px solid var(--borderM);border-radius:10px;cursor:pointer}
+  .nav-menu-toggle span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px}
+  #user-badge{max-width:min(48vw,490px);overflow-x:auto;scrollbar-width:thin;flex-shrink:0}
+  #badge-name{white-space:nowrap;max-width:105px;overflow:hidden;text-overflow:ellipsis}
+  .nav-links a{white-space:nowrap}
+  @media(max-width:1220px){nav{padding:0 22px}.nav-links{gap:0}.nav-links a{padding:6px 8px;font-size:.78rem}}
+  @media(max-width:1050px){
+    nav{justify-content:space-between;gap:12px}
+    .nav-menu-toggle{display:flex;margin-left:auto;order:2}
+    .nav-links{display:none;position:absolute;top:60px;left:0;right:0;background:var(--white);border-bottom:1px solid var(--borderM);padding:14px 20px 22px;box-shadow:var(--sh-md);max-height:calc(100dvh - 60px);overflow:auto;flex-direction:column;align-items:stretch;gap:4px}
+    .nav-links.open{display:flex}
+    .nav-links a{display:block;padding:11px 14px;font-size:.92rem}
+    #user-badge{order:1;max-width:min(55vw,390px)}
+  }
+  @media(max-width:680px){
+    nav{padding:0 14px}
+    #hero{grid-template-columns:1fr;gap:30px;min-height:auto;padding:106px 22px 52px;align-items:center}
+    h1.hero-title{font-size:clamp(2.4rem,10vw,4rem);letter-spacing:-1.4px;line-height:1.08;margin-bottom:20px}
+    .hero-badge{font-size:.68rem;letter-spacing:1px;padding:7px 12px;margin-bottom:22px}
+    .hero-sub{font-size:1rem;line-height:1.7;margin-bottom:26px;max-width:480px}
+    .hero-btns{gap:10px}.btn-primary,.btn-ghost{font-size:.9rem;padding:12px 19px}
+    .btn-ghost{display:inline-flex}
+    .hero-right{width:100%;max-width:500px;margin:auto}
+    .orbit-mock{padding:18px;border-radius:20px}
+    .mock-header{gap:10px;margin-bottom:15px;padding-bottom:13px}
+    .mock-logo-ring{width:32px;height:32px}.mock-name{font-size:.9rem}.mock-status{font-size:.72rem}
+    .mock-msgs{min-height:120px;gap:8px}.mock-msg{font-size:.82rem;padding:10px 13px}
+    .mock-input-row{gap:8px;margin-top:14px;padding-top:14px}.mock-input{font-size:.8rem;padding:9px 12px}.mock-send{width:34px;height:34px}.mock-send svg{width:14px;height:14px}
+    .trust-bar{gap:14px;padding:19px 16px}.trust-item{font-size:.73rem}
+    #orbit-section,#about-section,#faq-section{padding:60px 20px}
+    #accounts-section,#analyser-section,#sheets-section{padding-left:18px;padding-right:18px;padding-bottom:65px}
+    .accounts-container,.analyser-container,.sheets-container{padding:30px 21px}
+    #reviews-section{padding:60px 18px!important}
+    #user-reviews-showcase{padding:0 18px 65px!important}
+    .rfcard-left{padding:27px 24px}
+    #user-badge{max-width:calc(100vw - 180px);padding:3px 7px}
+    #user-badge a{display:none}
+  }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}.reveal{opacity:1!important;transform:none!important}}
+
   </style>
   <!-- Identity and workspace access are verified against Alaada's Appwrite project. -->
 </head>
@@ -767,7 +808,7 @@
 
 <div id="auth-overlay">
   <div class="auth-spinner"></div>
-  <div id="auth-msg">Checking your account…</div>
+  <div id="auth-msg" role="status" aria-live="polite">Checking your account…</div>
 </div>
 
 <!-- NAV -->
@@ -776,7 +817,8 @@
     <img src="images/alaada-logo.jpg" alt="Alaada logo" width="28" height="28" loading="eager"/>
     Alaada
   </a>
-  <ul class="nav-links">
+  <button class="nav-menu-toggle" id="nav-menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="primary-links"><span></span><span></span><span></span></button>
+  <ul class="nav-links" id="primary-links">
     <li><a href="#orbit-section">Orbit AI</a></li>
     <li><a href="#accounts-section">Accounts</a></li>
     <li><a href="#analyser-section">Web Analyser</a></li>
@@ -786,10 +828,9 @@
     <li><a href="/about-us.html">About</a></li>
     <li><a href="/blog.html">Blog</a></li>
     <li><a href="/developers.html">Developers</a></li>
-    <li><a href="/workspace" title="Open your personal or organisation workspace">Workspaces</a></li>
     <li><a href="/Orbit.html" class="nav-cta launch-orbit-btn">Try Orbit →</a></li>
   </ul>
-  <div id="user-badge">
+  <div id="user-badge" aria-label="Signed-in account">
     <div class="badge-avatar" id="badge-initial">A</div>
     <span id="badge-name">User</span>
     <a href="/workspaces" title="Appwrite personal and organisation workspaces" style="text-decoration:none;color:inherit;font-size:.72rem;">Workspaces</a>
@@ -835,7 +876,7 @@
       </div>
       <div class="mock-input-row">
         <div class="mock-input">Ask anything…</div>
-        <button class="mock-send" aria-label="Send"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        <button class="mock-send" type="button" aria-label="Open Orbit AI" onclick="window.location.href='/Orbit.html'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
     </div>
   </div>
@@ -844,7 +885,7 @@
 <!-- TRUST BAR -->
 <div class="trust-bar" role="list" aria-label="Trust indicators">
   <div class="trust-item" role="listitem">⚡ No install needed</div>
-  <div class="trust-item" role="listitem">🔒 Secure Appwrite sign-in</div>
+  <div class="trust-item" role="listitem">🔒 Secure Google sign-in</div>
   <div class="trust-item" role="listitem">🇮🇳 Made in India</div>
   <div class="trust-item" role="listitem">🌐 Works in your browser</div>
   <div class="trust-item" role="listitem">✦ Always improving</div>
@@ -1268,11 +1309,11 @@
             <div class="rf-field">
               <label class="rf-label">Rating</label>
               <div class="star-picker" id="star-picker" role="radiogroup" aria-label="Rating">
-                <span class="star" data-v="1" tabindex="0" role="radio" aria-label="1 star">★</span>
-                <span class="star" data-v="2" tabindex="0" role="radio" aria-label="2 stars">★</span>
-                <span class="star" data-v="3" tabindex="0" role="radio" aria-label="3 stars">★</span>
-                <span class="star" data-v="4" tabindex="0" role="radio" aria-label="4 stars">★</span>
-                <span class="star" data-v="5" tabindex="0" role="radio" aria-label="5 stars">★</span>
+                <span class="star" aria-checked="false" data-v="1" tabindex="0" role="radio" aria-label="1 star">★</span>
+                <span class="star" aria-checked="false" data-v="2" tabindex="0" role="radio" aria-label="2 stars">★</span>
+                <span class="star" aria-checked="false" data-v="3" tabindex="0" role="radio" aria-label="3 stars">★</span>
+                <span class="star" aria-checked="false" data-v="4" tabindex="0" role="radio" aria-label="4 stars">★</span>
+                <span class="star" aria-checked="false" data-v="5" tabindex="0" role="radio" aria-label="5 stars">★</span>
               </div>
               <input type="hidden" name="rating" id="rf-rating" required/>
               <span class="rf-rating-label" id="rf-rating-label">Click to rate</span>
@@ -1380,7 +1421,7 @@
     </div>
     <div class="pillars-grid">
       <div class="pillar reveal rd1"><span class="pillar-icon" aria-hidden="true">🎯</span><h3>One job, done right</h3><p>No feature overload. Each tool does exactly what it promises — clearly and fast.</p></div>
-      <div class="pillar reveal rd2"><span class="pillar-icon" aria-hidden="true">⚡</span><h3>Open in seconds</h3><p>Browser-based. Sign in once with your secure Alaada account and work across your authorised spaces.</p></div>
+      <div class="pillar reveal rd2"><span class="pillar-icon" aria-hidden="true">⚡</span><h3>Open in seconds</h3><p>Browser-based. No installs. Sign in with Google once and you're ready.</p></div>
       <div class="pillar reveal rd3"><span class="pillar-icon" aria-hidden="true">🔍</span><h3>Evidence, not noise</h3><p>Orbit reasons before it answers. Analyser shows data before it advises.</p></div>
       <div class="pillar reveal rd4"><span class="pillar-icon" aria-hidden="true">🇮🇳</span><h3>Proudly Indian</h3><p>Built in India for the world — competitive pricing, fast support, local trust.</p></div>
     </div>
@@ -1442,11 +1483,24 @@
 </footer>
 
 <script>
+
+/* Mobile navigation */
+(()=>{
+  const toggle=document.getElementById('nav-menu-toggle');
+  const links=document.getElementById('primary-links');
+  if(!toggle||!links)return;
+  const close=()=>{links.classList.remove('open');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-label','Open navigation');};
+  toggle.addEventListener('click',()=>{const open=links.classList.toggle('open');toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Close navigation':'Open navigation');});
+  links.addEventListener('click',e=>{if(e.target.closest('a'))close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  document.addEventListener('click',e=>{if(!links.contains(e.target)&&!toggle.contains(e.target))close();});
+})();
+
 /* SCROLL REVEAL */
-const revealIO = new IntersectionObserver(entries => {
+const revealIO = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(entries => {
   entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('in');revealIO.unobserve(e.target);} });
-},{threshold:0.1});
-document.querySelectorAll('.reveal').forEach(el=>revealIO.observe(el));
+},{threshold:0.1}) : null;
+document.querySelectorAll('.reveal').forEach(el=>revealIO ? revealIO.observe(el) : el.classList.add('in'));
 
 /* HERO CHAT TYPEWRITER */
 const heroReply = "Your onboarding likely drops users before they reach core value. Check where sessions end in the first 3 minutes — that's where retention almost always breaks.";
@@ -1552,7 +1606,7 @@ if(ademo){
       ratingLb.textContent = labels[v];
       ratingLb.style.color = 'var(--gold)';
       setStars(v, 'set');
-      stars.forEach((st, i) => { if (i < v) st.classList.add('active'); });
+      stars.forEach((st, i) => { st.setAttribute('aria-checked', String(i === v - 1)); });
     });
     s.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); s.click(); }
@@ -1619,7 +1673,7 @@ if(ademo){
     another.addEventListener('click', () => {
       form.reset(); chosen = 0; ratingIn.value = '';
       ratingLb.textContent = 'Click to rate'; ratingLb.style.color = '';
-      stars.forEach(s => s.classList.remove('active', 'hover'));
+      stars.forEach(s => { s.classList.remove('active', 'hover'); s.setAttribute('aria-checked','false'); });
       charEl.textContent = '0 / 500';
       form.style.display    = 'block';
       success.style.display = 'none';
@@ -1639,7 +1693,7 @@ if(ademo){
   "use strict";
   /* Appwrite is the identity authority for all four product workspaces. */
   const EP="https://sfo.cloud.appwrite.io/v1",PID="6972444700208a437da1";
-  const authUrl=dest=>`/auth.html?next=${encodeURIComponent(dest||'/account.html')}`;
+  const OAUTH=`${EP}/account/sessions/oauth2/google?project=${PID}&success=${encodeURIComponent("https://www.alaada.com")}&failure=${encodeURIComponent("https://www.alaada.com")}`;
   const CK="alaada_auth",IK="alaada_identity",PK="alaada_oauth_pending",AK="alaada_authed",CD=7;
   const DEST={orbit:"/Orbit.html",sheets:"/Spreadsheets.html",accounts:"/Accounts.html"};
   const cGet=n=>{
@@ -1671,21 +1725,23 @@ if(ademo){
   const verify=async()=>{const u=await fetchAcc();cSet(CK,'1',CD);lsAuthSet();iSave(u);return u;};
   const launch=async(dest,m)=>{
     showSpin(m||'Verifying…');
-    try{const c=iLoad();if(c)showBadge(c);await verify();hideSpin();window.location.href=dest;}
+    try{await verify();showBadge(iLoad());hideSpin();window.location.assign(dest);}
     catch(_){
       cDel(CK);lsAuthDel();iClear();
       if(pendingGet()){pendingClear();msg.textContent='Sign-in could not be completed. Please try again.';ov.classList.add('show');setTimeout(hideSpin,3000);return;}
-      pendingClear();msg.textContent='Opening secure Alaada sign-in…';ov.classList.add('show');
-      setTimeout(()=>window.location.replace(authUrl(dest)),250);
+      pendingSet(dest);msg.textContent='Redirecting to Google sign-in…';ov.classList.add('show');
+      setTimeout(()=>window.location.replace(OAUTH),600);
     }
   };
   window.logout=async()=>{
     showSpin('Signing out…');
-    try{await fetch(`${EP}/account/sessions/current`,{method:'DELETE',credentials:'include',headers:{'X-Appwrite-Project':PID}});}catch(_){}
+    try{const result=await fetch(`${EP}/account/sessions/current`,{method:'DELETE',credentials:'include',headers:{'X-Appwrite-Project':PID}});if(!result.ok&&result.status!==401)throw new Error('Could not sign out');}
+    catch(_){msg.textContent='Could not confirm sign-out. Please try again.';setTimeout(hideSpin,3000);return;}
     cDel(CK);lsAuthDel();pendingClear();iClear();hideSpin();location.replace(window.location.origin);
   };
   const handleReturn=async()=>{
     const pendingDest=pendingGet();if(!pendingDest)return false;
+    if(!Object.values(DEST).includes(pendingDest)){pendingClear();return false;}
     pendingClear();
     try{await verify();showBadge(iLoad());showSpin('Signing you in…');setTimeout(()=>window.location.href=pendingDest,400);return true;}
     catch(_){
@@ -1696,7 +1752,8 @@ if(ademo){
     }
   };
   const silentCheck=async()=>{
-    if(!hasAuthHint())return;const c=iLoad();if(c)showBadge(c);
+    // Never treat browser storage as proof of authentication.
+    if(!hasAuthHint())return;
     try{await verify();showBadge(iLoad());}
     catch(_){cDel(CK);lsAuthDel();iClear();document.getElementById('user-badge').classList.remove('visible');}
   };
