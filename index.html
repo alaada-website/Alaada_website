@@ -16,7 +16,7 @@
 
   <!-- ── PRIMARY SEO ── -->
   <meta name="description" content="Alaada builds AI, business and productivity tools for modern work — Orbit AI, Accounts, Web Analyser and Sheets, all in one connected ecosystem."/>
-  
+
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
   <meta name="author" content="Arzo Das, Alaada"/>
   <meta name="application-name" content="Alaada"/>
@@ -308,51 +308,51 @@
     .btn-ghost{display:none;}
   }
 
-  /* ── MOBILE (≤ 600 px): still side-by-side, scaled right down ── */
+  /* Phones use a readable single column, not a shrunken desktop layout. */
   @media(max-width:600px){
     #hero{
-      grid-template-columns:1fr 1fr;   /* ← side-by-side on phone */
-      padding:76px 12px 40px;
-      gap:10px;
+      grid-template-columns:1fr;
+      padding:92px 20px 40px;
+      gap:28px;
       min-height:auto;
       align-items:start;
     }
     /* Left column */
     .hero-badge{
-      font-size:.55rem;letter-spacing:.8px;
+      font-size:.65rem;letter-spacing:.8px;
       padding:4px 9px;margin-bottom:12px;
     }
     h1.hero-title{
-      font-size:clamp(.95rem,4.2vw,1.5rem);
+      font-size:clamp(2rem,8vw,3rem);
       letter-spacing:-.3px;
       margin-bottom:10px;
     }
     .hero-sub{
-      font-size:.68rem;line-height:1.5;
+      font-size:1rem;line-height:1.6;
       max-width:100%;margin-bottom:14px;
     }
     .hero-btns{gap:5px;}
     .btn-primary{
-      font-size:.68rem;padding:8px 11px;gap:4px;
+      font-size:.95rem;padding:12px 16px;gap:6px;
       border-radius:6px;
     }
-    /* Right column — shrink the mockup */
+    /* Demo text stays readable below the introduction. */
     .orbit-mock{
-      padding:10px;
+      padding:18px;
       border-radius:14px;
     }
     .mock-header{gap:6px;margin-bottom:8px;padding-bottom:8px;}
     .mock-logo-ring{width:22px;height:22px;}
-    .mock-name{font-size:.68rem;}
-    .mock-status{font-size:.58rem;}
+    .mock-name{font-size:.9rem;}
+    .mock-status{font-size:.75rem;}
     .mock-msgs{min-height:70px;gap:5px;}
-    .mock-msg{font-size:.6rem;padding:5px 7px;border-radius:8px;}
+    .mock-msg{font-size:.85rem;padding:10px 12px;border-radius:8px;}
     .mock-msg.user{border-radius:8px 8px 2px 8px;}
     .mock-msg.ai{border-radius:2px 8px 8px 8px;}
     .typing-dots span{width:4px;height:4px;}
     .mock-input-row{gap:5px;margin-top:8px;padding-top:8px;}
-    .mock-input{font-size:.6rem;padding:4px 7px;}
-    .mock-send{width:22px;height:22px;}
+    .mock-input{font-size:.8rem;padding:8px 10px;}
+    .mock-send{width:36px;height:36px;}
     .mock-send svg{width:9px;height:9px;}
   }
 
@@ -657,7 +657,7 @@
   .footer-logout:hover{color:#ff6b6b;border-color:rgba(255,107,107,.25);}
   .footer-bottom{max-width:1060px;margin:0 auto;padding-top:22px;border-top:1px solid rgba(255,255,255,.07);font-size:.72rem;color:rgba(255,255,255,.2);}
   .divider{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);max-width:1060px;margin:0 auto;}
-  
+
   /* USER REVIEWS SHOWCASE */
 .reviews-grid{
   display:grid;
@@ -757,7 +757,23 @@
 }
   /* Keep the marketing pages responsive without making every hover feel animated. */
   html[data-alaada-fast],html[data-alaada-fast] *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
-  html[data-alaada-fast] .reveal{opacity:1!important;transform:none!important;transition:none!important}
+  html[data-alaada-fast] .reveal,html[data-alaada-fast] .hero-badge,html[data-alaada-fast] .hero-title,html[data-alaada-fast] .hero-sub,html[data-alaada-fast] .hero-btns,html[data-alaada-fast] .hero-right{opacity:1!important;transform:none!important;transition:none!important}
+  nav{gap:20px;backdrop-filter:none;background:var(--bg)}
+  .nav-links{margin-left:auto;gap:0}
+  .nav-links a{padding:8px 10px}
+  .nav-menu,#user-badge{position:relative}
+  .nav-menu summary,#user-badge summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;white-space:nowrap;padding:8px 10px;border-radius:8px}
+  .nav-menu summary::-webkit-details-marker,#user-badge summary::-webkit-details-marker{display:none}
+  .nav-menu summary::after,#user-badge summary::after{content:'⌄';margin-left:4px}
+  .nav-menu-items,.account-menu-items{position:absolute;right:0;top:calc(100% + 8px);min-width:210px;padding:8px;background:var(--white);border:1px solid var(--borderM);border-radius:12px;box-shadow:var(--sh-md)}
+  .nav-menu-items a,.account-menu-items a,.account-menu-items button{display:block;width:100%;padding:10px 12px!important;border:0;border-radius:6px;background:none;text-align:left;text-decoration:none;color:var(--ink);font:inherit}
+  .nav-menu-items a:hover,.account-menu-items a:hover,.account-menu-items button:hover{background:var(--bg2)}
+  #user-badge{padding:0;border-radius:10px;box-shadow:none;flex-shrink:0}
+  #user-badge.visible{display:block}
+  #badge-name{max-width:130px;overflow:hidden;text-overflow:ellipsis}
+  #badge-logout{margin:0;color:#b42318}
+  @media(max-width:1000px){nav{padding:0 18px;gap:8px}.nav-links>li:not(:last-child){display:none}.nav-links{display:flex}.nav-links .nav-menu-items a{display:block}#badge-name{max-width:90px}}
+  @media(max-width:420px){#badge-name{display:none}.nav-logo{font-size:1rem}nav{padding:0 12px}}
   </style>
   <!-- Identity and workspace access are verified against Alaada's Appwrite project. -->
 </head>
@@ -777,28 +793,34 @@
     Alaada
   </a>
   <ul class="nav-links">
-    <li><a href="#orbit-section">Orbit AI</a></li>
-    <li><a href="#accounts-section">Accounts</a></li>
-    <li><a href="#analyser-section">Web Analyser</a></li>
-    <li><a href="#sheets-section">Sheets</a></li>
-    <li><a href="#faq-section">FAQ</a></li>
-    <li><a href="#reviews-section">Share your Review</a></li>
-    <li><a href="/about-us.html">About</a></li>
-    <li><a href="/blog.html">Blog</a></li>
-    <li><a href="/developers.html">Developers</a></li>
-    <li><a href="/workspace" title="Open your personal or organisation workspace">Workspaces</a></li>
-    <li><a href="/Orbit.html" class="nav-cta launch-orbit-btn">Try Orbit →</a></li>
+    <li><a href="/Orbit.html">Orbit AI</a></li>
+    <li><a href="/Accounts.html">Accounts</a></li>
+    <li><a href="/website-analyzer.html">Web Analyser</a></li>
+    <li><a href="/Spreadsheets.html">Sheets</a></li>
+    <li><a href="/workspaces" title="Open your personal or organisation workspace">Workspaces</a></li>
+    <li><details class="nav-menu"><summary>Explore</summary><div class="nav-menu-items">
+      <a href="/Orbit.html">Orbit AI</a><a href="/Accounts.html">Accounts</a>
+      <a href="/website-analyzer.html">Web Analyser</a><a href="/Spreadsheets.html">Sheets</a>
+      <a href="/workspaces">Workspaces</a><a href="/account.html">Your account</a>
+      <a href="#faq-section">FAQ</a><a href="#reviews-section">Share your review</a>
+      <a href="/about-us.html">About</a><a href="/team.html">Our team</a>
+      <a href="/blog.html">Blog</a><a href="/developers.html">Developers</a>
+    </div></details></li>
   </ul>
-  <div id="user-badge">
+  <details id="user-badge">
+    <summary aria-label="Your account menu">
     <div class="badge-avatar" id="badge-initial">A</div>
     <span id="badge-name">User</span>
+    </summary>
+    <div class="account-menu-items">
     <a href="/workspaces" title="Appwrite personal and organisation workspaces" style="text-decoration:none;color:inherit;font-size:.72rem;">Workspaces</a>
     <a href="/account.html" title="Open account center" style="text-decoration:none;color:inherit;font-size:.72rem;">Account</a>
-    <a href="/team.html" title="Manage team" style="text-decoration:none;color:inherit;font-size:.72rem;">Team</a>
+    <a href="/workspaces" title="Manage your organisation" style="text-decoration:none;color:inherit;font-size:.72rem;">Manage team</a>
     <a href="/account.html#preferences" title="Settings" style="text-decoration:none;color:inherit;font-size:.72rem;">Settings</a>
     <a id="admin-link" href="/admin.html" title="Platform admin" style="display:none;text-decoration:none;color:inherit;font-size:.72rem;">Admin</a>
-    <button id="badge-logout" onclick="logout()" title="Sign out">✕</button>
-  </div>
+    <button id="badge-logout" onclick="logout()" title="Sign out">Sign out</button>
+    </div>
+  </details>
 </nav>
 
 <main id="main-content">
@@ -1442,90 +1464,33 @@
 </footer>
 
 <script>
-/* SCROLL REVEAL */
-const revealIO = new IntersectionObserver(entries => {
-  entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('in');revealIO.unobserve(e.target);} });
-},{threshold:0.1});
-document.querySelectorAll('.reveal').forEach(el=>revealIO.observe(el));
-
-/* HERO CHAT TYPEWRITER */
-const heroReply = "Your onboarding likely drops users before they reach core value. Check where sessions end in the first 3 minutes — that's where retention almost always breaks.";
-let heroTyped = false;
-function typeHero(){
-  if(heroTyped)return; heroTyped=true;
-  const el=document.getElementById('hero-ai-reply');
-  el.innerHTML=''; let i=0;
-  const t=setInterval(()=>{ el.innerHTML+=heroReply[i]||''; i++; if(i>=heroReply.length)clearInterval(t); },26);
+/* Decorative demos render once, with no timers or scroll-triggered reveals. */
+document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));
+const heroReply="Your onboarding likely drops users before they reach core value. Check where sessions end in the first 3 minutes — that's where retention almost always breaks.";
+document.getElementById('hero-ai-reply').textContent=heroReply;
+document.getElementById('orbit-bot-1').textContent="Compound interest means earning interest on your interest. £100 at 10% becomes £110 in year 1 and £121 in year 2. Starting early gives your savings more time to grow.";
+document.getElementById('demo-url').textContent='example.com';
+document.getElementById('status-text').textContent='Example report · illustrative scores';
+document.getElementById('score-circles').style.opacity='1';
+document.getElementById('metric-bars').style.opacity='1';
+for(const [name,score] of Object.entries({perf:91,seo:87,access:94,speed:73})){
+  document.getElementById('num-'+name).textContent=score;
+  document.getElementById('ring-'+name).style.strokeDashoffset=2*Math.PI*22*(1-score/100);
 }
-setTimeout(typeHero,2200);
-
-/* ORBIT DEMO CHAT */
-const orbitReply="Compound interest means earning interest on your interest. £100 at 10% = £110 year 1. Year 2: 10% on £110 = £121. Each year accelerates. That's why starting early matters so much — time is the multiplier.";
-let orbitDone=false;
-const orbitObserver=new IntersectionObserver(entries=>{
-  if(entries[0].isIntersecting&&!orbitDone){
-    orbitDone=true;
-    setTimeout(()=>{
-      const el=document.getElementById('orbit-bot-1');
-      el.innerHTML=''; let i=0;
-      const t=setInterval(()=>{el.innerHTML+=orbitReply[i]||'';i++;if(i>=orbitReply.length)clearInterval(t);},22);
-    },600);
-  }
-},{threshold:0.3});
-const orbitCard=document.getElementById('orbit-demo-card');
-if(orbitCard)orbitObserver.observe(orbitCard);
-
-/* ANALYSER ANIMATED DEMO */
-const scores={perf:91,seo:87,access:94,speed:73};
-const barWidths=['88%','72%','95%','54%'];
-const barNums=['88','72','95','54'];
-let analyserDone=false;
-
-function animCount(id,target,dur){
-  const el=document.getElementById(id); let cur=0;
-  const step=target/(dur/16);
-  const t=setInterval(()=>{ cur=Math.min(cur+step,target); el.textContent=Math.round(cur); if(cur>=target)clearInterval(t); },16);
-}
-
-function animRing(id,score){
-  const circ=2*Math.PI*22;
-  const el=document.getElementById(id);
-  const offset=circ-(score/100)*circ;
-  setTimeout(()=>{ el.style.strokeDashoffset=offset; },80);
-}
-
-function runAnalyser(){
-  if(analyserDone)return; analyserDone=true;
-  const urlEl=document.getElementById('demo-url');
-  const url='alaada.com'; urlEl.textContent=''; let ui=0;
-  const urlT=setInterval(()=>{ urlEl.textContent+=url[ui]||''; ui++; if(ui>=url.length)clearInterval(urlT); },100);
-  const statusEl=document.getElementById('status-text');
-  const statuses=['Scanning page…','Checking SEO tags…','Measuring load speed…','Auditing accessibility…','Report ready ✓'];
-  let si=0;
-  const stT=setInterval(()=>{ si++; if(si<statuses.length)statusEl.textContent=statuses[si]; else clearInterval(stT); },700);
-  setTimeout(()=>{
-    document.getElementById('score-circles').style.opacity='1';
-    animRing('ring-perf',scores.perf); animRing('ring-seo',scores.seo);
-    animRing('ring-access',scores.access); animRing('ring-speed',scores.speed);
-    animCount('num-perf',scores.perf,1300); animCount('num-seo',scores.seo,1300);
-    animCount('num-access',scores.access,1300); animCount('num-speed',scores.speed,1300);
-  },1600);
-  setTimeout(()=>{
-    document.getElementById('metric-bars').style.opacity='1';
-    ['bar1','bar2','bar3','bar4'].forEach((id,i)=>{
-      document.getElementById(id).style.width=barWidths[i];
-      document.getElementById('bv'+(i+1)).textContent=barNums[i];
-    });
-  },2400);
-}
-
-const ademo=document.getElementById('analyser-demo');
-if(ademo){
-  const ao=new IntersectionObserver(entries=>{
-    if(entries[0].isIntersecting){runAnalyser();ao.unobserve(ademo);}
-  },{threshold:0.2});
-  ao.observe(ademo);
-}
+['88%','72%','95%','54%'].forEach((width,i)=>{
+  document.getElementById('bar'+(i+1)).style.width=width;
+  document.getElementById('bv'+(i+1)).textContent=['0.8 s','1.2 s','0.02','46%'][i];
+});
+document.addEventListener('click',event=>{
+  document.querySelectorAll('.nav-menu[open],#user-badge[open]').forEach(menu=>{
+    if(!menu.contains(event.target)||event.target.closest('a'))menu.open=false;
+  });
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape')document.querySelectorAll('.nav-menu[open],#user-badge[open]').forEach(menu=>{
+    menu.open=false;menu.querySelector('summary').focus();
+  });
+});
 
 /* REVIEW FORM */
 (function(){
@@ -1669,16 +1634,9 @@ if(ademo){
   const hideSpin=()=>ov.classList.remove('show');
   const showBadge=id=>{if(!id)return;document.getElementById('badge-initial').textContent=(id.name||id.email||'?')[0].toUpperCase();document.getElementById('badge-name').textContent=id.name||id.email;document.getElementById('user-badge').classList.add('visible');};
   const verify=async()=>{const u=await fetchAcc();cSet(CK,'1',CD);lsAuthSet();iSave(u);return u;};
-  const launch=async(dest,m)=>{
-    showSpin(m||'Verifying…');
-    try{const c=iLoad();if(c)showBadge(c);await verify();hideSpin();window.location.href=dest;}
-    catch(_){
-      cDel(CK);lsAuthDel();iClear();
-      if(pendingGet()){pendingClear();msg.textContent='Sign-in could not be completed. Please try again.';ov.classList.add('show');setTimeout(hideSpin,3000);return;}
-      pendingClear();msg.textContent='Opening secure Alaada sign-in…';ov.classList.add('show');
-      setTimeout(()=>window.location.replace(authUrl(dest)),250);
-    }
-  };
+  // Each product performs its own server-verified startup. Navigation needs no
+  // second account fetch or full-screen transition on the public homepage.
+  const launch=dest=>{window.location.href=dest;};
   window.logout=async()=>{
     showSpin('Signing out…');
     try{await fetch(`${EP}/account/sessions/current`,{method:'DELETE',credentials:'include',headers:{'X-Appwrite-Project':PID}});}catch(_){}
@@ -1704,14 +1662,8 @@ if(ademo){
     const alreadyVerified=await handleReturn();
     if(!alreadyVerified) silentCheck();
 
-    /* Spreadsheet formula cycler */
-    const formulas=['=SUM(B2:B5)','=AVERAGE(C2:C5)','=IF(D2>70,"Good","Low")','=VLOOKUP("Orbit",A2:D5,2,0)','=SUM(B2:B5)'];
-    let fi=0;
-    setInterval(()=>{
-      fi=(fi+1)%formulas.length;
-      const el=document.getElementById('sv-formula-text');
-      if(el){el.style.opacity='0';setTimeout(()=>{el.textContent=formulas[fi];el.style.opacity='1';el.style.transition='opacity .3s';},200);}
-    },2200);
+    const formula=document.getElementById('sv-formula-text');
+    if(formula)formula.textContent='=SUM(B2:B5)';
 
     document.querySelectorAll('.launch-orbit-btn').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();launch(DEST.orbit,'Launching Orbit…');}));
 

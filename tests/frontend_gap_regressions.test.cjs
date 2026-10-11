@@ -6,6 +6,48 @@ const vm=require('node:vm');
 const root=path.resolve(__dirname,'..');
 const read=name=>fs.readFileSync(path.join(root,name),'utf8');
 
+test('Changed monolithic pages contain syntactically valid inline JavaScript',()=>{
+  for(const file of ['index.html','about-us.html','Spreadsheets.html','Orbit.html','Accounts.html','website-analyzer.html']){
+    let number=0;
+    for(const script of read(file).matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)){
+      if(/\bsrc\s*=|application\/ld\+json|type=["']module/.test(script[1])||!script[2].trim())continue;
+      assert.doesNotThrow(()=>new vm.Script(script[2],{filename:file+':script-'+(++number)}));
+    }
+  }
+});
+
+test('Fast UI keeps hero content visible and removes decorative timers and Sheets blockers',()=>{
+  const home=read('index.html'),sheet=read('Spreadsheets.html'),about=read('about-us.html');
+  assert.match(home,/html\[data-alaada-fast\] \.hero-title[^\n]+opacity:1!important/);
+  assert.match(about,/html\[data-alaada-fast\] \.page-hero h1[^\n]+opacity:1!important/);
+  assert(!home.includes('setInterval('),'Homepage previews must not keep running animation loops');
+  assert(!sheet.includes('ffOverlay'),'No mandatory welcome dialog');
+  assert(!sheet.includes('/api/footfall'),'No unsupported startup tracking request');
+  assert(sheet.includes('DOMContentLoaded')&&sheet.includes('await G._persist.initialized'));
+  assert(!sheet.includes('data-state="saved" aria-live="polite">Saved'),'Do not claim unsynced data is saved');
+});
+
+test('Sheets restores cloud data even if IndexedDB is unavailable',async()=>{
+  const source=extract(read('Spreadsheets.html'),'async _initPersistence(){','\n  },').slice(0,-1);
+  const states=[],stored=new Map(),snapshot={name:'Existing workbook',sheets:[{name:'Data',cells:{A1:{value:'keep'}}}]};
+  const W={storage:{getItem:k=>stored.get(k),setItem:(k,v)=>stored.set(k,v)},list:()=>[{id:'existing'}],read:(kind,id)=>id==='existing'?snapshot:null};
+  const controller=vm.runInNewContext('({'+source+'})',{window:{AlaadaWorkspace:W},Error});
+  controller._persist={};controller._openWorkbookDb=async()=>null;controller._isPristineWorkbook=()=>true;
+  controller._hydrateWorkbook=data=>{assert.equal(data,snapshot);return true};controller.setSaveState=(...state)=>states.push(state);
+  await controller._initPersistence();
+  assert.equal(controller._persist.workbookId,'existing');assert.equal(stored.get('alaada.workbookId'),'existing');
+  assert.deepEqual(states,[['saved','Saved to cloud']]);
+});
+
+test('An invalid saved workbook does not become an editable blank document',async()=>{
+  const source=extract(read('Spreadsheets.html'),'async _initPersistence(){','\n  },').slice(0,-1);
+  let writes=0;
+  const W={storage:{getItem:()=>null,setItem:()=>writes++},list:()=>[{id:'existing'}],read:()=>({invalid:true})};
+  const controller=vm.runInNewContext('({'+source+'})',{window:{AlaadaWorkspace:W},Error});
+  controller._persist={};controller._openWorkbookDb=async()=>null;controller._isPristineWorkbook=()=>true;controller._hydrateWorkbook=()=>false;
+  await assert.rejects(controller._initPersistence(),/not been overwritten/);assert.equal(writes,0);assert(!controller._persistenceReady);
+});
+
 test('Product pages bust the four-hour workspace script cache when its content changes',()=>{
   const version=require('node:crypto').createHash('sha256').update(read('workspace-product-client.js').replace(/\r\n/g,'\n')).digest('hex').slice(0,12);
   for(const file of ['Accounts.html','Orbit.html','Spreadsheets.html','website-analyzer.html']){

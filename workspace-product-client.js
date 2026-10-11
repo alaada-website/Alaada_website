@@ -12,7 +12,7 @@
   const ACTIVE_WORKSPACE_COOKIE = 'alaada_active_workspace';
   const WORKSPACE_HINT_COOKIE = 'alaada_workspace_hint';
   const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
-  let accountFlight = null, jwtFlight = null, cachedJwt = null, cachedJwtExpiresAt = 0;
+  let accountFlight = null, jwtFlight = null, cachedJwt = null, cachedJwtExpiresAt = 0, verifyFlight = null, entitlementFlight = null;
   const sheetRoutes = {'/api/ai/command':'ai-command','/api/ai/chat':'ai-chat','/api/ai/analyze':'ai-analyze',
     '/api/ai/anomalies':'anomalies','/api/ai/translate-batch':'translate','/api/analytics/run':'analytics','/api/analytics/predict':'predict'};
   let user = null, workspace = null, workspaces = [], pending = 0, tail = Promise.resolve(), failed = null;
@@ -147,7 +147,7 @@
       const timeoutMs=method==='POST'&&/\/analyser\/analyze$/.test(path)?210000:
         method==='POST'&&/\/orbit\/reply$/.test(path)?120000:
         method==='POST'&&/\/sheets\/execute\//.test(path)?150000:
-        (method==='POST'&&/\/sheets\/formula$/.test(path)||method==='GET'&&/\/entitlements$/.test(path))?90000:
+        (method==='POST'&&/\/sheets\/formula$/.test(path)||method==='GET'&&/\/entitlements(?:\?|$)/.test(path))?90000:
         method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:25000;
       const response=await request('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))},'Alaada workspace service',!!rawOptions,timeoutMs);
       // Reads already start with a fresh Appwrite identity check. Recheck writes
@@ -210,8 +210,22 @@
     get active(){return workspace;},get user(){return user;},
     async flush(){await Promise.all([...requests]);await tail;if(failed)throw failed;},
     beforeSwitch(callback){beforeSwitch=callback;},
-    async verify(){const data=await api('/workspaces');if(!data.workspaces.some(w=>w.id===workspace.id)){freeze('Workspace membership was removed.');throw failed;}return true;},
-    async entitlements(){await W.ready;return api('/workspaces/'+workspace.id+'/entitlements');},
+    async verify(){
+      await W.ready;
+      if(!verifyFlight)verifyFlight=(async()=>{
+        const data=await api('/workspaces/'+workspace.id+'/access');
+        if(data.user!==user||data.workspace!==workspace.id||!['owner','admin','editor','reader'].includes(data.role)){
+          freeze('Workspace membership was removed.');throw failed;
+        }
+        return true;
+      })().finally(()=>{verifyFlight=null;});
+      return verifyFlight;
+    },
+    async entitlements(){
+      await W.ready;
+      if(!entitlementFlight)entitlementFlight=api('/workspaces/'+workspace.id+'/entitlements?product='+encodeURIComponent(product)).finally(()=>{entitlementFlight=null;});
+      return entitlementFlight;
+    },
     async resources(p=product,kind){
       await W.ready;if(!verified||failed)throw failed||Error('A verified workspace is required.');
       const active=workspace;
@@ -374,17 +388,17 @@
     await readyDOM;
     surfaces=[...document.body.children];
     bar=document.createElement('aside');bar.id='alaada-workspace-bar';
-    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#11243a;color:#fff;padding:6px 14px;display:flex;gap:10px;align-items:center;font:13px system-ui;min-height:36px';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483647;box-sizing:border-box;height:36px;background:#11243a;color:#fff;border-bottom:1px solid #31455e;padding:4px 12px;display:flex;gap:12px;align-items:center;font:12px system-ui;overflow-x:auto;white-space:nowrap';
     const cachedHint=readWorkspaceHint();
-    workspace=cachedHint;
     label=document.createElement('strong');label.textContent=cachedHint?'Active: '+cachedHint.name+' · checking…':'Checking workspace…';
-    selector=document.createElement('select');selector.setAttribute('aria-label','Active workspace');selector.disabled=true;
-    const manage=document.createElement('a');manage.href='/workspaces';manage.textContent='Manage workspaces';manage.style.color='#90e3da';
+    selector=document.createElement('select');selector.setAttribute('aria-label','Active workspace');selector.disabled=true;selector.hidden=true;
+    selector.style.cssText='min-width:110px;max-width:220px;border:1px solid #526781;border-radius:5px;background:#1d324b;color:#fff;padding:3px 5px;font:inherit';
+    const manage=document.createElement('a');manage.href='/workspaces';manage.textContent='Workspaces';manage.style.color='#90e3da';
     signin=document.createElement('a');
-    signin.href='/auth.html?next='+encodeURIComponent(location.pathname+location.search);signin.textContent='Sign in';signin.style.color='#fff';
+    signin.href='/auth.html?next='+encodeURIComponent(location.pathname+location.search);signin.textContent='Sign in';signin.style.color='#fff';signin.hidden=true;
     status=document.createElement('span');status.setAttribute('role','status');
     bar.append(label,selector,manage,signin,status);document.body.prepend(bar);
-    gate=document.createElement('div');gate.setAttribute('role','status');gate.setAttribute('aria-live','polite');gate.hidden=true;gate.style.cssText='position:fixed;inset:36px 0 0;z-index:2147483646;background:rgba(14,20,35,.94);color:#fff;padding:10vh 10vw;font:20px system-ui;transition:none';gate.textContent='Verifying your private workspace…';document.body.append(gate);
+    gate=document.createElement('div');gate.setAttribute('role','status');gate.setAttribute('aria-live','polite');gate.hidden=true;gate.style.cssText='position:fixed;inset:36px 0 0;z-index:2147483646;background:#f7f8fa;color:#17243a;padding:12vh max(24px,8vw);font:18px/1.6 system-ui;transition:none';gate.textContent='Connecting to your private workspace…';document.body.append(gate);
     document.body.style.paddingTop='36px';
     if(document.head&&document.createElement){for(const href of [new URL(endpoint).origin,'https://alaada-workspaces.onrender.com']){const link=document.createElement('link');link.rel='preconnect';link.href=href;link.crossOrigin='anonymous';document.head.append(link)}}
     // Warm the known Free service without credentials while Appwrite verifies
@@ -395,7 +409,7 @@
       const requested=new URL(location.href).searchParams.get('workspace');
       const hinted=!requested?cookieGet(ACTIVE_WORKSPACE_COOKIE):'';
       const bootstrapTarget=requested||hinted;
-      const bootstrapPath='/workspaces/bootstrap'+(bootstrapTarget?'?workspace='+encodeURIComponent(bootstrapTarget):'');
+      const bootstrapPath='/workspaces/bootstrap?product='+encodeURIComponent(product)+(bootstrapTarget?'&workspace='+encodeURIComponent(bootstrapTarget):'');
       const session=await api(bootstrapPath);user=session.user;workspaces=session.workspaces;
       workspace=workspaces.find(w=>w.id===session.active)||workspaces.find(w=>w.id===bootstrapTarget)||workspaces.find(w=>w.kind==='personal');
       if(requested&&(!workspace||workspace.id!==requested))workspace=null;
@@ -410,9 +424,10 @@
       }
       if(product==='orbit')values.set('orbit_threads',JSON.stringify(W.list('conversation').map(x=>x.data)));
       for(const w of workspaces){const option=document.createElement('option');option.value=w.id;option.textContent=w.name+' · '+w.kind;option.selected=w.id===workspace.id;selector.append(option);}
-      label.textContent='Active: '+workspace.name+' · '+workspace.kind;
+      label.textContent=product==='sheets'?'Alaada Sheets':product==='orbit'?'Orbit AI':product==='accounts'?'Alaada Accounts':'Web Analyser';
+      selector.hidden=false;
       selector.onchange=async()=>{const next=selector.value;selector.value=workspace.id;if(!confirm('Switch workspace? Current workbook changes will be saved; other unsaved form input will be discarded. The product will reload in the destination workspace.'))return;try{selector.disabled=true;await beforeSwitch();await W.flush();cookieSet(ACTIVE_WORKSPACE_COOKIE,next);const url=new URL(location.href);url.searchParams.set('workspace',next);location.assign(url.href);}catch(error){show(error.message);selector.disabled=!!failed;}};
-      verified=true;selector.disabled=false;gate.hidden=true;signin.hidden=true;for(const surface of surfaces)surface.inert=false;show('Private workspace verified');
+      verified=true;selector.disabled=false;gate.hidden=true;signin.hidden=true;for(const surface of surfaces)surface.inert=false;show('');
       saveWorkspaceHint(workspace);
       cookieSet(ACTIVE_WORKSPACE_COOKIE,workspace.id);
       return W;

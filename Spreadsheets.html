@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d0e14">
 <title>Alaada Sheets — Excel-grade spreadsheets with AI, formulas & analytics</title>
+<script>try{const hint=document.cookie.split(';').map(v=>v.trim()).find(v=>v.startsWith('alaada_sheets_theme='))?.split('=')[1];if(hint==='light'||hint==='dark')document.documentElement.dataset.uiTheme=hint}catch{}</script>
 <link rel="preconnect" href="https://sfo.cloud.appwrite.io" crossorigin>
 <meta name="description" content="Alaada Sheets is a fast, mobile-friendly spreadsheet with full Excel formula support (SUM, VLOOKUP, IF), AI chat that edits cells, anomaly detection, image-to-sheet OCR, .xlsx export, voice commands, and interactive charts.">
 <meta name="keywords" content="spreadsheet, excel, formulas, SUM, VLOOKUP, AI spreadsheet, anomaly detection, OCR, xlsx, csv, mobile spreadsheet, online excel, voice, charts">
@@ -475,11 +476,17 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
 @media(max-width:860px){#workspaceSearchWrap{display:none}#docwrap{flex:1}.tb-hide-sm{display:none!important}#globalActions .tb span{display:none}#workspaceOutline{width:min(86vw,320px)}#gridstat{display:none}.sim-builder-grid,.sim-chart-grid{grid-template-columns:1fr}.sim-row-top,.sim-row.output .sim-row-top{grid-template-columns:1fr 90px 1fr 30px}.sim-row-top .sim-distribution-field,.sim-row-top .sim-target-direction{grid-column:1/-2}.sim-params-grid{grid-template-columns:repeat(2,minmax(90px,1fr))}.sim-kpis{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){#tbar{height:46px;padding:0 7px}#lname{display:none}#lgem{width:28px}#docwrap{margin:0}#saveState{display:none}#rtabs{padding:0 5px}.rtab{padding:8px 9px}#rbody{min-height:48px}#fbar{height:38px}#namebox{width:58px}#fxlbl{padding:0 6px}.rg{padding:0 4px}.ui-hide-narrow{display:none!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* Secondary commands stay in the workspace menu instead of pushing the
+   document title, connection status and menu off-screen. */
+@media(max-width:1600px){#tbar .tb-hide-sm,#tbar .tdiv-sm{display:none!important}}
+@media(max-width:1200px){#engineState{display:none}#workspaceSearchWrap{max-width:200px}}
+@media(max-width:860px){#conn{display:none}}
+@media(max-width:620px){#tbar>[aria-label="Open Help"],#tbar>[aria-label="Open Alaada Simulate"]{display:none}#saveState{display:inline-flex;font-size:10px;max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#docwrap{min-width:50px}#docname{font-size:11px;padding:4px}}
 </style>
 </head>
 <body data-alaada-product="sheets">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=204eda06c32c" data-product="sheets"></script>
+<script src="/workspace-product-client.js?v=a35472c40a90" data-product="sheets"></script>
 <script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 <div id="app">
 <h1 class="visually-hidden">Alaada Sheets</h1>
@@ -513,7 +520,7 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
   <button class="tb tb-hide-sm" onclick="G.redo()" title="Ctrl+Y">↪</button>
   <div id="docwrap"><div id="docname" onclick="G.renDoc()">Untitled Spreadsheet</div></div>
   <div id="workspaceSearchWrap"><input id="workspaceQuickSearch" type="search" placeholder="Search workbook or commands…" aria-label="Search workbook and commands" onkeydown="G.workspaceSearchKey(event)"></div>
-  <span id="saveState" class="ui-badge" data-state="saved" aria-live="polite">Saved</span>
+  <span id="saveState" class="ui-badge" data-state="loading" aria-live="polite">Connecting…</span>
   <div id="conn" role="status"><div id="cdot"></div><span id="ctxt">Checking cloud access…</span></div>
   <span id="engineState" class="ui-badge" title="Calculation availability is separate from cloud save state">Local calculations</span>
   <button class="ui-icon-button" onclick="G.toggleUiTheme()" title="Switch light or dark theme" aria-label="Switch theme">◐</button>
@@ -521,6 +528,15 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
   <button class="ui-icon-button" onclick="G.toggleWorkspaceMenu(event)" title="Workspace menu" aria-label="Open workspace menu" aria-haspopup="menu" aria-expanded="false">•••</button>
 </div>
 <div id="workspaceMenu" class="ui-menu" role="menu" hidden>
+  <button role="menuitem" onclick="G.newFile();G.closeWorkspaceMenu()">New workbook</button>
+  <button role="menuitem" onclick="G.openFile();G.closeWorkspaceMenu()">Open workbook</button>
+  <button role="menuitem" onclick="G.saveXL();G.closeWorkspaceMenu()">Download Excel (.xlsx)</button>
+  <button role="menuitem" onclick="showEx();G.closeWorkspaceMenu()">Export workbook</button>
+  <button role="menuitem" onclick="G.saveEncryptedXlsxPrompt();G.closeWorkspaceMenu()">Encrypt Excel workbook</button>
+  <button role="menuitem" onclick="G.scanImage();G.closeWorkspaceMenu()">Import from image</button>
+  <button role="menuitem" onclick="G.openSimulate();G.closeWorkspaceMenu()">Alaada Simulate</button>
+  <button role="menuitem" onclick="G.undo();G.closeWorkspaceMenu()">Undo</button>
+  <button role="menuitem" onclick="G.redo();G.closeWorkspaceMenu()">Redo</button>
   <button role="menuitem" onclick="G.openRecentDialog();G.closeWorkspaceMenu()">Recent workbooks</button>
   <button role="menuitem" onclick="G.openVersionDialog();G.closeWorkspaceMenu()">Version history</button>
   <button role="menuitem" onclick="G.openCommandPalette();G.closeWorkspaceMenu()">Command palette <span style="margin-left:auto">Ctrl K</span></button>
@@ -1366,7 +1382,21 @@ const G={
   _idbRequest(request){return new Promise((resolve,reject)=>{request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})},
   async _openWorkbookDb(){await window.AlaadaWorkspace.ready;await window.AlaadaWorkspace.verify();if(this._persist.db)return Promise.resolve(this._persist.db);if(typeof indexedDB==='undefined')return Promise.resolve(null);return new Promise((resolve,reject)=>{const request=indexedDB.open(window.AlaadaWorkspace.databaseName('AlaadaSheets'),3);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains('workbooks'))db.createObjectStore('workbooks',{keyPath:'id'});if(!db.objectStoreNames.contains('versions')){const store=db.createObjectStore('versions',{keyPath:'id'});store.createIndex('workbookId','workbookId',{unique:false})}if(!db.objectStoreNames.contains('collaborationOutbox'))db.createObjectStore('collaborationOutbox',{keyPath:'id'})};request.onsuccess=()=>{this._persist.db=request.result;resolve(request.result)};request.onerror=()=>reject(request.error)})},
   _isPristineWorkbook(){return this.sheets.length===1&&Object.keys(this.sheets[0].cells||{}).length===0&&/^(Untitled|Untitled Spreadsheet)$/i.test(document.getElementById('docname')?.textContent||'Untitled')},
-  async _initPersistence(){try{const db=await this._openWorkbookDb();if(!db)return;let id='';try{id=window.AlaadaWorkspace.storage.getItem('alaada.workbookId')||''}catch{}if(!id)id=window.AlaadaWorkspace.list('workbook')[0]?.id||'';if(!id)id=globalThis.crypto?.randomUUID?.()||`wb-${Date.now()}-${Math.random().toString(36).slice(2)}`;this._persist.workbookId=id;try{window.AlaadaWorkspace.storage.setItem('alaada.workbookId',id)}catch{}const cloud=window.AlaadaWorkspace.read('workbook',id);const saved=cloud?{data:cloud}:await this._idbRequest(db.transaction('workbooks','readonly').objectStore('workbooks').get(id));if(saved?.data&&this._isPristineWorkbook()&&this._hydrateWorkbook(saved.data))this.toast('Recovered your last workbook','ok')}catch(error){console.warn('Workbook persistence unavailable:',error)}},
+  async _initPersistence(){
+    if(this._persistenceReady)return;
+    const db=await this._openWorkbookDb(),W=window.AlaadaWorkspace;
+    let id=W.storage.getItem('alaada.workbookId')||W.list('workbook')[0]?.id||'';
+    if(!id)id=globalThis.crypto?.randomUUID?.()||`wb-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    this._persist.workbookId=id;
+    const cloud=W.read('workbook',id);
+    const saved=cloud?{data:cloud}:db?await this._idbRequest(db.transaction('workbooks','readonly').objectStore('workbooks').get(id)):null;
+    if(saved?.data&&this._isPristineWorkbook()){
+      if(!this._hydrateWorkbook(saved.data))throw Error('The saved workbook could not be restored. It has not been overwritten.');
+      this.setSaveState?.(cloud?'saved':'unsaved',cloud?'Saved to cloud':'Local recovery · not synced');
+    }else if(!saved?.data)this.setSaveState?.('unsaved','Ready · new workbook');
+    if(W.storage.getItem('alaada.workbookId')!==id)W.storage.setItem('alaada.workbookId',id);
+    this._persistenceReady=true;
+  },
   _scheduleAutosave(){if(this._persist.restoring||!this._persist.workbookId)return;clearTimeout(this._persist.timer);this._persist.timer=setTimeout(()=>this._saveSnapshot('autosave'),900)},
   async _saveSnapshot(reason='manual'){try{const db=await this._openWorkbookDb();if(!db||!this._persist.workbookId)return false;const data=this._serializeWorkbook(),now=Date.now(),record={id:this._persist.workbookId,name:data.name,updatedAt:now,sheetCount:data.sheets.length,data};await window.AlaadaWorkspace.save('workbook',data.id,data,data.name);await this._idbRequest(db.transaction('workbooks','readwrite').objectStore('workbooks').put(record));const shouldVersion=reason!=='autosave'||now-this._persist.lastVersionAt>=300000;if(shouldVersion){this._persist.lastVersionAt=now;const version={id:`${data.id}:${now}`,workbookId:data.id,name:data.name,createdAt:now,reason,data};await this._idbRequest(db.transaction('versions','readwrite').objectStore('versions').put(version));await this._trimVersions(data.id,25)}return true}catch(error){console.warn('Autosave failed:',error);return false}},
   async _trimVersions(workbookId,limit=25){const db=this._persist.db;if(!db)return;const store=db.transaction('versions','readonly').objectStore('versions'),index=store.index('workbookId'),versions=await this._idbRequest(index.getAll(workbookId));versions.sort((a,b)=>b.createdAt-a.createdAt);if(versions.length<=limit)return;const tx=db.transaction('versions','readwrite'),target=tx.objectStore('versions');for(const version of versions.slice(limit))target.delete(version.id)},
@@ -1388,15 +1418,15 @@ const G={
   _newWorkbookIdentity(){const id=globalThis.crypto?.randomUUID?.()||`wb-${Date.now()}-${Math.random().toString(36).slice(2)}`;this._persist.workbookId=id;this._persist.lastVersionAt=0;try{window.AlaadaWorkspace.storage.setItem('alaada.workbookId',id)}catch{}return id},
 
   init(){
-    try{this._persist.workbookId=window.AlaadaWorkspace.storage.getItem('alaada.workbookId')||globalThis.crypto?.randomUUID?.()||`wb-${Date.now()}-${Math.random().toString(36).slice(2)}`;window.AlaadaWorkspace.storage.setItem('alaada.workbookId',this._persist.workbookId);this._collab.shareJoinPending=new URL(location.href).searchParams.has('alaada_share')}catch{this._persist.workbookId=this._persist.workbookId||`wb-${Date.now()}-${Math.random().toString(36).slice(2)}`}
+    this._collab.shareJoinPending=new URL(location.href).searchParams.has('alaada_share');
     this.sheets=[{name:'Sheet1',cells:{},cw:[],rh:[],charts:[],printSettings:{}}];
     this._initLocale();this.render();this.renderTabs();this.bindEvents();this.moveTo(0,0);this.checkConn();this._initVoice();this._consumeEasyShareLink();if(this._voice.rec){this._voice.rec.lang=LOCALES[this.locale].speech;this._voice.rec.addEventListener?.('start',()=>{document.getElementById('aiin').placeholder=LOCALES[this.locale].listening.replace(/^🎤\s*/, '')});this._voice.rec.addEventListener?.('end',()=>this.setLocale(this.locale,true))}
-    setInterval(()=>this.checkConn(),12000);
+    setInterval(()=>{if(!document.hidden)this.checkConn()},60000);
     this._startQueryScheduler();this._startWorkflowScheduler();
     if(window.visualViewport){window.visualViewport.addEventListener('resize',()=>{if(this.editing){this.posEditor();this.scrollIntoView(this.eRow,this.eCol)}})}
     document.addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey))return;const key=e.key.toLowerCase();if(key==='f'){e.preventDefault();e.stopImmediatePropagation();this.quickFind()}else if(key==='g'){e.preventDefault();this.openGoto()}},true);
     document.addEventListener('keydown',e=>{if(e.key==='F1'){e.preventDefault();this.openHelp()}else if(e.key==='Escape'&&document.getElementById('helpModal')?.style.display==='flex'){e.preventDefault();this.closeHelp()}},true);
-    this._initPersistence().then(()=>{if(!this._collab.shareJoinPending)this._resumeCollaborationSession()});/* Workspace pages require online identity verification. */this._scheduleBackgroundIndex();
+    this._persist.initialized=this._initPersistence().then(()=>{if(!this._collab.shareJoinPending)this._resumeCollaborationSession()});/* Restore before accepting edits. */this._scheduleBackgroundIndex();
     window.addEventListener('online',()=>{this.checkConn();if(this._collab.connected){const state=this._collab;this.connectCollaboration({workspaceId:state.workspaceId,workbookId:state.workbookId,actorId:state.actorId,clientId:state.clientId}).catch(error=>console.warn('Offline replay deferred',error))}this.toast('Back online · syncing saved edits','ok')});
     window.addEventListener('offline',()=>{this.checkConn();if(this._collab.connected)this._saveCollaborationOutbox();this.toast('Offline · cloud saves require a verified connection','warn')});
   },
@@ -2367,138 +2397,32 @@ async function doEx(fmt){hideEx();if(['xlsx','xlsm','ods'].includes(fmt)){G.save
 
 const _doExWithServerFormats=doEx;
 doEx=async function(fmt){if(fmt==='numbers'){hideEx();return G.saveXL('numbers')}return _doExWithServerFormats(fmt)};
-window.addEventListener('load',async()=>{try{await window.AlaadaWorkspace.ready;G.init();window.AlaadaWorkspace.beforeSwitch(async()=>{clearTimeout(G._persist.timer);if(!await G._saveSnapshot('workspace-switch'))throw Error('Workbook could not be saved. Workspace was not changed.');})}catch(error){console.warn('Workspace unavailable:',error.message)}});
+window.addEventListener('DOMContentLoaded',async()=>{
+  const app=document.getElementById('app'),loading=document.createElement('div');
+  loading.id='sheets-startup';loading.setAttribute('role','status');
+  loading.style.cssText='position:fixed;top:82px;left:16px;right:16px;z-index:12000;padding:12px 16px;background:#fff;color:#17243a;border:1px solid #cbd5e1;border-radius:8px;font:14px/1.5 system-ui';
+  loading.textContent='Connecting to your saved workbook…';document.body.append(loading);
+  app.inert=true;
+  // Paint a neutral grid immediately, without exposing cached private data or
+  // allowing edits that could race with restoration of the real workbook.
+  G.sheets=[{name:'Sheet1',cells:{},cw:[],rh:[],charts:[],printSettings:{}}];
+  G.render();G.renderTabs();document.getElementById('emptySheetCoach').hidden=true;
+  try{
+    await window.AlaadaWorkspace.ready;app.inert=true;
+    const theme=window.AlaadaWorkspace.storage.getItem('alaada.uiTheme');if(theme)G.applyUiTheme(theme);
+    loading.textContent='Opening your workbook…';G.init();await G._persist.initialized;
+    loading.remove();app.inert=false;
+    window.AlaadaWorkspace.beforeSwitch(async()=>{clearTimeout(G._persist.timer);if(!await G._saveSnapshot('workspace-switch'))throw Error('Workbook could not be saved. Workspace was not changed.');});
+  }catch(error){
+    G.setSaveState('error','Not connected');app.inert=true;
+    loading.textContent=error.message||'The workbook could not be opened.';
+    const retry=document.createElement('button');retry.textContent='Retry';retry.style.marginLeft='12px';retry.onclick=()=>location.reload();loading.append(retry);
+    console.warn('Workspace unavailable:',error.message);
+  }
+},{once:true});
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FOOTFALL MODAL — self-contained, injected via JS
-     Records "Yes" clicks to backend; "No" locks the grid.
-═══════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-  if((location.hostname==='127.0.0.1'||location.hostname==='localhost')&&new URLSearchParams(location.search).get('ui_test')==='1')return;
-  const welcomeCookie='alaada_sheets_welcome';
-  const hasWelcomeCookie=()=>document.cookie.split(';').some(item=>item.trim().startsWith(welcomeCookie+'=1'));
-  const rememberWelcome=()=>{try{document.cookie=welcomeCookie+'=1; Max-Age=31536000; Path=/; SameSite=Lax; Secure';}catch{}};
-  if(hasWelcomeCookie())return;
-  const mount=()=>{
-  const style=document.createElement('style');
-  style.textContent=`
-    #ffOverlay{position:fixed;inset:0;z-index:99999;background:rgba(5,6,15,.85);
-      backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;
-      animation:none}
-    @keyframes ffIn{from{opacity:0}to{opacity:1}}
-    #ffBox{background:#13141d;border:1px solid rgba(61,143,255,.2);border-radius:18px;
-      width:400px;max-width:92vw;padding:36px 28px 28px;text-align:center;
-      font-family:'Plus Jakarta Sans',sans-serif;position:relative;overflow:hidden;
-      animation:none}
-    #ffBox::before{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);
-      width:200px;height:200px;border-radius:50%;
-      background:radial-gradient(circle,rgba(61,143,255,.15) 0%,transparent 70%);
-      pointer-events:none}
-    @keyframes ffUp{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
-    #ffGem{width:52px;height:52px;border-radius:14px;
-      background:linear-gradient(135deg,#f0a500,#e09000);
-      display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
-      box-shadow:0 4px 20px rgba(240,165,0,.4)}
-    #ffTitle{font-size:19px;font-weight:800;color:#f0f2ff;margin-bottom:8px;letter-spacing:-.3px}
-    #ffTitle b{color:#f0a500}
-    #ffSub{font-size:13px;color:#8892b0;line-height:1.65;margin-bottom:26px}
-    #ffFeatures{display:flex;justify-content:center;gap:16px;margin-bottom:22px;flex-wrap:wrap}
-    .ff-feat{font-size:11px;color:#5a6080;display:flex;align-items:center;gap:4px}
-    .ff-feat span{color:#00d4a0}
-    #ffBtns{display:flex;gap:10px}
-    #ffYes{flex:1;height:44px;border-radius:10px;
-      background:linear-gradient(135deg,#f0a500,#e09000);border:none;
-      color:#1a0f00;font-family:inherit;font-size:14px;font-weight:800;
-      cursor:pointer;transition:none;box-shadow:0 3px 12px rgba(240,165,0,.35)}
-    #ffYes:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(240,165,0,.5)}
-    #ffYes:active{transform:scale(.96)}
-    #ffNo{flex:1;height:44px;border-radius:10px;background:transparent;
-      border:1px solid rgba(255,255,255,.1);color:#5a6080;
-      font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:none}
-    #ffNo:hover{border-color:rgba(255,77,106,.4);color:#ff7090;background:rgba(255,77,106,.06)}
-    #ffNo:active{transform:scale(.96)}
-    #ffExit{display:none;font-size:13px;color:#5a6080;line-height:1.8;padding-top:4px}
-    #ffExit a{color:#f0a500;font-weight:700;cursor:pointer;text-decoration:none}
-    #ffExit a:hover{text-decoration:underline}
-  `;
-  document.head.appendChild(style);
-
-  const modal=document.createElement('div');
-  modal.id='ffOverlay';
-  modal.innerHTML=`
-    <div id="ffBox">
-      <div id="ffGem">
-        <svg width="26" height="26" viewBox="0 0 14 14" fill="rgba(255,255,255,.95)">
-          <rect x="1" y="1" width="5" height="5" rx="1"/>
-          <rect x="8" y="1" width="5" height="5" rx="1"/>
-          <rect x="1" y="8" width="5" height="5" rx="1"/>
-          <rect x="8" y="8" width="5" height="5" rx="1"/>
-        </svg>
-      </div>
-      <div id="ffTitle">Welcome to Alaada <b>Sheets</b></div>
-      <div id="ffSub">
-        A full-featured AI spreadsheet — formulas, charts,<br>voice commands, and Tally export.
-      </div>
-      <div id="ffFeatures">
-        <div class="ff-feat"><span>✓</span> Excel formulas</div>
-        <div class="ff-feat"><span>✓</span> Orbit AI</div>
-        <div class="ff-feat"><span>✓</span> Charts</div>
-        <div class="ff-feat"><span>✓</span> Tally export</div>
-      </div>
-      <div id="ffBtns">
-        <button id="ffYes">✓ Yes, open Sheets</button>
-        <button id="ffNo">✕ No thanks</button>
-      </div>
-      <div id="ffExit">
-        No problem — come back any time.<br>
-        <a id="ffBack">Changed your mind? Click here →</a>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  function dismiss(){
-    modal.remove();
-    document.getElementById('gscroll')?.focus({preventScroll:true});
-  }
-
-  async function recordFootfall(){
-    try{
-      await window.AlaadaWorkspace.productFetch(API+'/api/footfall',{method:'POST',headers:{'Content-Type':'application/json'}});
-    }catch(_){}
-  }
-
-  document.getElementById('ffYes').addEventListener('click',async()=>{
-    rememberWelcome();
-    dismiss();
-    await recordFootfall();
-  });
-
-  document.getElementById('ffNo').addEventListener('click',()=>{
-    rememberWelcome();
-    document.getElementById('ffBtns').style.display='none';
-    document.getElementById('ffSub').style.display='none';
-    document.getElementById('ffFeatures').style.display='none';
-    document.getElementById('ffExit').style.display='block';
-    const app=document.getElementById('app');
-    app.style.filter='brightness(.35) blur(1px)';
-    app.style.pointerEvents='none';
-  });
-
-  document.getElementById('ffBack').addEventListener('click',async()=>{
-    const app=document.getElementById('app');
-    app.style.filter='';
-    app.style.pointerEvents='';
-    dismiss();
-    await recordFootfall();
-  });
-  };
-  const workspaceReady=window.AlaadaWorkspace?.ready;
-  if(workspaceReady)workspaceReady.then(mount,()=>{});else mount();
-})();
-</script>
+<!-- Sheets opens directly. Onboarding remains available from Help (F1). -->
 
 <script>
 /* Alaada Simulate: workbook-native Monte Carlo builder and results dashboard. */
@@ -2537,7 +2461,7 @@ G._simulationCommands=G._commands;G._commands=function(){return[...G._simulation
 <div id="uiLiveRegion" aria-live="polite" aria-atomic="true"></div>
 <script>
 /* Coherent workspace shell layered over the existing spreadsheet engine. */
-G._uiState={outlineOpen:false,saveState:'saved',lastFocus:null};
+G._uiState={outlineOpen:false,saveState:'loading',lastFocus:null};
 G.announce=function(message){const node=document.getElementById('uiLiveRegion');if(node){node.textContent='';requestAnimationFrame(()=>node.textContent=String(message||''))}};
 G.setSaveState=function(state,label){const node=document.getElementById('saveState');if(!node)return;const labels={saved:'Saved',saving:'Saving…',offline:'Offline',error:'Save error',conflict:'Conflict',unsaved:'Unsaved changes'};node.dataset.state=state;node.textContent=label||labels[state]||state;this._uiState.saveState=state};
 G.markCollaborationConflict=function(remoteChanges=0,localChanges=0){this.setSaveState('conflict');this.announce(`Workbook conflict detected. Rebasing ${localChanges} local changes over ${remoteChanges} remote changes.`);this.toast(`Conflict detected · reviewing ${remoteChanges} remote and ${localChanges} local change${localChanges===1?'':'s'}`,'warn');this._recordAction('Collaboration conflict',`${remoteChanges} remote · ${localChanges} local`);return true};
@@ -2545,7 +2469,7 @@ G._uiResolveCollaborationConflict=G._resolveCollaborationConflict;G._resolveColl
 G._uiSyncCollaboration=G.syncCollaboration;G.syncCollaboration=async function(){const result=await G._uiSyncCollaboration.apply(G,arguments);if(this._uiState.saveState==='conflict'&&!this._collab.pending.length&&!this._collab.inflight.length)this.setSaveState('saved','Conflict resolved');return result};
 G._uiScheduleAutosave=G._scheduleAutosave;G._scheduleAutosave=function(){G.setSaveState(navigator.onLine===false?'offline':'unsaved');return G._uiScheduleAutosave.apply(G,arguments)};
 G._uiSaveSnapshot=G._saveSnapshot;G._saveSnapshot=async function(){G.setSaveState(navigator.onLine===false?'offline':'saving');try{const result=await G._uiSaveSnapshot.apply(G,arguments);G.setSaveState(result?'saved':'error');return result}catch(error){G.setSaveState('error');throw error}};
-G.applyUiTheme=function(theme){const value=theme==='light'?'light':'dark';document.documentElement.dataset.uiTheme=value;try{window.AlaadaWorkspace.storage.setItem('alaada.uiTheme',value)}catch{};document.querySelector('[aria-label="Switch theme"]')?.setAttribute('title',value==='dark'?'Switch to light theme':'Switch to dark theme');this.announce(`${value} theme active`);return value};
+G.applyUiTheme=function(theme){const value=theme==='light'?'light':'dark';document.documentElement.dataset.uiTheme=value;try{document.cookie='alaada_sheets_theme='+value+'; Max-Age=31536000; Path=/; SameSite=Lax; Secure'}catch{}try{window.AlaadaWorkspace.storage.setItem('alaada.uiTheme',value)}catch{};document.querySelector('[aria-label="Switch theme"]')?.setAttribute('title',value==='dark'?'Switch to light theme':'Switch to dark theme');this.announce(`${value} theme active`);return value};
 G.toggleUiTheme=function(){return this.applyUiTheme(document.documentElement.dataset.uiTheme==='light'?'dark':'light')};
 G.toggleSpreadsheetFullscreen=function(force){const active=force===undefined?!document.body.classList.contains('ui-fullscreen'):!!force;document.body.classList.toggle('ui-fullscreen',active);this.announce(active?'Distraction-free spreadsheet mode':'Standard workspace mode');return active};
 G.workspaceSearchKey=function(event){if(event.key==='Escape'){event.currentTarget.value='';event.currentTarget.blur();return}if(event.key!=='Enter')return;event.preventDefault();const query=event.currentTarget.value.trim();if(!query)return this.openCommandPalette();const hits=this.findWorkbook(query,50);if(hits.length){const hit=hits[0];this.si=hit.sheet;this.renderTabs();this.renderCharts();this.moveTo(hit.r,hit.c);this.toast(`${hits.length} workbook match${hits.length===1?'':'es'} · ${hit.sheetName}!${hit.ref}`,'ok')}else{this.openCommandPalette();const input=document.getElementById('cmdinput');if(input){input.value=query;this.renderCommandPalette(query)}}};
@@ -2565,7 +2489,7 @@ G.updateFormulaAssist=function(){const input=document.getElementById('fbarinput'
 G._uiFbSync=G.fbSync;G.fbSync=function(){const result=G._uiFbSync.apply(G,arguments);G.updateFormulaAssist();return result};
 G.updateEmptySheetCoach=function(){const coach=document.getElementById('emptySheetCoach');if(!coach)return;coach.hidden=Object.keys(this.sh?.cells||{}).some(ref=>String(this.sh.cells[ref]?.value??this.sh.cells[ref]??'').trim()!=='')};
 G._uiRender=G.render;G.render=function(){const result=G._uiRender.apply(G,arguments);G.updateEmptySheetCoach();if(G._uiState.outlineOpen)G.renderWorkspaceOutline(document.getElementById('outlineSearch')?.value||'');return result};
-G._initWorkspaceUi=function(){let theme='dark';try{theme=window.AlaadaWorkspace.storage.getItem('alaada.uiTheme')||'dark'}catch{}this.applyUiTheme(theme);document.querySelectorAll('.rtab').forEach(tab=>{tab.setAttribute('role','tab');tab.setAttribute('tabindex',tab.classList.contains('active')?'0':'-1')});document.getElementById('rtabs')?.setAttribute('role','tablist');document.querySelectorAll('button').forEach(button=>{if(!button.getAttribute('aria-label')&&!button.title){const label=button.textContent.trim().replace(/\s+/g,' ');if(label)button.title=label}});this.renderTabs();this.updateEmptySheetCoach();const resize=document.getElementById('outlineResize'),panel=document.getElementById('workspaceOutline');let dragging=false;try{const width=Number(window.AlaadaWorkspace.storage.getItem('alaada.outlineWidth'));if(width>=220&&width<=480)panel.style.width=`${width}px`}catch{}resize?.addEventListener('pointerdown',event=>{dragging=true;resize.setPointerCapture(event.pointerId)});resize?.addEventListener('pointermove',event=>{if(!dragging)return;panel.style.width=`${Math.max(220,Math.min(480,event.clientX))}px`});resize?.addEventListener('pointerup',()=>{dragging=false;try{window.AlaadaWorkspace.storage.setItem('alaada.outlineWidth',parseInt(panel.style.width))}catch{}});document.addEventListener('pointerdown',event=>{if(!event.target.closest('#workspaceMenu,[aria-haspopup="menu"]'))G.closeWorkspaceMenu();if(!event.target.closest('#sheetTabMenu,.stab'))G.closeSheetTabMenu()});document.addEventListener('keydown',event=>{if(event.key==='F11'){event.preventDefault();G.toggleSpreadsheetFullscreen()}const dialog=[...document.querySelectorAll('[role="dialog"][aria-modal="true"]')].filter(node=>getComputedStyle(node).display!=='none'&&node.getAttribute('aria-hidden')!=='true').pop();if(!dialog||event.key!=='Tab')return;const focusable=[...dialog.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])')].filter(node=>node.offsetParent!==null);if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}});window.addEventListener('online',()=>G.setSaveState('saved'));window.addEventListener('offline',()=>G.setSaveState('offline'));this.setSaveState(navigator.onLine===false?'offline':'saved')};
+G._initWorkspaceUi=function(){let theme=document.documentElement.dataset.uiTheme||'dark';try{theme=window.AlaadaWorkspace.storage.getItem('alaada.uiTheme')||'dark'}catch{}this.applyUiTheme(theme);document.querySelectorAll('.rtab').forEach(tab=>{tab.setAttribute('role','tab');tab.setAttribute('tabindex',tab.classList.contains('active')?'0':'-1')});document.getElementById('rtabs')?.setAttribute('role','tablist');document.querySelectorAll('button').forEach(button=>{if(!button.getAttribute('aria-label')&&!button.title){const label=button.textContent.trim().replace(/\s+/g,' ');if(label)button.title=label}});this.renderTabs();this.updateEmptySheetCoach();const resize=document.getElementById('outlineResize'),panel=document.getElementById('workspaceOutline');let dragging=false;try{const width=Number(window.AlaadaWorkspace.storage.getItem('alaada.outlineWidth'));if(width>=220&&width<=480)panel.style.width=`${width}px`}catch{}resize?.addEventListener('pointerdown',event=>{dragging=true;resize.setPointerCapture(event.pointerId)});resize?.addEventListener('pointermove',event=>{if(!dragging)return;panel.style.width=`${Math.max(220,Math.min(480,event.clientX))}px`});resize?.addEventListener('pointerup',()=>{dragging=false;try{window.AlaadaWorkspace.storage.setItem('alaada.outlineWidth',parseInt(panel.style.width))}catch{}});document.addEventListener('pointerdown',event=>{if(!event.target.closest('#workspaceMenu,[aria-haspopup="menu"]'))G.closeWorkspaceMenu();if(!event.target.closest('#sheetTabMenu,.stab'))G.closeSheetTabMenu()});document.addEventListener('keydown',event=>{if(event.key==='F11'){event.preventDefault();G.toggleSpreadsheetFullscreen()}const dialog=[...document.querySelectorAll('[role="dialog"][aria-modal="true"]')].filter(node=>getComputedStyle(node).display!=='none'&&node.getAttribute('aria-hidden')!=='true').pop();if(!dialog||event.key!=='Tab')return;const focusable=[...dialog.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])')].filter(node=>node.offsetParent!==null);if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}});window.addEventListener('online',()=>{if(G._uiState.saveState==='offline')G.setSaveState('unsaved','Reconnected · retry save')});window.addEventListener('offline',()=>G.setSaveState('offline'));this.setSaveState(navigator.onLine===false?'offline':'loading',navigator.onLine===false?'Offline':'Connecting…')};
 G._uiCommands=G._commands;G._commands=function(){return[...G._uiCommands.call(G),{label:'Toggle workbook outline',category:'View',keywords:'navigator sheets tables charts models simulations',action:()=>G.toggleWorkspaceOutline()},{label:'Switch light or dark theme',category:'View',keywords:'appearance contrast',action:()=>G.toggleUiTheme()},{label:'Distraction-free spreadsheet mode',category:'View',keywords:'fullscreen focus',action:()=>G.toggleSpreadsheetFullscreen()},{label:'Expand formula editor',category:'Formulas',keywords:'formula bar multiline',action:()=>G.toggleFormulaBar(true)},{label:'Refresh simulation report',category:'Analyze',keywords:'rerun monte carlo report seed',action:()=>G.refreshSimulationReport()}]};
 G._analystIgnored=new Set();
 G._analystKey=function(item){return`${item.sheet_index??this.si}|${item.type||''}|${(item.cells||[]).join(',')}|${item.message||''}`};
