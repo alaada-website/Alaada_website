@@ -387,7 +387,7 @@ select{cursor:pointer;}
 </head>
 <body data-alaada-product="accounts">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=f1614d77fd43" data-product="accounts"></script>
+<script src="/workspace-product-client.js?v=7da20545d117" data-product="accounts"></script>
 <script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 
 <!-- ============== API GATE (first run / connection lost) ============== -->
@@ -840,7 +840,7 @@ let APPWRITE_JWT = '';
 let APPWRITE_JWT_EXPIRES_AT = 0;
 let APPWRITE_JWT_PROMISE = null;
 
-async function fetchWithTimeout(input, init={}, timeoutMs=10000){
+async function fetchWithTimeout(input, init={}, timeoutMs=90000){
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(new DOMException('Accounts request timed out. Retry the connection.', 'TimeoutError')), timeoutMs);
   const externalSignal = init.signal;
@@ -884,7 +884,13 @@ async function accountsAuthJSON(response, field){
 
 async function ensureAccountsIdentity({redirect=true} = {}){
   await window.AlaadaWorkspace.ready;
-  await window.AlaadaWorkspace.verify();
+  // The shared client has already verified the cookie session and workspace.
+  // It checks current identity again for each API call; do not mint a second
+  // JWT or repeat the whole bootstrap before every Accounts request.
+  if (window.AlaadaWorkspace.user) {
+    APPWRITE_USER = {$id:window.AlaadaWorkspace.user};
+    return APPWRITE_USER;
+  }
   if (!APPWRITE_AUTH_REQUIRED) return null;
   if (APPWRITE_USER) return APPWRITE_USER;
   try {
@@ -927,7 +933,8 @@ async function apiAuthHeaders(extra={}){
         origin:urlOrigin(API_BASE),
       });
     }
-    headers.Authorization = `Bearer ${await getAppwriteJwt()}`;
+    // Authorization is attached by AlaadaWorkspace.productFetch, not a second
+    // independent token cache on this page.
   }
   if (API_KEY && !headers['X-Alaada-API-Key']) headers['X-Alaada-API-Key'] = API_KEY;
   return headers;
@@ -955,12 +962,13 @@ let STATE = {
   openapi: null,
   openapiOperations: [],
   apiExplorerSelected: null,
+  capabilities: {},
 };
 
 /* ============================================================
    API WRAPPER
    ============================================================ */
-async function api(path, {method='GET', body=null, qs=null, raw=false, headers={}, formData=null, timeoutMs=10000} = {}) {
+async function api(path, {method='GET', body=null, qs=null, raw=false, headers={}, formData=null, timeoutMs=90000} = {}) {
   let url = API_BASE.replace(/\/$/,'') + path;
   if (qs) {
     const params = Object.entries(qs).filter(([,v]) => v !== undefined && v !== null && v !== '');
@@ -983,7 +991,7 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
       if (e instanceof ApiError) throw e;
       throw new ApiError('Could not reach the API. Check the URL and that the server is running.', 0, {code:'NETWORK_OR_CORS', endpoint:url});
     }
-    if (res.status !== 401 || attempt === 1 || !APPWRITE_AUTH_REQUIRED) break;
+    if (res.status !== 401 || attempt === 1 || !APPWRITE_AUTH_REQUIRED || window.AlaadaWorkspace.user) break;
     APPWRITE_JWT = '';
     APPWRITE_JWT_EXPIRES_AT = 0;
     // Keep body metadata and retry keys when refreshing only the credential.
@@ -1703,8 +1711,9 @@ async function tryConnect(url, {silent=false} = {}) {
   API_KEY = DEVELOPER_MODE ? gateApiKey.value.trim() : API_KEY;
   if (!silent) { gateStatus.innerHTML = '<span class="spin"></span> Connecting…'; }
   try {
-    const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
+    const res = await fetchWithTimeout(API_BASE + '/health');
     if (!res.ok) throw await healthResponseError(res);
+    STATE.capabilities = (await res.json()).capabilities || {};
     if (isDeveloperFrontend() || isTrustedAccountsApiBase(API_BASE)) window.AlaadaWorkspace.storage.setItem(LS.api, API_BASE);
     else window.AlaadaWorkspace.storage.removeItem(LS.api);
     setApiStatus('up');
@@ -1778,14 +1787,19 @@ async function bootstrap() {
     await loadCompanies();
     renderSidebarRouting();
     navigate(STATE.currentView);
-    pollHealth();
-    loadOpenApiSpec().catch(()=>{});
+    if (developerModeAllowed() && DEVELOPER_MODE) loadOpenApiSpec().catch(()=>{});
   })().finally(() => { bootstrapPromise = null; });
   return bootstrapPromise;
 }
-setInterval(() => { if (API_BASE) pollHealth(); }, 20000);
+let healthPollPromise = null;
+setInterval(() => { if (API_BASE && !document.hidden && !autoConnectPromise && STATE.companies.length) pollHealth(); }, 120000);
 async function pollHealth(){
-  try { const r = await fetchWithTimeout(API_BASE + '/health', {}, 10000); setApiStatus(r.ok ? 'up' : 'down'); } catch(e){ setApiStatus('down'); }
+  if (healthPollPromise) return healthPollPromise;
+  healthPollPromise = (async()=>{
+    try { const r = await fetchWithTimeout(API_BASE + '/health'); setApiStatus(r.ok ? 'up' : 'down'); }
+    catch(e){ setApiStatus('down'); }
+  })().finally(()=>{healthPollPromise=null;});
+  return healthPollPromise;
 }
 
 /* ============================================================
@@ -1885,7 +1899,7 @@ function classifyAccountsError(error, phase){
   } else if (status === 503) {
     kind = 'database_or_migrations';
     title = 'Accounts database is not ready';
-    message = 'The server is reachable, but the database or migrations are not ready yet. Retry after a moment.';
+    message = error?.message || 'Accounts is not ready yet. Retry the connection after a moment.';
   } else if (String(code).toUpperCase() === 'MALFORMED_RESPONSE') {
     kind = 'malformed_response';
     title = 'Accounts returned an unexpected response';
@@ -1901,10 +1915,9 @@ function classifyAccountsError(error, phase){
 function renderConnectingView(attempt){
   view().innerHTML = `<div class="empty" style="padding-top:80px;">
     <div class="empty-icon"><span class="spin" style="width:26px;height:26px;border-width:3px;"></span></div>
-    <h4>${attempt>1 ? 'Reconnecting to Accounts…' : 'Opening Alaada Accounts…'}</h4>
-    <p>${attempt>1
-        ? `The service is taking longer to respond. Retrying the connection.`
-        : `Setting things up for you.`}</p>
+    <h4>Opening Alaada Accounts…</h4>
+    <p>The Free server may need up to a minute to wake after being idle. This is one connection attempt; your work has not been changed.</p>
+    <p><a href="/workspaces">Open workspaces</a> · <a href="/">All products</a></p>
     ${technicalDetails([['Endpoint', API_BASE], ['Attempt', attempt]])}
   </div>`;
 }
@@ -1981,14 +1994,14 @@ async function startAutoConnect(){
     gateUrl.value = API_BASE;
     setApiStatus('connecting');
     renderConnectingView(1);
-    const delays = [0, 2000, 3000, 5000, 8000, 8000, 8000, 8000]; // ~40s of gentle retries
+    const delays = [0]; // One bounded request; never start overlapping cold-start retries.
     let lastError = null;
     for (let i = 0; i < delays.length; i++) {
       if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
       if (i > 0) renderConnectingView(i+1);
       try {
-        const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
-        if (res.ok) { window.AlaadaWorkspace.storage.setItem(LS.api, API_BASE); setApiStatus('up'); await bootstrap(); return true; }
+        const res = await fetchWithTimeout(API_BASE + '/health');
+        if (res.ok) { STATE.capabilities = (await res.json()).capabilities || {}; setApiStatus('up'); await bootstrap(); return true; }
         lastError = await healthResponseError(res);
       } catch(e) { lastError = normalizeConnectionError(e, API_BASE + '/health'); }
       if(!classifyAccountsError(lastError,'opening Accounts').retryable)break;
@@ -2064,9 +2077,17 @@ async function selectCompany(id, {silentNav=false} = {}) {
   clearCompanyScopedLoadStates();
   document.getElementById('co-current').textContent = 'Loading company…';
   view().innerHTML = '<div class="loading-row"><span class="spin"></span> Loading company…</div>';
+  let bundledCompany = null;
   try {
-    const company = await api(`/companies/${id}`);
+    if (STATE.capabilities.company_bootstrap) bundledCompany = await api(`/companies/${id}/bootstrap`);
+    const company = bundledCompany ? bundledCompany.company : await api(`/companies/${id}`);
     if (!sameCompanyGeneration(id, generation)) return;
+    if (!company || company.id !== id) throw new ApiError('Accounts returned a different company.',502,{code:'MALFORMED_RESPONSE'});
+    if (bundledCompany) {
+      const keys=['groups','ledgers','voucherTypes','financialYears','customers','suppliers','categories','uoms','warehouses','stockItems','gstRates','taxClassifications'];
+      if (keys.some(key=>!Array.isArray(bundledCompany[key]))) throw new ApiError('Company data was incomplete. Retry loading.',502,{code:'MALFORMED_RESPONSE'});
+      for (const key of keys) { STATE[key]=bundledCompany[key]; setLoadState(key,STATE[key].length?'loaded':'loaded_empty',{companyId:id}); }
+    }
     STATE.company = company;
   } catch(e) {
     if (!sameCompanyGeneration(id, generation)) return;
@@ -2091,7 +2112,7 @@ async function selectCompany(id, {silentNav=false} = {}) {
   }
   document.getElementById('co-current').textContent = STATE.company.name;
   renderCompanyMenu();
-  const scopedResults = await Promise.allSettled([
+  const scopedResults = bundledCompany ? [] : await Promise.allSettled([
     loadGroups(generation, id), loadLedgers(generation, id), loadVoucherTypes(generation, id), loadFinancialYears(generation, id),
     loadCustomers(generation, id), loadSuppliers(generation, id), loadCategories(generation, id), loadUoms(generation, id),
     loadWarehouses(generation, id), loadStockItems(generation, id), loadGstRates(generation, id), loadTaxClassifications(generation, id),

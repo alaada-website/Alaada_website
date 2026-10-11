@@ -125,7 +125,12 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   assert.equal(forwarded.options.headers.Authorization,'Bearer verified-token');
   assert.equal(forwarded.options.headers['X-Alaada-Workspace'],'personal');
   assert.equal(forwarded.options.body,JSON.stringify({name:'Cash'}));
-  assert(!accounts.requests.some(r=>r.url.startsWith('https://accounts-0o52.onrender.com')));
+  const direct=accounts.requests.filter(r=>r.url.startsWith('https://accounts-0o52.onrender.com'));
+  assert.equal(direct.length,1,'Only the credential-free public wake-up may bypass the gateway');
+  assert.equal(direct[0].url,'https://accounts-0o52.onrender.com/health');
+  assert.equal(direct[0].options.mode,'no-cors');
+  assert.equal(direct[0].options.headers,undefined);
+  assert.equal(direct[0].options.body,undefined);
   assert.match(forwarded.options.headers['Idempotency-Key'],/^[A-Za-z0-9_.:-]{16,180}$/);
   const accountOptions={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Private business'})};
   const accountAttempts=env=>env.requests.filter(r=>r.url.endsWith('/accounts/companies'));

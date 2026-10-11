@@ -83,6 +83,18 @@ function accountsIdentity(reply){
   return {redirects,requests,run:expression=>vm.runInContext(expression,context)};
 }
 
+test('Accounts reuses verified workspace identity without duplicate JWT/startup reads',async()=>{
+  const env=accountsIdentity(()=>{throw new Error('Unexpected duplicate auth request');});
+  env.run("window.AlaadaWorkspace.user='alice'");
+  assert.equal((await env.run('ensureAccountsIdentity()')).$id,'alice');
+  assert.equal(env.requests.length,0);
+  const source=read('Accounts.html');
+  assert.match(source,/const delays = \[0\]/);
+  assert(!source.includes("'/health', {}, 10000"));
+  assert.match(source,/bundledCompany = await api\(`\/companies\/\$\{id\}\/bootstrap`\)/);
+  assert.match(source,/bundledCompany \? \[\] : await Promise.allSettled/);
+});
+
 for(const [body,status,expected] of [['',200,502],['<html>Bad gateway</html>',502,502],['',503,503],['{',200,502],['{}',200,502],['',403,403]]){
   test(`Accounts auth does not redirect for an empty, malformed or non-auth failure (${status}, ${body})`,async()=>{
     const env=accountsIdentity(()=>new Response(body,{status}));

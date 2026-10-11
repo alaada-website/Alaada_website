@@ -166,8 +166,10 @@
       const timeoutMs=method==='POST'&&/\/analyser\/analyze$/.test(path)?210000:
         method==='POST'&&/\/orbit\/reply$/.test(path)?120000:
         method==='POST'&&/\/sheets\/execute\//.test(path)?150000:
+        method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:
+        /\/accounts\//.test(path)?90000:
         (method==='POST'&&/\/sheets\/formula$/.test(path)||method==='GET'&&/\/entitlements(?:\?|$)/.test(path))?90000:
-        method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:25000;
+        25000;
       const response=await request('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))},'Alaada workspace service',!!rawOptions,timeoutMs);
       // Reads already start with a fresh Appwrite identity check. Recheck writes
       // after the gateway call because they can change private state while the
@@ -423,8 +425,11 @@
     if(document.head&&document.createElement){for(const href of [new URL(endpoint).origin,'https://alaada-workspaces.onrender.com']){const link=document.createElement('link');link.rel='preconnect';link.href=href;link.crossOrigin='anonymous';document.head.append(link)}}
     // Warm the known Free service without credentials while Appwrite verifies
     // the session. This is a best-effort public health read, never authority.
-    const wake=new AbortController(),wakeTimer=setTimeout(()=>wake.abort(),10000);
-    nativeFetch('https://alaada-workspaces.onrender.com/health',{mode:'no-cors',cache:'no-store',signal:wake.signal}).catch(()=>{}).finally(()=>clearTimeout(wakeTimer));
+    const productHealth={accounts:'https://accounts-0o52.onrender.com/health',orbit:'https://orbitapi2.onrender.com/health',sheets:'https://spreadsheets-q70y.onrender.com/health'};
+    for(const url of ['https://alaada-workspaces.onrender.com/health',productHealth[product]].filter(Boolean)){
+      const wake=new AbortController(),wakeTimer=setTimeout(()=>wake.abort(),65000);
+      nativeFetch(url,{mode:'no-cors',cache:'no-store',signal:wake.signal}).catch(()=>{}).finally(()=>clearTimeout(wakeTimer));
+    }
     try {
       const requested=new URL(location.href).searchParams.get('workspace');
       const hinted=!requested?cookieGet(ACTIVE_WORKSPACE_COOKIE):'';
