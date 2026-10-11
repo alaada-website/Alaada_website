@@ -12,6 +12,7 @@
 <meta name="description" content="Orbit AI helps with research, analysis, files, and everyday work."/>
 <link rel="canonical" href="https://www.alaada.com/Orbit.html"/>
 <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.4.16/dist/purify.min.js"></script>
 <script>
   MathJax = {
     tex: { inlineMath:[['$','$'],['\\(','\\)']], displayMath:[['$$','$$'],['\\[','\\]']], processEscapes:true, processEnvironments:true },
@@ -989,9 +990,10 @@ body {
 /* ═══════════════════════════════════
    MOBILE
 ═══════════════════════════════════ */
-@media (max-width: 639px) {
+@media (max-width: 899px) {
   .sidebar {
-    position: fixed; top:0; left:0; bottom:0;
+    position: fixed; top:var(--alaada-workspace-bar-height,36px); left:0; bottom:0;
+    max-width: min(86vw,320px);
     transform: translateX(-100%);
     box-shadow: 8px 0 32px rgba(0,0,0,.12);
   }
@@ -1009,7 +1011,7 @@ body {
 /* ═══════════════════════════════════
    DESKTOP
 ═══════════════════════════════════ */
-@media (min-width: 640px) {
+@media (min-width: 900px) {
   .sidebar        { transform: none !important; position: relative; }
   #mobileHeader   { display: none !important; }
   #overlay        { display: none !important; }
@@ -1028,11 +1030,19 @@ body {
   #inputTextarea { border-radius: 14px; font-size: 14px; }
   .rnd-btn, #sendBtn { border-radius: var(--r-md); width: auto; height: auto; padding: 10px 14px; }
 }
+/* Keep the composer reachable on narrow and short screens. */
+.input-row{min-width:0}
+#inputTextarea{min-width:0}
+.message-wrap{min-width:0}
+.message{overflow-wrap:anywhere;max-width:100%;overflow-x:auto}
+#statusBar{overflow-wrap:anywhere;padding:6px 14px;line-height:1.4}
+#toast{white-space:normal;overflow-wrap:anywhere;border-radius:12px}
+@media(max-width:420px){.input-row{gap:4px;padding:8px}.rnd-btn,#sendBtn{width:36px;min-width:36px;height:40px}.welcome-container{padding:16px 0}.welcome-logo{width:48px;height:48px}}
 </style>
 </head>
 <body data-alaada-product="orbit">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=a35472c40a90" data-product="orbit"></script>
+<script src="/workspace-product-client.js?v=f1614d77fd43" data-product="orbit"></script>
 <script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 <div id="app">
 
@@ -1046,7 +1056,6 @@ body {
           <circle cx="14" cy="14" r="7.5"  stroke="#1a5fff" stroke-width="1.4" fill="none" opacity=".45"/>
           <circle cx="14" cy="14" r="2.8"  fill="#1a5fff"/>
           <circle cx="22.5" cy="9" r="2"   fill="#00957a">
-            <animateTransform attributeName="transform" type="rotate" from="0 14 14" to="360 14 14" dur="5s" repeatCount="indefinite"/>
           </circle>
         </svg>
         Orbit
@@ -1130,9 +1139,11 @@ body {
   <div class="sheet" id="profileSheet">
     <div class="sheet-handle"></div>
     <h2 id="sheetTitle">Your Profile</h2>
-    <label>Name *</label>
+    <p class="welcome-subtitle">Optional preferences for this workspace. You can chat without completing this form.</p>
+    <button type="button" class="save-btn secondary" onclick="closeSheet()">Close profile</button>
+    <label for="p_name">Name</label>
     <input id="p_name" placeholder="Your name" autocomplete="name" inputmode="text">
-    <label>Email *</label>
+    <label for="p_email">Email (optional)</label>
     <input id="p_email" type="email" placeholder="your@email.com" autocomplete="email" inputmode="email">
     <div class="field-row">
       <div><label>Age</label><input id="p_age" type="number" placeholder="Age" inputmode="numeric" min="1" max="120"></div>
@@ -1257,6 +1268,9 @@ let recorder = null, chunks = [], busy = false;
 ═══════════════════════════════════ */
 function parseMathMarkdown(text) {
   if (!text || text === "__TYPING__") return text;
+  // Both saved messages and model output are untrusted. A blocked CDN must
+  // degrade to readable plain text rather than break chat or insert raw HTML.
+  if (!window.marked?.parse || !window.DOMPurify?.sanitize) return escHtml(text).replace(/\n/g,'<br>');
   const blocks = [];
 
   // 1. Display math: \[...\]  (highest priority — do before $$)
@@ -1289,7 +1303,7 @@ function parseMathMarkdown(text) {
   // 6. Restore all math blocks
   html = html.replace(/\x02MATH(\d+)\x03/g, (_, i) => blocks[+i]);
 
-  return html;
+  return window.DOMPurify.sanitize(html,{USE_PROFILES:{html:true},FORBID_TAGS:['style','form','input','button'],FORBID_ATTR:['style','id','name']});
 }
 
 window.addEventListener("load", async () => {
@@ -1300,11 +1314,11 @@ window.addEventListener("load", async () => {
   imageGallery = JSON.parse(window.AlaadaWorkspace.storage.getItem('orbit_images') || '[]');
   voiceConfig = JSON.parse(window.AlaadaWorkspace.storage.getItem('orbit_voice') || 'null') || voiceConfig;
   autoResizeTA();
-  swipeToDismissSheet("profileSheet", "profileModal", () => profile?.name && profile?.email);
+  swipeToDismissSheet("profileSheet", "profileModal", () => true);
   swipeToDismissSheet("voiceSheet",   "voiceModal",   () => true);
   if (!threads.length || threads[0].messages.length > 0) createThread();
   else openThread(threads[0].id);
-  if (!profile?.name || !profile?.email) openSheet(true);
+  // Appwrite already owns identity. A second profile form must never gate chat.
   refreshProfileUI(); checkBirthday(); connectWS(); renderImageGallery(); buildVoiceCards(); syncVoiceBtn();
 
   const vBtn = document.getElementById("voiceBtn");
@@ -1684,7 +1698,6 @@ function renderChat() {
           <circle cx="14" cy="14" r="7"  stroke="#1a5fff" stroke-width="1.5" fill="none" opacity=".5"/>
           <circle cx="14" cy="14" r="2.8" fill="#1a5fff"/>
           <circle cx="22" cy="9" r="2" fill="#00957a">
-            <animateTransform attributeName="transform" type="rotate" from="0 14 14" to="360 14 14" dur="5s" repeatCount="indefinite"/>
           </circle>
         </svg>
       </div>
@@ -1761,7 +1774,7 @@ function autoTitle() {const t=activeThread();if(!t||t.title!=="New Chat")return;
 function refreshProfileUI() {
   const name=profile?.name||"",email=profile?.email||"",letter=name?name[0].toUpperCase():"?";
   document.getElementById("sidebarAvatar").textContent=letter;document.getElementById("mobileAvatarBtn").textContent=letter;
-  document.getElementById("sidebarName").textContent=name||"Set up profile";document.getElementById("sidebarEmail").textContent=email||"";
+  document.getElementById("sidebarName").textContent=name||"Chat preferences";document.getElementById("sidebarEmail").textContent=email||"Optional profile";
 }
 
 function openSheet(force=false) {
@@ -1774,13 +1787,14 @@ function closeSheet(){document.getElementById("profileModal").classList.remove("
 
 function saveProfile() {
   const name=document.getElementById("p_name").value.trim(),email=document.getElementById("p_email").value.trim();
-  if(!name){toast("Name is required.");return;}if(!email){toast("Email is required.");return;}
+  if(email&&!document.getElementById("p_email").checkValidity()){toast("Enter a valid email or leave it blank.");return;}
   const dob=document.getElementById("p_dob").value;if(dob&&new Date(dob)>=new Date()){toast("DOB must be in the past.");return;}
   profile={name,email,age:document.getElementById("p_age").value.trim(),dob,profession:document.getElementById("p_profession").value.trim(),hobby:document.getElementById("p_hobby").value.trim(),country:document.getElementById("p_country").value.trim(),skills:document.getElementById("p_skills").value.trim(),style:document.getElementById("p_style").value};
   window.AlaadaWorkspace.storage.setItem("orbit_profile",JSON.stringify(profile));refreshProfileUI();closeSheet();toast("Profile saved ✓");
 }
 
-document.getElementById("profileModal").addEventListener("click",(e)=>{if(e.target===document.getElementById("profileModal"))if(profile?.name&&profile?.email)closeSheet();});
+document.getElementById("profileModal").addEventListener("click",(e)=>{if(e.target===document.getElementById("profileModal"))closeSheet();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();closeVoiceModal();closeSidebar();}});
 
 function checkBirthday() {if(!profile?.dob)return;const today=new Date().toISOString().slice(0,10);if(profile.dob.slice(5,10)!==today.slice(5,10))return;if(window.AlaadaWorkspace.storage.getItem("orbit_bday")===today)return;const t=activeThread();if(t){t.messages.push({role:"assistant",text:`🎉 Happy Birthday, **${profile.name}**! Hope it's amazing! 🎂`});saveThreads();renderChat();}window.AlaadaWorkspace.storage.setItem("orbit_bday",today);}
 

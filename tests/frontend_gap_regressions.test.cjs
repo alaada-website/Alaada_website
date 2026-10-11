@@ -6,6 +6,18 @@ const vm=require('node:vm');
 const root=path.resolve(__dirname,'..');
 const read=name=>fs.readFileSync(path.join(root,name),'utf8');
 
+test('Every product fits below the workspace bar without covering bottom controls',()=>{
+  const source=read('workspace-product-client.js');
+  assert.match(source,/--alaada-workspace-bar-height:36px/);
+  for(const product of ['orbit','sheets','accounts','analyser'])assert(source.includes('body[data-alaada-product='+product+']'));
+  assert(source.includes('height:calc(100dvh - var(--alaada-workspace-bar-height))'));
+  assert(source.includes('#topbar{top:var(--alaada-workspace-bar-height)}'));
+  assert(source.includes('nav{top:var(--alaada-workspace-bar-height)}'));
+  assert.match(read('Orbit.html'),/@media \(max-width: 899px\)/);
+  assert.match(read('Orbit.html'),/#inputTextarea\{min-width:0\}/);
+  assert.match(read('Orbit.html'),/#toast\{white-space:normal/);
+});
+
 test('Changed monolithic pages contain syntactically valid inline JavaScript',()=>{
   for(const file of ['index.html','about-us.html','Spreadsheets.html','Orbit.html','Accounts.html','website-analyzer.html']){
     let number=0;
@@ -244,6 +256,17 @@ test('Orbit denied capabilities never consume or clear a draft',async()=>{
   const source=extract(read('Orbit.html'),'async function send()','\n}');
   const send=vm.runInNewContext('('+source+')',{busy:false,orbitCapabilities:{text:false},toast:()=>{},document:{getElementById:()=>input}});
   await send();assert.equal(input.value,'Keep my draft');
+});
+
+test('Orbit never blocks startup on a second profile and safely renders with blocked CDNs',()=>{
+  const source=read('Orbit.html');
+  assert(!source.includes('openSheet(true)'));
+  assert(source.includes('Close profile'));
+  assert(!source.includes('<animateTransform'));
+  const escape=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const render=vm.runInNewContext('('+extract(source,'function parseMathMarkdown(text)','\n}')+')',{window:{},escHtml:escape});
+  assert.equal(render('<img src=x onerror=alert(1)>\nHello'),'&lt;img src=x onerror=alert(1)&gt;<br>Hello');
+  assert(source.includes('return window.DOMPurify.sanitize(html,'));
 });
 
 test('Orbit failure keeps the draft and reuses its pending saved message',async()=>{

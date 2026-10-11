@@ -325,7 +325,7 @@ input[type=number].rb::-webkit-inner-spin-button{-webkit-appearance:none}
   #aist{display:none}
   #aiin::placeholder{font-size:11px}
   #mobnav{display:flex}
-  #stbar{display:none}
+  #stbar{display:flex}
   .ch{font-size:10px}
   .cell{font-size:11px}
   #errbanner{padding:5px 10px}
@@ -482,11 +482,17 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
 @media(max-width:1200px){#engineState{display:none}#workspaceSearchWrap{max-width:200px}}
 @media(max-width:860px){#conn{display:none}}
 @media(max-width:620px){#tbar>[aria-label="Open Help"],#tbar>[aria-label="Open Alaada Simulate"]{display:none}#saveState{display:inline-flex;font-size:10px;max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#docwrap{min-width:50px}#docname{font-size:11px;padding:4px}}
+@media(max-width:600px){
+  #aibar{height:auto;min-height:84px;display:grid;grid-template-columns:minmax(0,1fr) 36px 76px;gap:6px;padding:6px 10px}
+  #aiorb{display:none}#aiin{grid-column:1/3;grid-row:1;width:100%}#airun{grid-column:3;grid-row:1;padding:0 8px}
+  #langsel{grid-column:1;grid-row:2;max-width:150px;width:100%}#micbtn{grid-column:2;grid-row:2}
+  #aibar>.tb.gold{grid-column:3;grid-row:2;justify-content:center}#saveState{max-width:72px;min-width:0}
+}
 </style>
 </head>
 <body data-alaada-product="sheets">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=a35472c40a90" data-product="sheets"></script>
+<script src="/workspace-product-client.js?v=f1614d77fd43" data-product="sheets"></script>
 <script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 <div id="app">
 <h1 class="visually-hidden">Alaada Sheets</h1>
@@ -827,7 +833,7 @@ body.ui-fullscreen #tbar,body.ui-fullscreen #rband,body.ui-fullscreen #aibar{dis
   <div id="splitpane" role="grid" aria-label="Secondary spreadsheet pane" tabindex="0"></div>
   <div id="stbar">
     <div id="stablist"></div>
-    <button id="addst" onclick="G.addSheet()">+</button>
+    <button id="addst" aria-label="Add sheet" onclick="G.addSheet()">+</button>
   </div>
 </div>
 
