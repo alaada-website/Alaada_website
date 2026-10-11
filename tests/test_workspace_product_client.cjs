@@ -16,7 +16,7 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   }
   const document={readyState:'complete',currentScript:{dataset:{product}},body:new Element('body'),
     createElement:tag=>new Element(tag),addEventListener:(type,fn)=>events[type]=fn,hidden:false};
-  Object.defineProperty(document,'cookie',{set:value=>cookies.push(value),get:()=>''});
+  Object.defineProperty(document,'cookie',{set:value=>cookies.push(value),get:()=>config.cookie||''});
   document.body.append(new Element('main'));
   const location={href:'https://alaada.test/'+product+'.html'+requested,origin:'https://alaada.test',pathname:'/'+product+'.html',search:requested,assign:url=>navigation.push(url)};
   const state={user:'alice',workspaces:[{id:'personal',name:'Personal',kind:'personal'},{id:'company',name:'Company',kind:'organisation'}]};
@@ -28,7 +28,8 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
     if(String(url).endsWith('/account/jwts'))return json({jwt:'verified-token'});
     if(String(url).includes('/sheets/execute/'))return operationReply();
     if(String(url).includes('/accounts/'))return accountReply();
-    if(String(url).endsWith('/entitlements'))return json({role:'owner',products:{orbit:{execution_available:true,capabilities:{execution_receipts:true}},analyser:{capabilities:{analysis:true,execution_receipts:true}}}});
+    if(String(url).includes('/entitlements?product='))return json({role:'owner',products:{orbit:{execution_available:true,capabilities:{execution_receipts:true}},analyser:{capabilities:{analysis:true,execution_receipts:true}}}});
+    if(String(url).endsWith('/access'))return revoked?new Response(JSON.stringify({detail:'Workspace membership was removed.'}),{status:403}):json({user:currentUser,workspace:String(url).split('/')[3],role:'owner'});
     if(String(url).endsWith('/analyser/analyze'))return new Response(JSON.stringify({summary:{seo:{},security:{},accessibility:{},dom:{},resources:{}}}),{headers:{'Content-Type':'application/json','X-Alaada-Execution':'succeeded'}});
     if(String(url).startsWith('/api/workspaces/bootstrap')){
       const workspaces=revoked?state.workspaces.slice(0,1):state.workspaces;
@@ -50,11 +51,25 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
     localStorage:{getItem(){throw Error('Legacy storage must never be read');}}});
   vm.runInContext(source,context);
   const W=window.AlaadaWorkspace;
+  config.inspectStartup?.(W,document);
   if(config.failure)await assert.rejects(W.ready,config.failure);else await W.ready;
   return {W,requests,navigation,document,events,cookies,operationStorage,setOperationReply:fn=>operationReply=fn,setAccountReply:fn=>accountReply=fn,setUser:u=>currentUser=u,revoke:()=>revoked=true};
 }
 
 (async()=>{
+  const hinted=await boot('sheets','',[],new Map(),{
+    cookie:'alaada_workspace_hint='+encodeURIComponent(JSON.stringify({id:'forged',name:'Remembered workspace',kind:'personal'})),
+    inspectStartup(W){assert.equal(W.active,null,'A UI cookie must never become the active authorized workspace');}
+  });
+  assert.equal(hinted.W.active.id,'personal');
+  assert(hinted.requests.some(r=>r.url==='/api/workspaces/bootstrap?product=sheets'));
+  assert(!hinted.requests.some(r=>r.url==='/api/workspaces'));
+  await Promise.all([hinted.W.verify(),hinted.W.verify(),hinted.W.verify()]);
+  assert.equal(hinted.requests.filter(r=>r.url.endsWith('/access')).length,1,'Concurrent verification is coalesced, not cached');
+  await hinted.W.verify();
+  assert.equal(hinted.requests.filter(r=>r.url.endsWith('/access')).length,2,'A later verification is always fresh');
+  await Promise.all([hinted.W.entitlements(),hinted.W.entitlements()]);
+  assert.equal(hinted.requests.filter(r=>r.url.endsWith('/entitlements?product=sheets')).length,1);
   for(const [product,kind] of [['orbit','conversation'],['sheets','workbook'],['accounts','ledger'],['analyser','report']]) {
     const env=await boot(product);
     assert.equal(env.W.active.id,'personal');
@@ -77,7 +92,7 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   const org=await boot('sheets','?workspace=company');
   assert.equal(org.W.active.id,'company');
   org.revoke();
-  await assert.rejects(org.W.verify(),/membership was removed/);
+  await assert.rejects(org.W.verify(),error=>error.status===403);
   assert.equal(org.document.body.children.at(-1).hidden,false);
   await assert.rejects(boot('orbit','?workspace=forbidden'),/not authorised/);
   const orbit=await boot('orbit');
@@ -177,7 +192,7 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   assert.equal(JSON.parse(deletion.options.body).version,1);
   // Actual browser Responses exercise empty bodies, proxy HTML and streaming
   // failures; JSON-only doubles previously concealed the startup crash.
-  const targetCalls=(env,suffix)=>env.requests.filter(r=>r.url.endsWith(suffix));
+  const targetCalls=(env,suffix)=>env.requests.filter(r=>r.url.split('?')[0].endsWith(suffix));
   let cold=0;
   const recovered=await boot('accounts','',[],new Map(),{fetch:url=>{
     if(String(url).startsWith('/api/workspaces/bootstrap')&&++cold===1)return new Response('');
@@ -297,7 +312,7 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
     assert.notEqual(targetCalls(reloaded,'/analyser/analyze')[1].options.headers['X-Alaada-Operation'],receipt);
   }
   for(const product of ['orbit','analyser']){
-    const legacy=await boot(product,'',[],new Map(),{fetch:url=>url.endsWith('/entitlements')?json({products:{[product]:{capabilities:{}}}}):undefined});
+    const legacy=await boot(product,'',[],new Map(),{fetch:url=>url.includes('/entitlements?product=')?json({products:{[product]:{capabilities:{}}}}):undefined});
     if(product==='orbit'){
       await legacy.W.save('conversation','first',{messages:[{role:'user',text:'Hi'}]},'First');
       await assert.rejects(legacy.W.orbitReply('first'),/updated workspace backend/);

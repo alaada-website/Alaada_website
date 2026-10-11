@@ -111,6 +111,88 @@ def test_workspace_bootstrap_combines_verified_session_and_resources(env):
     assert env[0].get("/api/workspaces/client.js").headers["cache-control"].startswith("public, max-age=300")
 
 
+def test_product_bootstrap_is_scoped_and_existing_user_reads_do_not_write(env, monkeypatch):
+    from contextlib import contextmanager
+    personal = env[3]
+    sheet = create(env, personal).json()
+    create(env, personal, product='orbit', kind='conversation')
+    for key in ('sheets:alaada.uiTheme', 'orbit:theme'):
+        response = request(env, 'alice', 'PUT', f'/workspaces/{personal}/products/platform/records/settings/{key}',
+                           {'version': 0, 'title': 'Theme', 'payload': 'dark'}, personal)
+        assert response.status_code == 200, response.text
+    store = env[4].state.store
+    original = store.db
+    modes = []
+
+    @contextmanager
+    def tracked(*, readonly=False):
+        modes.append(readonly)
+        with original(readonly=readonly) as db:
+            yield db
+
+    monkeypatch.setattr(store, 'db', tracked)
+    data = request(env, 'alice', 'GET', f'/workspaces/bootstrap?product=sheets&workspace={personal}').json()
+    assert {row['product'] for row in data['resources']} == {'sheets', 'platform'}
+    assert any(row['id'] == sheet['id'] for row in data['resources'])
+    assert [row['payload']['native_key'] for row in data['resources'] if row['product'] == 'platform'] == ['sheets:alaada.uiTheme']
+    assert modes and all(modes), 'Repeat startup must not create Appwrite write transactions'
+    assert request(env, 'alice', 'GET', '/workspaces/bootstrap?product=unknown').status_code == 400
+    denied = request(env, 'bob', 'GET', f'/workspaces/bootstrap?product=sheets&workspace={personal}').json()
+    assert denied['active'] is None and denied['resources'] == []
+
+
+def test_lightweight_access_revalidates_membership_and_identity(env):
+    personal, org = env[3], env[2]
+    allowed = request(env, 'alice', 'GET', f'/workspaces/{org}/access')
+    assert allowed.json() == {'user': 'alice', 'workspace': org, 'role': 'editor'}
+    env[1]['alice'] = m.Identity('alice')
+    assert request(env, 'alice', 'GET', f'/workspaces/{org}/access').status_code == 403
+    assert request(env, 'bob', 'GET', f'/workspaces/{personal}/access').status_code == 403
+    assert request(env, 'invalid', 'GET', f'/workspaces/{personal}/access').status_code == 401
+    assert request(env, 'alice', 'GET', f'/workspaces/{personal}/access').status_code == 200
+
+
+def test_readonly_tablesdb_session_does_not_open_transactions_or_write_guards():
+    from types import SimpleNamespace
+    calls = []
+
+    class ReadService:
+        def get_row(self, **kwargs):
+            calls.append(kwargs)
+            assert 'transaction_id' not in kwargs
+            return SimpleNamespace(data={'id': 'personal', 'kind': 'personal', 'guard': 'private'})
+
+    session = m.TablesSession(ReadService(), 'database', readonly=True)
+    assert session.one('workspaces', {'id': 'personal'}) == {'id': 'personal', 'kind': 'personal'}
+    with pytest.raises(RuntimeError, match='read-only'):
+        session.insert('workspaces', {'id': 'new'})
+    with pytest.raises(RuntimeError, match='read-only'):
+        session.update('workspaces', {'id': 'personal'}, {'name': 'Changed'})
+    with pytest.raises(RuntimeError, match='read-only'):
+        session.delete('workspaces', {'id': 'personal'})
+    session.commit()
+    session.rollback()
+    assert len(calls) == 1
+
+
+def test_non_sheets_entitlements_never_wake_the_sheets_backend(env):
+    async def auth(token):
+        return env[1][token]
+
+    def unexpected_request(request):
+        pytest.fail('Opening another product must not call Sheets readiness')
+
+    app = m.create_app(env[4].state.store.path, authenticate=auth,
+                       sheets_url='https://sheets.test', sheets_secret='test-secret-' * 4,
+                       sheets_transport=httpx.MockTransport(unexpected_request))
+    client = TestClient(app)
+    for product in ('orbit', 'accounts', 'analyser', 'platform'):
+        response = client.get(f'/api/workspaces/{env[3]}/entitlements?product={product}',
+                              headers={'Authorization': 'Bearer alice'})
+        assert response.status_code == 200, response.text
+        assert set(response.json()['products']) == {product}
+
+
 def confirm(env, rid, plan, event="event1"):
     raw = json.dumps({"event": event, "request": rid, "plan": plan}).encode()
     stamp = str(int(time.time()))

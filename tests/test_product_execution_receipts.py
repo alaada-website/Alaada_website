@@ -214,8 +214,12 @@ def test_lost_persistence_acknowledgement_never_duplicates(execution, monkeypatc
     injected = False
 
     @contextmanager
-    def uncertain_db():
+    def uncertain_db(*, readonly=False):
         nonlocal injected
+        if readonly:
+            with original_db(readonly=True) as db:
+                yield db
+            return
         terminal = False
         with original_db() as db:
             yield db
