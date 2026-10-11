@@ -765,7 +765,7 @@
   .nav-menu summary,#user-badge summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;white-space:nowrap;padding:8px 10px;border-radius:8px}
   .nav-menu summary::-webkit-details-marker,#user-badge summary::-webkit-details-marker{display:none}
   .nav-menu summary::after,#user-badge summary::after{content:'⌄';margin-left:4px}
-  .nav-menu-items,.account-menu-items{position:absolute;right:0;top:calc(100% + 8px);min-width:210px;padding:8px;background:var(--white);border:1px solid var(--borderM);border-radius:12px;box-shadow:var(--sh-md)}
+  .nav-menu-items,.account-menu-items{position:absolute;right:0;top:calc(100% + 8px);min-width:210px;max-height:calc(100dvh - 80px);overflow-y:auto;padding:8px;background:var(--white);border:1px solid var(--borderM);border-radius:12px;box-shadow:var(--sh-md)}
   .nav-menu-items a,.account-menu-items a,.account-menu-items button{display:block;width:100%;padding:10px 12px!important;border:0;border-radius:6px;background:none;text-align:left;text-decoration:none;color:var(--ink);font:inherit}
   .nav-menu-items a:hover,.account-menu-items a:hover,.account-menu-items button:hover{background:var(--bg2)}
   #user-badge{padding:0;border-radius:10px;box-shadow:none;flex-shrink:0}
@@ -774,6 +774,29 @@
   #badge-logout{margin:0;color:#b42318}
   @media(max-width:1000px){nav{padding:0 18px;gap:8px}.nav-links>li:not(:last-child){display:none}.nav-links{display:flex}.nav-links .nav-menu-items a{display:block}#badge-name{max-width:90px}}
   @media(max-width:420px){#badge-name{display:none}.nav-logo{font-size:1rem}nav{padding:0 12px}}
+  html{scroll-padding-top:78px}
+  :focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+  @media(max-width:680px){
+    #hero{grid-template-columns:1fr;gap:30px;min-height:auto;padding:106px 22px 52px;align-items:center}
+    h1.hero-title{font-size:clamp(2.4rem,10vw,4rem);letter-spacing:-1.4px;line-height:1.08;margin-bottom:20px}
+    .hero-badge{font-size:.68rem;letter-spacing:1px;padding:7px 12px;margin-bottom:22px}
+    .hero-sub{font-size:1rem;line-height:1.7;margin-bottom:26px;max-width:480px}
+    .hero-btns{gap:10px}.btn-primary,.btn-ghost{font-size:.9rem;padding:12px 19px}
+    .btn-ghost{display:inline-flex}
+    .hero-right{width:100%;max-width:500px;margin:auto}
+    .orbit-mock{padding:18px;border-radius:20px}
+    .mock-header{gap:10px;margin-bottom:15px;padding-bottom:13px}
+    .mock-logo-ring{width:32px;height:32px}.mock-name{font-size:.9rem}.mock-status{font-size:.72rem}
+    .mock-msgs{min-height:120px;gap:8px}.mock-msg{font-size:.82rem;padding:10px 13px}
+    .mock-input-row{gap:8px;margin-top:14px;padding-top:14px}.mock-input{font-size:.8rem;padding:9px 12px}.mock-send{width:34px;height:34px}.mock-send svg{width:14px;height:14px}
+    .trust-bar{gap:14px;padding:19px 16px}.trust-item{font-size:.73rem}
+    #orbit-section,#about-section,#faq-section{padding:60px 20px}
+    #accounts-section,#analyser-section,#sheets-section{padding-left:18px;padding-right:18px;padding-bottom:65px}
+    .accounts-container,.analyser-container,.sheets-container{padding:30px 21px}
+    #reviews-section{padding:60px 18px!important}
+    #user-reviews-showcase{padding:0 18px 65px!important}
+    .rfcard-left{padding:27px 24px}
+  }
   </style>
   <!-- Identity and workspace access are verified against Alaada's Appwrite project. -->
 </head>
@@ -783,7 +806,7 @@
 
 <div id="auth-overlay">
   <div class="auth-spinner"></div>
-  <div id="auth-msg">Checking your account…</div>
+  <div id="auth-msg" role="status" aria-live="polite">Checking your account…</div>
 </div>
 
 <!-- NAV -->
@@ -857,7 +880,7 @@
       </div>
       <div class="mock-input-row">
         <div class="mock-input">Ask anything…</div>
-        <button class="mock-send" aria-label="Send"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        <button class="mock-send" type="button" aria-label="Open Orbit AI" onclick="window.location.href='/Orbit.html'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
     </div>
   </div>
@@ -1290,11 +1313,11 @@
             <div class="rf-field">
               <label class="rf-label">Rating</label>
               <div class="star-picker" id="star-picker" role="radiogroup" aria-label="Rating">
-                <span class="star" data-v="1" tabindex="0" role="radio" aria-label="1 star">★</span>
-                <span class="star" data-v="2" tabindex="0" role="radio" aria-label="2 stars">★</span>
-                <span class="star" data-v="3" tabindex="0" role="radio" aria-label="3 stars">★</span>
-                <span class="star" data-v="4" tabindex="0" role="radio" aria-label="4 stars">★</span>
-                <span class="star" data-v="5" tabindex="0" role="radio" aria-label="5 stars">★</span>
+                <span class="star" aria-checked="false" data-v="1" tabindex="0" role="radio" aria-label="1 star">★</span>
+                <span class="star" aria-checked="false" data-v="2" tabindex="0" role="radio" aria-label="2 stars">★</span>
+                <span class="star" aria-checked="false" data-v="3" tabindex="0" role="radio" aria-label="3 stars">★</span>
+                <span class="star" aria-checked="false" data-v="4" tabindex="0" role="radio" aria-label="4 stars">★</span>
+                <span class="star" aria-checked="false" data-v="5" tabindex="0" role="radio" aria-label="5 stars">★</span>
               </div>
               <input type="hidden" name="rating" id="rf-rating" required/>
               <span class="rf-rating-label" id="rf-rating-label">Click to rate</span>
@@ -1517,7 +1540,7 @@ document.addEventListener('keydown',event=>{
       ratingLb.textContent = labels[v];
       ratingLb.style.color = 'var(--gold)';
       setStars(v, 'set');
-      stars.forEach((st, i) => { if (i < v) st.classList.add('active'); });
+      stars.forEach((st, i) => { st.setAttribute('aria-checked', String(i === v - 1)); });
     });
     s.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); s.click(); }
@@ -1584,7 +1607,7 @@ document.addEventListener('keydown',event=>{
     another.addEventListener('click', () => {
       form.reset(); chosen = 0; ratingIn.value = '';
       ratingLb.textContent = 'Click to rate'; ratingLb.style.color = '';
-      stars.forEach(s => s.classList.remove('active', 'hover'));
+      stars.forEach(s => { s.classList.remove('active', 'hover'); s.setAttribute('aria-checked','false'); });
       charEl.textContent = '0 / 500';
       form.style.display    = 'block';
       success.style.display = 'none';
@@ -1604,7 +1627,6 @@ document.addEventListener('keydown',event=>{
   "use strict";
   /* Appwrite is the identity authority for all four product workspaces. */
   const EP="https://sfo.cloud.appwrite.io/v1",PID="6972444700208a437da1";
-  const authUrl=dest=>`/auth.html?next=${encodeURIComponent(dest||'/account.html')}`;
   const CK="alaada_auth",IK="alaada_identity",PK="alaada_oauth_pending",AK="alaada_authed",CD=7;
   const DEST={orbit:"/Orbit.html",sheets:"/Spreadsheets.html",accounts:"/Accounts.html"};
   const cGet=n=>{
@@ -1639,11 +1661,13 @@ document.addEventListener('keydown',event=>{
   const launch=dest=>{window.location.href=dest;};
   window.logout=async()=>{
     showSpin('Signing out…');
-    try{await fetch(`${EP}/account/sessions/current`,{method:'DELETE',credentials:'include',headers:{'X-Appwrite-Project':PID}});}catch(_){}
+    try{const result=await fetch(`${EP}/account/sessions/current`,{method:'DELETE',credentials:'include',headers:{'X-Appwrite-Project':PID}});if(!result.ok&&result.status!==401)throw new Error('Could not sign out');}
+    catch(_){msg.textContent='Could not confirm sign-out. Please try again.';setTimeout(hideSpin,3000);return;}
     cDel(CK);lsAuthDel();pendingClear();iClear();hideSpin();location.replace(window.location.origin);
   };
   const handleReturn=async()=>{
     const pendingDest=pendingGet();if(!pendingDest)return false;
+    if(!Object.values(DEST).includes(pendingDest)){pendingClear();return false;}
     pendingClear();
     try{await verify();showBadge(iLoad());showSpin('Signing you in…');setTimeout(()=>window.location.href=pendingDest,400);return true;}
     catch(_){
@@ -1654,7 +1678,8 @@ document.addEventListener('keydown',event=>{
     }
   };
   const silentCheck=async()=>{
-    if(!hasAuthHint())return;const c=iLoad();if(c)showBadge(c);
+    // Never treat browser storage as proof of authentication.
+    if(!hasAuthHint())return;
     try{await verify();showBadge(iLoad());}
     catch(_){cDel(CK);lsAuthDel();iClear();document.getElementById('user-badge').classList.remove('visible');}
   };
