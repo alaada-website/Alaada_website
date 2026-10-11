@@ -95,6 +95,20 @@ test('Accounts reuses verified workspace identity without duplicate JWT/startup 
   assert.match(source,/bundledCompany \? \[\] : await Promise.allSettled/);
 });
 
+test('Sheets detects XLSX encryption without an undefined signature byte',async()=>{
+  const source=read('Spreadsheets.html');
+  const start=source.indexOf('async loadFileSecure(event)'),end=source.indexOf('async loadFileEnhanced(event)',start);
+  assert(start>0&&end>start);
+  let imported=0;
+  const controller=vm.runInNewContext('({'+source.slice(start,end)+'})',{
+    Uint8Array,API:'https://sheets.invalid',btoa:value=>Buffer.from(value,'binary').toString('base64'),
+    window:{AlaadaWorkspace:{productFetch:async()=>new Response(JSON.stringify({sheets:[{name:'Sheet1',cells:{}}]}),{headers:{'Content-Type':'application/json'}})}}});
+  controller.toast=()=>{};controller._loadNamedStyles=()=>{};controller._showCompatibilityWarnings=()=>{};controller._finishImport=()=>{imported++;};
+  const target={value:'input.xlsx',files:[{name:'input.xlsx',size:8,arrayBuffer:async()=>new Uint8Array([0x50,0x4b,3,4,0,0,0,0]).buffer}]};
+  assert.equal(await controller.loadFileSecure({target}),true);
+  assert.equal(imported,1);assert.equal(target.value,'');
+});
+
 for(const [body,status,expected] of [['',200,502],['<html>Bad gateway</html>',502,502],['',503,503],['{',200,502],['{}',200,502],['',403,403]]){
   test(`Accounts auth does not redirect for an empty, malformed or non-auth failure (${status}, ${body})`,async()=>{
     const env=accountsIdentity(()=>new Response(body,{status}));
