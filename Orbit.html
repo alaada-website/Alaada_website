@@ -1607,7 +1607,7 @@ function applyDownloadLinks(node) {
     const fullUrl=href.startsWith("http")?href:`${BACKEND}${href}`;
     a.href=fullUrl;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("download","");
     const label=a.textContent.trim()||"Download file";
-    a.innerHTML=`⬇️ ${label}`;
+    a.textContent=`⬇️ ${label}`;
     a.style.cssText="display:inline-block;padding:9px 18px;margin:8px 2px 4px;background:var(--blue);color:white;border-radius:10px;text-decoration:none;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(26,95,255,.3);";
   });
 }
