@@ -10,6 +10,7 @@ test('Every product fits below the workspace bar without covering bottom control
   const source=read('workspace-product-client.js');
   assert.match(source,/--alaada-workspace-bar-height:36px/);
   for(const product of ['orbit','sheets','accounts','analyser'])assert(source.includes('body[data-alaada-product='+product+']'));
+  for(const [file,product] of [['Orbit.html','orbit'],['Spreadsheets.html','sheets'],['Accounts.html','accounts'],['website-analyzer.html','analyser']])assert(read(file).includes('data-alaada-product="'+product+'"'));
   assert(source.includes('height:calc(100dvh - var(--alaada-workspace-bar-height))'));
   assert(source.includes('#topbar{top:var(--alaada-workspace-bar-height)}'));
   assert(source.includes('nav{top:var(--alaada-workspace-bar-height)}'));
