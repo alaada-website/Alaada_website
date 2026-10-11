@@ -12,6 +12,34 @@ import pytest
 from fastapi.testclient import TestClient
 from test_personal_workspaces import m
 
+
+@pytest.mark.parametrize('second_status', [200, 401])
+def test_accounts_cold_start_refreshes_only_handshake(tmp_path, monkeypatch, second_status):
+    clock, health, writes = [1000], [], []
+    monkeypatch.setattr(m.time, 'time', lambda: clock[0])
+    async def auth(token):
+        return m.Identity('alice')
+    def provider(req):
+        claim = json.loads(base64.urlsafe_b64decode(req.headers['x-alaada-gateway-context']))
+        if req.url.path == '/workspace-gateway/health':
+            health.append(claim['iat'])
+            if len(health) == 1:
+                clock[0] += 50
+                return httpx.Response(401)
+            assert claim['iat'] == clock[0]
+            return httpx.Response(second_status, json={'capabilities': {}}, headers={'x-alaada-workspace-enforced': 'v1'})
+        writes.append(req)
+        return httpx.Response(201, json={'id': 'company', 'name': 'Test'}, headers={'x-alaada-workspace-enforced': 'v1'})
+    app = m.create_app(tmp_path/'accounts-cold.db', authenticate=auth, accounts_url='https://accounts.invalid',
+        accounts_secret='accounts-gateway-secret-at-least-32', accounts_transport=httpx.MockTransport(provider))
+    browser = TestClient(app)
+    wid = browser.get('/api/workspaces', headers={'Authorization': 'Bearer alice'}).json()['workspaces'][0]['id']
+    result = browser.post(f'/api/workspaces/{wid}/accounts/companies', json={'name': 'Test'},
+        headers={'Authorization': 'Bearer alice', 'X-Alaada-Workspace': wid})
+    assert result.status_code == (201 if second_status == 200 else 503), result.text
+    assert health == [1000, 1050]
+    assert len(writes) == (1 if second_status == 200 else 0)
+
 @pytest.mark.parametrize('second_status', [200, 401])
 def test_cold_start_re_signs_health_without_repeating_execution(tmp_path, monkeypatch, second_status):
     clock = [1000]

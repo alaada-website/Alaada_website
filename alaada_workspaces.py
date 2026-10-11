@@ -1782,12 +1782,15 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
 
     @app.api_route("/api/workspaces/{wid}/accounts/{upstream_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def accounts_gateway(wid: str, upstream_path: str, request: Request):
+        from starlette.concurrency import run_in_threadpool
         user = await identity(request)
         context(request, wid)
         method = request.method
         write = method not in ("GET", "HEAD")
-        with store.db() as db:
-            account_workspace = dict(store.workspace(db, user, wid, write=write))
+        def authorised_workspace(latest):
+            with store.db(readonly=True) as db:
+                return dict(store.workspace(db, latest, wid, write=write))
+        account_workspace = await run_in_threadpool(authorised_workspace, user)
         if not accounts_url:
             fail(503, "The workspace-aware Accounts backend is not configured.")
         # Route ownership comes from this registry, never a client JSON field or email.
@@ -1804,10 +1807,12 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         if company in ("import", "export") or any(p in ("sheets", "integrations", "restore") for p in parts[2:]):
             fail(403, "Use an explicitly authorised ownership migration for this operation.")
         if company:
-            with store.db() as db:
-                binding = db.one('accounts_bindings', {'company': company}, columns=['workspace'])
-                if not binding or binding[0] != wid:
-                    fail(404, "Company unavailable in this workspace.")
+            def company_binding():
+                with store.db(readonly=True) as db:
+                    return db.one('accounts_bindings', {'company': company}, columns=['workspace'])
+            binding = await run_in_threadpool(company_binding)
+            if not binding or binding[0] != wid:
+                fail(404, "Company unavailable in this workspace.")
         for key in ("workspace_id", "company_id", "organization_id", "organisation_id"):
             for value in request.query_params.getlist(key):
                 if key != "workspace_id" or value != wid:
@@ -1842,8 +1847,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             latest = await auth(token)
             if latest.user != user.user:
                 fail(401, "Account changed during the Accounts operation.")
-            with store.db() as db:
-                store.workspace(db, latest, wid, write=write)
+            await run_in_threadpool(authorised_workspace, latest)
 
         async def upstream(client, verb, path, content=b"", query="", content_type=None):
             target = path + ("?" + query if query else "")
@@ -1877,8 +1881,14 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 fail(403, 'Company collaboration requires an organisation workspace.')
 
         try:
-            async with httpx.AsyncClient(timeout=30, follow_redirects=False, transport=accounts_transport) as client:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(70, connect=10), follow_redirects=False, transport=accounts_transport) as client:
                 handshake = await upstream(client, "GET", "/workspace-gateway/health")
+                if handshake.status_code == 401:
+                    # Waking a Free service can outlast the short signature
+                    # lifetime. Recheck current membership and re-sign ONLY
+                    # this read. Never repeat a financial operation here.
+                    await revalidate()
+                    handshake = await upstream(client, "GET", "/workspace-gateway/health")
                 if handshake.status_code != 200 or handshake.headers.get("x-alaada-workspace-enforced") != "v1":
                     fail(503, "Accounts did not verify the workspace gateway contract. No product operation was sent.")
                 if is_health:
@@ -1923,8 +1933,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                             raise ValueError()
                     except ValueError:
                         fail(400, "Invalid company pagination")
-                    with store.db() as db:
-                        bindings = db.rows('accounts_bindings', {'workspace': wid}, columns=['company'], order=['created', 'company'])
+                    def workspace_bindings():
+                        with store.db(readonly=True) as db:
+                            return db.rows('accounts_bindings', {'workspace': wid}, columns=['company'], order=['created', 'company'])
+                    bindings = await run_in_threadpool(workspace_bindings)
                     visible = {}
                     if handshake.json().get('capabilities', {}).get('company_memberships') is True:
                         # Native Appwrite lists only current company memberships;
@@ -2848,8 +2860,10 @@ PRODUCT_CLIENT = r'''
       const timeoutMs=method==='POST'&&/\/analyser\/analyze$/.test(path)?210000:
         method==='POST'&&/\/orbit\/reply$/.test(path)?120000:
         method==='POST'&&/\/sheets\/execute\//.test(path)?150000:
+        method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:
+        /\/accounts\//.test(path)?90000:
         (method==='POST'&&/\/sheets\/formula$/.test(path)||method==='GET'&&/\/entitlements(?:\?|$)/.test(path))?90000:
-        method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:25000;
+        25000;
       const response=await request('/api'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+jwt.jwt,'X-Alaada-Workspace':workspace?.id||'',...(contentType?{'Content-Type':contentType}:{}),...(operationId?{'X-Alaada-Operation':operationId}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},...(rawOptions?{body:rawOptions.body,signal:rawOptions.signal}:(body===undefined?{}:{body:JSON.stringify(body)}))},'Alaada workspace service',!!rawOptions,timeoutMs);
       // Reads already start with a fresh Appwrite identity check. Recheck writes
       // after the gateway call because they can change private state while the
@@ -3105,8 +3119,11 @@ PRODUCT_CLIENT = r'''
     if(document.head&&document.createElement){for(const href of [new URL(endpoint).origin,'https://alaada-workspaces.onrender.com']){const link=document.createElement('link');link.rel='preconnect';link.href=href;link.crossOrigin='anonymous';document.head.append(link)}}
     // Warm the known Free service without credentials while Appwrite verifies
     // the session. This is a best-effort public health read, never authority.
-    const wake=new AbortController(),wakeTimer=setTimeout(()=>wake.abort(),10000);
-    nativeFetch('https://alaada-workspaces.onrender.com/health',{mode:'no-cors',cache:'no-store',signal:wake.signal}).catch(()=>{}).finally(()=>clearTimeout(wakeTimer));
+    const productHealth={accounts:'https://accounts-0o52.onrender.com/health',orbit:'https://orbitapi2.onrender.com/health',sheets:'https://spreadsheets-q70y.onrender.com/health'};
+    for(const url of ['https://alaada-workspaces.onrender.com/health',productHealth[product]].filter(Boolean)){
+      const wake=new AbortController(),wakeTimer=setTimeout(()=>wake.abort(),65000);
+      nativeFetch(url,{mode:'no-cors',cache:'no-store',signal:wake.signal}).catch(()=>{}).finally(()=>clearTimeout(wakeTimer));
+    }
     try {
       const requested=new URL(location.href).searchParams.get('workspace');
       const hinted=!requested?cookieGet(ACTIVE_WORKSPACE_COOKIE):'';
