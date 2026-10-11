@@ -2694,6 +2694,25 @@ PRODUCT_CLIENT = r'''
   const ACTIVE_WORKSPACE_COOKIE = 'alaada_active_workspace';
   const WORKSPACE_HINT_COOKIE = 'alaada_workspace_hint';
   const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+  const WORKSPACE_LAYOUT = `
+    :root{--alaada-workspace-bar-height:36px}
+    #alaada-workspace-bar{gap:8px!important;overflow:hidden!important}
+    #alaada-workspace-bar strong{min-width:0;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+    #alaada-workspace-bar select{min-width:0!important;flex:0 1 190px;max-width:30vw!important}
+    #alaada-workspace-bar a{flex-shrink:0}
+    #alaada-workspace-bar [role=status]{min-width:0;overflow:hidden;text-overflow:ellipsis;margin-left:auto}
+    body[data-alaada-product=orbit] #app,body[data-alaada-product=sheets] #app{
+      height:calc(100vh - var(--alaada-workspace-bar-height));
+      height:calc(100dvh - var(--alaada-workspace-bar-height));min-height:0;max-width:100%}
+    body[data-alaada-product=orbit] .main,body[data-alaada-product=orbit] .chat{min-height:0}
+    body[data-alaada-product=sheets] #chatPanel{top:var(--alaada-workspace-bar-height);height:calc(100dvh - var(--alaada-workspace-bar-height))}
+    body[data-alaada-product=accounts] #app{min-height:calc(100dvh - var(--alaada-workspace-bar-height))}
+    body[data-alaada-product=accounts] #topbar{top:var(--alaada-workspace-bar-height)}
+    body[data-alaada-product=accounts] #sidebar,body[data-alaada-product=accounts] #sidebar-backdrop{top:calc(var(--topbar-h) + var(--alaada-workspace-bar-height))}
+    body[data-alaada-product=analyser] nav{top:var(--alaada-workspace-bar-height)}
+    @media(max-width:600px){#alaada-workspace-bar{padding-inline:8px!important;font-size:11px!important}
+      #alaada-workspace-bar strong{max-width:85px}#alaada-workspace-bar select{flex:1 1 90px}}
+  `;
   let accountFlight = null, jwtFlight = null, cachedJwt = null, cachedJwtExpiresAt = 0, verifyFlight = null, entitlementFlight = null;
   const sheetRoutes = {'/api/ai/command':'ai-command','/api/ai/chat':'ai-chat','/api/ai/analyze':'ai-analyze',
     '/api/ai/anomalies':'anomalies','/api/ai/translate-batch':'translate','/api/analytics/run':'analytics','/api/analytics/predict':'predict'};
@@ -3082,6 +3101,7 @@ PRODUCT_CLIENT = r'''
     bar.append(label,selector,manage,signin,status);document.body.prepend(bar);
     gate=document.createElement('div');gate.setAttribute('role','status');gate.setAttribute('aria-live','polite');gate.hidden=true;gate.style.cssText='position:fixed;inset:36px 0 0;z-index:2147483646;background:#f7f8fa;color:#17243a;padding:12vh max(24px,8vw);font:18px/1.6 system-ui;transition:none';gate.textContent='Connecting to your private workspace…';document.body.append(gate);
     document.body.style.paddingTop='36px';
+    if(document.head){const layout=document.createElement('style');layout.textContent=WORKSPACE_LAYOUT;document.head.append(layout)}
     if(document.head&&document.createElement){for(const href of [new URL(endpoint).origin,'https://alaada-workspaces.onrender.com']){const link=document.createElement('link');link.rel='preconnect';link.href=href;link.crossOrigin='anonymous';document.head.append(link)}}
     // Warm the known Free service without credentials while Appwrite verifies
     // the session. This is a best-effort public health read, never authority.
