@@ -348,6 +348,26 @@ test('Orbit denied capabilities never consume or clear a draft',async()=>{
   await send();assert.equal(input.value,'Keep my draft');
 });
 
+test('Opening Orbit or New Chat reuses empty drafts without writing to the database',()=>{
+  const source=read('Orbit.html'),input={value:''},writes=[];
+  let next=0;
+  const ctx=vm.createContext({threads:[{id:'saved-empty',title:'New Chat',messages:[],archived:false}],
+    activeId:null,busy:false,composerDrafts:new Map(),transientThreads:new Set(),
+    document:{getElementById:()=>input},crypto:{randomUUID:()=>`draft-${++next}`},
+    openThread:id=>{ctx.activeId=id;input.value='';},renderThreads:()=>{},closeSidebar:()=>{},toast:()=>{},
+    window:{AlaadaWorkspace:{storage:{setItem:(key,value)=>writes.push(JSON.parse(value))}}}});
+  vm.runInContext(extract(source,'function createThread()','\n}')+extract(source,'function saveThreads()','\n}'),ctx);
+  ctx.createThread();ctx.createThread();
+  assert.equal(ctx.activeId,'saved-empty');assert.equal(ctx.threads.length,1);assert.equal(writes.length,0);
+  input.value='Keep this unsent draft';ctx.composerDrafts.set('saved-empty',input.value);
+  ctx.createThread();assert.equal(ctx.activeId,'draft-1');assert.equal(ctx.threads.length,2);
+  ctx.createThread();assert.equal(ctx.threads.length,2);assert.equal(writes.length,0);
+  ctx.saveThreads();assert.deepEqual(writes[0].map(t=>t.id),['saved-empty']);
+  ctx.threads[0].messages.push({role:'user',text:'Hello'});ctx.saveThreads();
+  assert.deepEqual(writes[1].map(t=>t.id),['draft-1','saved-empty']);
+  ctx.busy=true;ctx.createThread();assert.equal(ctx.threads.length,2);
+});
+
 test('Orbit never blocks startup on a second profile and safely renders with blocked CDNs',()=>{
   const source=read('Orbit.html');
   assert(!source.includes('openSheet(true)'));

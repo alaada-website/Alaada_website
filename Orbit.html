@@ -1323,8 +1323,7 @@ window.addEventListener("load", async () => {
   autoResizeTA();
   swipeToDismissSheet("profileSheet", "profileModal", () => true);
   swipeToDismissSheet("voiceSheet",   "voiceModal",   () => true);
-  if (!threads.length || threads[0].messages.length > 0) createThread();
-  else openThread(threads[0].id);
+  createThread(); // Reuse an empty draft without creating a cloud write on load.
   // Appwrite already owns identity. A second profile form must never gate chat.
   refreshProfileUI(); checkBirthday(); connectWS(); renderImageGallery(); buildVoiceCards(); syncVoiceBtn();
 
@@ -1543,6 +1542,7 @@ function closeSidebar(){document.getElementById("sidebar").classList.remove("ope
 
 let orbitCapabilities={text:false,files:false,voiceInput:false,voiceOutput:false};
 const composerDrafts=new Map();
+const transientThreads=new Set();
 function connectWS() {
   const workspace=window.AlaadaWorkspace.active;
   window.AlaadaWorkspace.entitlements().then(policy=>{
@@ -1660,9 +1660,15 @@ function showErr(msg) {
 }
 
 function createThread() {
+  if(busy)return;
+  const input=document.getElementById('inputTextarea');
+  const existing=threads.find(t=>!t.archived && !t.messages.length && !composerDrafts.get(t.id)
+    && !(t.id===activeId && input.value.trim()));
+  if(existing){openThread(existing.id);closeSidebar();return;}
   const id=(crypto.randomUUID?crypto.randomUUID():String(Date.now()));
   threads.unshift({id,title:"New Chat",messages:[],archived:false});
-  saveThreads();renderThreads();openThread(id);closeSidebar();
+  transientThreads.add(id);
+  renderThreads();openThread(id);closeSidebar();
 }
 
 function openThread(id){if(busy)return;const input=document.getElementById('inputTextarea');if(activeId)composerDrafts.set(activeId,input.value);activeId=id;stopSpeaking();renderThreads();renderChat();const t=threads.find(x=>x.id===id);if(t){document.getElementById("mobileTitle").textContent=t.title;input.value=composerDrafts.get(id)??(t.pendingPrompt&&t.messages.at(-1)?.role==='user'?t.pendingPrompt:'');}}
@@ -1687,7 +1693,10 @@ function renderThreads() {
 }
 
 function saveThreads() {
-  try{window.AlaadaWorkspace.storage.setItem("orbit_threads",JSON.stringify(threads));}
+  // Keep existing saved chats intact. A new empty draft needs no database row
+  // until its first message, rename or archive; typing remains local to this tab.
+  const saved=threads.filter(t=>!transientThreads.has(t.id)||t.messages.length||t.title!=="New Chat"||t.archived);
+  try{window.AlaadaWorkspace.storage.setItem("orbit_threads",JSON.stringify(saved));}
   catch(error){toast('Conversations were not saved: '+error.message);}
 }
 
