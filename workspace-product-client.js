@@ -164,7 +164,7 @@
       // Product execution can outlive a short identity/read request. Leave time
       // for the bounded gateway call and persistence; caller cancellation wins.
       const timeoutMs=method==='POST'&&/\/analyser\/analyze$/.test(path)?210000:
-        method==='POST'&&/\/orbit\/reply$/.test(path)?120000:
+        method==='POST'&&/\/orbit\/reply$/.test(path)?210000:
         method==='POST'&&/\/sheets\/execute\//.test(path)?150000:
         method==='POST'&&/\/accounts\/companies\/[^/]+\/automation\/notifications\//.test(path)?35000:
         /\/accounts\//.test(path)?90000:

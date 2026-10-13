@@ -31,6 +31,28 @@ test('Changed monolithic pages contain syntactically valid inline JavaScript',()
   }
 });
 
+test('Accounts mobile controls and long company names remain inside the viewport',()=>{
+  const source=read('Accounts.html');
+  assert.match(source,/@media\(max-width:700px\)\{\s*:root\{--topbar-h:92px;\}/);
+  assert.match(source,/#topbar\{display:grid;grid-template-columns:34px minmax\(0,1fr\) auto/);
+  assert.match(source,/#company-picker\{grid-row:2;grid-column:1 \/ 3;min-width:0;\}/);
+  assert.match(source,/#company-btn span.co-name\{flex:1;min-width:0;max-width:none/);
+  assert.match(source,/#company-menu\{position:fixed;[^\n]+left:12px;right:12px;width:auto;max-height:/);
+  assert.match(source,/#company-menu .co-menu-foot\{flex-shrink:0;\}/);
+});
+
+test('Saved cloud changes do not block navigation or call unavailable device exports',async()=>{
+  const source=read('Accounts.html');
+  assert(!source.includes("e.returnValue = 'Alaada has changes"));
+  assert(source.includes("STATE.capabilities.company_export === true && !!STATE.companyId"));
+  const state={companyId:'test-company',capabilities:{}},calls=[];
+  const ctx=vm.createContext({STATE:state,backupNeeded:()=>true,saveLocalCompanyBackup:async options=>calls.push(options),console});
+  vm.runInContext(extract(source,'async function refreshBackupBeforeLeaving(){','\n}'),ctx);
+  await ctx.refreshBackupBeforeLeaving();assert.equal(calls.length,0);
+  state.capabilities.company_export=true;
+  await ctx.refreshBackupBeforeLeaving();assert.equal(calls.length,1);
+});
+
 test('Fast UI keeps hero content visible and removes decorative timers and Sheets blockers',()=>{
   const home=read('index.html'),sheet=read('Spreadsheets.html'),about=read('about-us.html');
   assert.match(home,/html\[data-alaada-fast\] \.hero-title[^\n]+opacity:1!important/);

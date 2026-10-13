@@ -145,11 +145,31 @@ button{font-family:inherit;}
   #main{margin-left:0;width:100%;max-width:100vw;padding:20px 16px 50px;}
 }
 @media(max-width:420px){#main{padding-left:12px;padding-right:12px;}}
+@media(max-width:700px){
+  :root{--topbar-h:92px;}
+  #topbar{display:grid;grid-template-columns:34px minmax(0,1fr) auto;grid-template-rows:36px 40px;gap:4px 10px;padding:6px 12px;backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .hamburger-btn{grid-row:1;grid-column:1;}
+  #topbar .brand{grid-row:1;grid-column:2;min-width:0;font-size:.86rem;gap:6px;}
+  #topbar .brand small{font-size:.58rem;}
+  #api-status{grid-row:1;grid-column:3;justify-self:end;max-width:130px;}
+  #api-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #company-picker{grid-row:2;grid-column:1 / 3;min-width:0;}
+  #company-btn{width:100%;max-width:100%;min-width:0;min-height:36px;}
+  #company-btn span.co-name{flex:1;min-width:0;max-width:none;text-align:left;}
+  #global-search-btn{grid-row:2;grid-column:3;justify-self:end;min-height:36px;}
+  /* The full trial-balance report remains available in the navigation. */
+  #balance-beam{display:none;}
+  #company-menu{position:fixed;top:calc(var(--alaada-workspace-bar-height,36px) + var(--topbar-h) - 4px);left:12px;right:12px;width:auto;max-height:calc(100dvh - var(--alaada-workspace-bar-height,36px) - var(--topbar-h) - 12px);}
+  #company-menu.open{display:flex;flex-direction:column;}
+  #company-menu .co-list{min-height:0;max-height:none;overflow-y:auto;}
+  #company-menu .co-item .n{overflow-wrap:anywhere;}
+  #company-menu .co-menu-foot{flex-shrink:0;}
+}
 
 
 .view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;min-width:0;}
 .view-head>div:first-child{min-width:0;max-width:100%;}
-.view-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;}
+.view-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;overflow-wrap:anywhere;}
 .view-sub{color:var(--ink3);font-size:.85rem;margin-top:3px;overflow-wrap:anywhere;}
 .view-actions{display:flex;gap:8px;flex-wrap:wrap;min-width:0;}
 
@@ -387,7 +407,7 @@ select{cursor:pointer;}
 </head>
 <body data-alaada-product="accounts">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=e54fa1628309" data-product="accounts"></script>
+<script src="/workspace-product-client.js?v=ce9100b3963a" data-product="accounts"></script>
 <script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 
 <!-- ============== API GATE (first run / connection lost) ============== -->
@@ -696,8 +716,8 @@ select{cursor:pointer;}
 <div id="backup-reminder" role="status" aria-live="polite">
   <div class="backup-icon">!</div>
   <div class="backup-copy">
-    <div class="backup-title">Update this company's backup</div>
-    <div class="backup-text">Recent changes are not yet saved to this device. Create a local backup before leaving Alaada.</div>
+    <div class="backup-title">Optional device backup</div>
+    <div class="backup-text">Your saved changes are in the cloud. You can also keep an up-to-date copy on this device.</div>
     <div class="backup-actions">
       <button class="btn btn-teal btn-sm" onclick="createBackup()">Create backup</button>
       <button class="btn btn-ghost btn-sm" onclick="hideBackupReminder()">Later</button>
@@ -1074,7 +1094,7 @@ function updateBackupReminder(){
   const el = document.getElementById('backup-reminder');
   if (!el) return;
   const dismissed = STATE.companyId && sessionStorage.getItem(LS.backupReminderDismissed + STATE.companyId) === '1';
-  el.classList.toggle('show', !!STATE.companyId && backupNeeded(STATE.companyId) && !dismissed);
+  el.classList.toggle('show', STATE.capabilities.company_export === true && !!STATE.companyId && backupNeeded(STATE.companyId) && !dismissed);
 }
 function backupFileName(companyId){ return `alaada-accounts-backup-${companyId}.json`; }
 function requireBackupArray(payload, key){
@@ -8083,7 +8103,7 @@ async function submitCompanyForm(){
 }
 
 async function refreshBackupBeforeLeaving(){
-  if (!STATE.companyId || !backupNeeded(STATE.companyId)) return;
+  if (STATE.capabilities.company_export !== true || !STATE.companyId || !backupNeeded(STATE.companyId)) return;
   try { await saveLocalCompanyBackup({download:false, silent:true}); }
   catch(e){ console.warn(e); }
 }
@@ -8091,13 +8111,8 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') refreshBackupBeforeLeaving();
 });
 window.addEventListener('pagehide', refreshBackupBeforeLeaving);
-window.addEventListener('beforeunload', e => {
-  if (STATE.companyId && backupNeeded(STATE.companyId)) {
-    e.preventDefault();
-    e.returnValue = 'Alaada has changes that should be backed up on this device before you leave.';
-    return e.returnValue;
-  }
-});
+// A stale optional device backup is not an unsaved cloud write. Do not block
+// reloads or navigation merely because the user has not downloaded a copy.
 </script>
 <script defer src="accounts-enterprise.js"></script>
 <script defer src="accounts-banking.js"></script>
