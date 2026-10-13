@@ -1037,7 +1037,14 @@ body {
 .message{overflow-wrap:anywhere;max-width:100%;overflow-x:auto}
 #statusBar{overflow-wrap:anywhere;padding:6px 14px;line-height:1.4}
 #toast{white-space:normal;overflow-wrap:anywhere;border-radius:12px}
-@media(max-width:420px){.input-row{gap:4px;padding:8px}.rnd-btn,#sendBtn{width:36px;min-width:36px;height:40px}.welcome-container{padding:16px 0}.welcome-logo{width:48px;height:48px}}
+@media(max-width:420px){
+  .input-row{display:grid;grid-template-columns:repeat(3,36px) minmax(0,1fr) 36px;gap:4px;padding:8px}
+  #inputTextarea{grid-row:1;grid-column:1 / 5;width:100%}
+  #sendBtn{grid-row:1;grid-column:5}
+  .input-row .rnd-btn{grid-row:2}
+  .rnd-btn,#sendBtn{width:36px;min-width:36px;height:40px}
+  .welcome-container{padding:16px 0}.welcome-logo{width:48px;height:48px}
+}
 </style>
 </head>
 <body data-alaada-product="orbit">

@@ -16,6 +16,8 @@ test('Every product fits below the workspace bar without covering bottom control
   assert(source.includes('nav{top:var(--alaada-workspace-bar-height)}'));
   assert.match(read('Orbit.html'),/@media \(max-width: 899px\)/);
   assert.match(read('Orbit.html'),/#inputTextarea\{min-width:0\}/);
+  assert.match(read('Orbit.html'),/#inputTextarea\{grid-row:1;grid-column:1 \/ 5;width:100%\}/);
+  assert.match(read('Orbit.html'),/\.input-row \.rnd-btn\{grid-row:2\}/);
   assert.match(read('Orbit.html'),/#toast\{white-space:normal/);
   assert.match(read('Accounts.html'),/\.modal-backdrop\{position:fixed;inset:var\(--alaada-workspace-bar-height,36px\) 0 0/);
   assert.match(read('Accounts.html'),/\.modal\{[^\n]+max-height:100%;overflow:hidden;display:flex/);
