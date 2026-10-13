@@ -1009,6 +1009,9 @@ def test_analyser_signed_scope_persistence_and_revocation(tmp_path,scenario,monk
     secret='analyser-dedicated-test-secret-32-characters'
     async def auth(token):return users[token]
     async def backend(req):
+        if req.url.path == '/health':
+            assert 'x-alaada-gateway-context' not in req.headers
+            return httpx.Response(200, json={'product': 'Alaada Website Analyser', 'status': 'ok'})
         encoded=req.headers['x-alaada-gateway-context']
         assert hmac.compare_digest(req.headers['x-alaada-gateway-signature'],hmac.new(secret.encode(),encoded.encode(),hashlib.sha256).hexdigest())
         assertion=json.loads(base64.urlsafe_b64decode(encoded))

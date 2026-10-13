@@ -1808,7 +1808,25 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                         with store.db(readonly=True) as db:
                             store.workspace(db, latest, wid, write=True)
                     await run_in_threadpool(check)
-                code, _ = await readiness_probe(lambda: call(client, 'GET', '/workspace-gateway/health'), revalidate_analyser)
+                async def probe_analyser():
+                    # Wake the public process before sending a short-lived
+                    # signed assertion. Hosting interstitials are not health.
+                    async with client.stream('GET', analyser_url + '/health') as response:
+                        if response.status_code != 200:
+                            return response.status_code, None
+                        raw = bytearray()
+                        async for chunk in response.aiter_bytes():
+                            raw.extend(chunk)
+                            if len(raw) > 16_384:
+                                return 503, None
+                    try:
+                        health = json.loads(raw)
+                    except (ValueError, UnicodeError):
+                        return 503, None
+                    if not isinstance(health, dict) or health.get('status') != 'ok' or health.get('product') != 'Alaada Website Analyser':
+                        return 503, None
+                    return await call(client, 'GET', '/workspace-gateway/health')
+                code, _ = await readiness_probe(probe_analyser, revalidate_analyser)
                 if code != 200:
                     fail(503, 'Analyser gateway is unavailable. No analysis was sent.')
                 latest = await identity(request)

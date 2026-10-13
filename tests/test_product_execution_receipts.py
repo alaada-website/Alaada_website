@@ -104,6 +104,9 @@ def test_cold_start_re_signs_health_without_repeating_execution(tmp_path, monkey
     async def authenticate(token):
         return m.Identity('alice')
     def provider(req):
+        if req.url.path == '/health':
+            assert 'x-alaada-gateway-context' not in req.headers
+            return httpx.Response(200, json={'product': 'Alaada Website Analyser', 'status': 'ok'})
         claim = json.loads(base64.urlsafe_b64decode(req.headers['x-alaada-gateway-context']))
         assert hmac.compare_digest(req.headers['x-alaada-gateway-signature'],
             hmac.new(secret.encode(), req.headers['x-alaada-gateway-context'].encode(), hashlib.sha256).hexdigest())
@@ -150,6 +153,8 @@ def execution(request, tmp_path):
 
     def provider(req):
         if product == 'analyser':
+            if req.url.path == '/health':
+                return httpx.Response(200, json=state.get('public_health', {'product': 'Alaada Website Analyser', 'status': 'ok'}))
             encoded = req.headers['x-alaada-gateway-context']
             assert hmac.compare_digest(req.headers['x-alaada-gateway-signature'],
                 hmac.new(secret.encode(), encoded.encode(), hashlib.sha256).hexdigest())
@@ -260,6 +265,24 @@ def test_orbit_unready_does_not_spend_or_poison_the_prompt(execution, health, mo
     del state['health_payload']
     assert call().status_code == 200  # The same saved prompt can safely retry.
     assert state['calls'] == usage() == 1
+
+
+@pytest.mark.parametrize('execution', ['analyser'], indirect=True)
+@pytest.mark.parametrize('health', [{}, {'status': 'ok'}, '<html>Service is starting</html>'])
+def test_analyser_public_wake_must_be_ready_before_signed_handshake(execution, health, monkeypatch):
+    _, state, _, app, _, _, call, usage, _, _ = execution
+    state['public_health'] = health
+    async def no_delay(_):
+        pass
+    monkeypatch.setattr(m.asyncio, 'sleep', no_delay)
+    result = call()
+    assert result.status_code == 503
+    assert state['calls'] == state['health'] == usage() == 0
+    with app.state.store.db(readonly=True) as db:
+        assert db.rows('product_operations', {}) == []
+    del state['public_health']
+    assert call().status_code == 200
+    assert state['calls'] == state['health'] == usage() == 1
 
 
 @pytest.mark.parametrize('execution', ['orbit'], indirect=True)
