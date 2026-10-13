@@ -249,6 +249,32 @@ def fail(status, message):
     raise HTTPException(status, message)
 
 
+async def readiness_probe(send, revalidate=None):
+    """Bound cold-start retries to a read-only health probe, never execution."""
+    refreshed = False
+    try:
+        async with asyncio.timeout(70):
+            for attempt in range(3):
+                try:
+                    code, result = await send()
+                except httpx.HTTPError:
+                    code, result = 503, None
+                if code == 401:
+                    if refreshed:
+                        return code, result
+                    refreshed = True
+                elif code not in (502, 503, 504):
+                    return code, result
+                if attempt < 2:
+                    if revalidate is not None:
+                        await revalidate()
+                    if code != 401:
+                        await asyncio.sleep(1)
+            return code, result
+    except TimeoutError:
+        return 503, None
+
+
 class Identity:
     def __init__(self, user, teams=None, team_names=None):
         self.user, self.teams = user, teams or {}
@@ -1718,8 +1744,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     'X-Alaada-Gateway-Context': encoded, 'X-Alaada-Gateway-Signature': signature}) as response:
                 # A Free instance can wake after this short-lived signature has
                 # expired. Only the non-executing readiness read may be retried.
-                if method == 'GET' and response.status_code == 401:
-                    return 401, b''
+                if method == 'GET' and response.status_code in (401, 502, 503, 504):
+                    return response.status_code, b''
                 if response.headers.get('x-alaada-workspace-enforced') != 'v1':
                     fail(502, 'Analyser did not verify workspace enforcement.')
                 content = bytearray()
@@ -1731,9 +1757,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         record = None
         try:
             async with asyncio.timeout(180), httpx.AsyncClient(timeout=90, follow_redirects=False, transport=analyser_transport) as client:
-                code, _ = await call(client, 'GET', '/workspace-gateway/health')
-                if code == 401:
-                    code, _ = await call(client, 'GET', '/workspace-gateway/health')
+                code, _ = await readiness_probe(lambda: call(client, 'GET', '/workspace-gateway/health'))
                 if code != 200:
                     fail(503, 'Analyser gateway is unavailable. No analysis was sent.')
                 latest = await identity(request)
@@ -1882,14 +1906,11 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
 
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(70, connect=10), follow_redirects=False, transport=accounts_transport) as client:
-                handshake = await upstream(client, "GET", "/workspace-gateway/health")
-                if handshake.status_code == 401:
-                    # Waking a Free service can outlast the short signature
-                    # lifetime. Recheck current membership and re-sign ONLY
-                    # this read. Never repeat a financial operation here.
-                    await revalidate()
-                    handshake = await upstream(client, "GET", "/workspace-gateway/health")
-                if handshake.status_code != 200 or handshake.headers.get("x-alaada-workspace-enforced") != "v1":
+                async def probe_accounts():
+                    response = await upstream(client, "GET", "/workspace-gateway/health")
+                    return response.status_code, response
+                code, handshake = await readiness_probe(probe_accounts, revalidate)
+                if code != 200 or handshake.headers.get("x-alaada-workspace-enforced") != "v1":
                     fail(503, "Accounts did not verify the workspace gateway contract. No product operation was sent.")
                 if is_health:
                     await revalidate()
@@ -1999,41 +2020,46 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     return {"items": selected, "total": len(items), "page": page, "page_size": size}
                 operation = None
                 if write:
-                    with store.db() as db:
-                        store.workspace(db, user, wid, write=True)
-                        if idempotency_key:
-                            # The Accounts backend owns the business receipt.
-                            # This reservation owns quota/audit only; always call
-                            # the backend again to recheck current company access.
+                    def reserve_accounts():
+                        with store.db() as db:
+                            store.workspace(db, user, wid, write=True)
+                            if not idempotency_key:
+                                return None, store.quota(db, wid, 'accounts')
+                            # The backend still owns the business receipt and
+                            # rechecks company access, including on every replay.
                             operation_id = hashlib.sha256(('accounts:' + idempotency_key).encode()).hexdigest()
-                            operation, fresh = store.reserve_operation(db, user, wid, 'accounts',
+                            record, _ = store.reserve_operation(db, user, wid, 'accounts',
                                 method + ' /' + upstream_path, operation_id,
                                 {'body': hashlib.sha256(raw).hexdigest(), 'query': request.url.query,
                                  'content_type': request.headers.get('content-type', '')})
-                            if operation['state'] == 'retryable':
+                            if record['state'] == 'retryable':
                                 month = store.quota(db, wid, 'accounts')
                                 values = {'state': 'pending', 'month': month, 'status': None,
                                           'response': None, 'updated': int(time.time())}
-                                db.update('product_operations', {'id': operation['id']}, values)
-                                operation = dict(operation, **values)
-                        else:
-                            quota_month = store.quota(db, wid, "accounts")
+                                db.update('product_operations', {'id': record['id']}, values)
+                                record = dict(record, **values)
+                            return record, None
+                    operation, quota_month = await run_in_threadpool(reserve_accounts)
                 result = await upstream(client, method, "/" + upstream_path, raw, request.url.query, request.headers.get("content-type"))
                 if result.headers.get("x-alaada-workspace-enforced") != "v1":
                     fail(502, "Accounts response lost its workspace enforcement marker.")
                 if 300 <= result.status_code < 400:
                     fail(502, "Accounts redirects are not permitted.")
                 if operation and result.status_code in (400, 401, 403, 404, 405, 413, 415, 422):
-                    with store.db() as db:
-                        current = db.one('product_operations', {'id': operation['id']})
-                        if current and current['state'] == 'pending':
-                            store.finish_operation(db, current, 'retryable', result.status_code, {}, refund=True)
+                    def reject_accounts():
+                        with store.db() as db:
+                            current = db.one('product_operations', {'id': operation['id']})
+                            if current and current['state'] == 'pending':
+                                store.finish_operation(db, current, 'retryable', result.status_code, {}, refund=True)
+                    await run_in_threadpool(reject_accounts)
                 elif write and not operation and 400 <= result.status_code < 500:
-                    with store.db() as db:
-                        key = {'workspace': wid, 'product': 'accounts', 'month': quota_month}
-                        usage = db.one('usage', key)
-                        if usage:
-                            db.update('usage', key, {'amount': max(0, usage['amount'] - 1)})
+                    def refund_accounts():
+                        with store.db() as db:
+                            key = {'workspace': wid, 'product': 'accounts', 'month': quota_month}
+                            usage = db.one('usage', key)
+                            if usage:
+                                db.update('usage', key, {'amount': max(0, usage['amount'] - 1)})
+                    await run_in_threadpool(refund_accounts)
                 cid = None
                 if is_create and 200 <= result.status_code < 300:
                     created = result.json()
@@ -2042,24 +2068,26 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                         fail(502, "Accounts returned an invalid company identifier.")
                 await revalidate()
                 if write and result.is_success:
-                    with store.db() as db:
-                        store.workspace(db, user, wid, write=True)
-                        if cid:
-                            existing = db.one('accounts_bindings', {'company': cid}, columns=['workspace'])
-                            if existing and existing[0] != wid:
-                                fail(409, "Company is already owned by another workspace.")
-                            db.ensure('accounts_bindings', {'company': cid}, {'company': cid, 'workspace': wid, 'created_by': user.user, 'created': int(time.time())})
-                        current = db.one('product_operations', {'id': operation['id']}) if operation else None
-                        if not current or current['state'] != 'completed':
-                            if current and current['state'] == 'retryable':
-                                # A simultaneous success takes precedence over a
-                                # rejected attempt; restore its refunded quota once.
-                                month = store.quota(db, wid, 'accounts')
-                                db.update('product_operations', {'id': current['id']}, {'state': 'pending', 'month': month})
-                                current = dict(current, state='pending', month=month)
-                            store.audit(db, user, wid, 'accounts:create' if cid else 'accounts:' + method.lower(), cid or company)
-                            if current:
-                                store.finish_operation(db, current, 'completed', result.status_code, {'company': cid or company})
+                    def finish_accounts():
+                        with store.db() as db:
+                            store.workspace(db, user, wid, write=True)
+                            if cid:
+                                existing = db.one('accounts_bindings', {'company': cid}, columns=['workspace'])
+                                if existing and existing[0] != wid:
+                                    fail(409, 'Company is already owned by another workspace.')
+                                db.ensure('accounts_bindings', {'company': cid}, {'company': cid, 'workspace': wid, 'created_by': user.user, 'created': int(time.time())})
+                            current = db.one('product_operations', {'id': operation['id']}) if operation else None
+                            if not current or current['state'] != 'completed':
+                                if current and current['state'] == 'retryable':
+                                    # A simultaneous success takes precedence;
+                                    # restore refunded quota exactly once.
+                                    month = store.quota(db, wid, 'accounts')
+                                    db.update('product_operations', {'id': current['id']}, {'state': 'pending', 'month': month})
+                                    current = dict(current, state='pending', month=month)
+                                store.audit(db, user, wid, 'accounts:create' if cid else 'accounts:' + method.lower(), cid or company)
+                                if current:
+                                    store.finish_operation(db, current, 'completed', result.status_code, {'company': cid or company})
+                    await run_in_threadpool(finish_accounts)
                 # Never forward cookies or gateway credentials to the browser.
                 return Response(result.content, status_code=result.status_code,
                                 headers={k: v for k, v in result.headers.items() if k in ("content-type", "content-disposition")})
@@ -3084,6 +3112,12 @@ PRODUCT_CLIENT = r'''
           if(write)headers.set('Idempotency-Key',operationKey);
           else headers.delete('Idempotency-Key');
           const response=await api('/workspaces/'+workspace.id+'/accounts'+target.pathname+target.search,method,undefined,{...options,headers});
+          if(write&&response.ok&&!(method==='DELETE'&&response.status===204)){
+            const confirmation=await response.clone().json().catch(()=>null);
+            if(!confirmation||typeof confirmation!=='object'||(method==='POST'&&target.pathname==='/companies'&&typeof confirmation.id!=='string')){
+              return new Response(JSON.stringify({detail:'Accounts did not confirm the save. Keep the same form values and retry; the original retry reference has been preserved.',state:'unknown'}),{status:502,headers:{'Content-Type':'application/json'}});
+            }
+          }
           // Keep uncertain/conflicting outcomes retryable after reload. A fresh
           // successful user action receives a fresh key, even with identical data.
           if(storageKey&&(response.ok||[400,403,404,405,413,415,422].includes(response.status))){

@@ -13,8 +13,61 @@ from fastapi.testclient import TestClient
 from test_personal_workspaces import m
 
 
+def test_readiness_probe_is_bounded_and_rechecks_access(monkeypatch):
+    import asyncio
+    calls, checks = [], []
+    async def probe():
+        calls.append(True)
+        raise httpx.ConnectError('Still starting')
+    async def revalidate():
+        checks.append(True)
+    async def no_delay(_):
+        pass
+    monkeypatch.setattr(m.asyncio, 'sleep', no_delay)
+    assert asyncio.run(m.readiness_probe(probe, revalidate)) == (503, None)
+    assert len(calls) == 3 and len(checks) == 2
+
+
+@pytest.mark.parametrize('phase', ['reserve_operation', 'audit'])
+def test_accounts_writes_do_not_block_other_platform_requests(tmp_path, monkeypatch, phase):
+    import asyncio
+    entered, released, finished = threading.Event(), threading.Event(), threading.Event()
+    async def auth(token):
+        return m.Identity('alice')
+    def provider(request):
+        return httpx.Response(200 if request.method == 'GET' else 201,
+            json={'capabilities': {}} if request.method == 'GET' else {'id': 'new-company'},
+            headers={'x-alaada-workspace-enforced': 'v1'})
+    app = m.create_app(tmp_path/'nonblocking.db', authenticate=auth, accounts_url='https://accounts.invalid',
+        accounts_secret='accounts-gateway-secret-at-least-32', accounts_transport=httpx.MockTransport(provider))
+    browser = TestClient(app)
+    wid = browser.get('/api/workspaces', headers={'Authorization': 'Bearer alice'}).json()['workspaces'][0]['id']
+    original = getattr(app.state.store, phase)
+    def delayed(*args, **kwargs):
+        entered.set()
+        try:
+            assert released.wait(3), 'Database work blocked the application request loop'
+            return original(*args, **kwargs)
+        finally:
+            finished.set()
+    monkeypatch.setattr(app.state.store, phase, delayed)
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:
+            task = asyncio.create_task(client.post(f'/api/workspaces/{wid}/accounts/companies', json={'name':'Test'},
+                headers={'Authorization':'Bearer alice', 'X-Alaada-Workspace':wid, 'Idempotency-Key':'nonblocking-test-operation'}))
+            try:
+                assert await asyncio.to_thread(entered.wait, 3)
+                assert not finished.is_set()
+                assert (await client.get('/health')).status_code == 200
+            finally:
+                released.set()
+            assert (await task).status_code == 201
+    asyncio.run(run())
+
+
 @pytest.mark.parametrize('second_status', [200, 401])
-def test_accounts_cold_start_refreshes_only_handshake(tmp_path, monkeypatch, second_status):
+@pytest.mark.parametrize('first_status', [401, 502, 503, 504])
+def test_accounts_cold_start_refreshes_only_handshake(tmp_path, monkeypatch, second_status, first_status):
     clock, health, writes = [1000], [], []
     monkeypatch.setattr(m.time, 'time', lambda: clock[0])
     async def auth(token):
@@ -25,7 +78,7 @@ def test_accounts_cold_start_refreshes_only_handshake(tmp_path, monkeypatch, sec
             health.append(claim['iat'])
             if len(health) == 1:
                 clock[0] += 50
-                return httpx.Response(401)
+                return httpx.Response(first_status)
             assert claim['iat'] == clock[0]
             return httpx.Response(second_status, json={'capabilities': {}}, headers={'x-alaada-workspace-enforced': 'v1'})
         writes.append(req)
@@ -37,11 +90,12 @@ def test_accounts_cold_start_refreshes_only_handshake(tmp_path, monkeypatch, sec
     result = browser.post(f'/api/workspaces/{wid}/accounts/companies', json={'name': 'Test'},
         headers={'Authorization': 'Bearer alice', 'X-Alaada-Workspace': wid})
     assert result.status_code == (201 if second_status == 200 else 503), result.text
-    assert health == [1000, 1050]
+    assert health == ([1000, 1050, 1050] if first_status != 401 and second_status == 401 else [1000, 1050])
     assert len(writes) == (1 if second_status == 200 else 0)
 
 @pytest.mark.parametrize('second_status', [200, 401])
-def test_cold_start_re_signs_health_without_repeating_execution(tmp_path, monkeypatch, second_status):
+@pytest.mark.parametrize('first_status', [401, 502, 503, 504])
+def test_cold_start_re_signs_health_without_repeating_execution(tmp_path, monkeypatch, second_status, first_status):
     clock = [1000]
     monkeypatch.setattr(m.time, 'time', lambda: clock[0])
     attempts = []
@@ -58,7 +112,7 @@ def test_cold_start_re_signs_health_without_repeating_execution(tmp_path, monkey
             if len(attempts) == 1:
                 clock[0] += 50  # Render wake-up exceeds the provider's 15-second signature TTL.
                 assert abs(clock[0] - claim['iat']) > 15
-                return httpx.Response(401, json={'error': 'Expired gateway context'})
+                return httpx.Response(first_status, json={'error': 'Provider still starting'})
             assert abs(clock[0] - claim['iat']) <= 15
             return httpx.Response(second_status, json={'ok': True},
                 headers={'X-Alaada-Workspace-Enforced': 'v1'} if second_status == 200 else {})
@@ -74,7 +128,7 @@ def test_cold_start_re_signs_health_without_repeating_execution(tmp_path, monkey
         headers={'Authorization': 'Bearer alice', 'X-Alaada-Workspace': wid, 'X-Alaada-Operation': 'cold-start-operation-001'},
         json={'url': 'https://example.com'})
     assert response.status_code == (200 if second_status == 200 else 503), response.text
-    assert attempts == [1000, 1050]
+    assert attempts == ([1000, 1050, 1050] if first_status != 401 and second_status == 401 else [1000, 1050])
     with app.state.store.db() as db:
         assert len(scans) == len(db.rows('product_operations', {})) == (1 if second_status == 200 else 0)
         assert sum(row['amount'] for row in db.rows('usage', {})) == len(scans)
