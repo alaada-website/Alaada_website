@@ -450,6 +450,7 @@ class TablesSession:
         self.readonly = readonly
         self.transaction_id = None if readonly else service.create_transaction(ttl=120).id
         self.protected = set()
+        self.staged = {}
         self.schema = {k[3:]: v for k, v in tablesdb_schema().items()}
 
     def args(self, table, row_id=None):
@@ -487,21 +488,49 @@ class TablesSession:
 
     def rows(self, table, where=None, columns=None, order=(), limit=None, less_than=None):
         from appwrite.query import Query
+        if limit is not None and (type(limit) is not int or limit < 1):
+            raise ValueError('Invalid repository limit')
+        args = self.args(table)
+        # Transaction list queries can append staged rows outside their filters,
+        # ordering and page limit. Query committed pages, then overlay only this
+        # unit's writes. Row reads/writes still use the guarded transaction.
+        args.pop('transaction_id', None)
+        staged = {rid: data for (name, rid), data in self.staged.items() if name == table}
+
+        def matches(data):
+            return (all(data.get(k) == v for k, v in (where or {}).items())
+                    and all(data.get(k) is not None and data[k] < v for k, v in (less_than or {}).items()))
+
         filters = [Query.is_null(k) if v is None else Query.equal(k, v) for k, v in (where or {}).items()]
         filters += [Query.less_than(k, v) for k, v in (less_than or {}).items()]
         filters += [Query.order_desc(k[1:]) if k.startswith('-') else Query.order_asc(k) for k in order]
-        if not order:
-            filters.append(Query.order_asc('$id'))
-        result, cursor = [], None
+        filters.append(Query.order_asc('$id'))
+        result, seen, cursor = {}, set(), None
         while limit is None or len(result) < limit:
-            page_size = min(100, limit - len(result)) if limit else 100
+            page_size = min(100, limit - len(result)) if limit is not None else 100
             queries = filters + [Query.limit(page_size)] + ([Query.cursor_after(cursor)] if cursor else [])
-            page = self.service.list_rows(**self.args(table), queries=queries, total=False, ttl=0)
-            result.extend(self.project(row, columns) for row in page.rows)
+            page = self.service.list_rows(**args, queries=queries, total=False, ttl=0)
+            if len(page.rows) > page_size:
+                raise RuntimeError('Appwrite returned an invalid repository page')
+            for row in page.rows:
+                if not row.id or row.id in seen:
+                    raise RuntimeError('Appwrite repository pagination did not advance')
+                seen.add(row.id)
+                data = self.project(row)
+                if row.id not in staged and matches(data):
+                    result[row.id] = data
             if len(page.rows) < page_size:
                 break
             cursor = page.rows[-1].id
-        return result
+        result.update({rid: data for rid, data in staged.items() if data is not None and matches(data)})
+        # Stable tie-breaker for committed and newly staged rows. Sort before
+        # projection and limiting so a staged update can enter/leave a page.
+        ordered = sorted(result.items())
+        for key in reversed(order):
+            field = key.lstrip('-')
+            ordered.sort(key=lambda item: (item[1].get(field) is not None, item[1].get(field)),
+                         reverse=key.startswith('-'))
+        return [self.project(data, columns) for _, data in (ordered[:limit] if limit else ordered)]
 
     def one(self, table, where, columns=None):
         keys = self.schema[table]['indexes'][0]['attributes']
@@ -545,6 +574,7 @@ class TablesSession:
         row_id = self.row_id(table, data)
         self.service.create_row(**self.args(table, row_id), data=data, permissions=[])
         self.protected.add((table, row_id))
+        self.staged[table, row_id] = dict(data)
 
     def ensure(self, table, key, data):
         if self.one(table, key) is None:
@@ -563,7 +593,9 @@ class TablesSession:
             updated[key] += amount
         if self.row_id(table, updated) != self.row_id(table, previous):
             raise ValueError('Repository primary keys are immutable')
-        self.service.update_row(**self.args(table, self.row_id(table, previous)), data=self.prepare(table, updated))
+        row_id, updated = self.row_id(table, previous), self.prepare(table, updated)
+        self.service.update_row(**self.args(table, row_id), data=updated)
+        self.staged[table, row_id] = dict(updated)
         return 1
 
     def delete(self, table, where):
@@ -572,16 +604,20 @@ class TablesSession:
         if not where:
             raise ValueError('Repository deletes require a selector')
         rows = self.rows(table, where)
+        deleted = 0
         for row in rows:
             row_id = self.row_id(table, row)
-            if self.protected_row(table, row_id) is None:
+            current = self.protected_row(table, row_id)
+            if current is None or any(self.project(current).get(k) != v for k, v in where.items()):
                 continue
             if table == 'resources':
                 self.delete('grants', {'resource': row['id']})
                 self.delete('folder_membership', {'child': row['id']})
                 self.delete('folder_membership', {'parent': row['id']})
             self.service.delete_row(**self.args(table, row_id))
-        return len(rows)
+            self.staged[table, row_id] = None
+            deleted += 1
+        return deleted
 
     def file_referenced(self, file_id):
         return bool(self.rows('resources', {'storage_file_id': file_id}, limit=1))
