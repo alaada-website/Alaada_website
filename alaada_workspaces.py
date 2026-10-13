@@ -255,7 +255,7 @@ async def readiness_probe(send, revalidate=None):
     refreshed = False
     try:
         async with asyncio.timeout(70):
-            for attempt in range(3):
+            for attempt in range(10):
                 try:
                     code, result = await send()
                 except httpx.HTTPError:
@@ -266,11 +266,11 @@ async def readiness_probe(send, revalidate=None):
                     refreshed = True
                 elif code not in (502, 503, 504):
                     return code, result
-                if attempt < 2:
+                if attempt < 9:
                     if revalidate is not None:
                         await revalidate()
                     if code != 401:
-                        await asyncio.sleep(1)
+                        await asyncio.sleep(min(2 ** attempt, 10))
             return code, result
     except TimeoutError:
         return 503, None
@@ -1761,11 +1761,15 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             fail(400, 'A public HTTP(S) URL without credentials is required.')
         operation_id = request.headers.get('x-alaada-operation')
         inputs = {'url': url}
-        with store.db() as db:
-            store.workspace(db, user, wid, write=True)
-            _, _, existing = store.find_operation(db, user, wid, 'analyser', 'analyze', operation_id, inputs)
-            if existing:
-                return execution_reply(db, user, wid, existing, replayed=True)
+        def prepare_analyser():
+            with store.db(readonly=True) as db:
+                store.workspace(db, user, wid, write=True)
+                _, _, existing = store.find_operation(db, user, wid, 'analyser', 'analyze', operation_id, inputs)
+                if existing:
+                    return execution_reply(db, user, wid, existing, replayed=True)
+        prepared = await run_in_threadpool(prepare_analyser)
+        if prepared is not None:
+            return prepared
         if not analyser_url:
             fail(503, 'Workspace Analyser backend is not configured.')
         async def call(client, method, path, raw=b'', receipt=None):
@@ -1784,6 +1788,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 if method == 'GET' and response.status_code in (401, 502, 503, 504):
                     return response.status_code, b''
                 if response.headers.get('x-alaada-workspace-enforced') != 'v1':
+                    if method == 'GET':
+                        return 503, b''  # A host wake-up page is not a verified readiness response.
                     fail(502, 'Analyser did not verify workspace enforcement.')
                 content = bytearray()
                 async for chunk in response.aiter_bytes():
@@ -1794,17 +1800,28 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         record = None
         try:
             async with asyncio.timeout(180), httpx.AsyncClient(timeout=90, follow_redirects=False, transport=analyser_transport) as client:
-                code, _ = await readiness_probe(lambda: call(client, 'GET', '/workspace-gateway/health'))
+                async def revalidate_analyser():
+                    latest = await identity(request)
+                    if latest.user != user.user:
+                        fail(401, 'Account changed.')
+                    def check():
+                        with store.db(readonly=True) as db:
+                            store.workspace(db, latest, wid, write=True)
+                    await run_in_threadpool(check)
+                code, _ = await readiness_probe(lambda: call(client, 'GET', '/workspace-gateway/health'), revalidate_analyser)
                 if code != 200:
                     fail(503, 'Analyser gateway is unavailable. No analysis was sent.')
                 latest = await identity(request)
                 if latest.user != user.user:
                     fail(401, 'Account changed.')
-                with store.db() as db:
-                    store.workspace(db, latest, wid, write=True)
-                    record, created = store.reserve_operation(db, user, wid, 'analyser', 'analyze', operation_id, inputs)
-                    if not created:
-                        return execution_reply(db, latest, wid, record, replayed=True)
+                def reserve_analyser():
+                    with store.db() as db:
+                        store.workspace(db, latest, wid, write=True)
+                        reserved, created = store.reserve_operation(db, user, wid, 'analyser', 'analyze', operation_id, inputs)
+                        return (reserved, None) if created else (reserved, execution_reply(db, latest, wid, reserved, replayed=True))
+                record, replayed = await run_in_threadpool(reserve_analyser)
+                if replayed is not None:
+                    return replayed
                 code, raw = await call(client, 'POST', '/analyze', json.dumps(inputs).encode(), record)
                 if code != 200:
                     fail(502, 'Analysis failed.')
@@ -1826,17 +1843,19 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             rid = hashlib.sha256(json.dumps([wid, 'analyser', 'report', key]).encode()).hexdigest()
             payload = {'native_key': key, 'data': {'url': url, 'result': result,
                 'createdAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}}
-            with store.db() as db:
-                store.workspace(db, latest, wid, write=True)
-                db.insert('resources', {'id': rid, 'workspace': wid, 'product': 'analyser', 'kind': 'report',
-                    'title': url[:200], 'payload': json.dumps(payload, allow_nan=False), 'created_by': latest.user})
-                store.audit(db, latest, wid, 'analyser:complete', rid)
-                store.finish_operation(db, record, 'succeeded', 200, {'resource': rid})
-                completed = dict(record, state='succeeded', response=json.dumps({'resource': rid}), status=200)
-                return execution_reply(db, latest, wid, completed)
+            def finish_analyser():
+                with store.db() as db:
+                    store.workspace(db, latest, wid, write=True)
+                    db.insert('resources', {'id': rid, 'workspace': wid, 'product': 'analyser', 'kind': 'report',
+                        'title': url[:200], 'payload': json.dumps(payload, allow_nan=False), 'created_by': latest.user})
+                    store.audit(db, latest, wid, 'analyser:complete', rid)
+                    store.finish_operation(db, record, 'succeeded', 200, {'resource': rid})
+                    completed = dict(record, state='succeeded', response=json.dumps({'resource': rid}), status=200)
+                    return execution_reply(db, latest, wid, completed)
+            return await run_in_threadpool(finish_analyser)
         except (httpx.HTTPError, HTTPException, ValueError, TypeError, KeyError, RuntimeError, TimeoutError) as error:
             if record:
-                return execution_failure(record, error)
+                return await run_in_threadpool(execution_failure, record, error)
             if isinstance(error, HTTPException):
                 raise
             fail(502, 'Analyser readiness could not be confirmed. No analysis was sent.')
@@ -1945,6 +1964,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             async with httpx.AsyncClient(timeout=httpx.Timeout(70, connect=10), follow_redirects=False, transport=accounts_transport) as client:
                 async def probe_accounts():
                     response = await upstream(client, "GET", "/workspace-gateway/health")
+                    if response.status_code == 200 and response.headers.get('x-alaada-workspace-enforced') != 'v1':
+                        return 503, response
                     return response.status_code, response
                 code, handshake = await readiness_probe(probe_accounts, revalidate)
                 if code != 200 or handshake.headers.get("x-alaada-workspace-enforced") != "v1":

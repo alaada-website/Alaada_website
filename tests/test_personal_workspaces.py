@@ -533,7 +533,10 @@ def test_server_entitlements_follow_personal_plan_and_never_organisation_seat(en
 
 
 @pytest.mark.parametrize('scenario', ['unsigned', 'rejected', 'invalid_json', 'revoked'])
-def test_accounts_gateway_negative_boundaries(tmp_path, scenario):
+def test_accounts_gateway_negative_boundaries(tmp_path, scenario, monkeypatch):
+    async def no_delay(_):
+        pass
+    monkeypatch.setattr(m.asyncio, 'sleep', no_delay)
     users={'alice':m.Identity('alice',{'team':['editor']})}
     calls=[]
     async def authenticate(token):
@@ -562,7 +565,7 @@ def test_accounts_gateway_negative_boundaries(tmp_path, scenario):
         usage=db.execute("SELECT COALESCE(SUM(amount),0) FROM usage WHERE workspace=? AND product='accounts'",(org,)).fetchone()[0]
     assert usage==(0 if scenario in ('unsigned','rejected') else 1)
     if scenario=='unsigned':
-        assert calls==['/workspace-gateway/health']
+        assert calls==['/workspace-gateway/health'] * 10
 
 
 @pytest.mark.parametrize('revoked', [False, True])
@@ -997,7 +1000,10 @@ def test_shared_editor_capabilities_and_revocation_are_server_owned(env):
 
 
 @pytest.mark.parametrize('scenario',['success','revoked','unsigned'])
-def test_analyser_signed_scope_persistence_and_revocation(tmp_path,scenario):
+def test_analyser_signed_scope_persistence_and_revocation(tmp_path,scenario,monkeypatch):
+    async def no_delay(_):
+        pass
+    monkeypatch.setattr(m.asyncio, 'sleep', no_delay)
     users={'alice':m.Identity('alice',{'team':['editor']}),'admin':m.Identity('admin',{'team':['admin']})}
     calls=[]
     secret='analyser-dedicated-test-secret-32-characters'
@@ -1023,7 +1029,7 @@ def test_analyser_signed_scope_persistence_and_revocation(tmp_path,scenario):
         return client.post(f'/api/workspaces/{wid}/analyser/analyze',json={'url':'https://example.com'},headers={'Authorization':'Bearer '+user,'X-Alaada-Workspace':wid,'X-Alaada-Operation':'analysis-test-0001'})
     assert run(personal,'admin').status_code==403
     result=run(org)
-    assert result.status_code=={'success':200,'revoked':403,'unsigned':502}[scenario],result.text
+    assert result.status_code=={'success':200,'revoked':403,'unsigned':503}[scenario],result.text
     with app.state.store.db() as db:
         reports=db.execute("SELECT * FROM resources WHERE product='analyser'").fetchall()
         assert len(reports)==(1 if scenario=='success' else 0)
@@ -1032,7 +1038,7 @@ def test_analyser_signed_scope_persistence_and_revocation(tmp_path,scenario):
             assert result.headers['x-alaada-report']==reports[0]['id']
         assert db.execute("SELECT COALESCE(SUM(amount),0) FROM usage WHERE product='analyser'").fetchone()[0]==(0 if scenario=='unsigned' else 1)
     if scenario!='success':assert 'private report' not in result.text
-    if scenario=='unsigned':assert calls==['/workspace-gateway/health']
+    if scenario=='unsigned':assert calls==['/workspace-gateway/health'] * 10
 
 
 def test_sqlite_migration_supports_appwrite_tablesdb_idempotently(monkeypatch, tmp_path):

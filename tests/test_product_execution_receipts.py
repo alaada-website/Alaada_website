@@ -25,7 +25,7 @@ def test_readiness_probe_is_bounded_and_rechecks_access(monkeypatch):
         pass
     monkeypatch.setattr(m.asyncio, 'sleep', no_delay)
     assert asyncio.run(m.readiness_probe(probe, revalidate)) == (503, None)
-    assert len(calls) == 3 and len(checks) == 2
+    assert len(calls) == 10 and len(checks) == 9
 
 
 @pytest.mark.parametrize('phase', ['reserve_operation', 'audit'])
@@ -66,7 +66,7 @@ def test_accounts_writes_do_not_block_other_platform_requests(tmp_path, monkeypa
 
 
 @pytest.mark.parametrize('second_status', [200, 401])
-@pytest.mark.parametrize('first_status', [401, 502, 503, 504])
+@pytest.mark.parametrize('first_status', [200, 401, 502, 503, 504])
 def test_accounts_cold_start_refreshes_only_handshake(tmp_path, monkeypatch, second_status, first_status):
     clock, health, writes = [1000], [], []
     monkeypatch.setattr(m.time, 'time', lambda: clock[0])
@@ -94,7 +94,7 @@ def test_accounts_cold_start_refreshes_only_handshake(tmp_path, monkeypatch, sec
     assert len(writes) == (1 if second_status == 200 else 0)
 
 @pytest.mark.parametrize('second_status', [200, 401])
-@pytest.mark.parametrize('first_status', [401, 502, 503, 504])
+@pytest.mark.parametrize('first_status', [200, 401, 502, 503, 504])
 def test_cold_start_re_signs_health_without_repeating_execution(tmp_path, monkeypatch, second_status, first_status):
     clock = [1000]
     monkeypatch.setattr(m.time, 'time', lambda: clock[0])
@@ -270,25 +270,27 @@ def test_orbit_access_revoked_while_waking_never_sends(execution):
     assert state['calls'] == usage() == 0
 
 
-@pytest.mark.parametrize('execution', ['orbit'], indirect=True)
-@pytest.mark.parametrize('phase', ['resource', 'reserve_operation', 'audit'])
-def test_orbit_database_phases_do_not_freeze_other_products(execution, monkeypatch, phase):
+@pytest.mark.parametrize('execution,phase', [('orbit', phase) for phase in ('resource', 'reserve_operation', 'audit')]
+                         + [('analyser', phase) for phase in ('workspace', 'reserve_operation', 'audit')], indirect=['execution'])
+def test_product_database_phases_do_not_freeze_other_products(execution, monkeypatch, phase):
     import asyncio
-    _, _, _, app, _, wid, _, _, _, data = execution
+    product, _, _, app, _, wid, _, _, _, data = execution
     entered, released, finished = threading.Event(), threading.Event(), threading.Event()
     original = getattr(app.state.store, phase)
     def delayed(*args, **kwargs):
         entered.set()
         try:
-            assert released.wait(3), 'Orbit database work blocked other platform requests'
+            assert released.wait(3), 'Product database work blocked other platform requests'
             return original(*args, **kwargs)
         finally:
             finished.set()
     monkeypatch.setattr(app.state.store, phase, delayed)
     async def run():
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:
-            task = asyncio.create_task(client.post(f'/api/workspaces/{wid}/orbit/reply', json=data,
-                headers={'Authorization': 'Bearer alice', 'X-Alaada-Workspace': wid}))
+            operation = 'reply' if product == 'orbit' else 'analyze'
+            task = asyncio.create_task(client.post(f'/api/workspaces/{wid}/{product}/{operation}', json=data,
+                headers={'Authorization': 'Bearer alice', 'X-Alaada-Workspace': wid,
+                         'X-Alaada-Operation': 'nonblocking-analyser-check'}))
             try:
                 assert await asyncio.to_thread(entered.wait, 3)
                 assert not finished.is_set()
