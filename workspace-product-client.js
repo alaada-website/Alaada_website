@@ -390,6 +390,12 @@
           if(write)headers.set('Idempotency-Key',operationKey);
           else headers.delete('Idempotency-Key');
           const response=await api('/workspaces/'+workspace.id+'/accounts'+target.pathname+target.search,method,undefined,{...options,headers});
+          if(write&&response.ok&&!(method==='DELETE'&&response.status===204)){
+            const confirmation=await response.clone().json().catch(()=>null);
+            if(!confirmation||typeof confirmation!=='object'||(method==='POST'&&target.pathname==='/companies'&&typeof confirmation.id!=='string')){
+              return new Response(JSON.stringify({detail:'Accounts did not confirm the save. Keep the same form values and retry; the original retry reference has been preserved.',state:'unknown'}),{status:502,headers:{'Content-Type':'application/json'}});
+            }
+          }
           // Keep uncertain/conflicting outcomes retryable after reload. A fresh
           // successful user action receives a fresh key, even with identical data.
           if(storageKey&&(response.ok||[400,403,404,405,413,415,422].includes(response.status))){

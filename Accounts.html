@@ -387,7 +387,7 @@ select{cursor:pointer;}
 </head>
 <body data-alaada-product="accounts">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=7da20545d117" data-product="accounts"></script>
+<script src="/workspace-product-client.js?v=e54fa1628309" data-product="accounts"></script>
 <script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 
 <!-- ============== API GATE (first run / connection lost) ============== -->
@@ -8042,6 +8042,8 @@ function openCompanyForm(){
   });
 }
 async function submitCompanyForm(){
+  const button = document.getElementById('c-save');
+  if (!button || button.disabled) return;
   const name = document.getElementById('c-name').value.trim();
   if (!name) return toast('Company name is required','err');
   const payload = {
@@ -8055,12 +8057,29 @@ async function submitCompanyForm(){
     pan: document.getElementById('c-pan').value.trim() || null,
     address: document.getElementById('c-addr').value.trim() || null,
   };
+  const generation = STATE.companyGeneration, workspace = window.AlaadaWorkspace.active?.id;
+  const label = button.textContent;
+  button.disabled = true; button.textContent = 'Creating company…';
+  button.setAttribute('aria-busy', 'true');
   try {
     const c = await api('/companies', {method:'POST', body:payload});
+    if (!c || typeof c.id !== 'string') throw new ApiError('Company creation was not confirmed. Retry with the same form values.',502,{code:'MALFORMED_RESPONSE'});
+    if (workspace !== window.AlaadaWorkspace.active?.id) return;
     markBackupNeeded(c.id);
-    toast('Company created ✓','ok'); closeModal();
-    await loadCompanies(); await selectCompany(c.id); navigate('dashboard');
+    STATE.companies = [c, ...STATE.companies.filter(company => company.id !== c.id)];
+    setLoadState('companies', 'loaded'); renderCompanyMenu();
+    toast('Company created ✓','ok');
+    // Do not replace a different company or a newly opened form after a slow
+    // response. The saved company remains available in the picker.
+    if (generation !== STATE.companyGeneration || document.getElementById('c-save') !== button || !modalBackdrop.classList.contains('open')) return;
+    closeModal();
+    STATE.currentView = 'dashboard';
+    await selectCompany(c.id);
   } catch(e){ errToast(e); }
+  finally {
+    button.disabled = false; button.textContent = label;
+    button.removeAttribute('aria-busy');
+  }
 }
 
 async function refreshBackupBeforeLeaving(){

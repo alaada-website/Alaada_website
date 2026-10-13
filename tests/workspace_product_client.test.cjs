@@ -146,6 +146,15 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   await accountsReloaded.W.productFetch('/companies',accountOptions);
   assert.notEqual(accountAttempts(accountsReloaded).at(-1).options.headers['Idempotency-Key'],uncertainKey);
   assert(!JSON.stringify([...accounts.operationStorage]).includes('Private business'));
+  for(const body of ['', '<html>Starting</html>', '{}', 'null']){
+    const uncertain=await boot('accounts');
+    uncertain.setAccountReply(()=>new Response(body,{status:200}));
+    assert.equal((await uncertain.W.productFetch('/companies',accountOptions)).status,502);
+    const key=accountAttempts(uncertain)[0].options.headers['Idempotency-Key'];
+    uncertain.setAccountReply(()=>json({id:'confirmed-company'}));
+    assert.equal((await uncertain.W.productFetch('/companies',accountOptions)).status,200);
+    assert.equal(accountAttempts(uncertain).at(-1).options.headers['Idempotency-Key'],key);
+  }
   const supplied='voucher-post:company-id:voucher-id';
   await accountsReloaded.W.productFetch('/companies/company-id/vouchers/voucher-id/post',{
     method:'POST',headers:{'Idempotency-Key':supplied,'X-Idempotency-Key':supplied,Authorization:'attacker'}});

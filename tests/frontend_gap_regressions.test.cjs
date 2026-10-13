@@ -95,6 +95,43 @@ test('Accounts reuses verified workspace identity without duplicate JWT/startup 
   assert.match(source,/bundledCompany \? \[\] : await Promise.allSettled/);
 });
 
+function companyForm(reply){
+  const button={disabled:false,textContent:'Create company',setAttribute(){},removeAttribute(){}};
+  const fields=Object.fromEntries(['name','legal','cur','tz','fystart','fyend','gst','pan','addr'].map(key=>['c-'+key,{value:key==='name'?'My company':''}]));
+  fields['c-save']=button;
+  const selected=[],errors=[],state={companyGeneration:1,companies:[],currentView:'ledgers'};
+  const sandbox={document:{getElementById:id=>fields[id]},STATE:state,window:{AlaadaWorkspace:{active:{id:'personal'}}},
+    modalBackdrop:{classList:{contains:()=>true}},api:reply,markBackupNeeded(){},setLoadState(){},renderCompanyMenu(){},toast(){},
+    closeModal(){},selectCompany:async id=>selected.push(id),errToast:error=>errors.push(error),ApiError:Error};
+  const submit=vm.runInNewContext('('+extract(read('Accounts.html'),'async function submitCompanyForm()', '\n}')+')',sandbox);
+  return {button,fields,selected,errors,state,submit};
+}
+
+test('Company save is single-flight and opens the new company only once',async()=>{
+  let finish,calls=0;
+  const env=companyForm(()=>{calls++;return new Promise(resolve=>{finish=resolve;});});
+  const pending=env.submit();await env.submit();
+  assert.equal(calls,1);assert.equal(env.button.disabled,true);assert.equal(env.button.textContent,'Creating company…');
+  finish({id:'saved',name:'My company'});await pending;
+  assert.deepEqual(env.selected,['saved']);assert.equal(env.state.companies.length,1);assert.equal(env.state.currentView,'dashboard');
+  assert.equal(env.button.disabled,false);assert.equal(env.button.textContent,'Create company');
+});
+
+test('A failed company save preserves input and enables a safe retry',async()=>{
+  const env=companyForm(async()=>{throw new Error('Service unavailable');});
+  await env.submit();
+  assert.equal(env.fields['c-name'].value,'My company');assert.equal(env.button.disabled,false);
+  assert.equal(env.errors.length,1);assert.equal(env.selected.length,0);
+});
+
+test('A late company save does not replace a newly selected company',async()=>{
+  let finish;
+  const env=companyForm(()=>new Promise(resolve=>{finish=resolve;}));
+  const pending=env.submit();env.state.companyGeneration++;
+  finish({id:'saved',name:'My company'});await pending;
+  assert.equal(env.state.companies.length,1);assert.equal(env.selected.length,0);
+});
+
 test('Sheets detects XLSX encryption without an undefined signature byte',async()=>{
   const source=read('Spreadsheets.html');
   const start=source.indexOf('async loadFileSecure(event)'),end=source.indexOf('async loadFileEnhanced(event)',start);
