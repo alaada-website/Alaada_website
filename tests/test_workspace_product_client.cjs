@@ -290,7 +290,7 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   const orbitDeadlines=[],slowOrbit=await boot('orbit','',[],new Map(),{timers:orbitDeadlines});
   await slowOrbit.W.save('conversation','first',{messages:[{role:'user',text:'Hi'}]},'First');
   await slowOrbit.W.orbitReply('first');
-  assert.ok(orbitDeadlines.includes(120000));
+  assert.ok(orbitDeadlines.includes(210000));
   await slowOrbit.W.entitlements();assert.ok(orbitDeadlines.includes(90000));
   let started;const began=new Promise(resolve=>started=resolve);
   const stopped=await boot('analyser','',[],new Map(),{fetch:(url,options)=>{

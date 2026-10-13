@@ -571,6 +571,9 @@ def test_orbit_context_isolation_and_revocation_during_execution(tmp_path, revok
     calls=[]
     async def auth(token):return identities[token]
     async def backend(req):
+        if req.method == 'GET' and req.url.path == '/health':
+            return httpx.Response(200, json={'status':'ok', 'stateless':True, 'gateway_only':True,
+                'openai_configured':True, 'models':['simplex1']})
         payload=json.loads(req.content)
         calls.append(payload)
         assert req.headers['authorization']=='Bearer server-only-secret'

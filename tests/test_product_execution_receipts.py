@@ -160,6 +160,16 @@ def execution(request, tmp_path):
                 return httpx.Response(200, json={'ok': True}, headers={'X-Alaada-Workspace-Enforced': 'v1'})
             assert len(claim['operation_id']) == 64
         else:
+            if req.method == 'GET':
+                assert req.url.path == '/health'
+                assert 'authorization' not in req.headers
+                state['health'] += 1
+                if state.get('revoke_health'):
+                    users['alice'] = m.Identity('alice')
+                statuses = state.get('health_statuses', [])
+                return httpx.Response(statuses.pop(0) if statuses else 200, json=state.get('health_payload', {
+                    'status': 'ok', 'stateless': True, 'gateway_only': True,
+                    'openai_configured': True, 'models': ['simplex1']}))
             assert req.headers['authorization'] == 'Bearer test-only-orbit-key'
             assert json.loads(req.content)['privacy'] is True
         state['calls'] += 1
@@ -214,6 +224,79 @@ def execution(request, tmp_path):
             ('reply' if product == 'orbit' else 'analyze'), headers=h, json=data if body is None else body)
 
     return product, state, users, app, client, wid, call, lambda: total() - baseline, build, data
+
+
+@pytest.mark.parametrize('execution', ['orbit'], indirect=True)
+@pytest.mark.parametrize('cold_status', [502, 503, 504])
+def test_orbit_wakes_readonly_before_reserving_or_sending(execution, cold_status, monkeypatch):
+    _, state, _, app, _, _, call, usage, _, _ = execution
+    state['health_statuses'] = [cold_status, 200]
+    async def no_delay(_):
+        with app.state.store.db(readonly=True) as db:
+            assert db.rows('product_operations', {}) == []
+        assert state['calls'] == usage() == 0
+    monkeypatch.setattr(m.asyncio, 'sleep', no_delay)
+    assert call().status_code == 200
+    assert state['health'] == 2 and state['calls'] == usage() == 1
+    assert call().headers['x-alaada-replayed'] == 'true'
+    assert state['health'] == 2 and state['calls'] == usage() == 1
+
+
+@pytest.mark.parametrize('execution', ['orbit'], indirect=True)
+@pytest.mark.parametrize('health', [{}, {'status': 'ok'}, {
+    'status': 'ok', 'stateless': True, 'gateway_only': True,
+    'openai_configured': False, 'models': ['simplex1']}])
+def test_orbit_unready_does_not_spend_or_poison_the_prompt(execution, health, monkeypatch):
+    _, state, _, app, _, _, call, usage, _, _ = execution
+    state['health_payload'] = health
+    async def no_delay(_):
+        pass
+    monkeypatch.setattr(m.asyncio, 'sleep', no_delay)
+    result = call()
+    assert result.status_code == 503 and 'no AI request was sent' in result.text
+    assert state['calls'] == usage() == 0
+    with app.state.store.db(readonly=True) as db:
+        assert db.rows('product_operations', {}) == []
+    del state['health_payload']
+    assert call().status_code == 200  # The same saved prompt can safely retry.
+    assert state['calls'] == usage() == 1
+
+
+@pytest.mark.parametrize('execution', ['orbit'], indirect=True)
+def test_orbit_access_revoked_while_waking_never_sends(execution):
+    _, state, _, _, _, _, call, usage, _, _ = execution
+    state['revoke_health'] = True
+    assert call().status_code == 403
+    assert state['calls'] == usage() == 0
+
+
+@pytest.mark.parametrize('execution', ['orbit'], indirect=True)
+@pytest.mark.parametrize('phase', ['resource', 'reserve_operation', 'audit'])
+def test_orbit_database_phases_do_not_freeze_other_products(execution, monkeypatch, phase):
+    import asyncio
+    _, _, _, app, _, wid, _, _, _, data = execution
+    entered, released, finished = threading.Event(), threading.Event(), threading.Event()
+    original = getattr(app.state.store, phase)
+    def delayed(*args, **kwargs):
+        entered.set()
+        try:
+            assert released.wait(3), 'Orbit database work blocked other platform requests'
+            return original(*args, **kwargs)
+        finally:
+            finished.set()
+    monkeypatch.setattr(app.state.store, phase, delayed)
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:
+            task = asyncio.create_task(client.post(f'/api/workspaces/{wid}/orbit/reply', json=data,
+                headers={'Authorization': 'Bearer alice', 'X-Alaada-Workspace': wid}))
+            try:
+                assert await asyncio.to_thread(entered.wait, 3)
+                assert not finished.is_set()
+                assert (await client.get('/health')).status_code == 200
+            finally:
+                released.set()
+            assert (await task).status_code == 200
+    asyncio.run(run())
 
 
 def test_replay_after_restart_and_provider_disconnect(execution):
