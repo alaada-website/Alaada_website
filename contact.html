@@ -1,163 +1,375 @@
 <!DOCTYPE html>
-<html lang="en" data-alaada-fast>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact Alaada</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3C/svg%3E">
+  <meta name="theme-color" content="#f5f4ef">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Contact the Alaada team for product support, feedback, partnerships and business enquiries about Orbit AI, Accounts, Web Analyser and Sheets.">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Alaada">
+  <meta property="og:title" content="Contact Alaada — We're Here to Help">
+  <meta property="og:description" content="Questions, ideas, partnerships or product feedback? Get in touch with Alaada.">
+  <meta property="og:url" content="https://www.alaada.com/contact.html">
+  <meta property="og:image" content="https://www.alaada.com/images/Alaada%20landscape%20img.png">
+  <link rel="canonical" href="https://www.alaada.com/contact.html">
+  <link rel="icon" type="image/jpeg" href="images/alaada-logo.jpg">
+  <link rel="apple-touch-icon" href="images/alaada-logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Contact Alaada — Support, Feedback &amp; Partnerships</title>
   <style>
     :root {
-      --bg: #090d14;
-      --card: #0f1721;
-      --primary: #4f46e5;
-      --text: #fff;
-      --muted: #9aa0b0;
-      --accent: #7c3aed;
+      --bg:#f5f4ef; --bg2:#eceae3; --white:#fff;
+      --ink:#121110; --ink2:#46443f; --ink3:#79756e;
+      --border:rgba(0,0,0,.08); --border-strong:rgba(0,0,0,.14);
+      --blue:#1a5fff; --blue-soft:#e6edff;
+      --teal:#00957a; --teal-soft:#e0f5ee;
+      --violet:#7c3aed;
+      --shadow:0 3px 9px rgba(0,0,0,.04),0 18px 50px rgba(0,0,0,.075);
     }
+    *,*::before,*::after{box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:80px}
+    body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Figtree',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}
+    button,input,select,textarea{font:inherit}
+    a{color:inherit}
+    :focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+    .skip-link{position:fixed;left:16px;top:-90px;background:var(--ink);color:white;padding:10px 16px;border-radius:10px;z-index:1000;text-decoration:none}
+    .skip-link:focus{top:12px}
 
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
+    /* Navigation: matches the latest Alaada homepage. */
+    .site-nav{height:60px;position:fixed;inset:0 0 auto;z-index:100;background:rgba(245,244,239,.94);border-bottom:1px solid var(--border);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 40px}
+    .nav-logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font:800 1.18rem/1 'Syne',sans-serif;letter-spacing:-.5px;white-space:nowrap}
+    .nav-logo img{width:28px;height:28px;object-fit:cover;border-radius:7px}
+    .nav-links{display:flex;align-items:center;gap:4px;list-style:none;margin:0;padding:0}
+    .nav-links a{display:block;text-decoration:none;white-space:nowrap;font-size:.86rem;font-weight:600;color:var(--ink2);padding:8px 12px;border-radius:8px;transition:background .18s,color .18s}
+    .nav-links a:hover,.nav-links a[aria-current="page"]{background:var(--bg2);color:var(--ink)}
+    .nav-links .nav-cta{background:var(--blue);color:#fff;box-shadow:0 2px 10px rgba(26,95,255,.25);margin-left:6px}
+    .nav-links .nav-cta:hover{background:#1450d6;color:#fff}
+    .menu-toggle{display:none;width:42px;height:42px;align-items:center;justify-content:center;flex-direction:column;gap:5px;border:1px solid var(--border-strong);border-radius:10px;background:#fff;cursor:pointer}
+    .menu-toggle span{width:18px;height:2px;background:var(--ink);border-radius:2px}
 
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
-      background: var(--card);
-    }
+    /* Main content */
+    main{position:relative;isolation:isolate;overflow:hidden;padding:122px 24px 100px}
+    main::before{content:"";position:absolute;z-index:-1;width:590px;height:590px;top:-130px;left:-170px;pointer-events:none;background:radial-gradient(circle,rgba(26,95,255,.11),transparent 66%)}
+    main::after{content:"";position:absolute;z-index:-1;width:520px;height:520px;right:-180px;top:270px;pointer-events:none;background:radial-gradient(circle,rgba(0,149,122,.08),transparent 66%)}
+    .container{width:min(100%,1100px);margin-inline:auto}
+    .intro{max-width:720px;text-align:center;margin:0 auto 52px}
+    .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--blue);margin-bottom:22px}
+    .eyebrow::before{content:"";width:20px;height:2px;background:var(--blue)}
+    .intro h1{font:800 clamp(2.75rem,6vw,4.9rem)/1.07 'Syne',sans-serif;letter-spacing:-2.6px;margin:0 0 21px}
+    .gradient-text{background:linear-gradient(100deg,var(--blue),#608dff 55%,var(--teal));color:transparent;-webkit-background-clip:text;background-clip:text}
+    .intro p{max-width:600px;margin:0 auto;font-size:1.06rem;line-height:1.8;color:var(--ink2)}
+    .contact-grid{display:grid;grid-template-columns:minmax(0,.87fr) minmax(0,1.13fr);gap:30px;align-items:start}
+    .info-column{display:flex;flex-direction:column;gap:18px}
+    .info-panel{padding:33px;background:var(--white);border:1px solid var(--border-strong);border-radius:24px;box-shadow:0 2px 14px rgba(0,0,0,.025)}
+    .info-panel h2,.form-card h2{font:800 1.35rem/1.25 'Syne',sans-serif;letter-spacing:-.5px;margin:0 0 12px}
+    .info-panel>p,.form-intro{color:var(--ink2);font-size:.91rem;line-height:1.77;margin:0}
+    .contact-method{display:flex;gap:14px;margin-top:27px;align-items:flex-start}
+    .icon-tile{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;background:var(--blue-soft);border:1px solid rgba(26,95,255,.08);color:var(--blue);border-radius:13px}
+    .icon-tile.teal{color:var(--teal);background:var(--teal-soft);border-color:rgba(0,149,122,.12)}
+    .icon-tile svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .method-label{font-size:.76rem;font-weight:700;color:var(--ink3);margin:0 0 3px}
+    .method-title{font-weight:700;font-size:.95rem;line-height:1.4;margin:0 0 4px}
+    .method-description{font-size:.81rem;color:var(--ink3);margin:0;line-height:1.65}
+    .email-link{overflow-wrap:anywhere;color:var(--blue);text-decoration:underline;text-decoration-color:rgba(26,95,255,.25);text-underline-offset:4px}
+    .email-link:hover{color:#1245c5;text-decoration-color:currentColor}
+    .quick-card{border-radius:23px;padding:31px;background:#101b2e;color:#fff;position:relative;overflow:hidden}
+    .quick-card::after{content:"";position:absolute;width:240px;height:240px;right:-110px;bottom:-150px;border-radius:50%;background:rgba(26,95,255,.26);filter:blur(25px);pointer-events:none}
+    .quick-card h3{position:relative;z-index:1;font:700 1.04rem 'Syne',sans-serif;margin:0 0 9px}
+    .quick-card p{position:relative;z-index:1;color:rgba(255,255,255,.7);font-size:.86rem;line-height:1.7;margin:0 0 18px}
+    .quick-card a{position:relative;z-index:1;display:inline-flex;gap:8px;align-items:center;color:#fff;font-size:.87rem;font-weight:700;text-underline-offset:5px}
+    .quick-card a:hover{text-decoration-color:#8ab6ff}
 
-    nav .logo h1 {
-      font-size: 1.2rem;
-      color: var(--primary);
-      margin: 0;
-    }
+    /* Contact form */
+    .form-card{border:1px solid var(--border-strong);border-top:3px solid var(--blue);background:var(--white);padding:38px 40px 34px;border-radius:24px;box-shadow:var(--shadow)}
+    .form-intro{margin-bottom:27px}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+    .field{margin-bottom:20px;min-width:0}
+    .field label{display:block;font-weight:700;font-size:.8rem;color:var(--ink2);margin-bottom:8px}
+    .field .optional{font-weight:400;color:var(--ink3)}
+    .field input,.field select,.field textarea{display:block;width:100%;background:#faf9f6;border:1.5px solid var(--border-strong);border-radius:10px;color:var(--ink);padding:12px 14px;outline:none;transition:background .16s,border-color .16s,box-shadow .16s;font-size:.9rem}
+    .field input::placeholder,.field textarea::placeholder{color:#77746e}
+    .field input:focus,.field select:focus,.field textarea:focus{background:#fff;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,95,255,.12)}
+    .field textarea{resize:vertical;min-height:140px;max-height:440px;line-height:1.7}
+    .field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:42px}
+    .field-help{display:flex;justify-content:space-between;gap:12px;color:var(--ink3);font-size:.73rem;margin-top:7px}
+    .privacy-note{font-size:.78rem;line-height:1.7;color:var(--ink3);margin:0 0 22px}
+    .privacy-note a{color:var(--blue);text-underline-offset:3px}
+    .actions{display:flex;gap:11px;align-items:center;flex-wrap:wrap}
+    .send-btn{background:var(--blue);color:#fff;border:0;border-radius:10px;padding:13px 20px;min-height:48px;font-family:'Syne',sans-serif;font-weight:700;font-size:.86rem;cursor:pointer;transition:background .18s,transform .18s,box-shadow .18s;box-shadow:0 3px 15px rgba(26,95,255,.27)}
+    .send-btn:hover{background:#1450d6;transform:translateY(-1px);box-shadow:0 6px 23px rgba(26,95,255,.3)}
+    .secondary-btn{background:#fff;color:var(--ink2);border:1px solid var(--border-strong);border-radius:10px;min-height:48px;padding:11px 16px;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .18s,border-color .18s}
+    .secondary-btn:hover{background:var(--bg);border-color:#aba7a0}
+    .form-note{font-size:.77rem;color:var(--ink3);line-height:1.6;margin-top:14px}
+    .feedback{display:none;margin-top:16px;padding:13px 15px;border-radius:10px;background:#ebf4ff;border:1px solid #c8dcff;color:#19468b;font-size:.84rem;line-height:1.6}
+    .feedback.visible{display:block}
+    .feedback.error{background:#fff3f2;border-color:#f1c5c1;color:#942b26}
 
-    nav .menu a {
-      margin-left: 1.5rem;
-      color: var(--text);
-      text-decoration: none;
-    }
-
-    nav .menu a:hover {
-      color: var(--accent);
-    }
-
-    .contact-container {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
-    }
-
-    .contact-card {
-      background: var(--card);
-      padding: 3rem 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      max-width: 500px;
-      width: 100%;
-    }
-
-    .contact-card h2 {
-      margin-top: 0;
-      color: var(--primary);
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    .contact-card p {
-      color: var(--muted);
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .contact-card form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .contact-card input,
-    .contact-card textarea {
-      padding: 0.8rem;
-      border-radius: 8px;
-      border: none;
-      background: #1f2937;
-      color: var(--text);
-      resize: none;
-    }
-
-    .contact-card input::placeholder,
-    .contact-card textarea::placeholder {
-      color: var(--muted);
-    }
-
-    .contact-card button {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.3s;
-    }
-
-    .contact-card button:hover {
-      background: var(--primary);
-    }
-
-    footer {
-      text-align: center;
-      padding: 2rem;
-      background: var(--card);
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-  /* Keep the marketing pages responsive without making every hover feel animated. */
-  html[data-alaada-fast],html[data-alaada-fast] *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
-  html[data-alaada-fast] .reveal{opacity:1!important;transform:none!important;transition:none!important}
+    footer{background:#0d0c0b;color:rgba(255,255,255,.6);padding:52px 40px 28px}
+    .footer-inner{width:min(100%,1100px);margin:0 auto 36px;display:flex;gap:30px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+    .footer-brand{display:flex;align-items:center;gap:9px;color:white;font:800 1.12rem 'Syne',sans-serif;margin-bottom:7px}
+    .footer-brand img{height:23px;width:23px;border-radius:5px;object-fit:cover}
+    .footer-sub{font-size:.82rem;color:rgba(255,255,255,.38);margin:0 0 8px}
+    .footer-email{font-size:.84rem;color:rgba(255,255,255,.66);text-decoration:none}
+    .footer-email:hover{color:#fff}
+    .footer-links{max-width:535px;display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:flex-end}
+    .footer-links a{font-size:.81rem;color:rgba(255,255,255,.62);text-decoration:none}
+    .footer-links a:hover{color:#fff}
+    .footer-bottom{width:min(100%,1100px);margin:0 auto;border-top:1px solid rgba(255,255,255,.1);padding-top:22px;color:rgba(255,255,255,.39);font-size:.74rem}
+    @media(max-width:1000px){.site-nav{padding:0 22px}.nav-links a{padding:8px 9px;font-size:.8rem}.contact-grid{grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:22px}.form-card{padding:30px 28px}.info-panel{padding:28px}}
+    @media(max-width:800px){.menu-toggle{display:flex}.nav-links{display:none;position:absolute;top:60px;left:0;right:0;background:var(--white);border-bottom:1px solid var(--border-strong);box-shadow:var(--shadow);padding:14px 20px 20px;max-height:calc(100dvh - 60px);overflow-y:auto;flex-direction:column;align-items:stretch;gap:5px}.nav-links.open{display:flex}.nav-links a{padding:12px 14px;font-size:.92rem}.nav-links .nav-cta{margin-left:0}.contact-grid{grid-template-columns:1fr}.info-column{display:grid;grid-template-columns:1fr 1fr;align-items:stretch}.intro{margin-bottom:36px}main{padding-top:105px}.footer-links{justify-content:flex-start}}
+    @media(max-width:600px){.site-nav{padding:0 16px}main{padding:96px 15px 64px}.intro h1{font-size:clamp(2.45rem,11vw,3.6rem);letter-spacing:-1.4px}.intro p{font-size:.95rem}.contact-grid{gap:18px}.info-column{grid-template-columns:1fr;gap:14px}.info-panel,.quick-card{padding:25px 23px}.form-card{padding:27px 21px}.field-row{grid-template-columns:1fr;gap:0}.field{margin-bottom:17px}.actions{flex-direction:column;align-items:stretch}.actions button{width:100%}footer{padding:36px 24px 25px}.footer-inner{flex-direction:column;gap:22px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
-  <!-- Navbar -->
-  <nav>
-    <div class="logo"><h1>Alaada</h1></div>
-    <div class="menu">
-      <a href="/">Home</a>
-      <a href="/premium.html">Premium</a>
-      <a href="/contact.html">Contact</a>
-    </div>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a class="nav-logo" href="index.html" aria-label="Alaada home">
+      <img src="images/alaada-logo.jpg" alt="" width="28" height="28">
+      Alaada
+    </a>
+    <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Open navigation">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="index.html#orbit-section">Orbit AI</a></li>
+      <li><a href="index.html#accounts-section">Accounts</a></li>
+      <li><a href="index.html#analyser-section">Web Analyser</a></li>
+      <li><a href="index.html#sheets-section">Sheets</a></li>
+      <li><a href="premium.html">Premium</a></li>
+      <li><a href="contact.html" aria-current="page">Contact</a></li>
+      <li><a class="nav-cta" href="Orbit.html">Try Orbit &rarr;</a></li>
+    </ul>
   </nav>
 
-  <!-- Contact Section -->
-  <div class="contact-container">
-    <div class="contact-card">
-      <h2>Contact Us</h2>
-      <p>Have questions or feedback? We’d love to hear from you!</p>
-      <form action="mailto:your-email@example.com" method="POST" enctype="text/plain">
-        <input type="text" name="name" placeholder="Your Name" required>
-        <input type="email" name="email" placeholder="Your Email" required>
-        <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
-        <button type="submit">Send Message</button>
-      </form>
-    </div>
-  </div>
+  <main id="main-content">
+    <div class="container">
+      <header class="intro">
+        <div class="eyebrow">Get in touch</div>
+        <h1>Let's build<br><span class="gradient-text">something better.</span></h1>
+        <p>Have a question about Alaada, need help with a product, or want to explore a collaboration? We'd love to hear from you.</p>
+      </header>
 
-  <!-- Footer -->
+      <div class="contact-grid">
+        <aside class="info-column" aria-label="Other ways to contact Alaada">
+          <section class="info-panel">
+            <h2>We're here to help.</h2>
+            <p>Whether you're using Orbit AI, Alaada Accounts, Web Analyser or Sheets, reach out with your questions and ideas.</p>
+
+            <div class="contact-method">
+              <span class="icon-tile" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+              </span>
+              <div>
+                <p class="method-label">Email us directly</p>
+                <p class="method-title"><a class="email-link" href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a></p>
+                <p class="method-description">Support, feedback and general enquiries.</p>
+              </div>
+            </div>
+
+            <div class="contact-method">
+              <span class="icon-tile teal" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 19h16M7 16V8l5-4 5 4v8M10 19v-6h4v6"/></svg>
+              </span>
+              <div>
+                <p class="method-label">Based in India</p>
+                <p class="method-title">Kolkata, West Bengal</p>
+                <p class="method-description">Building practical AI and business tools for the world.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="quick-card">
+            <h3>Interested in working with Alaada?</h3>
+            <p>Tell us about your project, integration, partnership or business requirements.</p>
+            <a href="mailto:arzodas2024@gmail.com?subject=Partnership%20enquiry">Discuss a partnership <span aria-hidden="true">&rarr;</span></a>
+          </section>
+        </aside>
+
+        <section class="form-card" aria-labelledby="form-title">
+          <h2 id="form-title">Send us a message</h2>
+          <p class="form-intro">Fill out the details below. We'll prepare an email you can review and send from your own email app.</p>
+
+          <form id="contact-form" autocomplete="on">
+            <div class="field-row">
+              <div class="field">
+                <label for="full-name">Your name <span aria-hidden="true">*</span></label>
+                <input id="full-name" name="name" type="text" placeholder="Full name" autocomplete="name" maxlength="100" required>
+              </div>
+              <div class="field">
+                <label for="email">Email address <span aria-hidden="true">*</span></label>
+                <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" maxlength="254" required>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="topic">What is this about? <span aria-hidden="true">*</span></label>
+              <select id="topic" name="topic" required>
+                <option value="" selected disabled>Select an enquiry type</option>
+                <option value="Product support">Product support</option>
+                <option value="Orbit AI">Orbit AI</option>
+                <option value="Alaada Accounts">Alaada Accounts</option>
+                <option value="Alaada Sheets">Alaada Sheets</option>
+                <option value="Web Analyser">Web Analyser</option>
+                <option value="Plans and billing">Plans and billing</option>
+                <option value="Partnership or business">Partnership or business</option>
+                <option value="Feedback or suggestion">Feedback or suggestion</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="subject">Subject <span class="optional">(optional)</span></label>
+              <input id="subject" name="subject" type="text" placeholder="A short summary of your enquiry" maxlength="120">
+            </div>
+
+            <div class="field">
+              <label for="message">Your message <span aria-hidden="true">*</span></label>
+              <textarea id="message" name="message" rows="5" minlength="10" maxlength="2500" placeholder="Tell us how we can help…" aria-describedby="char-count" required></textarea>
+              <div class="field-help"><span>At least 10 characters</span><span id="char-count">0 / 2500</span></div>
+            </div>
+
+            <p class="privacy-note">By choosing to contact us, you decide what information to share. See our <a href="privacy-policy.html">Privacy Policy</a>. This page does not upload your message to Alaada.</p>
+            <div class="actions">
+              <button class="send-btn" type="submit">Open email draft <span aria-hidden="true">&rarr;</span></button>
+              <button class="secondary-btn" type="button" id="copy-draft">Copy message</button>
+            </div>
+            <p class="form-note">Your email app will open with a pre-filled draft. You must press <strong>Send</strong> in that app to deliver it.</p>
+            <div class="feedback" id="form-feedback" role="status" aria-live="polite"></div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+
   <footer>
-    &copy; 2025 Alaada. All rights reserved.
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand"><img src="images/alaada-logo.jpg" alt="" width="23" height="23">Alaada</div>
+        <p class="footer-sub">Where Perfection meets Possibility.</p>
+        <a class="footer-email" href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a>
+      </div>
+      <div class="footer-links" aria-label="Footer links">
+        <a href="index.html">Home</a>
+        <a href="about-us.html">About Us</a>
+        <a href="blog.html">Blog</a>
+        <a href="developers.html">Developers</a>
+        <a href="premium.html">Premium</a>
+        <a href="contact.html" aria-current="page">Contact</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms-and-conditions.html">Terms &amp; Conditions</a>
+        <a href="https://www.linkedin.com/company/alaada/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      </div>
+    </div>
+    <div class="footer-bottom">&copy; <span id="year">2026</span> Alaada. All rights reserved. &middot; Built in Kolkata, India.</div>
   </footer>
 
+  <script>
+    (() => {
+      'use strict';
+      const menuButton = document.getElementById('menu-toggle');
+      const menu = document.getElementById('nav-links');
+      const closeMenu = () => {
+        menu.classList.remove('open');
+        menuButton.setAttribute('aria-expanded', 'false');
+        menuButton.setAttribute('aria-label', 'Open navigation');
+      };
+      menuButton.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        menuButton.setAttribute('aria-expanded', String(open));
+        menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+      });
+      menu.addEventListener('click', e => { if (e.target.closest('a')) closeMenu(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+      document.addEventListener('click', e => {
+        if (!menu.contains(e.target) && !menuButton.contains(e.target)) closeMenu();
+      });
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      const form = document.getElementById('contact-form');
+      const field = id => document.getElementById(id);
+      const feedback = field('form-feedback');
+      const message = field('message');
+      const counter = field('char-count');
+      const supportEmail = 'arzodas2024@gmail.com';
+      const updateCounter = () => { counter.textContent = `${message.value.length} / 2500`; };
+      const showFeedback = (text, error = false) => {
+        feedback.textContent = text;
+        feedback.classList.toggle('error', error);
+        feedback.classList.add('visible');
+      };
+      updateCounter();
+      message.addEventListener('input', updateCounter);
+      form.addEventListener('input', () => feedback.classList.remove('visible'));
+
+      // A static website cannot deliver email itself. Preparing a mailto draft
+      // avoids claiming successful delivery without a verified server response.
+      function draft() {
+        const name = field('full-name').value.trim();
+        const email = field('email').value.trim();
+        const topic = field('topic').value;
+        const subject = field('subject').value.trim();
+        const body = message.value.trim();
+        return {
+          subject: `[Alaada] ${topic}${subject ? ' — ' + subject : ''}`,
+          body: `Hello Alaada,\n\n${body}\n\n---\nName: ${name}\nReply-to email: ${email}\nEnquiry type: ${topic}`
+        };
+      }
+      function validate() {
+        if (!form.reportValidity()) return false;
+        // HTML required and minlength alone do not reject all-whitespace text.
+        if (message.value.trim().length < 10) {
+          message.setCustomValidity('Please enter at least 10 meaningful characters.');
+          message.reportValidity();
+          message.setCustomValidity('');
+          return false;
+        }
+        if (!field('full-name').value.trim()) {
+          field('full-name').setCustomValidity('Please enter your name.');
+          field('full-name').reportValidity();
+          field('full-name').setCustomValidity('');
+          return false;
+        }
+        return true;
+      }
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        if (!validate()) return;
+        const data = draft();
+        const url = `mailto:${supportEmail}?subject=${encodeURIComponent(data.subject)}&body=${encodeURIComponent(data.body)}`;
+        window.location.href = url;
+        showFeedback(`Your email draft was prepared for ${supportEmail}. Review it and press Send in your email app. If no app opens, use “Copy message” and email us directly.`);
+      });
+      field('copy-draft').addEventListener('click', async () => {
+        if (!validate()) return;
+        const data = draft();
+        const text = `To: ${supportEmail}\nSubject: ${data.subject}\n\n${data.body}`;
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            temp.style.position = 'fixed';
+            temp.style.opacity = '0';
+            document.body.appendChild(temp);
+            temp.select();
+            const copied = document.execCommand('copy');
+            temp.remove();
+            if (!copied) throw new Error('Clipboard unavailable');
+          }
+          showFeedback(`Message copied. Open your email app, paste it into a new message, and send it to ${supportEmail}.`);
+        } catch (error) {
+          showFeedback(`Unable to copy automatically. You can select your message and email it to ${supportEmail}.`, true);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

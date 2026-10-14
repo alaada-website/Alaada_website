@@ -1,139 +1,169 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alaada – Privacy Policy</title>
-    <meta name="description" content="Privacy Policy describing how Alaada collects, uses, and protects user data.">
-    <style>
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, sans-serif;
-            line-height: 1.6;
-            margin: 40px;
-            color: #222;
-        }
-        h1, h2 {
-            color: #111;
-        }
-        section {
-            margin-bottom: 32px;
-        }
-        footer {
-            margin-top: 60px;
-            font-size: 0.9em;
-            color: #555;
-        }
-    </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="#f5f4ef" name="theme-color"/>
+<meta content="light" name="color-scheme"/>
+<meta content="How Alaada’s evolving AI, accounts, spreadsheet and website tools handle information, third-party providers, privacy requests and data protection." name="description"/>
+<meta content="index, follow" name="robots"/>
+<meta content="website" property="og:type"/>
+<meta content="Alaada" property="og:site_name"/>
+<meta content="Alaada — Privacy Policy" property="og:title"/>
+<meta content="How Alaada’s evolving AI, accounts, spreadsheet and website tools handle information, third-party providers, privacy requests and data protection." property="og:description"/>
+<meta content="https://www.alaada.com/privacy-policy.html" property="og:url"/>
+<meta content="https://www.alaada.com/images/Alaada%20landscape%20img.png" property="og:image"/>
+<link href="https://www.alaada.com/privacy-policy.html" rel="canonical"/>
+<link href="images/alaada-logo.jpg" rel="icon" type="image/jpeg"/>
+<link href="images/alaada-logo.jpg" rel="apple-touch-icon"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&amp;family=Figtree:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<title>Alaada — Privacy Policy</title>
+<style>
+    :root{
+      --bg:#f5f4ef;--bg2:#eceae3;--white:#fff;--ink:#121110;--ink2:#46443f;--ink3:#79756e;
+      --border:rgba(0,0,0,.08);--border-strong:rgba(0,0,0,.14);
+      --blue:#1a5fff;--blue-soft:#e6edff;--teal:#00957a;--violet:#7c3aed;
+      --shadow:0 3px 9px rgba(0,0,0,.04),0 18px 50px rgba(0,0,0,.075);
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:85px}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:'Figtree',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.72;-webkit-font-smoothing:antialiased}
+    a{color:var(--blue)}
+    button{font:inherit}
+    :focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+    .skip-link{position:fixed;left:16px;top:-100px;z-index:1000;padding:10px 16px;color:#fff;background:var(--ink);border-radius:10px;text-decoration:none}
+    .skip-link:focus{top:12px}
+    .site-nav{height:60px;position:fixed;inset:0 0 auto;z-index:100;background:rgba(245,244,239,.94);border-bottom:1px solid var(--border);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 40px}
+    .nav-logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font:800 1.18rem/1 'Syne',sans-serif;letter-spacing:-.5px;color:var(--ink);white-space:nowrap}
+    .nav-logo img{width:28px;height:28px;object-fit:cover;border-radius:7px}
+    .nav-links{display:flex;align-items:center;gap:4px;list-style:none;margin:0;padding:0}
+    .nav-links a{display:block;text-decoration:none;white-space:nowrap;font-size:.86rem;font-weight:600;color:var(--ink2);padding:8px 12px;border-radius:8px;transition:background .18s,color .18s}
+    .nav-links a:hover,.nav-links a[aria-current="page"]{background:var(--bg2);color:var(--ink)}
+    .nav-links .nav-cta{background:var(--blue);color:#fff;box-shadow:0 2px 10px rgba(26,95,255,.25);margin-left:6px}
+    .nav-links .nav-cta:hover{background:#1450d6;color:#fff}
+    .menu-toggle{display:none;width:42px;height:42px;align-items:center;justify-content:center;flex-direction:column;gap:5px;border:1px solid var(--border-strong);border-radius:10px;background:#fff;cursor:pointer}
+    .menu-toggle span{width:18px;height:2px;background:var(--ink);border-radius:2px}
+    main{position:relative;isolation:isolate;overflow:hidden;padding:111px 24px 90px}
+    main::before{content:"";position:absolute;z-index:-1;width:600px;height:600px;top:-180px;left:-180px;pointer-events:none;background:radial-gradient(circle,rgba(26,95,255,.10),transparent 67%)}
+    main::after{content:"";position:absolute;z-index:-1;width:540px;height:540px;right:-210px;top:350px;pointer-events:none;background:radial-gradient(circle,rgba(0,149,122,.075),transparent 65%)}
+    .content{width:min(100%,1060px);margin-inline:auto}
+    .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#fff 0%,#faf9ff 67%,#f1f7ff 100%);border:1px solid var(--border-strong);border-top:3px solid var(--blue);border-radius:26px;padding:48px 52px;box-shadow:var(--shadow);margin-bottom:27px}
+    .hero::after{content:"";position:absolute;pointer-events:none;width:270px;height:270px;right:-80px;top:-120px;border-radius:50%;background:radial-gradient(circle,rgba(26,95,255,.12),transparent 69%)}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--blue);background:var(--blue-soft);padding:6px 12px;border-radius:100px;font-size:.69rem;font-weight:800;text-transform:uppercase;letter-spacing:1.4px}
+    .eyebrow::before{content:"";width:6px;height:6px;border-radius:100%;background:var(--teal)}
+    h1,h2,h3{font-family:'Syne',sans-serif}
+    h1{font-size:clamp(2.3rem,5vw,3.8rem);line-height:1.1;letter-spacing:-1.8px;margin:21px 0 18px;font-weight:800;position:relative;z-index:1}
+    .hero p{font-size:1rem;line-height:1.78;max-width:740px;color:var(--ink2);margin:0;position:relative;z-index:1}
+    .meta{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;position:relative;z-index:1;color:var(--ink2);font-size:.82rem}
+    .meta span{background:rgba(245,244,239,.8);border:1px solid var(--border);padding:6px 10px;border-radius:8px}
+    .meta strong{color:var(--ink);font-weight:700}
+    .notice{margin:23px 0 0;padding:14px 17px;background:#eaf3ff;border:1px solid #cdddff;border-left:3px solid var(--blue);border-radius:10px;color:#2a4775;line-height:1.7;font-size:.86rem;position:relative;z-index:1}
+    .toc{background:var(--white);border:1px solid var(--border-strong);border-radius:22px;padding:28px 34px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.025)}
+    .toc h2{font-size:1.2rem;letter-spacing:-.4px;font-weight:800;margin:0 0 17px}
+    .toc ol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 36px;list-style:decimal;padding-left:22px;margin:0}
+    .toc li{padding:2px 0 2px 2px;font-size:.9rem;color:var(--ink3)}
+    .toc a{color:var(--ink2);font-weight:500;text-decoration:none;display:inline-block;padding:3px 0;border-radius:4px}
+    .toc a:hover{text-decoration:underline;color:var(--blue);text-underline-offset:3px}
+    .legal-section{background:var(--white);border:1px solid var(--border-strong);border-radius:19px;padding:31px 36px;margin-bottom:15px;box-shadow:0 2px 11px rgba(0,0,0,.024);scroll-margin-top:82px}
+    .legal-section h2{font-size:1.18rem;line-height:1.35;letter-spacing:-.35px;font-weight:800;margin:0 0 14px}
+    .legal-section h3{font-size:.98rem;margin:22px 0 7px}
+    .legal-section p{margin:12px 0;color:var(--ink2);font-size:.92rem;line-height:1.85}
+    .legal-section p:first-of-type{margin-top:0}
+    .legal-section p:last-child{margin-bottom:0}
+    .legal-section ul{padding-left:22px;margin:12px 0;color:var(--ink2);font-size:.92rem;line-height:1.82}
+    .legal-section li{padding-left:4px;margin:6px 0}
+    .legal-section a{overflow-wrap:anywhere;color:var(--blue);text-decoration-thickness:1px;text-underline-offset:3px}
+    .callout{padding:16px 18px;margin:19px 0;background:#f3efff;border-left:3px solid var(--violet);color:var(--ink2);border-radius:10px;font-size:.91rem;line-height:1.8}
+    .callout strong{color:var(--ink)}
+    footer{background:#0d0c0b;color:rgba(255,255,255,.6);padding:52px 40px 28px}
+    .footer-inner{width:min(100%,1060px);margin:0 auto 36px;display:flex;gap:30px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+    .footer-brand{display:flex;align-items:center;gap:9px;color:#fff;font:800 1.12rem 'Syne',sans-serif;margin-bottom:7px}
+    .footer-brand img{height:23px;width:23px;border-radius:5px;object-fit:cover}
+    .footer-sub{font-size:.82rem;color:rgba(255,255,255,.4);margin:0 0 8px}
+    .footer-email{font-size:.84rem;color:rgba(255,255,255,.66);text-decoration:none;overflow-wrap:anywhere}
+    .footer-email:hover{color:#fff}
+    .footer-links{max-width:530px;display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:flex-end}
+    .footer-links a{font-size:.81rem;color:rgba(255,255,255,.62);text-decoration:none}
+    .footer-links a:hover{color:#fff}
+    .footer-bottom{width:min(100%,1060px);margin:0 auto;border-top:1px solid rgba(255,255,255,.1);padding-top:22px;color:rgba(255,255,255,.42);font-size:.74rem}
+    @media(max-width:1000px){.site-nav{padding:0 22px}.nav-links a{padding:8px 9px;font-size:.8rem}.hero{padding:40px 34px}}
+    @media(max-width:800px){
+      .menu-toggle{display:flex}
+      .nav-links{display:none;position:absolute;top:60px;left:0;right:0;background:var(--white);border-bottom:1px solid var(--border-strong);box-shadow:var(--shadow);padding:14px 20px 20px;max-height:calc(100dvh - 60px);overflow-y:auto;flex-direction:column;align-items:stretch;gap:5px}
+      .nav-links.open{display:flex}.nav-links a{padding:12px 14px;font-size:.92rem}.nav-links .nav-cta{margin-left:0}
+      .toc ol{gap:2px 22px}
+    }
+    @media(max-width:600px){main{padding:94px 15px 60px}.site-nav{padding:0 16px}.hero{padding:30px 23px;border-radius:20px}.hero h1{letter-spacing:-1px}.hero p{font-size:.93rem}.meta{gap:8px}.meta span{width:100%}.notice{padding:13px}.toc{padding:23px 24px}.toc ol{grid-template-columns:1fr;gap:0}.legal-section{padding:25px 23px;border-radius:15px}.legal-section h2{font-size:1.05rem}footer{padding:36px 24px 25px}.footer-inner{flex-direction:column;gap:22px}.footer-links{justify-content:flex-start}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+  </style>
 </head>
 <body>
-
+<a class="skip-link" href="#main-content">Skip to content</a>
+<nav aria-label="Main navigation" class="site-nav">
+<a aria-label="Alaada home" class="nav-logo" href="index.html"><img alt="" height="28" src="images/alaada-logo.jpg" width="28"/> Alaada</a>
+<button aria-controls="nav-links" aria-expanded="false" aria-label="Open navigation" class="menu-toggle" id="menu-toggle" type="button"><span></span><span></span><span></span></button>
+<ul class="nav-links" id="nav-links">
+<li><a href="index.html">Home</a></li>
+<li><a href="index.html#orbit-section">Orbit AI</a></li>
+<li><a href="index.html#accounts-section">Accounts</a></li>
+<li><a href="index.html#analyser-section">Web Analyser</a></li>
+<li><a href="index.html#sheets-section">Sheets</a></li>
+<li><a href="contact.html">Contact</a></li>
+<li><a class="nav-cta" href="Orbit.html">Try Orbit →</a></li>
+</ul>
+</nav>
+<main id="main-content">
+<div class="content">
+<section class="hero">
+<span class="eyebrow">Legal · Privacy</span>
 <h1>Privacy Policy</h1>
-<p><strong>Last Updated:</strong> 21 December 2025</p>
-
-<section>
-    <h2>1. Introduction</h2>
-    <p>
-        Alaada respects your privacy and is committed to protecting your personal data.
-        This Privacy Policy explains how we collect, use, store, and safeguard your information.
-    </p>
+<p>How Alaada’s evolving AI, accounts, spreadsheet and website tools handle information, third-party providers, privacy requests and data protection.</p>
+<div class="meta"><span><strong>Last revised:</strong> 14 October 2026</span><span><strong>Effective:</strong> 14 October 2026 (upon publication)</span><span><strong>Previous edition:</strong> 31 July 2026</span></div>
+<div class="notice"><strong>What changed:</strong> Updated coverage for evolving account infrastructure, AI and tool use, storage and sharing, subscription rollout, consumer rights and phased Indian digital-data rules. Some features remain in development; this page is not a claim that they have been launched.</div>
 </section>
-
-<section>
-    <h2>2. Information We Collect</h2>
-    <p>
-        We may collect the following types of information:
-    </p>
-    <ul>
-        <li>Account information (name, email, credentials)</li>
-        <li>Usage data (features used, interaction logs)</li>
-        <li>Technical data (IP address, device, browser type)</li>
-        <li>Content you upload or generate on the Platform</li>
-    </ul>
-</section>
-
-<section>
-    <h2>3. How We Use Information</h2>
-    <p>
-        We use collected data to:
-    </p>
-    <ul>
-        <li>Provide and maintain the Platform</li>
-        <li>Improve features and user experience</li>
-        <li>Ensure security and prevent abuse</li>
-        <li>Communicate service-related updates</li>
-    </ul>
-</section>
-
-<section>
-    <h2>4. Cookies and Tracking</h2>
-    <p>
-        Alaada may use cookies or similar technologies to enhance functionality,
-        analyze usage, and maintain session integrity.
-        You may control cookies through your browser settings.
-    </p>
-</section>
-
-<section>
-    <h2>5. Data Sharing</h2>
-    <p>
-        We do not sell your personal data. Information may be shared only with
-        trusted service providers or when required by law.
-    </p>
-</section>
-
-<section>
-    <h2>6. Data Security</h2>
-    <p>
-        We implement reasonable technical and organizational measures to protect
-        your data. However, no system can be guaranteed to be 100% secure.
-    </p>
-</section>
-
-<section>
-    <h2>7. Data Retention</h2>
-    <p>
-        We retain personal data only as long as necessary to fulfill the purposes
-        outlined in this Policy or as required by law.
-    </p>
-</section>
-
-<section>
-    <h2>8. User Rights</h2>
-    <p>
-        Depending on your jurisdiction, you may have rights to access, correct,
-        or delete your personal data. Requests can be made through the Platform.
-    </p>
-</section>
-
-<section>
-    <h2>9. Children’s Privacy</h2>
-    <p>
-        Alaada does not knowingly collect personal data from children without
-        appropriate consent where required by law.
-    </p>
-</section>
-
-<section>
-    <h2>10. Changes to This Policy</h2>
-    <p>
-        We may update this Privacy Policy periodically. Continued use of the Platform
-        after changes indicates acceptance of the revised Policy.
-    </p>
-</section>
-
-<section>
-    <h2>11. Contact</h2>
-    <p>
-        For questions or concerns regarding this Privacy Policy, please contact Alaada
-        through the official communication channels provided on the Platform.
-    </p>
-</section>
-
+<nav aria-labelledby="toc-heading" class="toc">
+<h2 id="toc-heading">On this page</h2>
+<ol><li><a href="#scope">Scope and Who Handles Data</a></li><li><a href="#collected">Categories of Information</a></li><li><a href="#purposes">Why Information Is Processed</a></li><li><a href="#product-handling">How Alaada Products Handle Data</a></li><li><a href="#identity">Sign-In, Account Providers and Cross-Product Access</a></li><li><a href="#ai-services">AI, Voice, Model Providers and Tool Processing</a></li><li><a href="#sharing">Who May Receive Information</a></li><li><a href="#website-forms">Website Forms, Email and Reviews</a></li><li><a href="#analytics">Cookies, Local Storage and Analytics</a></li><li><a href="#storage">Storage, Backups and Hosting Limitations</a></li><li><a href="#retention">Retention and Deletion</a></li><li><a href="#international">International Processing and Data Transfers</a></li><li><a href="#rights">Your Privacy Rights and Choices</a></li><li><a href="#children">Children, Schools and Guardian Consent</a></li><li><a href="#security">Security and Incidents</a></li><li><a href="#third-parties">External Sites and Integrations</a></li><li><a href="#legal-framework">Indian Data-Protection and Digital-Service Rules</a></li><li><a href="#updates">Changes to This Policy</a></li><li><a href="#contact">Privacy Requests and Contact</a></li></ol>
+</nav><section class="legal-section" id="scope"><h2>1. Scope and Who Handles Data</h2><p>This Policy describes data that may be processed when you visit Alaada websites or use Orbit AI, Alaada Sheets, Alaada Accounts, Web Analyser, optional workspaces, reviews, support channels and other features as actually deployed. Alaada currently operates as a developing project/brand; references to a registered company, merchant of record or designated privacy officer should not be inferred from the brand name.</p><p>For privacy and data requests, contact <a href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a>. If a paid or organisation product is provided through another identified legal entity, an applicable notice or contract should identify that party and its responsibilities.</p></section><section class="legal-section" id="collected"><h2>2. Categories of Information</h2><h3>Account and identity data</h3><ul><li>Names, email addresses, account or provider IDs, profile images where supplied, login links or authentication metadata, organisation and workspace identifiers.</li><li>Invitations, memberships, roles, access permissions, preferences and relevant sign-in events, where supported.</li></ul><h3>Technical and usage data</h3><ul><li>IP addresses, approximate network-based locations, device and browser information, cookies and identifiers, diagnostic logs, timestamps, URLs visited and feature interaction events.</li><li>Security signals, API usage, error information, service limits, support communications and troubleshooting details.</li></ul><h3>Content you choose to submit</h3><ul><li>Prompts, AI conversations, voice recordings or transcripts where enabled, generated outputs, uploaded files, images and spreadsheets.</li><li>Financial and operational records, invoices, customers, suppliers, employees, inventory and other data supplied to accounting or business features.</li><li>Contact enquiries, feedback, reviews, attached files and URLs submitted for website analysis.</li></ul><h3>Payment-related information (where paid checkout is enabled)</h3><p>Plan selection, invoice or subscription identifiers, payment status, receipt details and transaction metadata may be returned by a processor. A third-party payment service ordinarily collects card details directly; the exact provider and its policy will be identified at checkout. A planned gateway is not an active data recipient until it is connected.</p></section><section class="legal-section" id="purposes"><h2>3. Why Information Is Processed</h2><ul><li>Create and manage requested accounts, sign-in sessions, memberships and product access.</li><li>Provide AI responses, processing of files, spreadsheet calculations, accounting functions, website analysis and other user-directed operations.</li><li>Store, synchronise, share, convert or export content according to available functionality and the permissions you grant.</li><li>Answer support requests, investigate incidents, diagnose errors, enforce usage limits and prevent abuse.</li><li>Provide billing, invoices or subscription services if a checkout is activated.</li><li>Measure usage and improve reliability and design, subject to available controls and applicable law.</li><li>Meet legal obligations and respond to valid requests.</li></ul><p>Where law requires a specific lawful ground, consent, notice or other condition, processing must be limited to the relevant authorised purpose. This Policy is an explanation; it is not a substitute for a required separate consent notice or consent-management control.</p></section><section class="legal-section" id="product-handling"><h2>4. How Alaada Products Handle Data</h2><h3>Orbit AI</h3><p>AI requests may include messages, chat history, selected memory or context, uploaded documents, images, selected web-search results and tool arguments. Some processing may occur on third-party model or speech services. Conversation and file retention can depend on the deployment, provider and storage configuration. Do not assume that every session or upload is permanently stored, deleted immediately or inaccessible to service providers.</p><h3>Alaada Sheets</h3><p>Spreadsheet content, formulas, import/export files, sharing metadata and version information may be processed by the relevant browser, application server or configured database. Collaboration and per-user permission controls depend on the specific version deployed; exports should be checked and saved independently.</p><h3>Alaada Accounts and business tools</h3><p>Records may include account ledgers, financial statements, vouchers, tax fields, bank and payment information, customers, suppliers, staff and documents. These may contain information about people other than the account holder. Business administrators are responsible for lawful collection, notices, access restrictions and record accuracy. Sensitive business data should not be placed into public demos.</p><h3>Web Analyser</h3><p>Submitted website URLs and diagnostic results may be processed by the service, which may contact the nominated website and expose the analyser’s IP address or request metadata to that website or its hosting provider. Avoid submitting private URLs, secret-bearing query strings or internal network addresses.</p><h3>HR and other experimental modules</h3><p>A standalone HR prototype may run locally in the browser and optionally use browser storage or file imports/exports; it is not automatically a secure, server-backed employee database. Do not use an unaudited prototype for real salaries, identity documents, medical information or confidential employment records.</p></section><section class="legal-section" id="identity"><h2>5. Sign-In, Account Providers and Cross-Product Access</h2><p>Different Alaada products may rely on Appwrite, Supabase, Google OAuth or other account systems and may not yet share a single account record or authentication session. Providers may receive identifiers and authentication events according to their own notices. We may also receive account IDs and basic profile information necessary to sign users in.</p><p>Organisation invitations, entitlements and shared workspaces can use different backends or be limited in an early version. A visible “signed in” badge alone should not be interpreted as proof of current server authorisation. Access and deletion requests may require checking more than one service.</p></section><section class="legal-section" id="ai-services"><h2>6. AI, Voice, Model Providers and Tool Processing</h2><p>To deliver an AI request, prompts and relevant content may be sent to external model, speech, search, image or file-processing providers. The data shared depends on the tool you invoke and the context needed for it. Providers may apply their own retention, abuse-monitoring and processing terms; Alaada does not promise that every provider applies identical terms or that all AI inputs are categorically excluded from model training.</p><p>Do not enter passwords, banking credentials, government identifiers, medical records or confidential client data unless the particular product is appropriately configured and you have permission to process that information. AI content may be inaccurate and should be reviewed before publication or consequential use.</p><p>Where an action executes code, accesses a connected system or sends content to a third party, that action may transfer more data than a plain conversation. Check the destination, permissions and preview before confirming.</p></section><section class="legal-section" id="sharing"><h2>7. Who May Receive Information</h2><p>Depending on a user’s product and its configuration, necessary processors and recipients can include cloud hosting and delivery networks, Appwrite or Supabase identity/database/storage services, Google sign-in and analytics services, AI model or speech services, email or form handlers, payment processors once activated, and external services deliberately connected by the user.</p><ul><li>People you intentionally invite into a workspace or share content with may see that content within their granted scope.</li><li>Technical providers may receive data required to perform requested tasks, storage, delivery, billing or security functions.</li><li>We may disclose information in response to valid legal requirements, or to investigate security incidents and protect lawful rights.</li><li>We do not sell personal information to advertising data brokers as part of the documented Alaada service model; advertising or analytics providers, where present, can have their own data practices described in their notices.</li></ul><p>The precise provider set can change by deployment. No future integration, including a proposed payment provider, should be assumed active unless shown in the service or checkout.</p></section><section class="legal-section" id="website-forms"><h2>8. Website Forms, Email and Reviews</h2><p>The current Contact page prepares an email message to <a href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a> through the visitor’s email application; opening an email draft does not itself submit information to an Alaada server. If you send the email, your email provider and our inbox provider will process the message.</p><p>Some review or feedback forms may use an external form handler (for example, Formspree) when enabled. In that case, the data you submit may be received and stored by the form service before Alaada accesses it. Public reviews may display details you decide to publish. Do not include private information about other people in a review.</p></section><section class="legal-section" id="analytics"><h2>9. Cookies, Local Storage and Analytics</h2><p>Websites and applications may use cookies, session storage, browser local storage and similar mechanisms to hold sign-in state, app preferences, local drafts, feature settings and technical identifiers. Some pages may run Google Analytics, and infrastructure services may maintain technical or security logs.</p><p>Optional analytics or advertising technologies, where present, may have separate consent requirements. Browser settings can restrict storage and tracking, although disabling essential authentication storage can prevent a service from working. Do not assume that all local browser data is included in an account export or server-side deletion.</p></section><section class="legal-section" id="storage"><h2>10. Storage, Backups and Hosting Limitations</h2><p>Alaada products may run on hosting services such as Render and may use Appwrite, Supabase Storage, PostgreSQL or other storage when configured. Some development or free-hosting environments use temporary local file storage that can disappear on restart. Other deployments may persist files in a database or object store. The presence of a storage connector in code does not prove that every product or upload uses it.</p><p>Backup, file-sharing controls and recovery differ by service. We cannot guarantee that a file is backed up, recoverable or deleted from all secondary copies on a particular schedule. Keep independent copies of important documents and financial records.</p></section><section class="legal-section" id="retention"><h2>11. Retention and Deletion</h2><p>Retention depends on the product, what you submit, active sessions, account history, billing and tax requirements, security logs, provider limits and backups. Some local browser files remain until the user clears local storage; some server uploads may expire or disappear on hosting restart; other data may persist until deleted or an applicable retention period ends.</p><p>We have not published one verified uniform retention period covering every Alaada product or provider. Where a specific retention period is needed by law or product contract, it should be disclosed at collection before reliance on that feature. A deletion request may require identity verification and may be subject to necessary legal records, backups or external processor procedures.</p><p>You may request available export, correction, access, account closure or deletion by contacting <a href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a>. We will assess the request against the product’s actual storage and applicable legal requirements rather than claiming immediate deletion from all systems.</p></section><section class="legal-section" id="international"><h2>12. International Processing and Data Transfers</h2><p>Data can be processed in India or other countries where hosting, authentication, storage, AI, analytics and other providers operate. International processing depends on the selected service and provider. Any legal restrictions or safeguards applicable to a specific transfer must be respected; this Policy does not guarantee an India-only hosting location.</p></section><section class="legal-section" id="rights"><h2>13. Your Privacy Rights and Choices</h2><p>Subject to the law that applies to you and the specific data involved, you may request information about our processing, access to personal information, corrections or updates, deletion, withdrawal of consent where relevant, and a way to raise a grievance. Some rights and timelines under India’s DPDP framework come into force in phases; they must not be described as universally in force before their notified commencement.</p><p>Email <a href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a> and identify the product and request type. We may need to verify control of the relevant account and may not be able to disclose other users’ information. Requests involving connected providers or products with separate accounts may require additional steps. If applicable law gives you a regulatory complaint option, these Terms do not remove it.</p></section><section class="legal-section" id="children"><h2>14. Children, Schools and Guardian Consent</h2><p>Alaada may be accessed by students as well as adults, but users who are under the legal age for independent consent or contracting must obtain required parent or legal guardian authorisation. Where the applicable child-data rules require verifiable consent or additional safeguards, those requirements govern when they take effect.</p><p>Do not upload a child’s school, medical, location, identity or wellbeing information into a public preview without permission, appropriate safeguards and a valid purpose. Alaada does not represent that age assurance, parental consent or child-specific controls are universally available across products. Contact <a href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a> to report concerns.</p></section><section class="legal-section" id="security"><h2>15. Security and Incidents</h2><p>We are improving account access controls, file permissions, authorisation checks, logging and other safeguards. Different components may have different security maturity, and certain early releases may not be suitable for sensitive data. No online platform can promise absolute security; we do not claim that every proposed protective control is currently deployed.</p><p>Use the available account protections, check shared permissions and avoid uploading confidential information into unverified demonstrations. Report suspected access problems or privacy incidents to <a href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a>. Where law requires notification of a personal-data incident, the legally applicable process and timing will govern.</p></section><section class="legal-section" id="third-parties"><h2>16. External Sites and Integrations</h2><p>Opening an external link, authorising a third-party connection, visiting a website that the analyser tests, or using a payment or OAuth page may result in independent processing by that third party. Their privacy statements and security practices apply to their services. We do not control all external content, retention or service availability.</p></section><section class="legal-section" id="legal-framework"><h2>17. Indian Data-Protection and Digital-Service Rules</h2><p>Indian legal requirements relevant to a particular Alaada service may include the Information Technology Act, 2000, applicable rules and consumer-protection laws, and the Digital Personal Data Protection Act, 2023 together with the Digital Personal Data Protection Rules, 2025 as their provisions commence in phases. The February 2026 amendments dealing with unlawful synthetically generated information may apply to activities or services that fall within the relevant intermediary provisions.</p><p>This description is informational and does not state that all DPDP obligations are already operative as of 14 October 2026, that Alaada has been designated as a regulated intermediary, or that every required compliance mechanism has been completed.</p><p>The notified DPDP framework has staggered effective dates after November 2025, including further provisions expected in November 2026 and May 2027. The precise duties depend on the provision, service and its role.</p></section><section class="legal-section" id="updates"><h2>18. Changes to This Policy</h2><p>We may update this Policy as products, account systems, analytics, hosting, payments, AI providers and law change. A revised policy will show the new update date. If a change requires separate notification or fresh consent under applicable law, a website edit alone is insufficient. We will provide such notice or obtain such consent where required.</p></section><section class="legal-section" id="contact"><h2>19. Privacy Requests and Contact</h2><p>For privacy queries, corrections, account data access, requests to delete supported data, notices about a child’s information or suspected security incidents, contact <a href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a>. State the relevant product or account without including passwords, one-time codes, full card numbers or unrelated sensitive documents.</p><p>This email is a general contact point and not a statement that a separately appointed Data Protection Officer or statutory grievance officer has been established. We will publish the appropriate details if and when such an appointment is required or made.</p></section>
+</div>
+</main>
 <footer>
-    <p>
-        © 2025 Alaada. All rights reserved.
-    </p>
+<div class="footer-inner">
+<div>
+<div class="footer-brand"><img alt="" height="23" src="images/alaada-logo.jpg" width="23"/> Alaada</div>
+<p class="footer-sub">Where Perfection meets Possibility.</p>
+<a class="footer-email" href="mailto:arzodas2024@gmail.com">arzodas2024@gmail.com</a>
+</div>
+<div aria-label="Footer navigation" class="footer-links">
+<a href="index.html">Home</a>
+<a href="about-us.html">About Us</a>
+<a href="contact.html">Contact</a>
+<a aria-current="page" href="privacy-policy.html">Privacy Policy</a>
+<a href="terms-and-conditions.html">Terms and Conditions</a>
+<a href="Accounts.html">Alaada Accounts</a>
+</div>
+</div>
+<div class="footer-bottom">© 2026 Alaada. All rights reserved. · Built in Kolkata, India.</div>
 </footer>
-
+<script>
+    (()=>{
+      const toggle=document.getElementById('menu-toggle');
+      const links=document.getElementById('nav-links');
+      if(!toggle || !links) return;
+      const close=()=>{links.classList.remove('open');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-label','Open navigation');};
+      toggle.addEventListener('click',()=>{
+        const open=links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded',String(open));
+        toggle.setAttribute('aria-label',open?'Close navigation':'Open navigation');
+      });
+      links.addEventListener('click',e=>{if(e.target.closest('a')) close();});
+      document.addEventListener('keydown',e=>{if(e.key==='Escape'){close();toggle.focus();}});
+      document.addEventListener('click',e=>{if(!e.target.closest('.site-nav'))close();});
+      window.addEventListener('resize',()=>{if(window.innerWidth>800)close();});
+    })();
+  </script>
 </body>
 </html>
