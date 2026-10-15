@@ -134,7 +134,7 @@
       const provider=subscription.provider,managed=provider&&['active','past_due','on_hold','paused'].includes(provider.status);
       if(plan==='Free')return Boolean(managed&&billing.management_enabled&&!provider.cancel_at_period_end);
       if(plan===subscription.plan)return false;
-      if(managed)return Boolean(provider.status==='active'&&billing.management_enabled&&billing.products_configured);
+      if(managed)return Boolean(provider.status==='active'&&billing.management_enabled&&billing.plan_changes_enabled&&billing.products_configured);
       return Boolean(billing.checkout_enabled&&billing.webhook_configured&&billing.products_configured);
     }
     function renderSubscription(){
@@ -148,9 +148,11 @@
       if(subscription.pending)notes.push(`Pending request: ${subscription.pending.plan}. Confirmation is still being checked.`);
       if(!billing.checkout_enabled&&!provider)notes.push('Paid checkout is temporarily unavailable. You can continue using your current plan.');
       else notes.push('Your plan is updated after verified payment confirmation.');
+      if(billing.environment==='test_mode')notes.push('Dodo Payments test mode: this is not a live purchase.');
+      if(provider&&!billing.plan_changes_enabled)notes.push('Paid plan changes are unavailable. Cancellation remains available when supported by your subscription.');
       $('billing-note').textContent=notes.join(' ');
     }
-    async function refreshSubscription(){subscription=await backend('/workspaces/'+encodeURIComponent(idOf(personal))+'/subscription','GET',undefined,idOf(personal));personal.plan=subscription.plan;try{billing=(await backend('/health')).dodo_billing||{}}catch{billing={}}renderSubscription()}
+    async function refreshSubscription(){subscription=await backend('/workspaces/'+encodeURIComponent(idOf(personal))+'/subscription','GET',undefined,idOf(personal));personal.plan=subscription.plan;if(subscription.billing){billing=subscription.billing}else{try{billing=(await backend('/health')).dodo_billing||{}}catch{billing={}}}renderSubscription()}
     async function load(){
       try{
         account=await aw('/account');

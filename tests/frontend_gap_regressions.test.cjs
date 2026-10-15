@@ -303,6 +303,28 @@ test('Onboarding derives checkout availability from server readiness',()=>{
   assert.match(source,/personal_plan:context\.subscription\.plan/);
 });
 
+test('Paid plan changes require catalog release but cancellation does not',()=>{
+  const source=extract(read('account.html'),'function canChange(plan)', '\n    }');
+  const billing={management_enabled:true,products_configured:true,plan_changes_enabled:false};
+  const canChange=vm.runInNewContext('('+source+')',{
+    subscription:{plan:'Pro',provider:{status:'active',cancel_at_period_end:false}},changingPlan:false,billing});
+  assert.equal(canChange('Elite'),false);
+  assert.equal(canChange('Free'),true);
+  billing.plan_changes_enabled=true;
+  assert.equal(canChange('Elite'),true);
+});
+
+test('Account uses subscription readiness without another health request',async()=>{
+  const source=extract(read('account.html'),'async function refreshSubscription()', '\n');
+  const calls=[];
+  const state={subscription:null,personal:{id:'p_me'},billing:{},idOf:w=>w.id,encodeURIComponent,
+    backend:async path=>{calls.push(path);return {plan:'Free',billing:{provider:'dodo',checkout_enabled:false}}},
+    renderSubscription(){}};
+  await vm.runInNewContext('('+source+')',state)();
+  assert.deepEqual(calls,['/workspaces/p_me/subscription']);
+  assert.equal(state.billing.provider,'dodo');
+});
+
 test('A delayed inbox response cannot repopulate a different workspace',async()=>{
   const node=()=>({value:'',children:[],textContent:'',classList:{add(){},toggle(){}},replaceChildren(){this.children=[]},append(...values){this.children.push(...values)}});
   const nodes=Object.fromEntries(['inbox-workspace','inbox-items','inbox-more','inbox-refresh','inbox-status'].map(id=>[id,node()]));
