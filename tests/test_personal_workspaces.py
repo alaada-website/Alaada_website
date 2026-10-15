@@ -759,7 +759,7 @@ def test_failed_billing_request_preserves_plan_and_allows_retry(env):
     assert confirm(env, retried.json()['id'], 'Free', 'cancel-after-failure').status_code == 200
 
 
-def dodo_app(tmp_path):
+def dodo_app(tmp_path, **overrides):
     from datetime import datetime, timezone
     from types import SimpleNamespace
     from dodopayments import DodoPayments
@@ -771,25 +771,33 @@ def dodo_app(tmp_path):
             raise HTTPException(401, 'Invalid session')
         return users[token]
     calls = {'checkout': None, 'checkout_count': 0, 'cancel': [], 'change': []}
+    products = {pid: {'product_id': pid, 'is_recurring': True,
+        'price': {'type': 'recurring_price', 'currency': 'INR', 'price': amount,
+                  'payment_frequency_count': 1, 'payment_frequency_interval': 'Month',
+                  'tax_inclusive': False}}
+        for pid, amount in [('pdt_pro_test', 99900), ('pdt_elite_test', 299900)]}
     def create_checkout(**kwargs):
         calls['checkout_count'] += 1
         calls['checkout'] = kwargs
         return SimpleNamespace(session_id=f'sess_test_{calls["checkout_count"]}',
                                checkout_url=f'https://checkout.dodopayments.com/session/{calls["checkout_count"]}')
     client = SimpleNamespace(
+        products=SimpleNamespace(retrieve=lambda pid: products[pid]),
         webhooks=DodoPayments(bearer_token='test-key', webhook_key=key, environment='test_mode').webhooks,
         checkout_sessions=SimpleNamespace(create=create_checkout),
         subscriptions=SimpleNamespace(
             update=lambda subscription_id, **kwargs: calls['cancel'].append((subscription_id, kwargs)),
             change_plan=lambda subscription_id, **kwargs: calls['change'].append((subscription_id, kwargs))))
-    app = m.create_app(tmp_path / 'dodo.sqlite3', authenticate=authenticate,
+    options = dict(authenticate=authenticate,
         dodo_api_key='test-key', dodo_webhook_key=key, dodo_environment='test_mode',
         dodo_products={'Pro':'pdt_pro_test','Elite':'pdt_elite_test'}, dodo_checkout_enabled=True,
-        dodo_client=client)
+        dodo_client=client, dodo_tax_inclusive=False)
+    app = m.create_app(tmp_path / 'dodo.sqlite3', **(options | overrides))
     http = TestClient(app)
     wid = next(w['id'] for w in http.get('/api/workspaces', headers={'Authorization':'Bearer alice'}).json()['workspaces']
                if w['kind'] == 'personal')
-    key_data = {'key': key, 'users': users, 'calls': calls, 'app': app, 'client': http, 'workspace': wid}
+    key_data = {'key': key, 'users': users, 'calls': calls, 'app': app, 'client': http, 'workspace': wid,
+                'products': products}
     return key_data
 
 
@@ -814,7 +822,8 @@ def test_dodo_checkout_and_verified_webhook_bind_only_the_personal_workspace(tmp
     assert checkout.json()['checkout_url'] == 'https://checkout.dodopayments.com/session/1'
     sent = env['calls']['checkout']
     assert sent['product_cart'] == [{'product_id':'pdt_pro_test','quantity':1}]
-    assert sent['metadata'] == {'workspace':wid,'user':'alice','plan':'Pro','request':checkout.json()['id']}
+    assert sent['metadata'] == {'workspace':wid,'user':'alice','plan':'Pro','request':checkout.json()['id'],
+                               'catalog_version': m.PRICE_CATALOG_VERSION, 'billing_environment': 'test_mode'}
     event = {'subscription_id':'sub_test_123','product_id':'pdt_pro_test','status':'active',
              'next_billing_date': m.datetime.fromtimestamp(time.time() + 86400, m.timezone.utc).isoformat(),
              'metadata':sent['metadata'],'customer':{'customer_id':'cus_test'}}

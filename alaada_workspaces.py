@@ -32,6 +32,10 @@ KINDS = {"orbit": ["conversation", "memory"], "sheets": ["workbook", "analysis"]
          "platform": ["file", "folder", "notification", "settings"]}
 # Initial local policy; configure approved production limits with ALAADA_LIMITS_JSON.
 LIMITS = {"Free": 50, "Pro": 2000, "Elite": 10000, "Enterprise": 50000}
+# Engineering targets, not public offers or entitlement grants. No annual prices,
+# seat floor, tax policy or quota changes are inferred from the planning package.
+PRICE_CATALOG_VERSION = '2026-10-15-v3'
+TARGET_MONTHLY_PRICES = {'Free': 0, 'Pro': 99900, 'Elite': 299900, 'Enterprise': 449900}
 SCHEMA = """
 PRAGMA foreign_keys=ON;
 CREATE TABLE IF NOT EXISTS workspaces(
@@ -898,7 +902,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                sheets_url=None, sheets_secret=None, sheets_transport=None,
                appwrite_api_key=None, appwrite_storage_bucket=None, appwrite_storage_transport=None,
                dodo_api_key=None, dodo_webhook_key=None, dodo_environment='live_mode',
-               dodo_products=None, dodo_checkout_enabled=False, dodo_client=None, team_members=None):
+               dodo_products=None, dodo_checkout_enabled=False, dodo_client=None, team_members=None,
+               dodo_approved_catalog_version=None, dodo_tax_inclusive=None):
     app = FastAPI(title="Alaada personal and organisation workspaces", docs_url=None, redoc_url=None)
     store = Store(path, limits, api_key=appwrite_api_key)
     if (store.postgres or store.tablesdb) and (not appwrite_api_key or not appwrite_storage_bucket):
@@ -911,6 +916,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     dodo_products = dict(dodo_products or {})
     if dodo_environment not in ('test_mode', 'live_mode'):
         raise ValueError('DODO_PAYMENTS_ENVIRONMENT must be test_mode or live_mode')
+    if dodo_environment == 'test_mode' and (os.environ.get('RENDER') or os.environ.get('ALAADA_ENV') == 'production'):
+        raise ValueError('Dodo test mode requires an isolated non-production deployment and database')
     for product_plan in ('Pro', 'Elite'):
         product_id = dodo_products.get(product_plan)
         if product_id and (not isinstance(product_id, str) or not re.fullmatch(r'pdt_[A-Za-z0-9_-]{1,120}', product_id)):
@@ -924,12 +931,29 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                                        environment=dodo_environment, max_retries=0, timeout=20)
         except Exception as error:
             raise ValueError('Dodo Payments SDK could not be configured') from error
-    dodo_checkout_ready = bool(dodo_checkout_enabled and dodo_api_key and dodo_webhook_key
-                               and dodo_products.get('Pro') and dodo_products.get('Elite'))
+    if dodo_tax_inclusive is not None and type(dodo_tax_inclusive) is not bool:
+        raise ValueError('Dodo tax policy must be a boolean or remain unapproved')
+    dodo_release_approved = (dodo_environment == 'test_mode' or
+                             dodo_approved_catalog_version == PRICE_CATALOG_VERSION)
+    dodo_sales_ready = bool(dodo_api_key and dodo_client and dodo_webhook_key
+                           and dodo_products.get('Pro') and dodo_products.get('Elite')
+                           and dodo_release_approved and type(dodo_tax_inclusive) is bool)
+    dodo_checkout_ready = bool(dodo_checkout_enabled and dodo_sales_ready)
     # Closing new sales must not prevent existing subscribers from cancelling.
     dodo_management_ready = bool(dodo_api_key and dodo_client and dodo_webhook_key)
     app.state.dodo_checkout_ready = dodo_checkout_ready
     app.state.dodo_client = dodo_client
+
+    def billing_readiness():
+        return {'provider': 'dodo', 'checkout_enabled': dodo_checkout_ready,
+                'plan_changes_enabled': dodo_sales_ready,
+                'management_enabled': dodo_management_ready,
+                'webhook_configured': bool(dodo_client and dodo_webhook_key),
+                'products_configured': bool(dodo_products.get('Pro') and dodo_products.get('Elite')),
+                'environment': dodo_environment, 'catalog_version': PRICE_CATALOG_VERSION,
+                'release_approved': dodo_release_approved,
+                'tax_policy_configured': type(dodo_tax_inclusive) is bool,
+                'enterprise_checkout_enabled': False}
     if sheets_url and not sheets_secret:
         sheets_url = None
     if analyser_url and not analyser_secret:
@@ -1077,11 +1101,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 "workspace_database": "appwrite-tablesdb" if store.tablesdb else ("appwrite-postgresql" if store.postgres else "local-sqlite"),
                 "appwrite_storage": bool(appwrite_api_key and appwrite_storage_bucket),
                 "billing_adapter": bool(billing_secret or dodo_checkout_ready),
-                "dodo_billing": {"checkout_enabled": dodo_checkout_ready,
-                                  "management_enabled": dodo_management_ready,
-                                  "webhook_configured": bool(dodo_client and dodo_webhook_key),
-                                  "products_configured": bool(dodo_products.get('Pro') and dodo_products.get('Elite')),
-                                  "environment": dodo_environment},
+                "dodo_billing": billing_readiness(),
                 "provisioning_webhook": bool(webhook_secret and webhook_url),
                 "product_gateways": {
                     "accounts": bool(accounts_url and accounts_secret),
@@ -1553,7 +1573,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     @app.get("/api/workspaces/{wid}/subscription")
     async def subscription(wid: str, request: Request):
         user = await identity(request)
-        with store.db() as db:
+        return await run_in_threadpool(read_subscription, user, wid)
+
+    def read_subscription(user, wid):
+        with store.db(readonly=True) as db:
             workspace = store.workspace(db, user, wid)
             if store.role(user, workspace) not in ("owner", "admin"):
                 fail(403, "Subscription owner required.")
@@ -1567,6 +1590,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                               if provider else None)
             sub["usage"] = [dict(row) for row in db.rows('usage', {'workspace': wid, 'month': time.strftime('%Y-%m', time.gmtime())}, columns=['product', 'amount'])]
             sub["monthly_product_writes"] = store.limits[sub["plan"]]
+            sub['billing'] = billing_readiness()
             return sub
 
     @app.get("/api/workspaces/{wid}/entitlements")
@@ -2177,6 +2201,43 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             return value.get(key)
         return getattr(value, key, None)
 
+    def checkout_catalog_prefix(plan):
+        # Persist the exact checkout mapping without a schema migration. An old
+        # pending URL must not become an offer for a new price/catalog/environment.
+        snapshot = [PRICE_CATALOG_VERSION, dodo_environment, plan, dodo_products.get(plan),
+                    TARGET_MONTHLY_PRICES.get(plan), dodo_tax_inclusive]
+        return 'cat_' + hashlib.sha256(json.dumps(snapshot).encode()).hexdigest()[:16] + '_'
+
+    def validate_dodo_product(plan):
+        # Read-only provider preflight, outside any Appwrite transaction. Never
+        # create/update a Dodo product or retry a financial mutation here.
+        try:
+            product = dodo_client.products.retrieve(dodo_products[plan])
+        except Exception:
+            fail(503, 'Dodo pricing could not be verified. No billing request was created.')
+        price = dodo_model_value(product, 'price')
+        expected = {'type': 'recurring_price', 'currency': 'INR',
+                    'price': TARGET_MONTHLY_PRICES[plan],
+                    'payment_frequency_count': 1, 'payment_frequency_interval': 'Month',
+                    'tax_inclusive': dodo_tax_inclusive}
+        matches = all(type(dodo_model_value(price, key)) is type(value)
+                      and dodo_model_value(price, key) == value for key, value in expected.items())
+        if (dodo_model_value(product, 'product_id') != dodo_products[plan]
+                or dodo_model_value(product, 'is_recurring') is not True or not matches
+                or any(dodo_model_value(price, key) not in (None, 0, False)
+                       for key in ('discount', 'discount_bps', 'trial_period_days', 'trial_amount',
+                                   'purchasing_power_parity'))):
+            fail(503, 'Dodo product does not match the approved monthly catalog. No billing request was created.')
+
+    def paid_change_requires_preflight(user, wid, plan):
+        with store.db(readonly=True) as db:
+            workspace = store.workspace(db, user, wid)
+            if workspace['kind'] != 'personal' or workspace['owner'] != user.user:
+                fail(403, 'Only the personal owner can change this subscription.')
+            current = db.one('subscriptions', {'workspace': wid})
+            pending = db.one('billing_requests', {'workspace': wid, 'state': 'pending'})
+            return plan != 'Free' and (plan != current['plan'] or pending is not None)
+
     def dodo_checkout_link(value):
         session_id = dodo_model_value(value, 'session_id')
         url = dodo_model_value(value, 'checkout_url')
@@ -2184,19 +2245,29 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             return None, None
         if not isinstance(url, str):
             return session_id, None
-        parsed = urlsplit(url)
-        if parsed.scheme != 'https' or not parsed.hostname or not parsed.hostname.endswith('.dodopayments.com'):
+        try:
+            parsed = urlsplit(url)
+            port = parsed.port
+        except ValueError:
+            return session_id, None
+        if (parsed.scheme != 'https' or parsed.username or parsed.password
+                or port not in (None, 443) or not parsed.hostname
+                or not parsed.hostname.endswith('.dodopayments.com')):
             return session_id, None
         return session_id, url
 
     async def create_dodo_checkout(user, wid, plan, rid):
         if not dodo_checkout_ready or not dodo_client:
             fail(503, 'Dodo checkout is not ready. No checkout or charge was created.')
-        metadata = {'workspace': wid, 'user': user.user, 'plan': plan, 'request': rid}
+        metadata = {'workspace': wid, 'user': user.user, 'plan': plan, 'request': rid,
+                    'catalog_version': PRICE_CATALOG_VERSION, 'billing_environment': dodo_environment}
         try:
             result = await asyncio.to_thread(
                 dodo_client.checkout_sessions.create,
                 product_cart=[{'product_id': dodo_products[plan], 'quantity': 1}],
+                billing_currency='INR',
+                feature_flags={'allow_currency_selection': False, 'allow_discount_code': False,
+                               'allow_editing_addons': False},
                 metadata=metadata,
                 return_url='https://www.alaada.com/account.html?billing=complete',
                 cancel_url='https://www.alaada.com/account.html?billing=cancelled')
@@ -2235,6 +2306,11 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         plan = data.get("plan")
         if plan not in ("Free", "Pro", "Elite"):
             fail(400, "Choose Free, Pro or Elite.")
+        if dodo_client and await run_in_threadpool(paid_change_requires_preflight, user, wid, plan):
+            if not dodo_sales_ready:
+                fail(503, 'Dodo paid plans await catalog release and tax approval. No billing request was created.')
+            await run_in_threadpool(validate_dodo_product, plan)
+            user = await identity(request)  # Recheck membership after provider I/O.
         with store.db() as db:
             workspace = store.workspace(db, user, wid)
             if workspace["kind"] != "personal" or workspace["owner"] != user.user:
@@ -2263,6 +2339,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     fail(409, 'A billing request is already pending.')
                 checkout = db.one('dodo_checkouts', {'request': pending['id']})
                 if checkout and checkout['state'] == 'ready' and checkout['checkout_url']:
+                    if not pending['id'].startswith(checkout_catalog_prefix(plan)):
+                        fail(409, 'This checkout belongs to an earlier catalog. Reconciliation is required before a new checkout.')
                     return JSONResponse({'id': pending['id'], 'state': 'pending', 'checkout_url': checkout['checkout_url']}, status_code=200)
                 fail(409, 'A Dodo request is already being reconciled. Do not create another checkout.')
             if provider and provider['status'] not in ('cancelled', 'expired', 'failed'):
@@ -2296,7 +2374,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 if not dodo_checkout_ready:
                     fail(503, 'Dodo checkout is not configured. No billing request was created.')
                 action = 'checkout'
-                rid = uuid.uuid4().hex
+                rid = checkout_catalog_prefix(plan) + uuid.uuid4().hex
                 db.insert('billing_requests', {'id': rid, 'workspace': wid, 'plan': plan, 'created': int(time.time())})
                 db.insert('dodo_checkouts', {'request': rid, 'workspace': wid, 'owner': user.user,
                                              'plan': plan, 'state': 'creating', 'created': int(time.time())})
@@ -3467,4 +3545,12 @@ if __name__ == "__main__":
         print(Store(args.db, limits).organisation(args.add_team, args.name))
     else:
         import uvicorn
-        uvicorn.run(create_app(args.db, limits=limits, billing_secret=os.environ.get("ALAADA_BILLING_ADAPTER_SECRET"), webhook_secret=os.environ.get("APPWRITE_WEBHOOK_SECRET"), webhook_url=os.environ.get("APPWRITE_WEBHOOK_URL"), web_root=args.web_root, accounts_url=os.environ.get("ALAADA_ACCOUNTS_UPSTREAM"), accounts_secret=os.environ.get("ALAADA_ACCOUNTS_GATEWAY_SECRET"), orbit_url=os.environ.get('ALAADA_ORBIT_UPSTREAM'), orbit_key=os.environ.get('ALAADA_ORBIT_API_KEY'), orbit_model=os.environ.get('ALAADA_ORBIT_MODEL', 'simplex1'), analyser_url=os.environ.get('ALAADA_ANALYSER_UPSTREAM'), analyser_secret=os.environ.get('ALAADA_ANALYSER_GATEWAY_SECRET'), sheets_url=os.environ.get('ALAADA_SHEETS_UPSTREAM'), sheets_secret=os.environ.get('ALAADA_CALCULATION_GATEWAY_SECRET'), appwrite_api_key=os.environ.get('APPWRITE_API_KEY'), appwrite_storage_bucket=os.environ.get('APPWRITE_STORAGE_BUCKET_ID'), dodo_api_key=os.environ.get('DODO_PAYMENTS_API_KEY'), dodo_webhook_key=os.environ.get('DODO_WEBHOOK_KEY'), dodo_environment=os.environ.get('DODO_PAYMENTS_ENVIRONMENT', 'live_mode'), dodo_products={'Pro': os.environ.get('DODO_PRO_PRODUCT_ID'), 'Elite': os.environ.get('DODO_ELITE_PRODUCT_ID')}, dodo_checkout_enabled=os.environ.get('DODO_ENABLE_CHECKOUT', '').lower() == 'true'), host=args.host, port=args.port)
+        # Release controls are explicit. Neither installing the SDK nor entering
+        # an API key approves the new catalog. Existing renewals/cancellation use
+        # their stored provider mapping and do not depend on these sales gates.
+        release_options = {
+            'dodo_approved_catalog_version': os.environ.get('DODO_APPROVED_CATALOG_VERSION'),
+            'dodo_tax_inclusive': {'true': True, 'false': False}.get(
+                os.environ.get('DODO_PRICE_TAX_INCLUSIVE', '').lower()),
+        }
+        uvicorn.run(create_app(args.db, **release_options, limits=limits, billing_secret=os.environ.get("ALAADA_BILLING_ADAPTER_SECRET"), webhook_secret=os.environ.get("APPWRITE_WEBHOOK_SECRET"), webhook_url=os.environ.get("APPWRITE_WEBHOOK_URL"), web_root=args.web_root, accounts_url=os.environ.get("ALAADA_ACCOUNTS_UPSTREAM"), accounts_secret=os.environ.get("ALAADA_ACCOUNTS_GATEWAY_SECRET"), orbit_url=os.environ.get('ALAADA_ORBIT_UPSTREAM'), orbit_key=os.environ.get('ALAADA_ORBIT_API_KEY'), orbit_model=os.environ.get('ALAADA_ORBIT_MODEL', 'simplex1'), analyser_url=os.environ.get('ALAADA_ANALYSER_UPSTREAM'), analyser_secret=os.environ.get('ALAADA_ANALYSER_GATEWAY_SECRET'), sheets_url=os.environ.get('ALAADA_SHEETS_UPSTREAM'), sheets_secret=os.environ.get('ALAADA_CALCULATION_GATEWAY_SECRET'), appwrite_api_key=os.environ.get('APPWRITE_API_KEY'), appwrite_storage_bucket=os.environ.get('APPWRITE_STORAGE_BUCKET_ID'), dodo_api_key=os.environ.get('DODO_PAYMENTS_API_KEY'), dodo_webhook_key=os.environ.get('DODO_WEBHOOK_KEY'), dodo_environment=os.environ.get('DODO_PAYMENTS_ENVIRONMENT', 'live_mode'), dodo_products={'Pro': os.environ.get('DODO_PRO_PRODUCT_ID'), 'Elite': os.environ.get('DODO_ELITE_PRODUCT_ID')}, dodo_checkout_enabled=os.environ.get('DODO_ENABLE_CHECKOUT', '').lower() == 'true'), host=args.host, port=args.port)
