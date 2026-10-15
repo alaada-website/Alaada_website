@@ -32,6 +32,49 @@ def test_live_catalog_needs_exact_release_approval(tmp_path, version):
     assert_no_sale(env)
 
 
+@pytest.mark.parametrize('provider_failure', [False, True])
+def test_startup_verifies_installed_key_without_opening_sales(tmp_path, provider_failure):
+    import asyncio
+    import threading
+    env = dodo_app(tmp_path, dodo_environment='live_mode', dodo_checkout_enabled=False)
+    entered, release = threading.Event(), threading.Event()
+    original = env['app'].state.dodo_client.products.retrieve
+    seen = []
+
+    def retrieve(product_id):
+        seen.append(product_id)
+        entered.set()
+        assert release.wait(5)
+        if provider_failure:
+            raise RuntimeError('private-provider-credential-must-not-leak')
+        return original(product_id)
+
+    env['app'].state.dodo_client.products.retrieve = retrieve
+
+    async def exercise():
+        async with env['app'].router.lifespan_context(env['app']):
+            try:
+                assert await asyncio.to_thread(entered.wait, 2)
+                assert env['app'].state.dodo_catalog_verification == 'checking'
+                assert not env['app'].state.dodo_checkout_ready
+            finally:
+                release.set()
+            for _ in range(200):
+                if env['app'].state.dodo_catalog_verification != 'checking':
+                    break
+                await asyncio.sleep(.01)
+            assert env['app'].state.dodo_catalog_verification == (
+                'unavailable' if provider_failure else 'verified')
+            assert len(seen) == (1 if provider_failure else 2)
+            status = env['client'].get('/api/health')
+            assert 'private-provider-credential' not in status.text
+            assert not status.json()['dodo_billing']['checkout_enabled']
+            assert not status.json()['dodo_billing']['plan_changes_enabled']
+            assert_no_sale(env)
+
+    asyncio.run(exercise())
+
+
 def test_tax_policy_must_be_explicit_even_with_release_approval(tmp_path):
     env = dodo_app(tmp_path, dodo_environment='live_mode',
                    dodo_approved_catalog_version=m.PRICE_CATALOG_VERSION, dodo_tax_inclusive=None)

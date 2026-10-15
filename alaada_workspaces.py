@@ -980,9 +980,14 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     store = Store(path, limits, api_key=appwrite_api_key)
     @asynccontextmanager
     async def lifespan(application):
+        # Verify the installed credential and catalog without opening sales or
+        # delaying health checks. This performs reads only, once per process.
+        catalog_task = asyncio.create_task(probe_dodo_catalog())
         try:
             yield
         finally:
+            catalog_task.cancel()
+            await asyncio.gather(catalog_task, return_exceptions=True)
             await run_in_threadpool(store.close)
 
     app = FastAPI(title="Alaada personal and organisation workspaces", docs_url=None,
@@ -1024,6 +1029,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     dodo_management_ready = bool(dodo_api_key and dodo_client and dodo_webhook_key)
     app.state.dodo_checkout_ready = dodo_checkout_ready
     app.state.dodo_client = dodo_client
+    app.state.dodo_catalog_verification = 'not_checked'
 
     def billing_readiness():
         return {'provider': 'dodo', 'checkout_enabled': dodo_checkout_ready,
@@ -1034,6 +1040,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                 'environment': dodo_environment, 'catalog_version': PRICE_CATALOG_VERSION,
                 'release_approved': dodo_release_approved,
                 'tax_policy_configured': type(dodo_tax_inclusive) is bool,
+                'catalog_verification': app.state.dodo_catalog_verification,
                 'enterprise_checkout_enabled': False}
     if sheets_url and not sheets_secret:
         sheets_url = None
@@ -2323,6 +2330,21 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                        for key in ('discount', 'discount_bps', 'trial_period_days', 'trial_amount',
                                    'purchasing_power_parity'))):
             fail(503, 'Dodo product does not match the approved monthly catalog. No billing request was created.')
+
+    async def probe_dodo_catalog():
+        if not (dodo_client and dodo_api_key and dodo_products.get('Pro')
+                and dodo_products.get('Elite') and type(dodo_tax_inclusive) is bool):
+            app.state.dodo_catalog_verification = 'not_configured'
+            return
+        app.state.dodo_catalog_verification = 'checking'
+        try:
+            for plan in ('Pro', 'Elite'):
+                await run_in_threadpool(validate_dodo_product, plan)
+        except Exception:
+            # Provider errors may contain credentials or customer information.
+            app.state.dodo_catalog_verification = 'unavailable'
+        else:
+            app.state.dodo_catalog_verification = 'verified'
 
     def paid_change_requires_preflight(user, wid, plan):
         with store.db(readonly=True) as db:
