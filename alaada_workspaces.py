@@ -1138,11 +1138,17 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         if not value.startswith("Bearer ") or len(value) > 8192:
             fail(401, "Appwrite JWT required.")
         result = await auth(value[7:])
-        wid = "p_" + hashlib.sha256(result.user.encode()).hexdigest()
-        if provision and not store.provisioned(wid):
-            with store.db() as db:
-                store.personal(db, result)
+        if provision:
+            await run_in_threadpool(provision_personal, result)
         return result
+
+    def provision_personal(user):
+        # TablesDB's SDK is synchronous. Keep each transaction and its
+        # connection in one worker, never on the shared ASGI event loop.
+        wid = "p_" + hashlib.sha256(user.user.encode()).hexdigest()
+        if not store.provisioned(wid):
+            with store.db() as db:
+                store.personal(db, user)
 
     async def body(request):
         raw = bytearray()
@@ -1275,6 +1281,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         title = text(data, "title")
         rid = hashlib.sha256(json.dumps([wid, product, kind, key]).encode()).hexdigest()
         payload = json.dumps({"native_key": key, "data": data.get("payload")})
+        return await run_in_threadpool(write_native_record, user, wid, product, kind, rid, title, payload, data)
+
+    def write_native_record(user, wid, product, kind, rid, title, payload, data):
         with store.db() as db:
             store.workspace(db, user, wid, write=True)
             previous = db.one('resources', {'id': rid, 'workspace': wid})
@@ -1321,7 +1330,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     @app.get('/api/workspaces/{wid}/folders/{rid}/children')
     async def folder_children(wid: str, rid: str, request: Request):
         user=await identity(request)
-        with store.db() as db:
+        return await run_in_threadpool(read_folder_children, user, wid, rid)
+
+    def read_folder_children(user, wid, rid):
+        with store.db(readonly=True) as db:
             # A grant to the folder itself is not a grant to its descendants.
             store.workspace(db,user,wid)
             folder=store.resource(db,user,wid,rid)
@@ -1332,8 +1344,12 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     @app.get('/api/account/preferences')
     async def account_preferences(request: Request):
         user=await identity(request)
-        with store.db() as db:
-            wid=store.personal(db,user)
+        return await run_in_threadpool(read_account_preferences, user)
+
+    def read_account_preferences(user):
+        wid = "p_" + hashlib.sha256(user.user.encode()).hexdigest()
+        with store.db(readonly=True) as db:
+            store.workspace(db, user, wid)
             row=db.one('account_preferences', {'user': user.user})
             return {'workspace':wid,'version':row['version'] if row else 0,
                     'personal_activity':bool(row['personal_activity']) if row else True,
@@ -1345,9 +1361,13 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         data=await body(request)
         if set(data)!={'version','personal_activity','organisation_activity'} or type(data['version']) is not int or any(type(data[k]) is not bool for k in ('personal_activity','organisation_activity')):
             fail(400,'Supply a version and both notification preferences as booleans.')
+        wid = "p_" + hashlib.sha256(user.user.encode()).hexdigest()
+        context(request,wid)
+        return await run_in_threadpool(write_account_preferences, user, wid, data)
+
+    def write_account_preferences(user, wid, data):
         with store.db() as db:
-            wid=store.personal(db,user)
-            context(request,wid)
+            store.workspace(db,user,wid,write=True)
             previous=db.one('account_preferences', {'user': user.user}, columns=['version'])
             version=previous['version'] if previous else 0
             if data['version']!=version:fail(409,'Account preferences changed. Reload before saving.')
@@ -1364,7 +1384,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     async def inbox(wid: str, request: Request, before: int = 0):
         user=await identity(request)
         if before<0:fail(400,'Invalid notification cursor.')
-        with store.db() as db:
+        return await run_in_threadpool(read_inbox, user, wid, before)
+
+    def read_inbox(user, wid, before):
+        with store.db(readonly=True) as db:
             store.workspace(db,user,wid)
             rows=db.rows('notifications', {'workspace': wid, 'recipient': user.user},
                          columns=['id', 'action', 'resource', 'created', 'read_at'], order=['-id'],
@@ -1375,6 +1398,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     async def read_notification(wid: str, nid: int, request: Request):
         user=await identity(request)
         context(request,wid)
+        return await run_in_threadpool(mark_notification_read, user, wid, nid)
+
+    def mark_notification_read(user, wid, nid):
         with store.db() as db:
             store.workspace(db,user,wid)
             selector = {'id': nid, 'workspace': wid, 'recipient': user.user}
@@ -1462,6 +1488,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     @app.get("/api/workspaces")
     async def workspaces(request: Request):
         user = await identity(request)
+        return await run_in_threadpool(read_workspaces, user)
+
+    def read_workspaces(user):
         # Confirmed Appwrite team memberships are the source of truth for
         # Enterprise workspaces. Provision their workspace rows idempotently
         # here so a newly accepted invitation becomes available immediately.
@@ -1480,12 +1509,15 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     async def workspace_bootstrap(request: Request):
         """Return the verified workspace list and selected product resources in one request."""
         user = await identity(request)
-        for team_id in user.teams:
-            store.organisation(team_id, user.team_names.get(team_id, team_id), licensed=False)
         requested = str(request.query_params.get('workspace') or '')[:128]
         product = request.query_params.get('product')
         if product is not None and product not in KINDS:
             fail(400, 'Unknown product.')
+        return await run_in_threadpool(read_workspace_bootstrap, user, requested, product)
+
+    def read_workspace_bootstrap(user, requested, product):
+        for team_id in user.teams:
+            store.organisation(team_id, user.team_names.get(team_id, team_id), licensed=False)
         with store.db(readonly=True) as db:
             visible = db.rows('workspaces', {'owner': user.user})
             for team in user.teams:
@@ -1510,6 +1542,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     @app.get('/api/workspaces/{wid}/access')
     async def workspace_access(wid: str, request: Request):
         user = await identity(request, provision=False)
+        return await run_in_threadpool(read_workspace_access, user, wid)
+
+    def read_workspace_access(user, wid):
         with store.db(readonly=True) as db:
             workspace = store.workspace(db, user, wid)
             return {'user': user.user, 'workspace': wid, 'role': store.role(user, workspace)}
@@ -1517,7 +1552,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     @app.get("/api/shared")
     async def shared(request: Request):
         user = await identity(request)
-        with store.db() as db:
+        return await run_in_threadpool(read_shared, user)
+
+    def read_shared(user):
+        with store.db(readonly=True) as db:
             rows = []
             for grant in db.rows('grants', {'user': user.user}):
                 resource = db.one('resources', {'id': grant['resource']})
@@ -1532,6 +1570,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     @app.get("/api/workspaces/{wid}/resources")
     async def listing(wid: str, request: Request):
         user = await identity(request)
+        return await run_in_threadpool(read_resources, user, wid)
+
+    def read_resources(user, wid):
         with store.db(readonly=True) as db:
             store.workspace(db, user, wid)
             return [output(row) for row in db.rows('resources', {'workspace': wid}, order=['title', 'id'])]
@@ -1552,7 +1593,10 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     @app.get("/api/workspaces/{wid}/resources/{rid}")
     async def read(wid: str, rid: str, request: Request):
         user = await identity(request)
-        with store.db() as db:
+        return await run_in_threadpool(read_resource, user, wid, rid)
+
+    def read_resource(user, wid, rid):
+        with store.db(readonly=True) as db:
             return resource_view(db,user,wid,rid)
 
     @app.post("/api/workspaces/{wid}/resources")
@@ -1561,6 +1605,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         context(request, wid)
         data = await body(request)
         product, kind, title, payload = resource_data(data)
+        return await run_in_threadpool(create_resource, user, wid, product, kind, title, payload)
+
+    def create_resource(user, wid, product, kind, title, payload):
         with store.db() as db:
             store.workspace(db, user, wid, write=True)
             store.quota(db, wid, product)
@@ -1575,6 +1622,9 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         context(request, wid)
         data = await body(request)
         title = text(data, "title")
+        return await run_in_threadpool(update_resource, user, wid, rid, title, data)
+
+    def update_resource(user, wid, rid, title, data):
         with store.db() as db:
             row = store.resource(db, user, wid, rid, write=True)
             if type(data.get("version")) is not int or row["version"] != data["version"]:
@@ -1687,11 +1737,13 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         product = request.query_params.get('product')
         if product is not None and product not in KINDS:
             fail(400, 'Unknown product.')
-        with store.db(readonly=True) as db:
-            store.workspace(db, user, wid)
+        await run_in_threadpool(read_workspace_access, user, wid)
         # Opening Orbit/Accounts/Analyser must not wait for a sleeping Sheets
         # service. Legacy callers with no product retain the full response.
         sheet_execution = await sheets_capabilities(user, wid) if product in (None, 'sheets') else {}
+        return await run_in_threadpool(read_entitlements, user, wid, product, sheet_execution)
+
+    def read_entitlements(user, wid, product, sheet_execution):
         with store.db(readonly=True) as db:
             workspace = store.workspace(db, user, wid)
             plan = store.effective_plan(db, wid)
