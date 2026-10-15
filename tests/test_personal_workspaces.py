@@ -542,6 +542,8 @@ def test_accounts_gateway_negative_boundaries(tmp_path, scenario, monkeypatch):
     async def authenticate(token):
         return users[token]
     async def upstream(req):
+        if req.url.path == '/health':
+            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'})
         calls.append(req.url.path)
         marker={'x-alaada-workspace-enforced':'v1'}
         if req.url.path=='/workspace-gateway/health':

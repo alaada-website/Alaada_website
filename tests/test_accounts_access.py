@@ -15,6 +15,8 @@ def test_company_pagination_filters_access_before_counting_and_slicing(tmp_path,
     async def auth(token):
         return m.Identity(token)
     async def backend(req):
+        if req.url.path == '/health':
+            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'})
         calls.append(req.url.path)
         marker = {'x-alaada-workspace-enforced': 'v1'}
         if req.url.path == '/workspace-gateway/health':
@@ -49,6 +51,8 @@ def test_company_listing_rejects_incomplete_or_revoked_results(tmp_path, failure
     async def auth(token):
         return m.Identity(token)
     async def backend(req):
+        if req.url.path == '/health':
+            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'})
         marker = {'x-alaada-workspace-enforced': 'v1'}
         if req.url.path == '/workspace-gateway/health':
             return httpx.Response(200, headers=marker, json={'capabilities': {'company_memberships': True}})
@@ -96,3 +100,44 @@ def test_directory_fails_closed_on_incomplete_or_cross_team_data(response):
         asyncio.run(m.appwrite_team_members('token', 'team', transport=httpx.MockTransport(
             lambda req: httpx.Response(200, json=response))))
     assert error.value.status_code == 503
+
+
+@pytest.mark.parametrize('failure', [None, 'revoked', 'wrong-backend', 'invalid-json'])
+def test_accounts_wakes_without_identity_then_checks_fresh_access(tmp_path, monkeypatch, failure):
+    import base64
+    now, requests, checks = [1000], [], []
+    monkeypatch.setattr(m.time, 'time', lambda: now[0])
+    async def no_delay(_):
+        pass
+    monkeypatch.setattr(m.asyncio, 'sleep', no_delay)
+    async def auth(token):
+        checks.append(now[0])
+        if failure == 'revoked' and now[0] > 1000:
+            raise m.HTTPException(401, 'Session revoked')
+        return m.Identity('alice')
+    def provider(request):
+        requests.append(request)
+        if request.url.path == '/health':
+            assert 'authorization' not in request.headers
+            assert 'x-alaada-gateway-context' not in request.headers
+            now[0] += 50
+            if len(requests) == 1:
+                return httpx.Response(503, text='Service is waking')
+            if failure == 'invalid-json':
+                return httpx.Response(200, text='<html>Still waking</html>')
+            return httpx.Response(200, json={'status': 'ok',
+                'persistence': 'local-disk' if failure == 'wrong-backend' else 'appwrite-tablesdb'})
+        claim = json.loads(base64.urlsafe_b64decode(request.headers['x-alaada-gateway-context']))
+        assert claim['iat'] == now[0]
+        return httpx.Response(200, json={'gateway': 'v1'}, headers={'x-alaada-workspace-enforced': 'v1'})
+    app = m.create_app(tmp_path / 'warmup.db', authenticate=auth, accounts_url='https://accounts.invalid',
+        accounts_secret='x' * 40, accounts_transport=httpx.MockTransport(provider))
+    browser = TestClient(app)
+    headers = {'Authorization': 'Bearer alice'}
+    wid = browser.get('/api/workspaces', headers=headers).json()['workspaces'][0]['id']
+    result = browser.get(f'/api/workspaces/{wid}/accounts/health', headers=headers | {'X-Alaada-Workspace': wid})
+    assert result.status_code == (401 if failure == 'revoked' else 503 if failure else 200)
+    signed = [request for request in requests if request.url.path == '/workspace-gateway/health']
+    assert len(signed) == (0 if failure else 1)
+    assert all(request.method == 'GET' for request in requests)
+    assert len(checks) >= 3

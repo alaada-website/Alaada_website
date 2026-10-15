@@ -15,7 +15,7 @@ import re
 import sqlite3
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote, urlsplit
@@ -639,6 +639,76 @@ class TablesSession:
             self.service.update_transaction(transaction_id=self.transaction_id, rollback=True)
 
 
+def _pooled_tablesdb_client(endpoint, project, api_key, *, transport=None):
+    """Reuse admin-only HTTPS connections; never cache user identity or replay writes."""
+    import httpx
+    from appwrite.client import Client
+    from appwrite.encoders.value_class_encoder import ValueClassEncoder
+    from appwrite.exception import AppwriteException
+
+    class PooledTablesClient(Client):
+        def __init__(self):
+            super().__init__()
+            self._http = httpx.Client(
+                timeout=httpx.Timeout(20, connect=5, pool=5),
+                limits=httpx.Limits(max_connections=20, max_keepalive_connections=10,
+                                    keepalive_expiry=30),
+                follow_redirects=False, transport=transport)
+
+        def close(self):
+            self._http.close()
+
+        def call(self, method, path='', headers=None, params=None, response_type='json'):
+            # This transport is intentionally limited to the TablesDB service.
+            # Account/session clients must remain separate and request scoped.
+            if (response_type != 'json' or not (path == '/tablesdb' or path.startswith('/tablesdb/'))
+                    or method.lower() not in ('get', 'post', 'put', 'patch', 'delete')):
+                raise AppwriteException('Unsupported TablesDB transport operation.')
+            request_headers = {**self._global_headers, **(headers or {})}
+            params = dict(params or {})
+            options = {}
+            if method.lower() == 'get':
+                options['params'] = self.flatten(params)
+            else:
+                request_headers['content-type'] = 'application/json'
+                options['content'] = json.dumps(params, cls=ValueClassEncoder).encode('utf-8')
+            try:
+                request = self._http.build_request(
+                    method, self._endpoint + path, headers=request_headers, **options)
+                # Server cookies are not a substitute for the explicitly scoped
+                # API key. Never replay a cookie from a previous response.
+                request.headers.pop('cookie', None)
+                response = self._http.send(request, follow_redirects=False)
+            except (httpx.HTTPError, RuntimeError) as error:
+                # A timed-out write may already have committed. Do not retry it
+                # here; transaction receipts own the same-key retry decision.
+                raise AppwriteException('Appwrite request was not confirmed.', 503,
+                                        'transport_unavailable') from error
+            if not 200 <= response.status_code < 300:
+                try:
+                    detail = response.json()
+                except ValueError:
+                    detail = {}
+                if not isinstance(detail, dict):
+                    detail = {}
+                raise AppwriteException(
+                    detail.get('message') or 'Appwrite request failed.',
+                    response.status_code, detail.get('type'), response.text)
+            if response.status_code == 204:
+                return {}
+            try:
+                result = response.json()
+            except ValueError as error:
+                raise AppwriteException('Invalid Appwrite JSON response.', 503,
+                                        'invalid_response') from error
+            if not isinstance(result, dict):
+                raise AppwriteException('Invalid Appwrite response shape.', 503,
+                                        'invalid_response')
+            return result
+
+    return PooledTablesClient().set_endpoint(endpoint).set_project(project).set_key(api_key)
+
+
 class Store:
     def __init__(self, path, limits=None, api_key=None):
         self.path = str(path)
@@ -650,13 +720,12 @@ class Store:
         if set(self.limits) != set(LIMITS) or any(type(v) is not int or v < 0 for v in self.limits.values()):
             raise ValueError("Limits must define nonnegative integer Free, Pro, Elite, Enterprise quotas")
         if self.tablesdb:
-            from appwrite.client import Client
             from appwrite.services.tables_db import TablesDB
             key = api_key or os.environ.get('APPWRITE_API_KEY')
             self.database_id = self.path.removeprefix('tablesdb:')
             if not key or not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}', self.database_id):
                 raise ValueError('A valid Appwrite database ID and server key are required')
-            self.service = TablesDB(Client().set_endpoint(ENDPOINT).set_project(PROJECT).set_key(key))
+            self.service = TablesDB(_pooled_tablesdb_client(ENDPOINT, PROJECT, key))
             return
         with self.db() as db:
             if not self.postgres:
@@ -666,6 +735,10 @@ class Store:
             db.executescript(SCHEMA)
             if not self.postgres:
                 db.execute("PRAGMA user_version=1")
+
+    def close(self):
+        if self.tablesdb:
+            self.service.client.close()
 
     @contextmanager
     def db(self, *, readonly=False):
@@ -904,8 +977,16 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                dodo_api_key=None, dodo_webhook_key=None, dodo_environment='live_mode',
                dodo_products=None, dodo_checkout_enabled=False, dodo_client=None, team_members=None,
                dodo_approved_catalog_version=None, dodo_tax_inclusive=None):
-    app = FastAPI(title="Alaada personal and organisation workspaces", docs_url=None, redoc_url=None)
     store = Store(path, limits, api_key=appwrite_api_key)
+    @asynccontextmanager
+    async def lifespan(application):
+        try:
+            yield
+        finally:
+            await run_in_threadpool(store.close)
+
+    app = FastAPI(title="Alaada personal and organisation workspaces", docs_url=None,
+                  redoc_url=None, lifespan=lifespan)
     if (store.postgres or store.tablesdb) and (not appwrite_api_key or not appwrite_storage_bucket):
         raise ValueError("APPWRITE_API_KEY and APPWRITE_STORAGE_BUCKET_ID are required with Appwrite databases")
     app.state.store = store
@@ -2005,12 +2086,26 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(70, connect=10), follow_redirects=False, transport=accounts_transport) as client:
                 async def probe_accounts():
+                    # Wake a sleeping Free service without a signed assertion:
+                    # its 15-second signature can expire during startup.
+                    # Public readiness is not authority; sign a fresh handshake
+                    # only after the expected Appwrite backend responds.
+                    public = await client.get(accounts_url + '/health')
+                    if public.status_code != 200:
+                        return 503, None
+                    try:
+                        health = public.json()
+                    except ValueError:
+                        return 503, None
+                    if (not isinstance(health, dict) or health.get('status') != 'ok'
+                            or health.get('persistence') != 'appwrite-tablesdb'):
+                        return 503, None
                     response = await upstream(client, "GET", "/workspace-gateway/health")
                     if response.status_code == 200 and response.headers.get('x-alaada-workspace-enforced') != 'v1':
                         return 503, response
                     return response.status_code, response
                 code, handshake = await readiness_probe(probe_accounts, revalidate)
-                if code != 200 or handshake.headers.get("x-alaada-workspace-enforced") != "v1":
+                if code != 200 or handshake is None or handshake.headers.get("x-alaada-workspace-enforced") != "v1":
                     fail(503, "Accounts did not verify the workspace gateway contract. No product operation was sent.")
                 if is_health:
                     await revalidate()
