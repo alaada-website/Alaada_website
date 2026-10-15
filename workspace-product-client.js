@@ -14,11 +14,12 @@
   const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
   const WORKSPACE_LAYOUT = `
     :root{--alaada-workspace-bar-height:36px}
-    #alaada-workspace-bar{gap:8px!important;overflow:hidden!important}
+    #alaada-workspace-bar{gap:4px 8px!important;min-height:36px;height:auto!important;flex-wrap:wrap;overflow:visible!important}
     #alaada-workspace-bar strong{min-width:0;max-width:150px;overflow:hidden;text-overflow:ellipsis}
     #alaada-workspace-bar select{min-width:0!important;flex:0 1 190px;max-width:30vw!important}
     #alaada-workspace-bar a{flex-shrink:0}
-    #alaada-workspace-bar [role=status]{min-width:0;overflow:hidden;text-overflow:ellipsis;margin-left:auto}
+    #alaada-workspace-bar [role=status]{min-width:0;flex:1 0 100%;white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.4;padding:2px 0}
+    #alaada-workspace-bar [role=status]:empty{display:none}
     body[data-alaada-product=orbit] #app,body[data-alaada-product=sheets] #app{
       height:calc(100vh - var(--alaada-workspace-bar-height));
       height:calc(100dvh - var(--alaada-workspace-bar-height));min-height:0;max-width:100%}
@@ -53,7 +54,11 @@
   };
   if(document.documentElement && document.documentElement.dataset)document.documentElement.dataset.alaadaFast='1';
   if(document.head && document.createElement){const style=document.createElement('style');style.textContent='html[data-alaada-fast],html[data-alaada-fast] *{scroll-behavior:auto!important;transition:none!important;animation:none!important}html[data-alaada-fast] .spin,html[data-alaada-fast] .spinner,html[data-alaada-fast] [class*="spinner"],html[data-alaada-fast] [class*="loading"]{animation-duration:.7s!important;animation-iteration-count:infinite!important}html[data-alaada-fast] .reveal,html[data-alaada-fast] [data-reveal]{opacity:1!important;transform:none!important;transition:none!important}';document.head.append(style)}
-  function show(message) { if(status)status.textContent=message; }
+  function fitWorkspaceBar() {
+    const height=Math.max(36,Math.ceil(bar?.getBoundingClientRect?.().height||36));
+    document.documentElement?.style?.setProperty('--alaada-workspace-bar-height',height+'px');
+  }
+  function show(message) { if(status)status.textContent=message;fitWorkspaceBar(); }
   function freeze(error) {
     clearAuthCache();
     failed=error instanceof Error?error:Error(String(error));
@@ -269,7 +274,23 @@
         if(policy.products?.orbit?.capabilities?.execution_receipts!==true)throw Error('Orbit needs the updated workspace backend before a reply can be sent safely. Your draft is saved.');
         const mapKey=keyOf('orbit','conversation',String(key)),previous=records.get(mapKey);
         if(!previous)throw Error('Save the conversation first');
-        const row=await api('/workspaces/'+workspace.id+'/orbit/reply','POST',{conversation:previous.id,version:previous.version});
+        let row;
+        try{
+          row=await api('/workspaces/'+workspace.id+'/orbit/reply','POST',{conversation:previous.id,version:previous.version});
+        }catch(error){
+          if(!error.retryable||failed)throw error;
+          // A proxy can lose the response after Orbit committed its answer.
+          // Reconcile with one read, never a second inference or a new prompt.
+          show('Checking whether Orbit saved the reply…');
+          try{
+            const saved=await api('/workspaces/'+workspace.id+'/resources/'+previous.id);
+            const before=previous.payload?.data?.messages,after=saved.payload?.data?.messages;
+            if(saved.version!==previous.version+1||!Array.isArray(before)||!Array.isArray(after)||
+              after.length!==before.length+1||after.at(-1)?.role!=='assistant'||typeof after.at(-1)?.text!=='string'||
+              !after.at(-1).text.trim()||JSON.stringify(after.slice(0,-1))!==JSON.stringify(before))throw error;
+            row=saved;
+          }catch(recoveryError){throw failed||([401,403].includes(recoveryError.status)?recoveryError:error);}
+        }
         if(row.id!==previous.id||row.product!=='orbit'||row.kind!=='conversation'||!Number.isInteger(row.version)||row.version<=previous.version||row.payload?.native_key!==String(key)||!Array.isArray(row.payload?.data?.messages))throw connectionError('Orbit',200,'MALFORMED_RESPONSE');
         records.set(mapKey,row);
         values.set('orbit_threads',JSON.stringify([...records.values()].filter(r=>r.product==='orbit'&&r.kind==='conversation').map(r=>r.payload.data)));
@@ -425,9 +446,11 @@
     signin.href='/auth.html?next='+encodeURIComponent(location.pathname+location.search);signin.textContent='Sign in';signin.style.color='#fff';signin.hidden=true;
     status=document.createElement('span');status.setAttribute('role','status');
     bar.append(label,selector,manage,signin,status);document.body.prepend(bar);
-    gate=document.createElement('div');gate.setAttribute('role','status');gate.setAttribute('aria-live','polite');gate.hidden=true;gate.style.cssText='position:fixed;inset:36px 0 0;z-index:2147483646;background:#f7f8fa;color:#17243a;padding:12vh max(24px,8vw);font:18px/1.6 system-ui;transition:none';gate.textContent='Connecting to your private workspace…';document.body.append(gate);
-    document.body.style.paddingTop='36px';
+    gate=document.createElement('div');gate.setAttribute('role','status');gate.setAttribute('aria-live','polite');gate.hidden=true;gate.style.cssText='position:fixed;inset:var(--alaada-workspace-bar-height,36px) 0 0;z-index:2147483646;overflow:auto;background:#f7f8fa;color:#17243a;padding:8vh max(24px,8vw);font:18px/1.6 system-ui;transition:none';gate.textContent='Connecting to your private workspace…';document.body.append(gate);
+    document.body.style.paddingTop='var(--alaada-workspace-bar-height,36px)';
     if(document.head){const layout=document.createElement('style');layout.textContent=WORKSPACE_LAYOUT;document.head.append(layout)}
+    if(window.ResizeObserver)new window.ResizeObserver(fitWorkspaceBar).observe(bar);
+    fitWorkspaceBar();
     if(document.head&&document.createElement){for(const href of [new URL(endpoint).origin,'https://alaada-workspaces.onrender.com']){const link=document.createElement('link');link.rel='preconnect';link.href=href;link.crossOrigin='anonymous';document.head.append(link)}}
     // Warm the known Free service without credentials while Appwrite verifies
     // the session. This is a best-effort public health read, never authority.

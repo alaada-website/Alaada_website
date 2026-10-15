@@ -13,8 +13,10 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
     append(...items){this.children.push(...items);for(const item of items)if(item.selected)this.value=item.value;}
     prepend(...items){this.children.unshift(...items);}
     setAttribute(){}
+    getBoundingClientRect(){return {height:config.barHeight||36};}
   }
   const document={readyState:'complete',currentScript:{dataset:{product}},body:new Element('body'),
+    documentElement:{style:{setProperty:(key,value)=>{config.layout?.set(key,value);}}},
     createElement:tag=>new Element(tag),addEventListener:(type,fn)=>events[type]=fn,hidden:false};
   Object.defineProperty(document,'cookie',{set:value=>cookies.push(value),get:()=>config.cookie||''});
   document.body.append(new Element('main'));
@@ -57,6 +59,10 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
 }
 
 (async()=>{
+  const layout=new Map();
+  const resized=await boot('sheets','',[],new Map(),{barHeight:82,layout});
+  assert.equal(layout.get('--alaada-workspace-bar-height'),'82px','Wrapped status reserves real space above every product');
+  assert.equal(resized.document.body.style.paddingTop,'var(--alaada-workspace-bar-height,36px)');
   const hinted=await boot('sheets','',[],new Map(),{
     cookie:'alaada_workspace_hint='+encodeURIComponent(JSON.stringify({id:'forged',name:'Remembered workspace',kind:'personal'})),
     inspectStartup(W){assert.equal(W.active,null,'A UI cookie must never become the active authorized workspace');}
@@ -109,6 +115,26 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   assert.equal(orbit.W.read('conversation','first').messages[0].text,'Scoped reply');
   await orbit.W.save('conversation','first',{...answer,title:'Renamed'},'Renamed');
   assert.equal(JSON.parse(orbit.requests.filter(r=>r.options.method==='PUT').at(-1).options.body).version,2);
+  // The committed answer survives a lost proxy response without another inference.
+  for(const scenario of ['saved','unchanged','edited','revoked']){
+    const messages=[{role:'user',text:'One reply, please.'}];
+    const before={id:'lost-response',product:'orbit',kind:'conversation',version:1,
+      payload:{native_key:'recover',data:{id:'recover',messages}}};
+    const saved={...before,version:2,payload:{native_key:'recover',data:{id:'recover',messages:[...messages,{role:'assistant',text:'Saved reply'}]}}};
+    const recovery=await boot('orbit','',[before],new Map(),{fetch(url,options){
+      if(url.endsWith('/orbit/reply'))return new Response('<html>Bad gateway</html>',{status:502});
+      if(url.endsWith('/resources/lost-response')){
+        if(scenario==='revoked')return new Response(JSON.stringify({detail:'Access removed'}),{status:403});
+        if(scenario==='unchanged')return json(before);
+        if(scenario==='edited')return json({...saved,payload:{...saved.payload,data:{messages:[{role:'user',text:'Other prompt'},{role:'assistant',text:'Other answer'}]}}});
+        return json(saved);
+      }
+    }});
+    if(scenario==='saved')assert.equal((await recovery.W.orbitReply('recover')).messages.at(-1).text,'Saved reply');
+    else await assert.rejects(recovery.W.orbitReply('recover'),error=>error.status===(scenario==='revoked'?403:502));
+    assert.equal(recovery.requests.filter(r=>r.url.endsWith('/orbit/reply')).length,1,'Never resubmit inference to recover a lost response');
+    assert.equal(recovery.requests.filter(r=>r.url.endsWith('/resources/lost-response')).length,1);
+  }
   const switchTest=await boot('sheets');
   switchTest.W.beforeSwitch(async()=>{throw Error('Workbook save failed');});
   const selector=switchTest.document.body.children[0].children[1];
