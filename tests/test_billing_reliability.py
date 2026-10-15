@@ -71,6 +71,64 @@ def test_changed_payload_same_event_id_is_not_silently_deduplicated(tmp_path):
     assert env['client'].get(f'/api/workspaces/{env["workspace"]}/subscription', headers=headers).json()['plan'] == 'Pro'
 
 
+def test_verified_webhook_database_wait_does_not_block_health(tmp_path, monkeypatch):
+    import asyncio
+    import threading
+    from contextlib import contextmanager
+    from test_personal_workspaces import signed_dodo_request
+
+    env = dodo_app(tmp_path)
+    entered, release = threading.Event(), threading.Event()
+    original = env['app'].state.store.billing_receipt
+    request_thread = threading.get_ident()
+
+    @contextmanager
+    def delayed_receipt(*args):
+        assert threading.get_ident() != request_thread
+        entered.set()
+        assert release.wait(5), 'Health request was blocked by billing database I/O'
+        with original(*args):
+            yield
+
+    monkeypatch.setattr(env['app'].state.store, 'billing_receipt', delayed_receipt)
+    raw, headers = signed_dodo_request(env['key'], 'nonblocking-probe',
+                                      {'non_billable': True}, 'integration.healthcheck')
+
+    async def exercise():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=env['app']),
+                                     base_url='http://testserver') as client:
+            delivery = asyncio.create_task(client.post('/api/dodo/webhook', content=raw, headers=headers))
+            try:
+                assert await asyncio.to_thread(entered.wait, 2)
+                health = await asyncio.wait_for(client.get('/health'), 1)
+                assert health.status_code == 200
+                assert not delivery.done()
+            finally:
+                release.set()
+            assert (await delivery).json() == {'received': True}
+
+    asyncio.run(exercise())
+    with env['app'].state.store.db(readonly=True) as db:
+        assert db.one('subscriptions', {'workspace': env['workspace']})['plan'] == 'Free'
+        assert db.rows('dodo_subscriptions', {}) == []
+
+
+@pytest.mark.parametrize('offset', [-600, 600])
+def test_outside_signature_window_never_touches_database(tmp_path, monkeypatch, offset):
+    env = dodo_app(tmp_path)
+    stamp = datetime.now(timezone.utc) + timedelta(seconds=offset)
+    raw = json.dumps({'type': 'integration.healthcheck', 'data': {'non_billable': True}})
+    headers = {'webhook-id': 'outside-window', 'webhook-timestamp': str(int(stamp.timestamp())),
+               'webhook-signature': Webhook(env['key']).sign('outside-window', stamp, raw),
+               'Content-Type': 'application/json'}
+
+    def unexpected_receipt(*_):
+        pytest.fail('Invalid signatures must not touch the billing database')
+
+    monkeypatch.setattr(env['app'].state.store, 'billing_receipt', unexpected_receipt)
+    assert env['client'].post('/api/dodo/webhook', content=raw, headers=headers).status_code == 401
+
+
 def test_failed_verified_receipt_is_durable_and_contains_no_raw_pii(tmp_path):
     env = dodo_app(tmp_path)
     response, raw = deliver(env, 'unlinked', {'subscription_id': 'sub_unlinked', 'status': 'active',

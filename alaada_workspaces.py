@@ -2522,7 +2522,12 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
             dodo_client.webhooks.unwrap(raw.decode('utf-8'), headers=headers, key=dodo_webhook_key)
         except Exception:
             fail(401, 'Invalid Dodo webhook signature.')
-        event_id = headers['webhook-id']
+        # TablesDB uses synchronous network I/O. Keep verification before any
+        # database access, then process the full receipt/transaction in one
+        # worker so a slow webhook cannot block sessions or health checks.
+        return await run_in_threadpool(process_dodo_webhook, raw_data, raw, headers['webhook-id'])
+
+    def process_dodo_webhook(raw_data, raw, event_id):
         event_type = raw_data.get('type')
         event = raw_data.get('data')
         if not isinstance(event_id, str) or len(event_id) > 255 or not isinstance(event_type, str) or not 1 <= len(event_type) <= 128 or not isinstance(event, dict):
