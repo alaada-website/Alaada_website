@@ -956,6 +956,39 @@ def test_account_preferences_stay_private_and_survive_membership_changes(env):
     assert request(env,'alice','GET','/account/preferences').json()==saved.json()
 
 
+def test_notification_pages_and_repeated_acknowledgement_preserve_recipient_scope(env):
+    personal,org=env[3],env[2]
+    with env[4].state.store.db() as db:
+        for index in range(125):
+            db.insert('notifications', {'workspace': personal, 'recipient': 'alice',
+                'action': 'orbit:reply', 'resource': 'fixture-'+str(index), 'created': 1792000000+index})
+            db.insert('notifications', {'workspace': personal, 'recipient': 'admin',
+                'action': 'private-admin', 'created': 1792000000+index})
+    path=f'/workspaces/{personal}/notifications'
+    ids=[]
+    cursor=0
+    for count in (50,50,25):
+        result=request(env,'alice','GET',path+f'?before={cursor}').json()
+        assert len(result['items'])==count
+        assert all(row['action']=='orbit:reply' and row['read_at'] is None for row in result['items'])
+        if cursor:
+            assert all(row['id']<cursor for row in result['items'])
+        ids.extend(row['id'] for row in result['items'])
+        cursor=result['next_before']
+    assert cursor is None and len(set(ids))==125 and ids==sorted(ids,reverse=True)
+    assert request(env,'alice','GET',path+'?before=-1').status_code==400
+    assert request(env,'alice','GET',path+'?before=invalid').status_code==422
+    read_path=path+f'/{ids[0]}/read'
+    assert request(env,'alice','POST',read_path,{},org).status_code==409
+    first=request(env,'alice','POST',read_path,{},personal)
+    assert first.status_code==200 and first.json()=={'read':True}
+    when=request(env,'alice','GET',path).json()['items'][0]['read_at']
+    assert when is not None
+    assert request(env,'alice','POST',read_path,{},personal).status_code==200
+    assert request(env,'alice','GET',path).json()['items'][0]['read_at']==when
+    assert request(env,'admin','POST',read_path,{},personal).status_code==403
+
+
 @pytest.mark.parametrize('revoked',[False,True])
 def test_sheets_calculation_scope_and_inflight_revocation(tmp_path,revoked):
     users={'alice':m.Identity('alice',{'team':['editor']}),'admin':m.Identity('admin',{'team':['admin']})}
