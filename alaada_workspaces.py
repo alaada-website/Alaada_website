@@ -287,46 +287,142 @@ class Identity:
 
 
 class AppwriteIdentity:
-    """Fresh verified account and confirmed team memberships on every request."""
+    """Fresh authorization with a lifespan-owned, credential-free connection pool."""
+    deadline = 25
+    membership_parallelism = 4
+
+    def __init__(self, *, transport=None):
+        self._client, self._transport = None, transport
+
+    def _new_client(self):
+        from http.cookiejar import CookieJar, DefaultCookiePolicy
+
+        class NoCookies(DefaultCookiePolicy):
+            def set_ok(self, *args, **kwargs):
+                return False
+            def return_ok(self, *args, **kwargs):
+                return False
+
+        options = {'transport': self._transport} if self._transport is not None else {}
+        return httpx.AsyncClient(timeout=httpx.Timeout(15, connect=5, pool=5),
+            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10, keepalive_expiry=30),
+            cookies=CookieJar(policy=NoCookies()), follow_redirects=False, **options)
+
+    async def start(self):
+        if self._client is None:
+            self._client = self._new_client()
+
+    async def close(self):
+        client, self._client = self._client, None
+        if client is not None:
+            await client.aclose()
+
     async def __call__(self, token):
-        async with httpx.AsyncClient(timeout=15) as client:
-            headers = {"X-Appwrite-Project": PROJECT, "X-Appwrite-JWT": token}
+        try:
+            async with asyncio.timeout(self.deadline):
+                if self._client is not None:
+                    return await self._verify(self._client, token)
+                # One-shot callers/tests without ASGI lifespan must not leak a pool.
+                async with self._new_client() as client:
+                    return await self._verify(client, token)
+        except TimeoutError:
+            fail(503, 'Identity verification timed out. Retry without signing out.')
 
-            async def get(path, params=None):
+    async def _verify(self, client, token):
+        # Share sockets only. JWT headers, account and memberships are request-local.
+        headers = {'X-Appwrite-Project': PROJECT, 'X-Appwrite-JWT': token}
+
+        async def get(path, params=None):
+            try:
+                request = client.build_request('GET', ENDPOINT + path, headers=headers, params=params)
+                request.headers.pop('cookie', None)
+                response = await client.send(request, stream=True, follow_redirects=False)
                 try:
-                    response = await client.get(ENDPOINT + path, headers=headers, params=params)
-                except httpx.HTTPError:
-                    fail(503, "Identity service unavailable; access denied.")
-                if response.status_code in (401, 403):
-                    fail(401, "Appwrite session expired or access revoked.")
-                if response.status_code != 200:
-                    fail(503, "Unable to verify Appwrite permissions.")
-                return response.json()
+                    if response.status_code in (401, 403):
+                        fail(401, 'Appwrite session expired or access revoked.')
+                    if response.status_code != 200:
+                        fail(503, 'Unable to verify Appwrite permissions.')
+                    raw = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        raw.extend(chunk)
+                        if len(raw) > 1_000_000:
+                            raise ValueError('Oversized identity response')
+                    result = json.loads(raw)
+                    if not isinstance(result, dict):
+                        raise ValueError('Invalid identity response')
+                    return result
+                finally:
+                    await response.aclose()
+            except (httpx.HTTPError, ValueError, TypeError):
+                fail(503, 'Identity service unavailable; access denied.')
 
-            async def pages(path, key, extra=None):
-                offset = 0
-                while True:
-                    queries = (extra or []) + [{"method": "limit", "values": [100]},
-                                               {"method": "offset", "values": [offset]}]
-                    result = await get(path, [("queries[]", json.dumps(q)) for q in queries])
-                    rows = result[key]
-                    for row in rows:
-                        yield row
-                    offset += len(rows)
-                    if not rows or offset >= result["total"]:
-                        break
+        async def pages(path, key, extra=None):
+            offset, expected = 0, None
+            while True:
+                queries = (extra or []) + [{'method': 'limit', 'values': [100]},
+                                           {'method': 'offset', 'values': [offset]}]
+                result = await get(path, [('queries[]', json.dumps(q)) for q in queries])
+                rows, total = result.get(key), result.get('total')
+                if (not isinstance(rows, list) or len(rows) > 100 or type(total) is not int
+                        or not 0 <= total <= 50000 or expected is not None and total != expected
+                        or offset + len(rows) > total or not rows and offset < total
+                        or any(not isinstance(row, dict) for row in rows)):
+                    fail(503, 'Appwrite permissions could not be verified completely. Retry loading.')
+                expected = total
+                for row in rows:
+                    yield row
+                offset += len(rows)
+                if offset >= total:
+                    break
 
-            account = await get("/account")
-            if not account.get("status"):
-                fail(401, "Account disabled.")
-            teams, team_names = {}, {}
-            async for team in pages("/teams", "teams"):
-                query = [{"method": "equal", "attribute": "userId", "values": [account["$id"]]}]
-                async for member in pages("/teams/" + quote(team["$id"], safe="") + "/memberships", "memberships", query):
-                    if member.get("confirm") and member.get("userId") == account["$id"]:
-                        teams[team["$id"]] = member.get("roles", [])
-                        team_names[team["$id"]] = team.get("name") or team["$id"]
-            return Identity(account["$id"], teams, team_names)
+        def valid_id(value):
+            return isinstance(value, str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,35}', value)
+
+        account = await get('/account')
+        if not valid_id(account.get('$id')) or type(account.get('status')) is not bool:
+            fail(503, 'Appwrite account could not be verified.')
+        if not account['status']:
+            fail(401, 'Account disabled.')
+        uid, candidates, seen = account['$id'], [], set()
+        async for team in pages('/teams', 'teams'):
+            tid = team.get('$id')
+            if not valid_id(tid) or tid in seen or not isinstance(team.get('name', ''), str):
+                fail(503, 'Appwrite organisations could not be verified completely.')
+            seen.add(tid)
+            candidates.append((tid, (team.get('name') or tid)[:200]))
+
+        async def membership(team):
+            tid, name = team
+            query = [{'method': 'equal', 'attribute': 'userId', 'values': [uid]}]
+            found, confirmed = False, None
+            async for member in pages('/teams/' + quote(tid, safe='') + '/memberships', 'memberships', query):
+                roles = member.get('roles')
+                if (found or member.get('userId') != uid or member.get('teamId', tid) != tid
+                        or type(member.get('confirm')) is not bool or not isinstance(roles, list)
+                        or len(roles) > 100 or any(not isinstance(role, str) or not role or len(role) > 128 for role in roles)):
+                    fail(503, 'Appwrite organisation membership could not be verified.')
+                found = True
+                if member['confirm']:
+                    confirmed = (tid, name, roles)
+            return confirmed
+
+        teams, team_names = {}, {}
+        for offset in range(0, len(candidates), self.membership_parallelism):
+            tasks = [asyncio.create_task(membership(team))
+                     for team in candidates[offset:offset + self.membership_parallelism]]
+            try:
+                results = await asyncio.gather(*tasks)
+            finally:
+                # Failure/timeout must not leave background authorization requests.
+                for task in tasks:
+                    if not task.done():
+                        task.cancel()
+                await asyncio.gather(*tasks, return_exceptions=True)
+            for result in results:
+                if result is not None:
+                    tid, name, roles = result
+                    teams[tid], team_names[tid] = roles, name
+        return Identity(uid, teams, team_names)
 
 
 async def appwrite_team_members(token, team, user_id=None, *, transport=None):
@@ -980,6 +1076,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     store = Store(path, limits, api_key=appwrite_api_key)
     @asynccontextmanager
     async def lifespan(application):
+        if isinstance(auth, AppwriteIdentity):
+            await auth.start()
         # Verify the installed credential and catalog without opening sales or
         # delaying health checks. This performs reads only, once per process.
         catalog_task = asyncio.create_task(probe_dodo_catalog())
@@ -988,6 +1086,8 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
         finally:
             catalog_task.cancel()
             await asyncio.gather(catalog_task, return_exceptions=True)
+            if isinstance(auth, AppwriteIdentity):
+                await auth.close()
             await run_in_threadpool(store.close)
 
     app = FastAPI(title="Alaada personal and organisation workspaces", docs_url=None,
@@ -998,6 +1098,7 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
     app.state.appwrite_api_key = appwrite_api_key
     app.state.appwrite_storage_bucket = appwrite_storage_bucket
     auth = authenticate or AppwriteIdentity()
+    app.state.identity_verifier = auth
     verified_team_members = team_members or appwrite_team_members
     dodo_products = dict(dodo_products or {})
     if dodo_environment not in ('test_mode', 'live_mode'):
