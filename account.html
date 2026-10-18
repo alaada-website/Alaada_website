@@ -5,6 +5,8 @@
   <title>Account · Alaada</title>
   <style>
     :root{color-scheme:light;--bg:#f5f4ef;--ink:#242321;--muted:#77746d;--line:#dedbd2;--card:#fffdf8;--gold:#a37423;--danger:#b33c35}*{box-sizing:border-box}.hidden{display:none!important}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}a{color:inherit}.shell{max-width:1060px;margin:auto;padding:28px 20px 64px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}.brand{font-weight:750;font-size:1.15rem;text-decoration:none}.toplinks{display:flex;gap:16px;color:var(--muted);font-size:.9rem}.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px}.nav,.card{background:var(--card);border:1px solid var(--line);border-radius:16px}.nav{padding:9px;height:max-content;position:sticky;top:16px}.nav button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;border-radius:9px;color:var(--muted);cursor:pointer;font:inherit}.nav button.active,.nav button:hover{background:#f0eadc;color:var(--ink)}.card{padding:22px;margin-bottom:14px}.card h1,.card h2{margin:0 0 6px;letter-spacing:-.025em}.card h1{font-size:1.55rem}.card h2{font-size:1.05rem}.sub{color:var(--muted);margin:0 0 18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field label{display:block;color:var(--muted);font-size:.78rem;margin-bottom:5px}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;font:inherit;color:var(--ink)}button.primary,button.secondary,button.danger{border:0;border-radius:9px;padding:10px 13px;font:inherit;cursor:pointer}button.primary{background:var(--ink);color:white}button.secondary{background:#efe9dc;color:var(--ink)}button.danger{background:#f9e5e2;color:var(--danger)}button:disabled{opacity:.55;cursor:not-allowed}.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:15px}.status{font-size:.86rem;color:var(--muted);min-height:21px}.error{color:var(--danger)}.pill{display:inline-block;border-radius:999px;padding:4px 9px;background:#eee9dc;color:var(--gold);font-size:.78rem}.workspace-row{border-top:1px solid var(--line);padding:13px 0;display:flex;justify-content:space-between;align-items:center;gap:12px}.workspace-row:first-child{border-top:0}.workspace-select{width:100%;max-width:540px}.note{padding:12px 14px;background:#f4f0e8;border-radius:10px;color:#5c574d;font-size:.88rem}.errorbox{padding:12px 14px;border:1px solid #efc7c2;background:#fff6f5;border-radius:10px;color:var(--danger)}@media(max-width:720px){.layout{grid-template-columns:1fr}.nav{display:flex;overflow:auto;position:static}.nav button{white-space:nowrap;width:auto}.grid{grid-template-columns:1fr}.top{align-items:flex-start;gap:14px}.toplinks{flex-wrap:wrap;justify-content:flex-end}}
+    .panel-message{margin:8px 0 12px}.session-row{border-top:1px solid var(--line);padding:16px 0;display:flex;gap:14px;justify-content:space-between;align-items:flex-start}.session-details{min-width:0;overflow-wrap:anywhere}.session-details p{margin:5px 0}.session-row button{flex-shrink:0}.session-confirm{padding:14px;border:1px solid var(--line);border-radius:10px;background:#f4f0e8;margin:12px 0}.session-confirm p{margin:0}.session-row .pill{margin-left:8px}.layout>section{min-width:0}.workspace-row{flex-wrap:wrap}.top .pill{overflow-wrap:anywhere;min-width:0}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #225dc1;outline-offset:3px}@media(max-width:480px){.shell{padding:18px 12px 36px}.card{padding:17px}.top{flex-wrap:wrap}.toplinks{margin-left:auto}.session-row{flex-direction:column}.session-row .actions{margin-top:4px}.session-row .pill{margin-left:0;display:table;margin-top:4px}}
+    @media(max-width:720px){.nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible}.nav button{width:100%;white-space:normal}}@media(max-width:480px){.nav{grid-template-columns:repeat(2,minmax(0,1fr))}.top .pill{order:3;width:100%}}
   </style>
 </head>
 <body>
@@ -30,7 +32,16 @@
     const ENDPOINT='https://sfo.cloud.appwrite.io/v1',PROJECT='6972444700208a437da1',params=new URLSearchParams(location.search),$=id=>document.getElementById(id);
     let account=null,workspaces=[],active=null,personal=null,subscription=null,prefsVersion=0,billing={},changingPlan=false,preferencesReady=false;
     let inboxEpoch=0,inboxBefore=null,inboxBusy=false;
+    let workspacesReady=false,workspaceLoad=null,preferenceLoad=null,subscriptionLoad=null;
+    let sessionsEpoch=0,sessionsLoad=null,sessions=[],sessionAction=false,pendingSession=null;
     const idOf=workspace=>workspace?.id||workspace?.$id;
+    $('password-form').insertAdjacentHTML('afterend','<h2 style="margin-top:28px">Signed-in devices</h2><p class="sub">Review and end your own Appwrite sessions. No paid plan is required.</p><button id="sessions-refresh" class="secondary" type="button">Refresh devices</button><p id="sessions-status" class="status" role="status" aria-live="polite"></p><div id="session-confirm" class="session-confirm hidden" role="group" aria-label="Confirm sign-out"><p id="session-confirm-text"></p><div class="actions"><button id="session-confirm-yes" class="danger" type="button">End session</button><button id="session-confirm-no" class="secondary" type="button">Keep session</button></div></div><div id="session-items" aria-label="Signed-in devices"></div>');
+    for(const [panel,statusId] of Object.entries({'workspaces-panel':'workspace-status',subscription:'plan-status',preferences:'preferences-status',notifications:'inbox-status'})){
+      let status=$(statusId);if(!status){status=document.createElement('p');status.id=statusId;status.className='status panel-message';status.setAttribute('role','status');$(panel).querySelector('h1').after(status)}
+      const retry=document.createElement('button');retry.id='retry-'+panel;retry.type='button';retry.className='secondary hidden';retry.textContent='Retry loading this section';retry.onclick=()=>loadPanel(panel);status.after(retry);
+    }
+    $('create-enterprise').disabled=true;$('send-invite').disabled=true;$('change-plan').disabled=true;
+    $('personal-activity').disabled=true;$('organisation-activity').disabled=true;
     function msg(id,text,error=false){const el=$(id);el.textContent=text;el.classList.toggle('error',error)}
     async function readUMSResponse(response,service,allowEmpty=false){
       let data=null;const raw=await response.text();
@@ -62,17 +73,105 @@
       return verifyAppwriteShape(await readUMSResponse(response,'Appwrite',method==='DELETE'),path);
     }
     async function backend(path,method='GET',data,wid){
-      const current=await aw('/account');
-      if(!account||current.$id!==account.$id)throw new Error('Your signed-in account changed. Reload before continuing.');
+      await currentAccount();
       const token=await aw('/account/jwts','POST',{}),headers={Authorization:`Bearer ${token.jwt}`,'Content-Type':'application/json'};
       if(wid)headers['X-Alaada-Workspace']=wid;
       const response=await fetch('/api'+path,{method,headers,cache:'no-store',redirect:'error',signal:AbortSignal.timeout(40000),...(data===undefined?{}:{body:JSON.stringify(data)})});
       const out=await readUMSResponse(response,'Workspace service',method==='DELETE');
       await currentAccount();return out;
     }
-    function lockAccount(message){$('app').classList.add('hidden');$('failure').classList.remove('hidden');$('failure-message').textContent=message;account=null;workspaces=[];active=null;personal=null;subscription=null}
+    function lockAccount(message){inboxEpoch++;sessionsEpoch++;sessions=[];pendingSession=null;$('inbox-items').replaceChildren();$('session-items').replaceChildren();$('session-confirm').classList.add('hidden');$('app').classList.add('hidden');$('failure').classList.remove('hidden');$('failure-message').textContent=message;account=null;workspaces=[];workspacesReady=false;active=null;personal=null;subscription=null}
     async function currentAccount(){let current;try{current=await aw('/account')}catch(error){lockAccount('Your session could not be verified. Sign in or reload to continue.');throw error}if(!account||current.$id!==account.$id){const message='Your signed-in account changed. Reload before continuing.';lockAccount(message);throw new Error(message)}return current}
-    function showPanel(name){if(!['profile','workspaces-panel','subscription','notifications','preferences','security'].includes(name))name='profile';document.querySelectorAll('[data-panel]').forEach(x=>x.classList.toggle('active',x.dataset.panel===name));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('hidden',x.id!==name));if(name==='notifications')loadInbox(true)}
+    function showPanel(name){if(!['profile','workspaces-panel','subscription','notifications','preferences','security'].includes(name))name='profile';document.querySelectorAll('[data-panel]').forEach(x=>x.classList.toggle('active',x.dataset.panel===name));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('hidden',x.id!==name));loadPanel(name)}
+    // Profile and security use Appwrite directly. Never make them wait for a
+    // sleeping product gateway, billing lookup, or activity-preferences query.
+    async function ensureWorkspaces(){
+      if(workspacesReady)return;
+      if(workspaceLoad)return workspaceLoad;
+      workspaceLoad=(async()=>{
+        const data=await backend('/workspaces');
+        if(!Array.isArray(data.workspaces)||data.user!==account?.$id)throw new Error('Workspace ownership could not be verified. Retry loading your workspaces.');
+        workspaces=data.workspaces;renderWorkspaces();workspacesReady=true;$('create-enterprise').disabled=false;
+      })();
+      try{await workspaceLoad}finally{workspaceLoad=null}
+    }
+    async function loadPreferences(){
+      if(preferencesReady)return;
+      if(preferenceLoad)return preferenceLoad;
+      preferenceLoad=(async()=>{
+        const preferences=await backend('/account/preferences','GET',undefined,idOf(personal));
+        if(preferences.workspace!==idOf(personal)||!Number.isInteger(preferences.version)||typeof preferences.personal_activity!=='boolean'||typeof preferences.organisation_activity!=='boolean')throw new Error('Activity preferences could not be verified. Retry before saving them.');
+        prefsVersion=preferences.version;preferencesReady=true;$('personal-activity').checked=preferences.personal_activity;$('organisation-activity').checked=preferences.organisation_activity;
+        $('personal-activity').disabled=false;$('organisation-activity').disabled=false;
+      })();
+      try{await preferenceLoad}finally{preferenceLoad=null}
+    }
+    async function loadSubscription(){
+      if(subscriptionLoad)return subscriptionLoad;
+      subscriptionLoad=(async()=>{const first=!subscription;await refreshSubscription();if(first)$('plan-select').value=['Free','Pro','Elite'].includes(params.get('plan'))?params.get('plan'):subscription.plan;renderSubscription()})();
+      try{await subscriptionLoad}catch(error){billing={};renderSubscription();if(!subscription){$('current-plan').textContent='Unavailable';$('billing-note').textContent='Your plan could not be verified. No subscription change has been made. Retry when connected.'}throw error}finally{subscriptionLoad=null}
+    }
+    async function loadPanel(name){
+      if(!account||name==='profile')return;
+      if(name==='security'){await loadSessions();return}
+      const status={notifications:'inbox-status',subscription:'plan-status',preferences:'preferences-status','workspaces-panel':'workspace-status'}[name];
+      msg(status,'Loading '+(name==='subscription'?'your verified plan':'workspace settings')+'…');$('retry-'+name).classList.add('hidden');
+      try{
+        await ensureWorkspaces();
+        if(name==='notifications'){await loadInbox(true);return}
+        if(name==='subscription')await loadSubscription();
+        if(name==='preferences')await loadPreferences();
+        msg(status,name==='subscription'&&params.get('billing')==='complete'?'Returned from checkout. Only verified payment records update your plan.':name==='subscription'&&params.get('billing')==='cancelled'?'Checkout was cancelled. Your plan is unchanged.':'');
+      }catch(error){if(account){msg(status,error.message||'Could not load this section. Please retry.',true);$('retry-'+name).classList.remove('hidden');if(!workspacesReady)$('active-label').textContent='Workspace connection unavailable'}}
+    }
+    function sessionTime(value){const date=new Date(value);return value&&Number.isFinite(date.getTime())?date.toLocaleString():'Not available'}
+    function sessionLabel(session){return [session.clientName||session.deviceName||'Browser',session.osName].filter(Boolean).join(' · ')}
+    function verifiedSessions(data,userId){
+      if(!data||!Array.isArray(data.sessions)||!Number.isInteger(data.total)||data.total!==data.sessions.length||data.sessions.some(s=>!s||typeof s.$id!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(s.$id)||s.userId!==userId||typeof s.current!=='boolean')||new Set(data.sessions.map(s=>s.$id)).size!==data.sessions.length)throw new Error('Appwrite returned an incomplete device list. Refresh before ending a session.');
+      // Keep only the fields displayed here. Never retain OAuth/provider tokens.
+      return data.sessions.map(s=>({$id:s.$id,userId:s.userId,current:s.current,clientName:s.clientName,deviceName:s.deviceName,osName:s.osName,created:s.$createdAt,expire:s.expire}));
+    }
+    function renderSessions(){
+      $('session-items').replaceChildren();
+      for(const session of sessions){
+        const row=document.createElement('div');row.className='session-row';const details=document.createElement('div');details.className='session-details';
+        const title=document.createElement('strong');title.textContent=sessionLabel(session);details.append(title);
+        if(session.current){const badge=document.createElement('span');badge.className='pill';badge.textContent='This device';details.append(badge)}
+        for(const text of ['Signed in: '+sessionTime(session.created),'Expires: '+sessionTime(session.expire)]){const line=document.createElement('p');line.className='status';line.textContent=text;details.append(line)}
+        const button=document.createElement('button');button.type='button';button.className='danger';button.textContent=session.current?'Sign out here':'End session';button.disabled=sessionAction;
+        button.onclick=()=>{if(sessionAction)return;pendingSession=session;$('session-confirm-text').textContent='End '+sessionLabel(session)+(session.current?' on this device? You will be signed out.':'? That device will need to sign in again.');$('session-confirm').classList.remove('hidden');$('session-confirm-yes').focus()};
+        row.append(details,button);$('session-items').append(row);
+      }
+    }
+    async function loadSessions(){
+      if(!account||sessionAction)return;
+      if(sessionsLoad)return sessionsLoad;
+      const epoch=++sessionsEpoch,userId=account.$id;$('sessions-refresh').disabled=true;msg('sessions-status','Checking your signed-in devices…');
+      pendingSession=null;$('session-confirm').classList.add('hidden');sessions=[];renderSessions();
+      sessionsLoad=(async()=>{
+        try{await currentAccount();const data=await aw('/account/sessions');await currentAccount();if(epoch!==sessionsEpoch||account?.$id!==userId)return;sessions=verifiedSessions(data,userId);renderSessions();msg('sessions-status',sessions.length?'Your active Appwrite sessions.':'No active sessions returned. Refresh before continuing.')}
+        catch(error){if(epoch===sessionsEpoch&&account)msg('sessions-status',error.message||'Devices could not be loaded. Refresh to retry.',true)}
+        finally{if(epoch===sessionsEpoch)$('sessions-refresh').disabled=false}
+      })();
+      try{await sessionsLoad}finally{sessionsLoad=null}
+    }
+    async function endSession(){
+      if(sessionAction||!pendingSession||!account)return;
+      const target=pendingSession,userId=account.$id;sessionAction=true;pendingSession=null;$('session-confirm').classList.add('hidden');$('sessions-refresh').disabled=true;renderSessions();
+      let attempted=false;
+      try{
+        await currentAccount();const fresh=verifiedSessions(await aw('/account/sessions'),userId);await currentAccount();
+        const selected=fresh.find(s=>s.$id===target.$id);
+        if(!selected){sessions=fresh;msg('sessions-status','That session has already ended.');return}
+        // Appwrite also enforces session ownership; never use a server API key.
+        attempted=true;await aw('/account/sessions/'+encodeURIComponent(selected.$id),'DELETE');
+        if(selected.current){location.replace('/auth.html?next=%2Faccount.html%23security');return}
+        await currentAccount();sessions=verifiedSessions(await aw('/account/sessions'),userId);await currentAccount();
+        if(sessions.some(s=>s.$id===selected.$id))throw new Error('The session is still listed. Refresh to check its status.');
+        msg('sessions-status','Session ended. That device must sign in again.');
+      }catch(error){if(account){if(attempted)sessions=[];msg('sessions-status',attempted?'Session outcome could not be confirmed. Refresh the device list before retrying.':error.message,true)}}
+      finally{sessionAction=false;if(account){renderSessions();$('sessions-refresh').disabled=false}}
+    }
     function notificationTitle(action){
       const titles={'file:upload':'File uploaded','accounts:create':'Accounts company created','orbit:reply':'Orbit reply saved','analyser:complete':'Analysis report saved','share:read':'Read access granted','share:write':'Edit access granted','share:revoke':'Sharing permission revoked'};
       if(String(action).startsWith('subscription:'))return 'Personal subscription update';
@@ -152,22 +251,17 @@
       if(provider&&!billing.plan_changes_enabled)notes.push('Paid plan changes are unavailable. Cancellation remains available when supported by your subscription.');
       $('billing-note').textContent=notes.join(' ');
     }
-    async function refreshSubscription(){subscription=await backend('/workspaces/'+encodeURIComponent(idOf(personal))+'/subscription','GET',undefined,idOf(personal));personal.plan=subscription.plan;if(subscription.billing){billing=subscription.billing}else{try{billing=(await backend('/health')).dodo_billing||{}}catch{billing={}}}renderSubscription()}
+    async function refreshSubscription(){const next=await backend('/workspaces/'+encodeURIComponent(idOf(personal))+'/subscription','GET',undefined,idOf(personal));if(!['Free','Pro','Elite'].includes(next.plan))throw new Error('Your personal plan could not be verified. Refresh payment status to retry.');subscription=next;personal.plan=subscription.plan;if(subscription.billing){billing=subscription.billing}else{try{billing=(await backend('/health')).dodo_billing||{}}catch{billing={}}}renderSubscription()}
     async function load(){
       try{
         account=await aw('/account');
         if(!account.prefs?.onboarding_completed){location.replace('/onboarding.html?next='+encodeURIComponent(location.pathname+location.search+location.hash));return}
         $('display-name').value=account.name||'';$('email').value=account.email||'';const prefs=account.prefs||{};
         $('account-type').value=prefs.account_type==='enterprise'?'enterprise':'personal';$('classification').value=prefs.classification||'individual';
-        workspaces=(await backend('/workspaces')).workspaces||[];renderWorkspaces();await refreshSubscription();
-        const requested=['Free','Pro','Elite'].includes(params.get('plan'))?params.get('plan'):subscription.plan;
-        $('plan-select').value=requested;renderSubscription();
         $('theme').value=prefs.theme||'system';$('language').value=prefs.language||'en';$('currency').value=prefs.currency||'INR';$('default_product').value=prefs.default_product||'orbit';
-        try{const preferences=await backend('/account/preferences','GET',undefined,idOf(personal));prefsVersion=preferences.version||0;preferencesReady=true;$('personal-activity').checked=preferences.personal_activity!==false;$('organisation-activity').checked=preferences.organisation_activity!==false}catch{msg('preferences-status','Activity preferences could not be loaded. Reload before saving them.',true);$('personal-activity').disabled=true;$('organisation-activity').disabled=true}
         $('verification-status').textContent=account.emailVerification?'Your email address is verified.':'Verify your email address to help protect your account.';$('verify-email').hidden=Boolean(account.emailVerification);
+        $('active-label').textContent='Your account';
         $('loading').classList.add('hidden');$('app').classList.remove('hidden');showPanel(params.has('billing')||params.has('plan')?'subscription':location.hash.slice(1));
-        if(params.get('billing')==='cancelled')msg('plan-status','Checkout was cancelled. Your current plan is unchanged.');
-        else if(params.get('billing')==='complete')msg('plan-status','Returned from checkout. The current plan above comes from verified billing records. Use Refresh payment status if confirmation is still pending.');
       }catch(error){$('loading').classList.add('hidden');$('failure').classList.remove('hidden');$('failure-message').textContent=error.message||'Sign in to view your account.'}
     }
     document.querySelectorAll('[data-panel]').forEach(button=>button.addEventListener('click',()=>{showPanel(button.dataset.panel);history.replaceState(null,'',location.pathname+location.search+'#'+button.dataset.panel)}));
@@ -185,9 +279,12 @@
       const plan=$('plan-select').value;if(!canChange(plan))return;changingPlan=true;renderSubscription();
       try{const result=await backend('/workspaces/'+encodeURIComponent(idOf(personal))+'/subscription','POST',{plan},idOf(personal));if(result.checkout_url){const target=new URL(result.checkout_url);if(target.protocol!=='https:'||!['checkout.dodopayments.com','test.checkout.dodopayments.com'].includes(target.hostname)||target.username||target.password)throw new Error('The payment service returned an invalid checkout address. Contact support.');location.assign(target.href);return}await refreshSubscription();msg('plan-status',result.message||(result.state==='scheduled'?'Plan change scheduled for your next billing date.':'Your request is awaiting verified payment confirmation.'))}catch(error){msg('plan-status',error.message,true)}finally{changingPlan=false;renderSubscription()}
     });
-    $('refresh-plan').addEventListener('click',async()=>{const button=$('refresh-plan');button.disabled=true;try{await refreshSubscription();msg('plan-status',subscription.pending?'Payment confirmation is still pending.':'Plan status refreshed from verified billing records.')}catch(error){msg('plan-status',error.message,true)}finally{button.disabled=false}});
+    $('refresh-plan').addEventListener('click',async()=>{const button=$('refresh-plan');button.disabled=true;try{await ensureWorkspaces();await loadSubscription();msg('plan-status',subscription.pending?'Payment confirmation is still pending.':'Plan status refreshed from verified billing records.')}catch(error){msg('plan-status',error.message,true)}finally{button.disabled=false}});
     $('verify-email').addEventListener('click',async()=>{const button=$('verify-email');button.disabled=true;try{await currentAccount();await aw('/account/verification','POST',{url:new URL('/auth.html?verified=complete&next=%2Faccount.html%23security',location.origin).href});msg('security-status','Verification email sent.')}catch(error){msg('security-status',error.message,true)}finally{button.disabled=false}});
     $('password-form').addEventListener('submit',async event=>{event.preventDefault();try{await currentAccount();await aw('/account/password','PUT',{password:$('new-password').value,oldPassword:$('old-password').value});event.target.reset();msg('security-status','Password changed.')}catch(error){msg('security-status',error.message,true)}});
+    $('sessions-refresh').addEventListener('click',()=>loadSessions());
+    $('session-confirm-no').addEventListener('click',()=>{pendingSession=null;$('session-confirm').classList.add('hidden')});
+    $('session-confirm-yes').addEventListener('click',()=>endSession());
     $('signout').addEventListener('click',async()=>{try{await aw('/account/sessions/current','DELETE');location.replace('/')}catch(error){msg('security-status','Sign-out could not be confirmed. Please retry.',true)}});
     $('signout-all').addEventListener('click',async()=>{try{await aw('/account/sessions','DELETE');location.replace('/')}catch(error){msg('security-status',error.message,true)}});
     document.addEventListener('visibilitychange',()=>{if(document.hidden){$('app').inert=true;return}if(account)currentAccount().then(()=>{$('app').inert=false}).catch(()=>{})});
