@@ -20,6 +20,23 @@
     #alaada-workspace-bar a{flex-shrink:0}
     #alaada-workspace-bar [role=status]{min-width:0;flex:1 0 100%;white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.4;padding:2px 0}
     #alaada-workspace-bar [role=status]:empty{display:none}
+    #alaada-inbox-button{border:1px solid #526781;border-radius:6px;background:#1d324b;color:#fff;padding:4px 8px;font:inherit;cursor:pointer;min-height:28px}
+    #alaada-inbox-button:disabled{opacity:.6;cursor:default}
+    #alaada-inbox{position:fixed;inset:12px 12px auto auto;margin:0;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box;padding:0;border:1px solid #ccd5df;border-radius:14px;background:#fff;color:#17243a;font:14px/1.5 system-ui;box-shadow:0 12px 40px #11243a30;overflow:auto;overscroll-behavior:contain;text-align:left}
+    #alaada-inbox::backdrop{background:#11243a55;backdrop-filter:none}
+    #alaada-inbox header,#alaada-inbox footer{padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    #alaada-inbox h2{margin:0;font:700 18px/1.3 system-ui;color:#17243a}
+    #alaada-inbox p{margin:0;overflow-wrap:anywhere}
+    #alaada-inbox-scope{font-size:12px;color:#526176;max-width:290px}
+    #alaada-inbox-message{padding:0 16px 12px;white-space:normal}
+    #alaada-inbox ol{list-style:none;margin:0;padding:0 16px}
+    #alaada-inbox li{border-top:1px solid #e1e7ee;padding:14px 0;display:grid;gap:8px}
+    #alaada-inbox li[data-unread=true]{border-left:3px solid #165dfb;padding-left:12px}
+    #alaada-inbox time{font-size:12px;color:#526176}
+    #alaada-inbox button{width:auto;min-height:36px;padding:6px 12px;border:1px solid #bcc8d7;border-radius:8px;background:#f5f7fb;color:#17243a;font:600 13px/1.4 system-ui;cursor:pointer;justify-self:start}
+    #alaada-inbox button:disabled{opacity:.55;cursor:default}
+    #alaada-inbox button:focus-visible,#alaada-inbox a:focus-visible{outline:3px solid #165dfb;outline-offset:2px}
+    #alaada-inbox a{color:#164eb8;text-decoration:underline;font-size:13px}
     body[data-alaada-product=orbit] #app,body[data-alaada-product=sheets] #app{
       height:calc(100vh - var(--alaada-workspace-bar-height));
       height:calc(100dvh - var(--alaada-workspace-bar-height));min-height:0;max-width:100%}
@@ -37,6 +54,8 @@
     '/api/ai/anomalies':'anomalies','/api/ai/translate-batch':'translate','/api/analytics/run':'analytics','/api/analytics/predict':'predict'};
   let user = null, workspace = null, workspaces = [], pending = 0, tail = Promise.resolve(), failed = null;
   let bar, status, selector, gate, label, signin, verified = false, surfaces=[], beforeSwitch=async()=>{};
+  let inboxButton, inboxDialog, inboxList, inboxMessage, inboxScope, inboxRefresh, inboxOlder;
+  let inboxSession=null;
   const readyDOM = document.readyState === 'loading' ? new Promise(r => document.addEventListener('DOMContentLoaded',r,{once:true})) : Promise.resolve();
   const keyOf = (p,k,key) => JSON.stringify([p,k,key]);
   const cookieGet = name => {try{const item=document.cookie.split(';').map(value=>value.trim()).find(value=>value.startsWith(name+'='));return item?decodeURIComponent(item.slice(name.length+1)):'';}catch{return ''}};
@@ -61,6 +80,8 @@
   function show(message) { if(status)status.textContent=message;fitWorkspaceBar(); }
   function freeze(error) {
     clearAuthCache();
+    closeInbox(false);
+    if(inboxButton)inboxButton.disabled=true;
     failed=error instanceof Error?error:Error(String(error));
     const message=failed.message;
     verified=false; values.clear(); records.clear();
@@ -187,7 +208,114 @@
       if((path==='/workspaces'||path.startsWith('/workspaces/bootstrap'))&&(response.user!==account.$id||!Array.isArray(response.workspaces)||response.workspaces.some(w=>!w||typeof w.id!=='string'||!w.id)))throw connectionError('Alaada workspace service',200,'MALFORMED_RESPONSE');
       if(path.endsWith('/resources')&&method==='GET'&&!Array.isArray(response))throw connectionError('Alaada workspace service',200,'MALFORMED_RESPONSE');
       return response;
-    } catch(error) { if(error.status===401)clearAuthCache();if([401,403].includes(error.status))freeze(error);show(error.message); throw error; }
+    } catch(error) { if(error.status===401)clearAuthCache();if([401,403].includes(error.status))freeze(error);if(!rawOptions?.quiet)show(error.message); throw error; }
+  }
+  function closeInbox(restoreFocus=true) {
+    const session=inboxSession;inboxSession=null;
+    session?.controller.abort();
+    if(inboxDialog?.open)inboxDialog.close();
+    if(inboxList)inboxList.replaceChildren();
+    if(inboxMessage)inboxMessage.textContent='';
+    if(inboxScope)inboxScope.textContent='';
+    if(inboxButton){inboxButton.setAttribute('aria-expanded','false');if(restoreFocus&&verified&&!failed)inboxButton.focus();}
+  }
+  function currentInbox(session) {
+    return inboxSession===session&&verified&&!failed&&session.user===user&&session.workspace===workspace?.id&&!session.controller.signal.aborted;
+  }
+  function notificationLabel(action) {
+    const labels={'file:upload':'File uploaded','accounts:create':'Company created','orbit:reply':'Orbit reply saved',
+      'analyser:complete':'Website report saved','share:read':'Read access shared','share:write':'Edit access shared',
+      'share:revoke':'Sharing access removed','move:out':'Resource moved out','move:in':'Resource moved in',
+      'copy:out':'Resource copied out','copy:in':'Resource copied in'};
+    if(labels[action])return labels[action];
+    if(action.startsWith('subscription:'))return 'Subscription update · '+action.slice(13).replaceAll(':',' · ');
+    return 'Workspace activity · '+action;
+  }
+  function validateInbox(data, before) {
+    if(!data||!Array.isArray(data.items)||data.items.length>50||!(data.next_before===null||Number.isSafeInteger(data.next_before)&&data.next_before>0))throw Error('Notifications returned an incomplete page. Refresh to retry.');
+    let previous=before||Number.MAX_SAFE_INTEGER;
+    for(const row of data.items){
+      if(!row||!Number.isSafeInteger(row.id)||row.id<=0||row.id>=previous||typeof row.action!=='string'||!row.action||row.action.length>200
+        ||!Number.isSafeInteger(row.created)||row.created<0||row.created>8640000000000
+        ||!(row.read_at===null||Number.isSafeInteger(row.read_at)&&row.read_at>=0))throw Error('Notifications returned invalid activity. Refresh to retry.');
+      previous=row.id;
+    }
+    if(data.next_before!==null&&(data.items.length!==50||data.next_before!==data.items.at(-1)?.id))throw Error('Notifications returned an invalid page cursor. Refresh to retry.');
+    return data;
+  }
+  function renderInbox(session) {
+    if(!currentInbox(session))return;
+    inboxList.replaceChildren();
+    for(const row of session.items){
+      const item=document.createElement('li');item.setAttribute('data-unread',String(row.read_at===null));
+      const title=document.createElement('p');title.textContent=notificationLabel(row.action);
+      const time=document.createElement('time');time.dateTime=new Date(row.created*1000).toISOString();time.textContent=new Date(row.created*1000).toLocaleString();
+      item.append(title,time);
+      const read=document.createElement(row.read_at===null?'button':'span');
+      read.textContent=row.read_at===null?'Mark as read':'Read';
+      if(row.read_at===null){read.type='button';read.disabled=session.busy;read.onclick=()=>markInboxRead(session,row);}
+      item.append(read);inboxList.append(item);
+    }
+    inboxRefresh.disabled=session.busy;inboxOlder.disabled=session.busy||session.next===null;
+  }
+  async function inboxRequest(session, path, method='GET') {
+    const response=await api('/workspaces/'+encodeURIComponent(session.workspace)+'/notifications'+path,method,undefined,
+      {signal:session.controller.signal,quiet:true,...(method==='POST'?{body:'{}',headers:{'Content-Type':'application/json'}}:{})});
+    if(!currentInbox(session))return null;
+    return readJSON(response,'Notifications');
+  }
+  async function loadInbox(older=false) {
+    const session=inboxSession;if(!session||session.busy||!currentInbox(session))return;
+    const before=older?session.next:null;if(older&&before===null)return;
+    session.busy=true;renderInbox(session);inboxMessage.textContent='Loading notifications…';
+    try{
+      const result=await inboxRequest(session,before?'?before='+before:'');
+      if(!currentInbox(session))return;
+      const page=validateInbox(result,before);
+      session.items=page.items;session.next=page.next_before;
+      const unread=session.items.filter(row=>row.read_at===null).length;
+      inboxMessage.textContent=session.items.length?unread+' unread on this page. '+(older?'Showing older activity.':'Latest activity.'):'No notifications in this workspace.';
+    }catch(error){if(currentInbox(session))inboxMessage.textContent='Could not load notifications. '+error.message;}
+    finally{if(currentInbox(session)){session.busy=false;renderInbox(session);}}
+  }
+  async function markInboxRead(session,row) {
+    if(!currentInbox(session)||session.busy||row.read_at!==null)return;
+    session.busy=true;renderInbox(session);inboxMessage.textContent='Updating notification…';
+    try{
+      const result=await inboxRequest(session,'/'+row.id+'/read','POST');
+      if(!currentInbox(session))return;
+      if(result?.read!==true)throw Error('The read state was not confirmed. Refresh before retrying.');
+      row.read_at=Math.floor(Date.now()/1000);
+      inboxMessage.textContent='Marked as read. '+session.items.filter(item=>item.read_at===null).length+' unread on this page.';
+    }catch(error){if(currentInbox(session))inboxMessage.textContent='Read state not confirmed. Refresh to check it. '+error.message;}
+    finally{if(currentInbox(session)){session.busy=false;renderInbox(session);}}
+  }
+  async function openInbox() {
+    if(!verified||failed)return;
+    if(inboxSession){inboxDialog.focus();return;}
+    if(!inboxDialog){
+      inboxDialog=document.createElement('dialog');inboxDialog.id='alaada-inbox';
+      inboxDialog.setAttribute('aria-labelledby','alaada-inbox-title');inboxDialog.setAttribute('aria-describedby','alaada-inbox-scope');
+      const header=document.createElement('header'),heading=document.createElement('div'),title=document.createElement('h2');
+      title.id='alaada-inbox-title';title.textContent='Notifications';
+      inboxScope=document.createElement('p');inboxScope.id='alaada-inbox-scope';heading.append(title,inboxScope);
+      const close=document.createElement('button');close.type='button';close.textContent='Close';close.onclick=()=>closeInbox();
+      header.append(heading,close);
+      inboxMessage=document.createElement('p');inboxMessage.id='alaada-inbox-message';inboxMessage.setAttribute('role','status');inboxMessage.setAttribute('aria-live','polite');
+      inboxList=document.createElement('ol');inboxList.setAttribute('aria-label','Workspace activity');
+      const footer=document.createElement('footer');
+      inboxRefresh=document.createElement('button');inboxRefresh.type='button';inboxRefresh.textContent='Refresh latest';inboxRefresh.onclick=()=>loadInbox();
+      inboxOlder=document.createElement('button');inboxOlder.type='button';inboxOlder.textContent='Older activity';inboxOlder.onclick=()=>loadInbox(true);
+      const preferences=document.createElement('a');preferences.href='/account.html#preferences';preferences.textContent='Notification preferences';
+      footer.append(inboxRefresh,inboxOlder,preferences);inboxDialog.append(header,inboxMessage,inboxList,footer);
+      inboxDialog.oncancel=event=>{event.preventDefault();closeInbox();};
+      inboxDialog.onclick=event=>{if(event.target===inboxDialog)closeInbox();};
+      document.body.append(inboxDialog);
+    }
+    inboxSession={user,workspace:workspace.id,items:[],next:null,busy:false,controller:new AbortController()};
+    inboxScope.textContent=workspace.name+' · Private to your account';
+    inboxButton.setAttribute('aria-expanded','true');inboxDialog.showModal();
+    await loadInbox();
   }
   function enqueue(fn, freezeOnError=true) {
     if(!verified)throw Error('A verified workspace is required.');
@@ -445,7 +573,9 @@
     signin=document.createElement('a');
     signin.href='/auth.html?next='+encodeURIComponent(location.pathname+location.search);signin.textContent='Sign in';signin.style.color='#fff';signin.hidden=true;
     status=document.createElement('span');status.setAttribute('role','status');
-    bar.append(label,selector,manage,signin,status);document.body.prepend(bar);
+    inboxButton=document.createElement('button');inboxButton.id='alaada-inbox-button';inboxButton.type='button';inboxButton.textContent='Notifications';inboxButton.disabled=true;
+    inboxButton.setAttribute('aria-haspopup','dialog');inboxButton.setAttribute('aria-controls','alaada-inbox');inboxButton.setAttribute('aria-expanded','false');inboxButton.onclick=openInbox;
+    bar.append(label,selector,manage,signin,inboxButton,status);document.body.prepend(bar);
     gate=document.createElement('div');gate.setAttribute('role','status');gate.setAttribute('aria-live','polite');gate.hidden=true;gate.style.cssText='position:fixed;inset:var(--alaada-workspace-bar-height,36px) 0 0;z-index:2147483646;overflow:auto;background:#f7f8fa;color:#17243a;padding:8vh max(24px,8vw);font:18px/1.6 system-ui;transition:none';gate.textContent='Connecting to your private workspace…';document.body.append(gate);
     document.body.style.paddingTop='var(--alaada-workspace-bar-height,36px)';
     if(document.head){const layout=document.createElement('style');layout.textContent=WORKSPACE_LAYOUT;document.head.append(layout)}
@@ -480,8 +610,8 @@
       for(const w of workspaces){const option=document.createElement('option');option.value=w.id;option.textContent=w.name+' · '+w.kind;option.selected=w.id===workspace.id;selector.append(option);}
       label.textContent=product==='sheets'?'Alaada Sheets':product==='orbit'?'Orbit AI':product==='accounts'?'Alaada Accounts':'Web Analyser';
       selector.hidden=false;
-      selector.onchange=async()=>{const next=selector.value;selector.value=workspace.id;if(!confirm('Switch workspace? Current workbook changes will be saved; other unsaved form input will be discarded. The product will reload in the destination workspace.'))return;try{selector.disabled=true;await beforeSwitch();await W.flush();cookieSet(ACTIVE_WORKSPACE_COOKIE,next);const url=new URL(location.href);url.searchParams.set('workspace',next);location.assign(url.href);}catch(error){show(error.message);selector.disabled=!!failed;}};
-      verified=true;selector.disabled=false;gate.hidden=true;signin.hidden=true;for(const surface of surfaces)surface.inert=false;show('');
+      selector.onchange=async()=>{const next=selector.value;selector.value=workspace.id;if(!confirm('Switch workspace? Current workbook changes will be saved; other unsaved form input will be discarded. The product will reload in the destination workspace.'))return;closeInbox(false);try{selector.disabled=true;await beforeSwitch();await W.flush();cookieSet(ACTIVE_WORKSPACE_COOKIE,next);const url=new URL(location.href);url.searchParams.set('workspace',next);location.assign(url.href);}catch(error){show(error.message);selector.disabled=!!failed;}};
+      verified=true;selector.disabled=false;inboxButton.disabled=false;gate.hidden=true;signin.hidden=true;for(const surface of surfaces)surface.inert=false;show('');
       saveWorkspaceHint(workspace);
       cookieSet(ACTIVE_WORKSPACE_COOKIE,workspace.id);
       return W;
@@ -489,6 +619,7 @@
   })();
   W.ready.catch(()=>{});
   window.addEventListener('beforeunload',event=>{if(pending||failed&&verified){event.preventDefault();event.returnValue='Workspace changes have not been saved.';}});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden||!verified)return;W.verify().catch(error=>freeze(error));});
+  window.addEventListener('pagehide',()=>closeInbox(false));
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){closeInbox(false);return;}if(!verified)return;W.verify().catch(error=>freeze(error));});
   window.AlaadaProduct={product,ready:()=>W.ready.then(()=>true)};
 })();
