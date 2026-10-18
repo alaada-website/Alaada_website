@@ -15,17 +15,28 @@
     <main class="card">
       <h1 id="title">Welcome back</h1>
       <p id="subtitle" class="muted">One Appwrite account for your personal and organisation workspaces.</p>
-      <form id="form" novalidate>
+      <div id="primary-auth"><form id="form" novalidate>
         <div id="name-wrap" class="field hidden"><label for="name">Display name</label><input id="name" autocomplete="name" maxlength="128"></div>
         <div class="field"><label for="email">Email</label><input id="email" type="email" required autocomplete="email" maxlength="254"></div>
         <div class="field"><label for="password">Password</label><input id="password" type="password" required minlength="8" autocomplete="current-password" maxlength="256"></div>
         <button id="submit" class="primary" type="submit">Sign in</button>
       </form>
       <div class="actions"><button class="secondary" id="google" type="button" disabled title="Google OAuth is not configured for this Appwrite project">Google sign-in unavailable</button><button class="secondary" id="magic" type="button">Email me a sign-in link</button><button class="secondary" id="forgot" type="button">Reset password</button></div>
-      <p class="status" style="min-height:0;margin-top:6px">Email and password sign-in, account recovery, and Appwrite Magic URL links are available. Google OAuth needs project credentials.</p>
+      <p class="status" style="min-height:0;margin-top:6px">Email and password sign-in, account recovery, and Appwrite Magic URL links are available. Google OAuth needs project credentials.</p></div>
+      <section id="mfa-panel" class="hidden" aria-labelledby="title">
+        <p class="muted">Your session needs another verification step before you can open Alaada. Your existing account protections stay enabled.</p>
+        <div class="field"><label for="mfa-factor">Verification method</label><select id="mfa-factor" style="width:100%;max-width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;font:inherit;background:white"></select></div>
+        <button id="mfa-start" class="primary" type="button">Continue with this method</button>
+        <form id="mfa-form" class="hidden" novalidate>
+          <p id="mfa-instruction" class="muted" style="margin-top:16px"></p>
+          <div class="field"><label id="mfa-code-label" for="mfa-code">Verification code</label><input id="mfa-code" autocomplete="one-time-code" inputmode="numeric" maxlength="128" spellcheck="false" required></div>
+          <button id="mfa-verify" class="primary" type="submit">Verify and continue</button>
+        </form>
+        <div class="actions" style="grid-template-columns:1fr"><button id="mfa-retry" class="secondary hidden" type="button">Reload verification methods</button><button id="mfa-check" class="secondary hidden" type="button">Check sign-in status</button><button id="mfa-again" class="secondary hidden" type="button">Choose another method or request a new code</button><button id="mfa-cancel" class="secondary" type="button">Cancel this sign-in</button></div>
+      </section>
       <p id="status" class="status" role="status" aria-live="polite"></p>
       <a id="continue" class="continue hidden" href="/onboarding.html">Continue to your Alaada workspace</a>
-      <p class="switch"><span id="mode-copy">New to Alaada?</span> <button id="mode" type="button">Create an account</button></p>
+      <p id="mode-switch" class="switch"><span id="mode-copy">New to Alaada?</span> <button id="mode" type="button">Create an account</button></p>
     </main>
   </div>
   <script>
@@ -42,7 +53,8 @@
       } catch {return '/account.html';}
     }
     const next=safeNext(params.get('next')||'/account.html');
-    let signup=params.get('mode')==='signup',busy=false;
+    let signup=params.get('mode')==='signup',busy=false,mfaChallenge=null,mfaOwner=null,mfaSessionId=null,mfaUnknown=false;
+    const factorLabels={totp:'Authenticator app',email:'Email code',phone:'SMS code',recoveryCode:'Recovery code'};
     function destination(account){return account.prefs?.onboarding_completed||new URL(next,location.origin).pathname==='/onboarding.html'?next:'/onboarding.html?next='+encodeURIComponent(next)}
     function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error)}
     const recoveryUserId=params.get('userId'),recoverySecret=params.get('secret');
@@ -57,7 +69,7 @@
       if(!response.ok){
         const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
         const error=new Error(detail.slice(0,300)||service+' request failed (HTTP '+response.status+').');
-        error.status=response.status;error.code=response.status;throw error;
+        error.status=response.status;error.code=response.status;error.type=typeof data?.type==='string'?data.type.slice(0,100):'';throw error;
       }
       if(response.status===204 && allowEmpty)return {};
       if(!data || typeof data!=='object'){
@@ -80,7 +92,69 @@
       const response=await fetch(ENDPOINT+path,options);
       return verifyAppwriteShape(await readUMSResponse(response,'Appwrite',method==='DELETE'),path);
     }
-    async function finishSignIn(){try{const account=await api('/account');location.replace(destination(account))}catch(error){status(error.status===401?'Sign in to continue.':error.message||'The sign-in service is temporarily unavailable. Retry without signing out.',true)}}
+    function validId(value){return typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(value)}
+    function mfaBusy(value){busy=value;for(const id of ['mfa-start','mfa-verify','mfa-retry','mfa-check','mfa-again','mfa-cancel','mfa-factor'])$(id).disabled=value;}
+    function clearChallenge(){mfaChallenge=null;$('mfa-code').value='';$('mfa-form').classList.add('hidden');$('mfa-again').classList.add('hidden')}
+    function finishAccount(account){
+      if(mfaOwner&&account.$id!==mfaOwner){clearChallenge();mfaUnknown=true;$('mfa-start').classList.add('hidden');$('mfa-check').classList.add('hidden');$('mfa-retry').classList.add('hidden');throw new Error('The signed-in account changed. Reload before continuing.');}
+      $('password').value='';$('mfa-code').value='';location.replace(destination(account));
+    }
+    async function showMfa(){
+      clearChallenge();$('password').value='';$('primary-auth').classList.add('hidden');$('mode-switch').classList.add('hidden');$('continue').classList.add('hidden');$('mfa-panel').classList.remove('hidden');
+      $('mfa-cancel').textContent=mfaSessionId?'Cancel this sign-in':'Back to Alaada';
+      $('title').textContent='Verify your sign-in';$('subtitle').textContent='Appwrite two-step verification';$('mfa-start').classList.add('hidden');$('mfa-check').classList.add('hidden');$('mfa-retry').classList.add('hidden');$('mfa-factor').replaceChildren();
+      const wasBusy=busy;mfaBusy(true);status('Checking your available verification methods…');
+      try{
+        const factors=await api('/account/mfa/factors');
+        if(!factors||['totp','email','phone'].some(key=>typeof factors[key]!=='boolean')||('recoveryCode' in factors&&typeof factors.recoveryCode!=='boolean'))throw new Error('Invalid verification methods.');
+        for(const [key,label] of Object.entries(factorLabels))if(factors[key]===true){const option=document.createElement('option');option.value=key;option.textContent=label;$('mfa-factor').append(option)}
+        if(!$('mfa-factor').options.length)throw new Error('No supported verification method is available.');
+        mfaUnknown=false;$('mfa-start').classList.remove('hidden');status('Choose a method. Email and SMS codes are sent only when you press Continue.');
+      }catch(error){status(error.status===429?'Too many requests. Wait before reloading verification methods.':'Verification methods could not be loaded. Your session has not been accepted; retry or cancel this sign-in.',true);$('mfa-retry').classList.remove('hidden')}
+      finally{mfaBusy(wasBusy)}
+    }
+    async function finishSignIn(){
+      try{finishAccount(await api('/account'))}
+      catch(error){if(error.type==='user_more_factors_required'){await showMfa();return}status(error.status===401?'Sign in to continue.':error.message||'The sign-in service is temporarily unavailable. Retry without signing out.',true)}
+    }
+    async function startMfa(){
+      if(busy||mfaUnknown)return;const factor=$('mfa-factor').value;if(!Object.hasOwn(factorLabels,factor))return;
+      mfaBusy(true);clearChallenge();status('Preparing verification…');
+      try{
+        const challenge=await api('/account/mfa/challenges','POST',{factor}),expires=Date.parse(challenge.expire);
+        if(!validId(challenge.$id)||!validId(challenge.userId)||!Number.isFinite(expires)||expires<=Date.now())throw new Error('Appwrite did not confirm a usable challenge.');
+        if(mfaOwner&&challenge.userId!==mfaOwner){mfaUnknown=true;throw new Error('The signed-in account changed. Reload before continuing.')}
+        mfaOwner=challenge.userId;mfaChallenge={id:challenge.$id,user:challenge.userId,factor,expires};
+        $('mfa-start').classList.add('hidden');$('mfa-form').classList.remove('hidden');$('mfa-again').classList.remove('hidden');
+        $('mfa-code-label').textContent=factor==='recoveryCode'?'Unused recovery code':'Verification code';$('mfa-code').inputMode=factor==='recoveryCode'?'text':'numeric';$('mfa-code').autocomplete=factor==='recoveryCode'?'off':'one-time-code';
+        $('mfa-instruction').textContent=factor==='totp'?'Enter the current code from your authenticator app.':factor==='recoveryCode'?'Enter one of your saved recovery codes. Each code can be used once.':factor==='email'?'Enter the code Appwrite sent to your verified email address.':'Enter the code Appwrite sent to your verified phone number.';
+        status('This challenge expires at '+new Date(expires).toLocaleTimeString()+'.');$('mfa-code').focus();
+      }catch(error){clearChallenge();$('mfa-start').classList.add('hidden');$('mfa-retry').classList.toggle('hidden',mfaUnknown);status(mfaUnknown?'The signed-in account changed. Reload before continuing.':error.status===429?'Too many code requests. Wait before requesting another code.':'A verification challenge could not be confirmed. No code was retried automatically. Reload methods to try again.',true)}
+      finally{mfaBusy(false)}
+    }
+    async function verifyMfa(event){
+      event.preventDefault();if(busy||!mfaChallenge||mfaUnknown)return;const challenge=mfaChallenge,otp=$('mfa-code').value.trim();
+      if(!otp||otp.length>128||(challenge.factor==='totp'&&!/^\d{6}$/.test(otp)))return status('Enter a valid '+(challenge.factor==='recoveryCode'?'recovery code.':'verification code.'),true);
+      if(Date.now()>=challenge.expires){clearChallenge();$('mfa-start').classList.remove('hidden');return status('This challenge expired. Request a new code or use another method.',true)}
+      mfaBusy(true);status('Verifying your sign-in…');let accepted=false;
+      try{
+        const session=await api('/account/mfa/challenges','PUT',{challengeId:challenge.id,otp});$('mfa-code').value='';
+        if(session.userId!==challenge.user)throw new Error('Verification session could not be confirmed.');accepted=true;
+        finishAccount(await api('/account'));
+      }catch(error){
+        $('mfa-code').value='';
+        if(error.status&&error.status<500&&!mfaUnknown&&!accepted){status(error.status===429?'Too many attempts. Wait before trying another code.':'The code was not accepted. Check it and try again, or request a new challenge.',true)}
+        else{mfaUnknown=true;clearChallenge();$('mfa-start').classList.add('hidden');$('mfa-check').classList.remove('hidden');status('The verification outcome is uncertain. Check sign-in status before trying another code; nothing was retried automatically.',true)}
+      }finally{mfaBusy(false)}
+    }
+    $('mfa-start').addEventListener('click',startMfa);$('mfa-form').addEventListener('submit',verifyMfa);
+    $('mfa-retry').addEventListener('click',async()=>{if(!busy)await showMfa()});
+    $('mfa-again').addEventListener('click',()=>{if(busy)return;clearChallenge();$('mfa-start').classList.remove('hidden');status('Choose a method, then press Continue to start a new challenge.')});
+    $('mfa-factor').addEventListener('change',()=>{if(busy)return;clearChallenge();if(!mfaUnknown)$('mfa-start').classList.remove('hidden')});
+    $('mfa-check').addEventListener('click',async()=>{if(busy)return;mfaBusy(true);try{await finishSignIn()}finally{mfaBusy(false)}});
+    // Partial sessions cannot read /sessions/current. Only revoke the exact session
+    // created by this page; never risk signing out a different account in another tab.
+    $('mfa-cancel').addEventListener('click',async()=>{if(busy)return;if(!mfaSessionId){clearChallenge();location.replace('/');return}mfaBusy(true);try{await api('/account/sessions/'+encodeURIComponent(mfaSessionId),'DELETE');clearChallenge();location.replace('/auth.html?next='+encodeURIComponent(next))}catch{status('Sign-out could not be confirmed. Retry cancellation; your session has not been declared closed.',true)}finally{mfaBusy(false)}});
     function showContinue(text,error=false,account={}){status(text,error);$('continue').href=destination(account);$('continue').classList.remove('hidden')}
     $('mode').addEventListener('click',()=>{if(busy)return;signup=!signup;mode()});
     $('google').addEventListener('click',()=>{const success=new URL('/auth.html?oauth=complete&next='+encodeURIComponent(next),location.origin).href;const failure=new URL('/auth.html?oauth=failed&next='+encodeURIComponent(next),location.origin).href;location.assign(`${ENDPOINT}/account/sessions/oauth2/google?project=${encodeURIComponent(PROJECT)}&success=${encodeURIComponent(success)}&failure=${encodeURIComponent(failure)}`)});
@@ -99,20 +173,20 @@
           let emailSent=true;try{await api('/account/verification','POST',{url:new URL('/auth.html?verified=complete&next='+encodeURIComponent(next),location.origin).href})}catch{emailSent=false}
           const createdAccount=await api('/account');signup=false;mode();$('email').value=email;$('password').value='';showContinue(emailSent?'Account created. Verify your email, then continue to your personal workspace.':'Account created and signed in, but Appwrite could not send the verification email. Continue to set up your private workspace.',!emailSent,createdAccount);return
         }
-        await api('/account/sessions/email','POST',{email,password});
+        const session=await api('/account/sessions/email','POST',{email,password});mfaOwner=validId(session.userId)?session.userId:null;mfaSessionId=mfaOwner&&validId(session.$id)?session.$id:null;
         await finishSignIn();
-      }catch(error){status(error.message||'Could not complete sign-in. Please try again.',true)}finally{busy=false;$('submit').disabled=false}
+      }catch(error){if(error.type==='user_more_factors_required')await showMfa();else status(error.message||'Could not complete sign-in. Please try again.',true)}finally{mfaBusy(false);$('submit').disabled=false}
     });
     mode();
     (async()=>{
       if(recovering)return;
       if(verificationUserId&&verificationSecret&&params.get('verified')==='complete'){try{await api('/account/verification','PUT',{userId:verificationUserId,secret:verificationSecret});status('Email verified. Continuing to your workspace…');await finishSignIn()}catch(error){status(error.message,true)}return}
-      if(magicComplete){try{status('Signing you in…');await api('/account/sessions/token','POST',{userId:verificationUserId,secret:verificationSecret});await finishSignIn()}catch(error){status(error.message||'This sign-in link is invalid or has expired. Request a new one.',true)}return}
+      if(magicComplete){try{status('Signing you in…');const session=await api('/account/sessions/token','POST',{userId:verificationUserId,secret:verificationSecret});mfaOwner=validId(session.userId)?session.userId:null;mfaSessionId=mfaOwner&&validId(session.$id)?session.$id:null;await finishSignIn()}catch(error){if(error.type==='user_more_factors_required')await showMfa();else status(error.message||'This sign-in link is invalid or has expired. Request a new one.',true)}return}
       if(params.get('verified')==='complete'){status('Email verification link is missing required data. Request a new one from your account.',true);return}
       if(params.get('recovery')==='complete'){status('Password recovery link is missing required data. Request a new link.',true);return}
       if(params.get('oauth')==='failed'){status('Google sign-in did not finish. Please try again.',true);return}
       if(params.get('oauth')==='complete'){status('Checking your Appwrite session…');await finishSignIn();return}
-      try{const account=await api('/account');location.replace(destination(account))}catch{}
+      try{finishAccount(await api('/account'))}catch(error){if(error.type==='user_more_factors_required')await showMfa()}
     })();
   })();
   </script>
