@@ -1102,10 +1102,23 @@ function requireBackupArray(payload, key){
   if (!Array.isArray(payload[key])) throw new Error(`Backup JSON is missing ${key}.`);
 }
 function validateBackupPayload(payload){
-  if (!payload || payload.export_format !== 'alaada.company.v1' || !payload.company || !payload.company.id) {
+  if (!payload || !['alaada.company.v1','alaada.accounts.appwrite.v1'].includes(payload.export_format) || !payload.company || !payload.company.id) {
     throw new Error('This is not a valid Alaada company backup JSON file.');
   }
   ['account_groups','ledgers','voucher_types','financial_years','vouchers','audit_logs'].forEach(key => requireBackupArray(payload, key));
+  if (payload.export_format === 'alaada.accounts.appwrite.v1') {
+    if (payload.manifest?.scope !== 'company-business-records' || payload.manifest?.restore_supported !== false
+        || !payload.manifest.counts || !Array.isArray(payload.manifest.excluded)) throw new Error('Company export manifest is incomplete.');
+    const sections=['account_groups','ledgers','voucher_types','financial_years','vouchers','journal_entries',
+      'customers','suppliers','payment_transactions','item_categories','units_of_measure','warehouses',
+      'stock_items','stock_ledger_entries','gst_tax_rates','tax_classifications','sales_invoices','purchase_bills',
+      'accounting_dimensions','budgets','approval_rules','approval_requests','audit_logs'];
+    if (sections.some(key => !Object.hasOwn(payload.manifest.counts,key))) throw new Error('Company export manifest is incomplete.');
+    for (const [key,count] of Object.entries(payload.manifest.counts)) {
+      if (!Number.isSafeInteger(count) || count < 0 || !Array.isArray(payload[key]) || payload[key].length !== count)
+        throw new Error('Company export record counts do not match.');
+    }
+  }
   if (payload.journal_entries !== undefined) requireBackupArray(payload, 'journal_entries');
   if (payload.customers !== undefined) requireBackupArray(payload, 'customers');
   if (payload.suppliers !== undefined) requireBackupArray(payload, 'suppliers');
@@ -1168,9 +1181,9 @@ function backupSummary(record){
   ];
 }
 
-function openBackupDb(){
+function openBackupDb(databaseName=window.AlaadaWorkspace.databaseName(BACKUP_DB)){
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(window.AlaadaWorkspace.databaseName(BACKUP_DB), 1);
+    const req = indexedDB.open(databaseName, 1);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(BACKUP_STORE)) db.createObjectStore(BACKUP_STORE, {keyPath:'companyId'});
@@ -1179,8 +1192,8 @@ function openBackupDb(){
     req.onerror = () => reject(req.error);
   });
 }
-async function putLocalBackup(record){
-  const db = await openBackupDb();
+async function putLocalBackup(record, databaseName){
+  const db = await openBackupDb(databaseName);
   return new Promise((resolve, reject) => {
     const tx = db.transaction(BACKUP_STORE, 'readwrite');
     tx.objectStore(BACKUP_STORE).put(record);
@@ -1234,24 +1247,32 @@ async function saveBackupFile(payload, fileName){
 }
 async function saveLocalCompanyBackup({download=false, silent=false} = {}){
   if (!STATE.companyId) return null;
-  const payload = await api(`/companies/${STATE.companyId}/export/json`);
+  const companyId=STATE.companyId, generation=STATE.companyGeneration;
+  const databaseName=window.AlaadaWorkspace.databaseName(BACKUP_DB);
+  const payload = validateBackupPayload(await api(`/companies/${companyId}/export/json`));
+  if (!sameCompanyGeneration(companyId,generation) || databaseName !== window.AlaadaWorkspace.databaseName(BACKUP_DB))
+    throw new Error('Company or workspace changed during export. No local copy was saved.');
+  if (payload.company.id !== companyId) throw new Error('The export belongs to a different company. No local copy was saved.');
   const record = {
-    companyId: STATE.companyId,
-    companyName: payload.company && payload.company.name ? payload.company.name : (STATE.company ? STATE.company.name : 'Company'),
+    companyId,
+    companyName: payload.company.name || 'Company',
     savedAt: new Date().toISOString(),
-    fileName: backupFileName(STATE.companyId),
+    fileName: backupFileName(companyId),
     payload,
   };
-  await putLocalBackup(record);
-  clearBackupNeeded(STATE.companyId);
+  await putLocalBackup(record, databaseName);
+  if (!sameCompanyGeneration(companyId,generation) || databaseName !== window.AlaadaWorkspace.databaseName(BACKUP_DB)) return record;
+  clearBackupNeeded(companyId);
   if (download) await saveBackupFile(payload, record.fileName);
-  if (!silent) toast(`Backup updated: ${record.fileName}`, 'ok');
+  if (!silent) toast(`Local data copy saved: ${record.fileName}`, 'ok');
   return record;
 }
 async function ensureLocalBackupForSelectedCompany(){
-  if (!STATE.companyId) return;
+  if (!STATE.companyId || STATE.capabilities.company_export !== true) return;
+  const companyId=STATE.companyId, generation=STATE.companyGeneration;
   try {
-    const existing = await getLocalBackup(STATE.companyId);
+    const existing = await getLocalBackup(companyId);
+    if (!sameCompanyGeneration(companyId,generation)) return;
     if (!existing) await saveLocalCompanyBackup({download:false, silent:true});
   } catch(e){ console.warn(e); }
 }
@@ -1435,6 +1456,9 @@ async function deleteSecureDraftRecord(record){
 }
 async function restoreLocalBackupToCloud(record){
   if (!record || !record.payload) return null;
+  validateBackupPayload(record.payload);
+  if (STATE.capabilities.company_restore === false || record.payload.export_format === 'alaada.accounts.appwrite.v1')
+    throw new Error('Cloud restore is not available for this Appwrite data copy. Keep the JSON export; no records have been changed.');
   const restored = await api('/companies/import/json', {method:'POST', body:record.payload});
   toast(`Restored local backup: ${restored.name}`, 'ok');
   await loadCompanies();
@@ -1969,10 +1993,10 @@ async function renderOfflineBackupView(error=null){
         <div class="stat-grid" style="margin-top:18px;text-align:left;">
           ${summary.map(item => `<div class="stat"><span>${esc(item.label)}</span><strong>${esc(item.value)}</strong></div>`).join('')}
         </div>
-        <p style="margin-top:16px;">Reconnect to restore this backup to the cloud database, or download the JSON copy from this device.</p>
+        <p style="margin-top:16px;">Download this device copy to keep your exported records. ${STATE.capabilities.company_restore === false || backup.payload?.export_format === 'alaada.accounts.appwrite.v1' ? 'Appwrite cloud restore is not available yet.' : 'Reconnect to review cloud restore.'}</p>
         <div style="margin-top:18px;">
           <button class="btn btn-blue" onclick="startAutoConnect()">Retry cloud</button>
-          <button class="btn btn-teal" onclick="restoreOfflineBackup()" style="margin-left:8px;">Restore after reconnect</button>
+          ${STATE.capabilities.company_restore === false || backup.payload?.export_format === 'alaada.accounts.appwrite.v1' ? '' : '<button class="btn btn-teal" onclick="restoreOfflineBackup()" style="margin-left:8px;">Restore after reconnect</button>'}
           <button class="btn btn-ghost" onclick="downloadOfflineBackup()" style="margin-left:8px;">Download backup</button>
         </div>
         ${connectionTechnicalDetails(error)}
@@ -6962,7 +6986,7 @@ async function renderSettings(){
         Developer mode - shows the API explorer, internal endpoint list, and connection details
       </label>
     </div>` : '';
-  view().innerHTML = viewHead('Company &amp; Financial Years', 'Manage company details and accounting periods.',
+  view().innerHTML = viewHead('Company & Financial Years', 'Manage company details and accounting periods.',
     `<button class="btn btn-ghost" onclick="openCompanyForm()">+ New company</button>
      <button class="btn btn-danger" onclick="deleteCurrentCompany()">Delete this company</button>`) +
     `<div class="grid grid-2">
@@ -6991,9 +7015,10 @@ async function renderSettings(){
         <button class="btn btn-ghost btn-sm" onclick="downloadCsv('ledgers')">Export ledgers CSV</button>
         <button class="btn btn-ghost btn-sm" onclick="downloadCsv('vouchers')">Export vouchers CSV</button>
         <button class="btn btn-ghost btn-sm" onclick="importLedgersCsv()">Import ledgers CSV</button>
-        <button class="btn btn-teal btn-sm" onclick="createBackup()">Create backup</button>
-        <button class="btn btn-ghost btn-sm" onclick="restoreBackupFromDevice()">Restore backup JSON</button>
+        <button class="btn btn-teal btn-sm" onclick="createBackup()">${STATE.capabilities.company_restore === false ? 'Save device copy' : 'Create backup'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="restoreBackupFromDevice()" ${STATE.capabilities.company_restore === false ? 'disabled title="Appwrite cloud restore is not available yet"' : ''}>Restore backup JSON</button>
       </div>
+      ${STATE.capabilities.company_export === true && STATE.capabilities.company_restore === false ? '<p class="help-text">JSON exports include company business records and financial audit history, including archived records (up to 8 MB per download). They exclude access memberships, delivery configuration and internal receipts. Keep a downloaded copy; automated cloud restore is not available yet.</p>' : ''}
     </div>
     ${developerSettingsHtml}`;
   renderFyList();
@@ -7021,7 +7046,7 @@ async function renderRecoveryCenter(){
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
         <button class="btn btn-ghost btn-sm" onclick="previewLocalBackup()">Preview</button>
         <button class="btn btn-ghost btn-sm" onclick="downloadRecoveryBackup()">Export</button>
-        <button class="btn btn-blue btn-sm" onclick="restoreRecoveryBackup()">Restore to cloud</button>
+        ${STATE.capabilities.company_restore === false || backup.payload?.export_format === 'alaada.accounts.appwrite.v1' ? '<span class="help-text">Appwrite data copy — cloud restore unavailable.</span>' : '<button class="btn btn-blue btn-sm" onclick="restoreRecoveryBackup()">Restore to cloud</button>'}
       </div>
     </div>` : `<div class="card card-pad">${emptyState('□','No local company backup','Create a backup from Settings after your next successful connection.')}</div>`;
     const draftHtml = drafts.length ? `<div class="card card-pad">
