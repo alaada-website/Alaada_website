@@ -1,6 +1,7 @@
 """Attachment ownership, bounded parsing and durable chat integration."""
 import base64
 import json
+from contextlib import contextmanager
 from email.parser import BytesParser
 from email.policy import default
 
@@ -122,3 +123,28 @@ def test_access_revoked_during_download_does_not_send_private_context(files):
     assert not state['prompts']
     with app.state.store.db() as db:
         assert not db.rows('product_operations', {})
+
+
+def test_lost_upload_commit_ack_keeps_the_committed_storage_object(files, monkeypatch):
+    call, _, _, state, _, _, app = files
+    original_db, original_audit = app.state.store.db, app.state.store.audit
+    pending = [False]
+    def audit(db, user, wid, action, rid=None):
+        original_audit(db, user, wid, action, rid)
+        if action == 'file:upload': pending[0] = True
+    @contextmanager
+    def uncertain_db(*args, **kwargs):
+        with original_db(*args, **kwargs) as db:
+            yield db
+        if pending[0]:
+            pending[0] = False
+            raise RuntimeError('Committed but acknowledgement lost')
+    monkeypatch.setattr(app.state.store, 'audit', audit)
+    monkeypatch.setattr(app.state.store, 'db', uncertain_db)
+    with pytest.raises(RuntimeError, match='acknowledgement lost'):
+        call('POST','/files',{'name':'retained.csv','content':base64.b64encode(b'a,b').decode()})
+    with original_db(readonly=True) as db:
+        rows = db.rows('resources', {'product':'platform','kind':'file'})
+        assert len(rows) == 1
+        metadata = json.loads(rows[0]['payload'])
+        assert state['files'][metadata['storage_file_id']] == b'a,b'
