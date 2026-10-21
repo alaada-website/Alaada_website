@@ -15,8 +15,8 @@ def test_company_pagination_filters_access_before_counting_and_slicing(tmp_path,
     async def auth(token):
         return m.Identity(token)
     async def backend(req):
-        if req.url.path == '/health':
-            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'})
+        if req.url.path == '/health/live':
+            return httpx.Response(200, json={'status': 'alive', 'persistence': 'appwrite-tablesdb'})
         calls.append(req.url.path)
         marker = {'x-alaada-workspace-enforced': 'v1'}
         if req.url.path == '/workspace-gateway/health':
@@ -51,8 +51,8 @@ def test_company_listing_rejects_incomplete_or_revoked_results(tmp_path, failure
     async def auth(token):
         return m.Identity(token)
     async def backend(req):
-        if req.url.path == '/health':
-            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'})
+        if req.url.path == '/health/live':
+            return httpx.Response(200, json={'status': 'alive', 'persistence': 'appwrite-tablesdb'})
         marker = {'x-alaada-workspace-enforced': 'v1'}
         if req.url.path == '/workspace-gateway/health':
             return httpx.Response(200, headers=marker, json={'capabilities': {'company_memberships': True}})
@@ -117,7 +117,7 @@ def test_accounts_wakes_without_identity_then_checks_fresh_access(tmp_path, monk
         return m.Identity('alice')
     def provider(request):
         requests.append(request)
-        if request.url.path == '/health':
+        if request.url.path == '/health/live':
             assert 'authorization' not in request.headers
             assert 'x-alaada-gateway-context' not in request.headers
             now[0] += 50
@@ -125,7 +125,7 @@ def test_accounts_wakes_without_identity_then_checks_fresh_access(tmp_path, monk
                 return httpx.Response(503, text='Service is waking')
             if failure == 'invalid-json':
                 return httpx.Response(200, text='<html>Still waking</html>')
-            return httpx.Response(200, json={'status': 'ok',
+            return httpx.Response(200, json={'status': 'alive',
                 'persistence': 'local-disk' if failure == 'wrong-backend' else 'appwrite-tablesdb'})
         claim = json.loads(base64.urlsafe_b64decode(request.headers['x-alaada-gateway-context']))
         assert claim['iat'] == now[0]
@@ -141,3 +141,30 @@ def test_accounts_wakes_without_identity_then_checks_fresh_access(tmp_path, monk
     assert len(signed) == (0 if failure else 1)
     assert all(request.method == 'GET' for request in requests)
     assert len(checks) >= 3
+
+
+@pytest.mark.parametrize('legacy', [False, True])
+def test_accounts_wake_avoids_duplicate_schema_probe_with_legacy_compatibility(tmp_path, legacy):
+    seen = []
+    async def auth(token):
+        return m.Identity('alice')
+    def provider(request):
+        seen.append(request.url.path)
+        if request.url.path == '/health/live':
+            assert 'authorization' not in request.headers
+            return httpx.Response(404) if legacy else httpx.Response(200,
+                json={'status': 'alive', 'persistence': 'appwrite-tablesdb'})
+        if request.url.path == '/health':
+            assert legacy and 'authorization' not in request.headers
+            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'})
+        assert request.url.path == '/workspace-gateway/health'
+        assert 'x-alaada-gateway-signature' in request.headers
+        return httpx.Response(200, json={'gateway': 'v1'}, headers={'x-alaada-workspace-enforced': 'v1'})
+    app = m.create_app(tmp_path / 'wake.db', authenticate=auth, accounts_url='http://127.0.0.1',
+        accounts_secret='x' * 40, accounts_transport=httpx.MockTransport(provider))
+    browser = TestClient(app)
+    headers = {'Authorization': 'Bearer alice'}
+    wid = browser.get('/api/workspaces', headers=headers).json()['workspaces'][0]['id']
+    response = browser.get(f'/api/workspaces/{wid}/accounts/health', headers=headers | {'X-Alaada-Workspace': wid})
+    assert response.status_code == 200
+    assert seen == ['/health/live'] + (['/health'] if legacy else []) + ['/workspace-gateway/health']

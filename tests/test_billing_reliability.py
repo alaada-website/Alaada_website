@@ -178,9 +178,9 @@ def test_accounts_gateway_preserves_and_signs_idempotency_key(tmp_path):
     async def auth(token):
         return m.Identity('alice')
     async def upstream(req):
-        if req.url.path == '/health':
+        if req.url.path == '/health/live':
             assert 'authorization' not in req.headers and 'x-alaada-gateway-context' not in req.headers
-            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'})
+            return httpx.Response(200, json={'status': 'alive', 'persistence': 'appwrite-tablesdb'})
         context = json.loads(base64.urlsafe_b64decode(req.headers['x-alaada-gateway-context']))
         assert hmac.compare_digest(req.headers['x-alaada-gateway-signature'],
             hmac.new(secret.encode(), req.headers['x-alaada-gateway-context'].encode(), hashlib.sha256).hexdigest())
@@ -211,7 +211,7 @@ def test_accounts_retry_reserves_quota_and_emits_company_notification_once(tmp_p
     async def upstream(req):
         marker = {'x-alaada-workspace-enforced': 'v1'}
         if req.method == 'GET':
-            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'}, headers=marker)
+            return httpx.Response(200, json={'status': 'alive' if req.url.path == '/health/live' else 'ok', 'persistence': 'appwrite-tablesdb'}, headers=marker)
         received.append(req.headers['idempotency-key'])
         return httpx.Response(reply_status[0], json={'id': 'retry-created-company'}, headers=marker)
     application = m.create_app(tmp_path / 'accounts-quota.db', authenticate=auth,

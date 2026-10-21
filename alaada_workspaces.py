@@ -2299,14 +2299,20 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     # its 15-second signature can expire during startup.
                     # Public readiness is not authority; sign a fresh handshake
                     # only after the expected Appwrite backend responds.
-                    public = await client.get(accounts_url + '/health')
+                    public = await client.get(accounts_url + '/health/live')
+                    expected_status = 'alive'
+                    if public.status_code == 404:
+                        # Older compatible backends have only /health. Never
+                        # use this fallback after a timeout or failed readiness.
+                        public = await client.get(accounts_url + '/health')
+                        expected_status = 'ok'
                     if public.status_code != 200:
                         return 503, None
                     try:
                         health = public.json()
                     except ValueError:
                         return 503, None
-                    if (not isinstance(health, dict) or health.get('status') != 'ok'
+                    if (not isinstance(health, dict) or health.get('status') != expected_status
                             or health.get('persistence') != 'appwrite-tablesdb'):
                         return 503, None
                     response = await upstream(client, "GET", "/workspace-gateway/health")

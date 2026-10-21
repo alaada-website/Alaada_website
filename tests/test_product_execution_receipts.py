@@ -35,8 +35,8 @@ def test_accounts_writes_do_not_block_other_platform_requests(tmp_path, monkeypa
     async def auth(token):
         return m.Identity('alice')
     def provider(request):
-        if request.url.path == '/health':
-            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'})
+        if request.url.path == '/health/live':
+            return httpx.Response(200, json={'status': 'alive', 'persistence': 'appwrite-tablesdb'})
         return httpx.Response(200 if request.method == 'GET' else 201,
             json={'capabilities': {}} if request.method == 'GET' else {'id': 'new-company'},
             headers={'x-alaada-workspace-enforced': 'v1'})
@@ -75,8 +75,8 @@ def test_accounts_cold_start_refreshes_only_handshake(tmp_path, monkeypatch, sec
     async def auth(token):
         return m.Identity('alice')
     def provider(req):
-        if req.url.path == '/health':
-            return httpx.Response(200, json={'status': 'ok', 'persistence': 'appwrite-tablesdb'})
+        if req.url.path == '/health/live':
+            return httpx.Response(200, json={'status': 'alive', 'persistence': 'appwrite-tablesdb'})
         claim = json.loads(base64.urlsafe_b64decode(req.headers['x-alaada-gateway-context']))
         if req.url.path == '/workspace-gateway/health':
             health.append(claim['iat'])
