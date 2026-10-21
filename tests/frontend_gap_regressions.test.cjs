@@ -72,7 +72,7 @@ test('Sheets restores cloud data even if IndexedDB is unavailable',async()=>{
   const W={storage:{getItem:k=>stored.get(k),setItem:(k,v)=>stored.set(k,v)},list:()=>[{id:'existing'}],read:(kind,id)=>id==='existing'?snapshot:null};
   const controller=vm.runInNewContext('({'+source+'})',{window:{AlaadaWorkspace:W},Error});
   controller._persist={};controller._openWorkbookDb=async()=>null;controller._isPristineWorkbook=()=>true;
-  controller._hydrateWorkbook=data=>{assert.equal(data,snapshot);return true};controller.setSaveState=(...state)=>states.push(state);
+  controller._hydrateWorkbook=data=>{assert.deepEqual(JSON.parse(JSON.stringify(data)),snapshot);assert.notEqual(data,snapshot);data.sheets[0].cells.A1.value='local edit';assert.equal(snapshot.sheets[0].cells.A1.value,'keep');return true};controller.setSaveState=(...state)=>states.push(state);
   await controller._initPersistence();
   assert.equal(controller._persist.workbookId,'existing');assert.equal(stored.get('alaada.workbookId'),'existing');
   assert.deepEqual(states,[['saved','Saved to cloud']]);
