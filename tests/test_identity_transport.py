@@ -228,6 +228,52 @@ def test_bad_responses_are_bounded_and_never_retried_or_redirected(kind):
     asyncio.run(exercise())
 
 
+@pytest.mark.parametrize('stage', ['account', 'teams', 'memberships'])
+@pytest.mark.parametrize('status', [401, 403])
+def test_paused_project_is_unavailable_not_session_revocation(stage, status):
+    paused, seen = [True], []
+    def handle(request):
+        seen.append(request)
+        if paused[0] and request.url.path.endswith('/' + stage):
+            return httpx.Response(status, json={'type': 'project_paused', 'message': 'private provider details'})
+        return boundary(request)
+    async def exercise():
+        auth = m.AppwriteIdentity(transport=httpx.MockTransport(handle))
+        await auth.start()
+        try:
+            with pytest.raises(HTTPException) as caught:
+                await auth('alice')
+            assert caught.value.status_code == 503
+            assert 'not been cleared' in caught.value.detail
+            assert 'private provider' not in caught.value.detail
+            assert sum(r.url.path.endswith('/' + stage) for r in seen) == 1
+            paused[0] = False
+            assert (await auth('alice')).user == 'alice'
+        finally:
+            await auth.close()
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize('body', [b'', b'<html>Forbidden</html>', b'[]',
+    b'{"type":"user_unauthorized"}', b'{"message":"project_paused"}'])
+def test_non_pause_auth_errors_still_deny_session(body):
+    async def exercise():
+        auth = m.AppwriteIdentity(transport=httpx.MockTransport(lambda _: httpx.Response(403, content=body)))
+        with pytest.raises(HTTPException) as caught:
+            await auth('alice')
+        assert caught.value.status_code == 401
+    asyncio.run(exercise())
+
+
+def test_oversized_auth_error_is_bounded_and_never_grants_identity():
+    async def exercise():
+        auth = m.AppwriteIdentity(transport=httpx.MockTransport(lambda _: httpx.Response(403, content=b'x' * 8193)))
+        with pytest.raises(HTTPException) as caught:
+            await auth('alice')
+        assert caught.value.status_code == 503
+    asyncio.run(exercise())
+
+
 def test_actual_http_connection_is_reused_across_identity_checks(monkeypatch):
     connections = []
     class Handler(BaseHTTPRequestHandler):

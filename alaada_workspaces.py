@@ -339,6 +339,19 @@ class AppwriteIdentity:
                 response = await client.send(request, stream=True, follow_redirects=False)
                 try:
                     if response.status_code in (401, 403):
+                        # Appwrite uses 403 for a paused project as well as access
+                        # denial. An infrastructure outage is not a revoked user.
+                        error_body = bytearray()
+                        async for chunk in response.aiter_bytes():
+                            error_body.extend(chunk)
+                            if len(error_body) > 8192:
+                                fail(503, 'Identity service unavailable; access denied.')
+                        try:
+                            error_data = json.loads(error_body)
+                        except (ValueError, UnicodeError):
+                            error_data = None
+                        if isinstance(error_data, dict) and error_data.get('type') == 'project_paused':
+                            fail(503, 'Alaada sign-in is temporarily unavailable. The Appwrite project must be restored by its owner. Your sign-in has not been cleared.')
                         fail(401, 'Appwrite session expired or access revoked.')
                     if response.status_code != 200:
                         fail(503, 'Unable to verify Appwrite permissions.')
@@ -3326,6 +3339,12 @@ PRODUCT_CLIENT = r'''
     let data;
     try{data=text.trim()?JSON.parse(text):null;}catch{}
     if(!response.ok&&!allowHttpError){
+      if(service==='Appwrite'&&[401,403].includes(response.status)&&data?.type==='project_paused'){
+        const error=connectionError(service,503,'APPWRITE_PROJECT_PAUSED',
+          'Alaada sign-in is temporarily unavailable. The Appwrite project must be restored by its owner. Your sign-in has not been cleared.');
+        error.retryable=false; // Requires operator action, not repeated browser requests.
+        throw error;
+      }
       const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
       throw connectionError(service,response.status,'HTTP_'+response.status,detail.slice(0,300));
     }
