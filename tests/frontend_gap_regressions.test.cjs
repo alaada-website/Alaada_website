@@ -374,7 +374,7 @@ test('Opening Orbit or New Chat reuses empty drafts without writing to the datab
   const source=read('Orbit.html'),input={value:''},writes=[];
   let next=0;
   const ctx=vm.createContext({threads:[{id:'saved-empty',title:'New Chat',messages:[],archived:false}],
-    activeId:null,busy:false,composerDrafts:new Map(),transientThreads:new Set(),
+    activeId:null,busy:false,composerDrafts:new Map(),composerAttachments:new Map(),transientThreads:new Set(),
     document:{getElementById:()=>input},crypto:{randomUUID:()=>`draft-${++next}`},
     openThread:id=>{ctx.activeId=id;input.value='';},renderThreads:()=>{},closeSidebar:()=>{},toast:()=>{},
     window:{AlaadaWorkspace:{storage:{setItem:(key,value)=>writes.push(JSON.parse(value))}}}});

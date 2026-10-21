@@ -48,7 +48,7 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
   };
   const window={fetch,addEventListener:(type,fn)=>events[type]=fn,
     sessionStorage:{getItem:key=>operationStorage.get(key)||null,setItem:(key,value)=>operationStorage.set(key,value)}};
-  const context=vm.createContext({window,document,location,URL,Headers,Response,AbortController,DOMException,TextEncoder,Uint8Array,crypto:require('node:crypto').webcrypto,Map,Set,Promise,Error,JSON,encodeURIComponent,confirm:()=>true,console,
+  const context=vm.createContext({window,document,location,URL,Headers,Response,AbortController,DOMException,TextEncoder,TextDecoder,btoa,Uint8Array,crypto:require('node:crypto').webcrypto,Map,Set,Promise,Error,JSON,encodeURIComponent,confirm:()=>true,console,
     setTimeout:(fn,ms)=>{config.timers?.push(ms);return setTimeout(fn,ms>=25000?(config.timeoutMs??ms):0);},clearTimeout,
     localStorage:{getItem(){throw Error('Legacy storage must never be read');}}});
   vm.runInContext(source,context);
@@ -59,6 +59,27 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
 }
 
 (async()=>{
+  for(const outcome of ['saved','wrong-workspace','wrong-hash','lost-response','readonly','disabled']){
+    const file=new File(['a,b\n1,2'],'test.csv',{type:'text/csv'}),uploads=[];
+    const env=await boot('orbit','',[],new Map(),{fetch(url,options){
+      if(url.includes('/entitlements?'))return json({role:outcome==='readonly'?'reader':'owner',products:{orbit:{capabilities:{files:outcome!=='disabled'}}}});
+      if(url.endsWith('/files')){
+        uploads.push(JSON.parse(options.body));
+        if(outcome==='lost-response')return new Response('',{status:502});
+        return json({id:'a'.repeat(32),name:file.name,size:file.size,
+          workspace:outcome==='wrong-workspace'?'company':'personal',
+          sha256:outcome==='wrong-hash'?'invalid':require('node:crypto').createHash('sha256').update('a,b\n1,2').digest('hex')});
+      }
+    }});
+    if(outcome==='saved')assert.equal((await env.W.uploadOrbitFile(file)).name,'test.csv');
+    else await assert.rejects(env.W.uploadOrbitFile(file));
+    assert.equal(uploads.length,['readonly','disabled'].includes(outcome)?0:1,'No automatic upload retry');
+    if(uploads.length)assert.equal(Buffer.from(uploads[0].content,'base64').toString(),'a,b\n1,2');
+    for(const invalid of [new File(['x'],'x.pdf'),new File([''],'x.txt'),new File([new Uint8Array(65537)],'x.txt'),new File([new Uint8Array([255,0])],'x.txt')]){
+      await assert.rejects(env.W.uploadOrbitFile(invalid));
+    }
+    assert.equal(uploads.length,['readonly','disabled'].includes(outcome)?0:1);
+  }
   for(const product of ['orbit','sheets','accounts','analyser']){
     for(const endpoint of ['/account','/account/jwts']){
       const env=await boot(product,'',[],new Map(),{failure:error=>error.status===503&&error.code==='APPWRITE_PROJECT_PAUSED',fetch(url){

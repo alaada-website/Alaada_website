@@ -398,6 +398,32 @@
         return rows.filter(row=>row.product===p&&(!kind||row.kind===kind));
       }finally{requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
     },
+    async uploadOrbitFile(file){
+      await W.ready;
+      if(product!=='orbit'||!verified||failed)throw failed||Error('A verified Orbit workspace is required.');
+      if(!file||!Number.isInteger(file.size)||file.size<1||file.size>65536||
+        typeof file.name!=='string'||file.name.length>200||/[\x00-\x1f\x7f/\\]/.test(file.name)||
+        !/\.(txt|csv|tsv|md|json)$/i.test(file.name))throw Error('Choose a UTF-8 TXT, CSV, TSV, Markdown or JSON file, up to 64 KiB.');
+      const active=workspace;
+      const operation=(async()=>{
+        const policy=await W.entitlements();
+        if(policy.role==='reader'||policy.products?.orbit?.capabilities?.files!==true)throw Error('File analysis is not available in this workspace.');
+        const bytes=new Uint8Array(await file.arrayBuffer());
+        if(bytes.length!==file.size)throw Error('The selected file changed. Select it again.');
+        let decoded;
+        try{decoded=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{throw Error('This file is not UTF-8 text. Binary documents are not supported yet.');}
+        if(!decoded.trim()||/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(decoded))throw Error('The file is empty or contains binary data.');
+        let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+        const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
+        if(workspace!==active||failed)throw failed||Error('Workspace changed. Select the file again.');
+        const saved=await api('/workspaces/'+active.id+'/files','POST',{name:file.name,content:btoa(binary)});
+        if(workspace!==active||saved.workspace!==active.id||typeof saved.id!=='string'||!/^[a-f0-9]{32}$/.test(saved.id)||
+          saved.name!==file.name||saved.size!==file.size||saved.sha256!==digest)throw Error('File upload could not be confirmed. Check workspace Files before uploading again.');
+        return {id:saved.id,name:saved.name};
+      })();
+      requests.add(operation);selector.disabled=true;
+      try{return await operation;}finally{requests.delete(operation);selector.disabled=!!pending||!!failed||!!requests.size;}
+    },
     async orbitReply(key){
       await W.ready;if(product!=='orbit')throw Error('Orbit page required');
       const flightKey=JSON.stringify([workspace.id,String(key)]);

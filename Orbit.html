@@ -1049,7 +1049,7 @@ body {
 </head>
 <body data-alaada-product="orbit">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=b01b187a9911" data-product="orbit"></script>
+<script src="/workspace-product-client.js?v=0b10c82558ab" data-product="orbit"></script>
 <script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
 <div id="app">
 
@@ -1126,7 +1126,7 @@ body {
       <div id="previewBar">
         <img id="prevThumb" src="/images/alaada-logo.jpg" alt="" style="display:none">
         <div id="prevName"></div>
-        <button id="prevClose" onclick="clearPreview()">✕</button>
+        <button id="prevClose" aria-label="Remove attachment from this draft" onclick="clearPreview()">✕</button>
       </div>
       <div class="input-row">
         <button class="rnd-btn" id="micBtn" aria-label="Voice input" disabled>🎤</button>
@@ -1135,7 +1135,7 @@ body {
         <textarea id="inputTextarea" aria-label="Message to Orbit" aria-describedby="statusBar" placeholder="Ask Orbit anything…" rows="1"></textarea>
         <button id="sendBtn" aria-label="Send message" onclick="send()" disabled>➤</button>
         <input id="fileInput" type="file" style="display:none"
-          accept="image/*,application/pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.txt,.csv">
+          accept=".txt,.csv,.tsv,.md,.json">
       </div>
     </div>
   </div>
@@ -1542,17 +1542,17 @@ function closeSidebar(){document.getElementById("sidebar").classList.remove("ope
 
 let orbitCapabilities={text:false,files:false,voiceInput:false,voiceOutput:false};
 const composerDrafts=new Map();
+const composerAttachments=new Map();
 const transientThreads=new Set();
 function connectWS() {
   const workspace=window.AlaadaWorkspace.active;
   window.AlaadaWorkspace.entitlements().then(policy=>{
     if(window.AlaadaWorkspace.active!==workspace)return;
-    // The current signed adapter supports text only. Do not advertise legacy
-    // upload/voice routes before their scoped contracts are implemented.
     orbitCapabilities.text=policy.role!=='reader' && policy.products?.orbit?.execution_available===true && policy.products?.orbit?.capabilities?.execution_receipts===true;
+    orbitCapabilities.files=orbitCapabilities.text && policy.products?.orbit?.capabilities?.files===true && typeof window.AlaadaWorkspace.uploadOrbitFile==='function';
     lockInput(busy);
-    setStatus(orbitCapabilities.text?'Text chat ready · voice and attachments are not connected yet.':policy.role==='reader'?'Read-only workspace. Saved conversations are available.':policy.products?.orbit?.execution_available===true?'Text chat needs the updated workspace backend. Your drafts are kept.':'Text chat is not connected yet. You can keep drafting and read saved conversations.');
-  }).catch(()=>{orbitCapabilities.text=false;lockInput(busy);setStatus('Workspace access could not be verified. Your draft has not been sent.');});
+    setStatus(orbitCapabilities.text?(orbitCapabilities.files?'Ready · attach TXT, CSV, TSV, Markdown or JSON (64 KiB). Voice, images and Office/PDF processing are not connected yet.':'Text chat ready · voice and attachments are not connected yet.'):policy.role==='reader'?'Read-only workspace. Saved conversations are available.':policy.products?.orbit?.execution_available===true?'Text chat needs the updated workspace backend. Your drafts are kept.':'Text chat is not connected yet. You can keep drafting and read saved conversations.');
+  }).catch(()=>{orbitCapabilities.text=false;orbitCapabilities.files=false;lockInput(busy);setStatus('Workspace access could not be verified. Your draft has not been sent.');});
   return; // Execution uses the authenticated workspace API.
 
   if(ws&&(ws.readyState===WebSocket.OPEN||ws.readyState===WebSocket.CONNECTING))return;
@@ -1584,11 +1584,12 @@ async function send() {
   if(busy)return;
   if(!orbitCapabilities.text){toast('Chat is not available yet. Your draft has been kept.');return;}
   const ta=document.getElementById("inputTextarea");const text=ta.value;
-  if(!text.trim()&&!fileId)return;
-  if(fileId){toast("Workspace file execution is not connected yet.");return;}
+  if(!text.trim()){if(fileId)toast('Add a question about your attachment before sending.');return;}
+  if(fileId&&!orbitCapabilities.files){toast('File analysis is unavailable. Your draft and attachment are kept.');return;}
   const t=activeThread();if(!t)return;
-  if(!(t.pendingPrompt===text&&t.messages.at(-1)?.role==='user'&&t.messages.at(-1)?.text===text)){
-    t.messages.push({role:"user",text,images:null});
+  const attachments=fileId?[{id:fileId.id,name:fileId.name}]:[];
+  if(!(t.pendingPrompt===text&&t.messages.at(-1)?.role==='user'&&t.messages.at(-1)?.text===text&&JSON.stringify(t.messages.at(-1)?.attachments||[])===JSON.stringify(attachments))){
+    t.messages.push({role:"user",text,images:null,...(attachments.length?{attachments}:{})});
   }
   t.pendingPrompt=text;
   saveThreads();renderChat();busy=true;lockInput(true);stopSpeaking();
@@ -1599,6 +1600,7 @@ async function send() {
     const updated=await window.AlaadaWorkspace.orbitReply(t.id);
     t.messages=updated.messages;
     delete t.pendingPrompt;composerDrafts.delete(t.id);ta.value="";ta.style.height="auto";
+    clearPreview(true);
     updateUserMemory(text,t.messages[t.messages.length-1].text);
     autoTitle();saveThreads();renderChat();
     setStatus("Saved in "+window.AlaadaWorkspace.active.name);
@@ -1646,6 +1648,7 @@ function finalize(remaining) {
 
 function lockInput(on){
   document.getElementById('inputTextarea').disabled=on;
+  document.getElementById('prevClose').disabled=on;
   for(const[id,capability]of[['sendBtn','text'],['micBtn','voiceInput'],['voiceBtn','voiceOutput'],['attachBtn','files']]){
     const button=document.getElementById(id);button.disabled=on||!orbitCapabilities[capability];
     button.title=orbitCapabilities[capability]?'':'This capability is not connected for this workspace yet.';
@@ -1663,6 +1666,7 @@ function createThread() {
   if(busy)return;
   const input=document.getElementById('inputTextarea');
   const existing=threads.find(t=>!t.archived && !t.messages.length && !composerDrafts.get(t.id)
+    && !composerAttachments.get(t.id)
     && !(t.id===activeId && input.value.trim()));
   if(existing){openThread(existing.id);closeSidebar();return;}
   const id=(crypto.randomUUID?crypto.randomUUID():String(Date.now()));
@@ -1671,7 +1675,7 @@ function createThread() {
   renderThreads();openThread(id);closeSidebar();
 }
 
-function openThread(id){if(busy)return;const input=document.getElementById('inputTextarea');if(activeId)composerDrafts.set(activeId,input.value);activeId=id;stopSpeaking();renderThreads();renderChat();const t=threads.find(x=>x.id===id);if(t){document.getElementById("mobileTitle").textContent=t.title;input.value=composerDrafts.get(id)??(t.pendingPrompt&&t.messages.at(-1)?.role==='user'?t.pendingPrompt:'');}}
+function openThread(id){if(busy)return;const input=document.getElementById('inputTextarea');if(activeId)composerDrafts.set(activeId,input.value);activeId=id;stopSpeaking();renderThreads();renderChat();const t=threads.find(x=>x.id===id);if(t){document.getElementById("mobileTitle").textContent=t.title;input.value=composerDrafts.get(id)??(t.pendingPrompt&&t.messages.at(-1)?.role==='user'?t.pendingPrompt:'');fileId=composerAttachments.has(id)?composerAttachments.get(id):(t.pendingPrompt?t.messages.at(-1)?.attachments?.[0]||null:null);showFilePreview();}}
 
 function renderThreads() {
   const aEl=document.getElementById("threads"),arEl=document.getElementById("archivedThreads"),arcSec=document.getElementById("archivedSection");
@@ -1748,6 +1752,10 @@ function makeBubble(msg) {
     typesetMath(div);
   }
   if(msg.images?.length){const g=document.createElement("div");g.className="gallery";msg.images.forEach(src=>{if(!src)return;const img=document.createElement("img");img.src=src;img.loading="lazy";img.alt="Generated image";img.onclick=()=>window.open(src,"_blank");g.appendChild(img);});div.appendChild(g);}
+  if(Array.isArray(msg.attachments))for(const attachment of msg.attachments){
+    if(typeof attachment?.name!=='string')continue;
+    const label=document.createElement('p');label.textContent='📎 '+attachment.name;label.style.overflowWrap='anywhere';div.appendChild(label);
+  }
   wrap.appendChild(div);
   if(msg.text!=="__TYPING__")wrap.appendChild(buildActionsBar(msg));
   return wrap;
@@ -1760,7 +1768,7 @@ function buildActionsBar(msg) {
       if(voiceSpeaking){stopSpeaking();btn.innerHTML=`<span>🔊</span><span>Read</span>`;btn.classList.remove("speaking-btn");return;}
       btn.classList.add("speaking-btn");btn.innerHTML=`<span>⏹</span><span>Stop</span>`;
       speakText(msg.text).then(()=>{btn.innerHTML=`<span>🔊</span><span>Read</span>`;btn.classList.remove("speaking-btn");});
-    });bar.appendChild(speakBtn);
+    });speakBtn.disabled=!orbitCapabilities.voiceOutput;speakBtn.title=orbitCapabilities.voiceOutput?'Read aloud':'Read aloud is not connected yet.';bar.appendChild(speakBtn);
   }
   const copyBtn=makeActionBtn("📋","Copy",async(btn)=>{
     try{let text=msg.text||"";text=text.replace(/\*\*(.*?)\*\*/g,"$1").replace(/\*(.*?)\*/g,"$1").replace(/#{1,6} /g,"").trim();if(msg.images?.length){text+="\n\n[Images: "+msg.images.length+"]";msg.images.forEach((u,i)=>{if(!u.startsWith("data:"))text+=`\nImage ${i+1}: ${u}`;});}await navigator.clipboard.writeText(text);showBtnSuccess(btn,"Copied!");toast("Copied to clipboard!");}
@@ -1827,19 +1835,24 @@ function ctxAction(action) {
 document.addEventListener("click",(e)=>{const m=document.getElementById("ctxMenu");if(m.style.display==="block"&&!m.contains(e.target))closeCtx();});
 document.addEventListener("touchstart",(e)=>{const m=document.getElementById("ctxMenu");if(m.style.display==="block"&&!m.contains(e.target))closeCtx();},{passive:true});
 
-function triggerFile(){if(!orbitCapabilities.files){toast('Attachments are not connected for this workspace yet.');return;}document.getElementById("fileInput").click();}
+function triggerFile(){if(busy)return;if(!orbitCapabilities.files){toast('Attachments are not connected for this workspace yet.');return;}document.getElementById("fileInput").click();}
 function hidePreview(){document.getElementById("previewBar").style.display="none";}
-function clearPreview(){filePreview=fileId=null;fileIsImage=false;document.getElementById("fileInput").value="";hidePreview();}
+function clearPreview(confirmed=false){if(busy&&!confirmed)return;filePreview=fileId=null;fileIsImage=false;composerAttachments.set(activeId,null);document.getElementById("fileInput").value="";hidePreview();}
+function showFilePreview(){const bar=document.getElementById('previewBar');document.getElementById('prevThumb').style.display='none';document.getElementById('prevName').textContent=fileId?'📎 '+fileId.name:'';bar.style.display=fileId?'flex':'none';}
 
 document.getElementById("fileInput").onchange=async()=>{
+  if(busy)return;
   if(!orbitCapabilities.files){toast('Attachments are not connected for this workspace yet.');return;}
-  const file=document.getElementById("fileInput").files[0];if(!file)return;toast("Uploading…");
-  const form=new FormData();form.append("file",file);
-  try{const res=await timedFetch(`${BACKEND}/upload`,{method:"POST",body:form},30000);const data=await res.json();if(!data.file_id){toast("Upload failed.");return;}fileId=data.file_id;fileIsImage=file.type.startsWith("image/");toast("File ready ✓");}
-  catch(e){toast("Upload error: "+(e.message||"timeout"));return;}
-  const bar=document.getElementById("previewBar");
-  if(file.type.startsWith("image/")){const reader=new FileReader();reader.onload=(ev)=>{filePreview=ev.target.result;const th=document.getElementById("prevThumb");th.src=filePreview;th.style.display="block";document.getElementById("prevName").textContent=file.name;bar.style.display="flex";};reader.readAsDataURL(file);}
-  else{document.getElementById("prevThumb").style.display="none";const icons={pdf:"📄",xlsx:"📊",xls:"📊",docx:"📝",doc:"📝",pptx:"📊",ppt:"📊",csv:"📊",txt:"📄",xml:"📄"};const ext=file.name.split(".").pop().toLowerCase();document.getElementById("prevName").textContent=`${icons[ext]||"📎"} ${file.name}`;bar.style.display="flex";}
+  const file=document.getElementById('fileInput').files[0];if(!file||!activeThread())return;
+  const thread=activeId,workspace=window.AlaadaWorkspace.active;
+  busy=true;lockInput(true);setStatus('Saving your attachment privately…');
+  try{
+    const saved=await window.AlaadaWorkspace.uploadOrbitFile(file);
+    if(activeId!==thread||window.AlaadaWorkspace.active!==workspace)throw Error('The destination changed. Check workspace Files before uploading again.');
+    fileId=saved;composerAttachments.set(thread,saved);showFilePreview();
+    setStatus('Attachment saved privately. Add a question and send to analyze it.');
+  }catch(error){toast(error.message,7000);setStatus('Attachment not confirmed. Your message and previous attachment are kept. Check workspace Files before retrying.');}
+  finally{document.getElementById('fileInput').value='';busy=false;lockInput(false);}
 };
 
 const iw=document.getElementById("inputWrapper");
