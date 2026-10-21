@@ -47,6 +47,10 @@
       let data=null;const raw=await response.text();
       try{data=raw.trim()?JSON.parse(raw):null}catch{}
       if(!response.ok){
+        if(service==='Appwrite'&&[401,403].includes(response.status)&&data?.type==='project_paused'){
+          const error=new Error('Alaada sign-in is temporarily unavailable. The Appwrite project must be restored by its owner. Your sign-in has not been cleared.');
+          error.status=503;error.code=503;error.type='project_paused';throw error;
+        }
         const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
         const error=new Error(detail.slice(0,300)||service+' request failed (HTTP '+response.status+').');
         error.status=response.status;error.code=response.status;throw error;
@@ -81,7 +85,7 @@
       await currentAccount();return out;
     }
     function lockAccount(message){inboxEpoch++;sessionsEpoch++;sessions=[];pendingSession=null;$('inbox-items').replaceChildren();$('session-items').replaceChildren();$('session-confirm').classList.add('hidden');$('app').classList.add('hidden');$('failure').classList.remove('hidden');$('failure-message').textContent=message;account=null;workspaces=[];workspacesReady=false;active=null;personal=null;subscription=null}
-    async function currentAccount(){let current;try{current=await aw('/account')}catch(error){lockAccount('Your session could not be verified. Sign in or reload to continue.');throw error}if(!account||current.$id!==account.$id){const message='Your signed-in account changed. Reload before continuing.';lockAccount(message);throw new Error(message)}return current}
+    async function currentAccount(){let current;try{current=await aw('/account')}catch(error){lockAccount(error.type==='project_paused'?error.message:'Your session could not be verified. Sign in or reload to continue.');throw error}if(!account||current.$id!==account.$id){const message='Your signed-in account changed. Reload before continuing.';lockAccount(message);throw new Error(message)}return current}
     function showPanel(name){if(!['profile','workspaces-panel','subscription','notifications','preferences','security'].includes(name))name='profile';document.querySelectorAll('[data-panel]').forEach(x=>x.classList.toggle('active',x.dataset.panel===name));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('hidden',x.id!==name));loadPanel(name)}
     // Profile and security use Appwrite directly. Never make them wait for a
     // sleeping product gateway, billing lookup, or activity-preferences query.

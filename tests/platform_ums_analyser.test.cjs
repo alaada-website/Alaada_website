@@ -17,6 +17,12 @@ for(const file of ['auth.html','onboarding.html','account.html','admin.html','ac
       await assert.rejects(parse(new Response(body),'Appwrite'),e=>e.status===502);
     }
     for(const status of [401,403,429,502,503])await assert.rejects(parse(new Response('',{status}),'Appwrite'),e=>e.status===status);
+    for(const status of [401,403]){
+      await assert.rejects(parse(new Response(JSON.stringify({type:'project_paused',message:'private provider details'}),{status}),'Appwrite'),
+        e=>e.status===503&&e.type==='project_paused'&&/not been cleared/.test(e.message)&&!e.message.includes('private provider'));
+      await assert.rejects(parse(new Response(JSON.stringify({message:'project_paused'}),{status}),'Appwrite'),e=>e.status===status);
+      await assert.rejects(parse(new Response(JSON.stringify({type:'project_paused'}),{status}),'Workspace service'),e=>e.status===status);
+    }
     await assert.rejects(parse(new Response(null,{status:204}),'Appwrite'),e=>e.status===502);
     assert.deepEqual(JSON.parse(JSON.stringify(await parse(new Response(null,{status:204}),'Appwrite',true))),{});
     for(const field of ['/account','/account/jwts'])for(const value of [{},[],{jwt:42,$id:42},{jwt:' ',$id:' '}])assert.throws(()=>shape(value,field),e=>e.status===502);

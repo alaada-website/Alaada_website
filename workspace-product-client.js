@@ -121,6 +121,12 @@
     let data;
     try{data=text.trim()?JSON.parse(text):null;}catch{}
     if(!response.ok&&!allowHttpError){
+      if(service==='Appwrite'&&[401,403].includes(response.status)&&data?.type==='project_paused'){
+        const error=connectionError(service,503,'APPWRITE_PROJECT_PAUSED',
+          'Alaada sign-in is temporarily unavailable. The Appwrite project must be restored by its owner. Your sign-in has not been cleared.');
+        error.retryable=false; // Requires operator action, not repeated browser requests.
+        throw error;
+      }
       const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
       throw connectionError(service,response.status,'HTTP_'+response.status,detail.slice(0,300));
     }

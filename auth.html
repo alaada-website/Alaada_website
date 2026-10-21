@@ -67,6 +67,10 @@
       let data=null;const raw=await response.text();
       try{data=raw.trim()?JSON.parse(raw):null}catch{}
       if(!response.ok){
+        if(service==='Appwrite'&&[401,403].includes(response.status)&&data?.type==='project_paused'){
+          const error=new Error('Alaada sign-in is temporarily unavailable. The Appwrite project must be restored by its owner. Your sign-in has not been cleared.');
+          error.status=503;error.code=503;error.type='project_paused';throw error;
+        }
         const detail=typeof data?.detail==='string'?data.detail:typeof data?.message==='string'?data.message:'';
         const error=new Error(detail.slice(0,300)||service+' request failed (HTTP '+response.status+').');
         error.status=response.status;error.code=response.status;error.type=typeof data?.type==='string'?data.type.slice(0,100):'';throw error;

@@ -59,6 +59,21 @@ async function boot(product, requested='', seed=[], operationStorage=new Map(), 
 }
 
 (async()=>{
+  for(const product of ['orbit','sheets','accounts','analyser']){
+    for(const endpoint of ['/account','/account/jwts']){
+      const env=await boot(product,'',[],new Map(),{failure:error=>error.status===503&&error.code==='APPWRITE_PROJECT_PAUSED',fetch(url){
+        if(url.endsWith(endpoint))return new Response(JSON.stringify({type:'project_paused',message:'Private provider detail'}),{status:403});
+      }});
+      assert.equal(env.requests.filter(r=>r.url.endsWith(endpoint)).length,1,'Paused project needs operator action, not retries');
+      assert.equal(env.W.active,null);
+      assert(!env.requests.some(r=>r.url.startsWith('/api/')),'No private operations before authentication');
+      assert(env.document.body.children[1].inert);
+      assert.equal(env.document.body.children[0].children[3].hidden,true,'Do not offer sign-in for a project outage');
+      assert.match(env.document.body.children.at(-1).textContent,/restored by its owner/);
+      assert(!env.document.body.children.at(-1).textContent.includes('Private provider detail'));
+      assert(!env.cookies.some(value=>value.startsWith('a_session_')),'Never clear the Appwrite session cookie');
+    }
+  }
   const layout=new Map();
   const resized=await boot('sheets','',[],new Map(),{barHeight:82,layout});
   assert.equal(layout.get('--alaada-workspace-bar-height'),'82px','Wrapped status reserves real space above every product');
