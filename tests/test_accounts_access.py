@@ -143,7 +143,7 @@ def test_accounts_wakes_without_identity_then_checks_fresh_access(tmp_path, monk
     assert len(checks) >= 3
 
 
-@pytest.mark.parametrize('legacy', [False, True])
+@pytest.mark.parametrize('legacy', [False, True, 'old_liveness'])
 def test_accounts_wake_avoids_duplicate_schema_probe_with_legacy_compatibility(tmp_path, legacy):
     seen = []
     async def auth(token):
@@ -152,6 +152,8 @@ def test_accounts_wake_avoids_duplicate_schema_probe_with_legacy_compatibility(t
         seen.append(request.url.path)
         if request.url.path == '/health/live':
             assert 'authorization' not in request.headers
+            if legacy == 'old_liveness':
+                return httpx.Response(200, json={'status': 'alive'})
             return httpx.Response(404) if legacy else httpx.Response(200,
                 json={'status': 'alive', 'persistence': 'appwrite-tablesdb'})
         if request.url.path == '/health':

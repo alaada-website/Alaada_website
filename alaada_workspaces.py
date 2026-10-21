@@ -2301,9 +2301,15 @@ def create_app(path, authenticate=None, limits=None, billing_secret=None, webhoo
                     # only after the expected Appwrite backend responds.
                     public = await client.get(accounts_url + '/health/live')
                     expected_status = 'alive'
-                    if public.status_code == 404:
-                        # Older compatible backends have only /health. Never
-                        # use this fallback after a timeout or failed readiness.
+                    legacy_liveness = False
+                    if public.status_code == 200:
+                        try:
+                            legacy_liveness = public.json() == {'status': 'alive'}
+                        except ValueError:
+                            pass
+                    if public.status_code == 404 or legacy_liveness:
+                        # Support older liveness responses on rollback. Never
+                        # fall back after a timeout or a failed readiness check.
                         public = await client.get(accounts_url + '/health')
                         expected_status = 'ok'
                     if public.status_code != 200:
