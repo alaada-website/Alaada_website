@@ -38,19 +38,29 @@ function fakeDocument(){
 }
 function setup({hash='',search='',reply}={}){
   const document=fakeDocument(),requests=[],redirects=[];
+  let storedAccount=structuredClone(alice),preferences={workspace:personal.id,version:0,personal_activity:true,organisation_activity:false};
   let rows=[ownSession('current-device',true),ownSession()];
   const context=vm.createContext({document,URL,URLSearchParams,AbortSignal,Set,Map,Date,console,
     history:{replaceState(){}},location:{hash,search,pathname:'/account.html',origin:'https://www.alaada.com',replace:p=>redirects.push(p)},
     fetch:async(url,options={})=>{
       const pathname=new URL(url,'https://www.alaada.com').pathname,req={pathname,url,method:options.method||'GET',options};requests.push(req);
       if(reply){const result=await reply(req);if(result!==undefined)return result}
-      if(pathname==='/v1/account')return json(alice);
+      if(pathname==='/v1/account')return json(storedAccount);
+      if(pathname==='/v1/account/name'){storedAccount.name=JSON.parse(options.body).name;return json(storedAccount)}
+      if(pathname==='/v1/account/prefs'){storedAccount.prefs=JSON.parse(options.body).prefs;return json(storedAccount.prefs)}
+      if(pathname==='/v1/account/password')return json(storedAccount);
       if(pathname==='/v1/account/jwts')return json({jwt:'fixture-only'});
-      if(pathname==='/v1/account/sessions')return json({total:rows.length,sessions:rows});
+      if(pathname==='/v1/account/sessions'){
+        if(req.method==='DELETE'){rows=[];return new Response(null,{status:204})}
+        return json({total:rows.length,sessions:rows});
+      }
       if(pathname.startsWith('/v1/account/sessions/')&&req.method==='DELETE'){rows=rows.filter(r=>r.$id!==decodeURIComponent(pathname.split('/').pop()));return new Response(null,{status:204})}
       if(pathname==='/api/workspaces')return json({user:'alice',workspaces:[personal]});
       if(pathname.endsWith('/subscription'))return json({plan:'Free',billing:{checkout_enabled:false},pending:null});
-      if(pathname==='/api/account/preferences')return json({workspace:personal.id,version:0,personal_activity:true,organisation_activity:false});
+      if(pathname==='/api/account/preferences'){
+        if(req.method==='PUT')preferences={...preferences,...JSON.parse(options.body),version:preferences.version+1};
+        return json(preferences);
+      }
       if(pathname.endsWith('/notifications'))return json({items:[],next_before:null});
       throw Error('Unexpected request '+pathname);
     }});
@@ -159,4 +169,124 @@ test('Untrusted device labels are text, never HTML, and repeated refreshes share
   const one=env.api.loadSessions(),two=env.api.loadSessions();await flush();assert.equal(env.requests.filter(r=>r.pathname==='/v1/account/sessions').length,1);
   finish(json({total:1,sessions:[{...ownSession(),clientName:'<img src=x onerror=alert(1)>'}]}));await Promise.all([one,two]);
   const title=env.$('session-items').children[0].children[0].children[0];assert.match(title.textContent,/<img/);assert.equal(title.innerHTML,'');
+});
+
+const submit=(env,id)=>env.$(id).listeners.submit({target:env.$(id),preventDefault(){}});
+test('Profile writes are single-flight, capture submitted values, and exclude concurrent preference writes',async()=>{
+  let finish;const pending=new Promise(resolve=>finish=resolve);
+  const env=setup({reply:req=>req.pathname==='/v1/account/name'?pending.then(()=>undefined):undefined});await env.boot;
+  env.$('display-name').value='Updated Alice';env.$('classification').value='professional';
+  const first=submit(env,'profile-form');await flush();
+  const duplicate=submit(env,'profile-form'),overlap=submit(env,'preferences-form');
+  env.$('classification').value='freelancer';await flush();
+  assert.equal(env.requests.filter(r=>r.pathname==='/v1/account/name').length,1);
+  assert.equal(env.requests.filter(r=>r.pathname==='/v1/account/prefs').length,0);
+  finish();await Promise.all([first,duplicate,overlap]);
+  const writes=env.requests.filter(r=>r.pathname==='/v1/account/prefs');assert.equal(writes.length,1);
+  assert.equal(JSON.parse(writes[0].options.body).prefs.classification,'professional');
+  assert.equal(env.$('classification').value,'freelancer','In-flight changes stay in the form as an unsaved draft');
+  assert.match(env.$('profile-status').textContent,/newer edits are not saved/);assert.equal(env.$('profile-form').inert,false);
+});
+test('Notification preference conflicts require a fresh version without discarding unsaved choices',async()=>{
+  let version=0;const env=setup({reply:req=>{
+    if(req.pathname!=='/api/account/preferences')return;
+    if(req.method==='PUT'){
+      if(version===0){version=7;return new Response(JSON.stringify({detail:'Changed in another tab'}),{status:409})}
+      const data=JSON.parse(req.options.body);assert.equal(data.version,7);return json({workspace:personal.id,...data,version:8});
+    }
+    return json({workspace:personal.id,version,personal_activity:true,organisation_activity:false});
+  }});await env.boot;await env.api.loadPanel('preferences');
+  env.$('personal-activity').checked=false;env.$('organisation-activity').checked=true;
+  await submit(env,'preferences-form');
+  assert.match(env.$('preferences-status').textContent,/not saved|could not be confirmed/i);
+  assert.equal(env.$('retry-preferences').classList.contains('hidden'),false);
+  await submit(env,'preferences-form');
+  assert.equal(env.requests.filter(r=>r.pathname==='/api/account/preferences'&&r.method==='PUT').length,1,'No retry with the obsolete version');
+  await env.$('retry-preferences').click();
+  assert.equal(env.$('personal-activity').checked,false);assert.equal(env.$('organisation-activity').checked,true);
+  assert.match(env.$('preferences-status').textContent,/unsaved|review/i);
+  await submit(env,'preferences-form');assert.match(env.$('preferences-status').textContent,/Preferences saved/);
+});
+test('A lost password response does not resend, clear the draft, or announce success',async()=>{
+  let finish;const pending=new Promise(resolve=>finish=resolve);
+  const env=setup({reply:req=>req.pathname==='/v1/account/password'?pending.then(()=>new Response('',{status:502})):undefined});await env.boot;
+  env.$('old-password').value='old-fixture-password';env.$('new-password').value='new-fixture-password';
+  const first=submit(env,'password-form');await flush();const duplicate=submit(env,'password-form');finish();await Promise.all([first,duplicate]);
+  assert.equal(env.requests.filter(r=>r.pathname==='/v1/account/password').length,1);
+  assert.equal(env.$('new-password').value,'new-fixture-password');
+  assert.match(env.$('security-status').textContent,/could not be confirmed/i);
+});
+
+test('Malformed activity acknowledgements never announce success or reuse an unverified version',async()=>{
+  for(const data of [{},{workspace:'another-user',version:1,personal_activity:false,organisation_activity:true},
+    {workspace:personal.id,version:9,personal_activity:false,organisation_activity:true},
+    {workspace:personal.id,version:1,personal_activity:true,organisation_activity:true}]){
+    const env=setup({reply:req=>req.pathname==='/api/account/preferences'&&req.method==='PUT'?json(data):undefined});
+    await env.boot;await env.api.loadPanel('preferences');env.$('personal-activity').checked=false;env.$('organisation-activity').checked=true;
+    await submit(env,'preferences-form');await submit(env,'preferences-form');
+    assert.equal(env.requests.filter(r=>r.pathname==='/api/account/preferences'&&r.method==='PUT').length,1);
+    assert.equal(env.$('retry-preferences').classList.contains('hidden'),false);
+    assert.doesNotMatch(env.$('preferences-status').textContent,/^Preferences saved/);
+  }
+});
+test('Lost preference acknowledgements preserve drafts through failed recovery reads',async()=>{
+  let failed=false;const env=setup({reply:req=>{
+    if(req.pathname!=='/api/account/preferences')return;
+    if(req.method==='PUT'){failed=true;return new Response('',{status:502})}
+    if(failed)return new Response('',{status:503});
+  }});await env.boot;await env.api.loadPanel('preferences');env.$('personal-activity').checked=false;env.$('organisation-activity').checked=true;
+  await submit(env,'preferences-form');await env.$('retry-preferences').click();await submit(env,'preferences-form');
+  assert.equal(env.$('personal-activity').checked,false);assert.equal(env.$('organisation-activity').checked,true);
+  assert.equal(env.requests.filter(r=>r.pathname==='/api/account/preferences'&&r.method==='PUT').length,1);
+  assert.equal(env.$('retry-preferences').classList.contains('hidden'),false);
+});
+test('A successful preferences save retains unrelated profile settings',async()=>{
+  const env=setup();await env.boot;env.$('classification').value='freelancer';await submit(env,'profile-form');
+  await env.api.loadPanel('preferences');env.$('theme').value='dark';await submit(env,'preferences-form');
+  const data=JSON.parse(env.requests.filter(r=>r.pathname==='/v1/account/prefs').at(-1).options.body);
+  assert.equal(data.prefs.classification,'freelancer');assert.equal(data.prefs.onboarding_completed,true);
+  assert.equal(data.prefs.theme,'dark');assert.equal(env.$('preferences-status').textContent,'Preferences saved.');
+});
+test('A profile partial save reports the saved name and keeps the classification draft',async()=>{
+  const env=setup({reply:req=>req.pathname==='/v1/account/prefs'?new Response('',{status:502}):undefined});await env.boot;
+  env.$('display-name').value='New name';env.$('classification').value='professional';await submit(env,'profile-form');
+  assert.match(env.$('profile-status').textContent,/Display name saved.*classification could not be confirmed/);
+  assert.equal(env.$('classification').value,'professional');assert.equal(env.$('profile-form').inert,false);
+});
+test('Account replacement during profile or preference writes locks private UI and suppresses later writes',async()=>{
+  for(const form of ['profile-form','preferences-form']){
+    let replaced=false;const env=setup({reply:req=>{
+      if(req.pathname==='/v1/account'&&replaced)return json({...alice,$id:'bob'});
+      if(req.pathname==='/v1/account/name'){replaced=true;return json({...alice,name:'Alice'})}
+      if(req.pathname==='/v1/account/prefs'){replaced=true;return json({})}
+    }});await env.boot;if(form==='preferences-form')await env.api.loadPanel('preferences');await submit(env,form);
+    assert.equal(env.$('app').classList.contains('hidden'),true);assert.equal(env.$(form).inert,true);
+    assert.equal(env.requests.filter(r=>r.method==='PUT').length,1);assert.match(env.$('failure-message').textContent,/account changed/);
+  }
+});
+test('Password changes reject malformed acknowledgement and clear only confirmed submitted values',async()=>{
+  for(const data of [{},{...alice,$id:'bob'},alice]){
+    const env=setup({reply:req=>req.pathname==='/v1/account/password'?json(data):undefined});await env.boot;
+    env.$('old-password').value='old-fixture-password';env.$('new-password').value='new-fixture-password';await submit(env,'password-form');
+    assert.equal(env.$('new-password').value,data===alice?'':'new-fixture-password');
+    assert.match(env.$('security-status').textContent,data===alice?/Password changed/:/could not be confirmed/);
+  }
+});
+test('Signing out all devices needs explicit confirmation and sends only one DELETE',async()=>{
+  const env=setup();await env.boot;await env.$('signout-all').click();
+  assert.equal(env.requests.some(r=>r.method==='DELETE'),false);assert.match(env.$('session-confirm-text').textContent,/including this one/);
+  await Promise.all([env.api.endSession(),env.api.endSession()]);
+  assert.deepEqual(env.requests.filter(r=>r.method==='DELETE').map(r=>r.pathname),['/v1/account/sessions']);
+  assert.deepEqual(env.redirects,['/auth.html?next=%2Faccount.html%23security']);
+});
+test('Cancel or an account switch before all-device confirmation cannot revoke sessions',async()=>{
+  let changed=false;const env=setup({reply:req=>changed&&req.pathname==='/v1/account'?json({...alice,$id:'bob'}):undefined});await env.boot;
+  await env.$('signout-all').click();await env.$('session-confirm-no').click();await env.api.endSession();
+  await env.$('signout-all').click();changed=true;await env.api.endSession();assert.equal(env.requests.some(r=>r.method==='DELETE'),false);
+});
+test('A failed all-device sign-out neither redirects nor repeats the write',async()=>{
+  const env=setup({reply:req=>req.method==='DELETE'?new Response('',{status:502}):undefined});await env.boot;
+  await env.$('signout-all').click();await env.api.endSession();await env.api.endSession();
+  assert.equal(env.requests.filter(r=>r.method==='DELETE').length,1);assert.equal(env.redirects.length,0);
+  assert.match(env.$('sessions-status').textContent,/could not be confirmed/);
 });

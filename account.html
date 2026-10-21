@@ -34,6 +34,7 @@
     let inboxEpoch=0,inboxBefore=null,inboxBusy=false;
     let workspacesReady=false,workspaceLoad=null,preferenceLoad=null,subscriptionLoad=null;
     let sessionsEpoch=0,sessionsLoad=null,sessions=[],sessionAction=false,pendingSession=null;
+    let accountMutation=false,preferencesNeedRefresh=false;
     const idOf=workspace=>workspace?.id||workspace?.$id;
     $('password-form').insertAdjacentHTML('afterend','<h2 style="margin-top:28px">Signed-in devices</h2><p class="sub">Review and end your own Appwrite sessions. No paid plan is required.</p><button id="sessions-refresh" class="secondary" type="button">Refresh devices</button><p id="sessions-status" class="status" role="status" aria-live="polite"></p><div id="session-confirm" class="session-confirm hidden" role="group" aria-label="Confirm sign-out"><p id="session-confirm-text"></p><div class="actions"><button id="session-confirm-yes" class="danger" type="button">End session</button><button id="session-confirm-no" class="secondary" type="button">Keep session</button></div></div><div id="session-items" aria-label="Signed-in devices"></div>');
     for(const [panel,statusId] of Object.entries({'workspaces-panel':'workspace-status',subscription:'plan-status',preferences:'preferences-status',notifications:'inbox-status'})){
@@ -43,6 +44,27 @@
     $('create-enterprise').disabled=true;$('send-invite').disabled=true;$('change-plan').disabled=true;
     $('personal-activity').disabled=true;$('organisation-activity').disabled=true;
     function msg(id,text,error=false){const el=$(id);el.textContent=text;el.classList.toggle('error',error)}
+    function beginAccountMutation(){
+      if(!account||accountMutation||sessionAction)return false;
+      accountMutation=true;
+      // Appwrite preferences are a whole-object replacement. Profile and display
+      // settings must not race each other's read/modify/write on this page.
+      for(const id of ['profile-form','preferences-form','password-form']){$(id).inert=true;$(id).setAttribute('aria-busy','true')}
+      return true;
+    }
+    function endAccountMutation(){
+      accountMutation=false;
+      for(const id of ['profile-form','preferences-form','password-form']){$(id).inert=!account;$(id).setAttribute('aria-busy','false')}
+    }
+    function writeFailure(error,action){
+      return !error.status||error.status>=500||error.status===408
+        ?action+' could not be confirmed. Check the saved state before trying again. Your draft has been kept.'
+        :action+' not saved. '+error.message;
+    }
+    function verifyPreferences(preferences){
+      if(preferences.workspace!==idOf(personal)||!Number.isSafeInteger(preferences.version)||preferences.version<0||typeof preferences.personal_activity!=='boolean'||typeof preferences.organisation_activity!=='boolean')throw new Error('Activity preferences could not be verified. Retry before saving them.');
+      return preferences;
+    }
     async function readUMSResponse(response,service,allowEmpty=false){
       let data=null;const raw=await response.text();
       try{data=raw.trim()?JSON.parse(raw):null}catch{}
@@ -103,9 +125,12 @@
       if(preferencesReady)return;
       if(preferenceLoad)return preferenceLoad;
       preferenceLoad=(async()=>{
-        const preferences=await backend('/account/preferences','GET',undefined,idOf(personal));
-        if(preferences.workspace!==idOf(personal)||!Number.isInteger(preferences.version)||typeof preferences.personal_activity!=='boolean'||typeof preferences.organisation_activity!=='boolean')throw new Error('Activity preferences could not be verified. Retry before saving them.');
-        prefsVersion=preferences.version;preferencesReady=true;$('personal-activity').checked=preferences.personal_activity;$('organisation-activity').checked=preferences.organisation_activity;
+        const preferences=verifyPreferences(await backend('/account/preferences','GET',undefined,idOf(personal)));
+        prefsVersion=preferences.version;preferencesReady=true;
+        // On recovery, leave the user's current checkbox choices untouched.
+        // Reading a fresh version never submits the preserved draft for them.
+        if(!preferencesNeedRefresh){$('personal-activity').checked=preferences.personal_activity;$('organisation-activity').checked=preferences.organisation_activity}
+        preferencesNeedRefresh=false;
         $('personal-activity').disabled=false;$('organisation-activity').disabled=false;
       })();
       try{await preferenceLoad}finally{preferenceLoad=null}
@@ -118,6 +143,8 @@
     async function loadPanel(name){
       if(!account||name==='profile')return;
       if(name==='security'){await loadSessions();return}
+      if(name==='preferences'&&accountMutation)return;
+      const recoveringPreferences=name==='preferences'&&preferencesNeedRefresh;
       const status={notifications:'inbox-status',subscription:'plan-status',preferences:'preferences-status','workspaces-panel':'workspace-status'}[name];
       msg(status,'Loading '+(name==='subscription'?'your verified plan':'workspace settings')+'…');$('retry-'+name).classList.add('hidden');
       try{
@@ -125,6 +152,7 @@
         if(name==='notifications'){await loadInbox(true);return}
         if(name==='subscription')await loadSubscription();
         if(name==='preferences')await loadPreferences();
+        if(recoveringPreferences){msg(status,'Latest activity settings checked. Your unsaved choices are still selected. Review them, then Save preferences to apply them.');return}
         msg(status,name==='subscription'&&params.get('billing')==='complete'?'Returned from checkout. Only verified payment records update your plan.':name==='subscription'&&params.get('billing')==='cancelled'?'Checkout was cancelled. Your plan is unchanged.':'');
       }catch(error){if(account){msg(status,error.message||'Could not load this section. Please retry.',true);$('retry-'+name).classList.remove('hidden');if(!workspacesReady)$('active-label').textContent='Workspace connection unavailable'}}
     }
@@ -142,8 +170,8 @@
         const title=document.createElement('strong');title.textContent=sessionLabel(session);details.append(title);
         if(session.current){const badge=document.createElement('span');badge.className='pill';badge.textContent='This device';details.append(badge)}
         for(const text of ['Signed in: '+sessionTime(session.created),'Expires: '+sessionTime(session.expire)]){const line=document.createElement('p');line.className='status';line.textContent=text;details.append(line)}
-        const button=document.createElement('button');button.type='button';button.className='danger';button.textContent=session.current?'Sign out here':'End session';button.disabled=sessionAction;
-        button.onclick=()=>{if(sessionAction)return;pendingSession=session;$('session-confirm-text').textContent='End '+sessionLabel(session)+(session.current?' on this device? You will be signed out.':'? That device will need to sign in again.');$('session-confirm').classList.remove('hidden');$('session-confirm-yes').focus()};
+        const button=document.createElement('button');button.type='button';button.className='danger';button.textContent=session.current?'Sign out here':'End session';button.disabled=sessionAction||accountMutation;
+        button.onclick=()=>{if(sessionAction||accountMutation)return;pendingSession=session;$('session-confirm-text').textContent='End '+sessionLabel(session)+(session.current?' on this device? You will be signed out.':'? That device will need to sign in again.');$('session-confirm-yes').textContent='End session';$('session-confirm').classList.remove('hidden');$('session-confirm-yes').focus()};
         row.append(details,button);$('session-items').append(row);
       }
     }
@@ -160,11 +188,12 @@
       try{await sessionsLoad}finally{sessionsLoad=null}
     }
     async function endSession(){
-      if(sessionAction||!pendingSession||!account)return;
+      if(sessionAction||accountMutation||!pendingSession||!account)return;
       const target=pendingSession,userId=account.$id;sessionAction=true;pendingSession=null;$('session-confirm').classList.add('hidden');$('sessions-refresh').disabled=true;renderSessions();
       let attempted=false;
       try{
         await currentAccount();const fresh=verifiedSessions(await aw('/account/sessions'),userId);await currentAccount();
+        if(target.all){attempted=true;await aw('/account/sessions','DELETE');location.replace('/auth.html?next=%2Faccount.html%23security');return}
         const selected=fresh.find(s=>s.$id===target.$id);
         if(!selected){sessions=fresh;msg('sessions-status','That session has already ended.');return}
         // Appwrite also enforces session ownership; never use a server API key.
@@ -275,22 +304,86 @@
     $('inbox-more').addEventListener('click',()=>loadInbox(false));
     $('inbox-preferences').addEventListener('click',()=>showPanel('preferences'));
     $('invite-workspace').addEventListener('change',renderInvite);$('plan-select').addEventListener('change',renderSubscription);
-    $('profile-form').addEventListener('submit',async event=>{event.preventDefault();const name=$('display-name').value.trim();if(!name)return msg('profile-status','Enter your display name.',true);try{await currentAccount();await aw('/account/name','PUT',{name});const latest=await currentAccount();const prefs={...(latest.prefs||{}),account_type:$('account-type').value,classification:$('classification').value};await aw('/account/prefs','PUT',{prefs});account={...latest,name,prefs};msg('profile-status','Profile and account classification saved.')}catch(error){msg('profile-status',error.message,true)}});
+    $('profile-form').addEventListener('submit',async event=>{
+      event.preventDefault();const name=$('display-name').value.trim(),accountType=$('account-type').value,classification=$('classification').value;
+      if(!name)return msg('profile-status','Enter your display name.',true);
+      if(!beginAccountMutation())return;
+      let nameSaved=false,attempted=false;msg('profile-status','Saving profile…');
+      try{
+        const current=await currentAccount();attempted=true;
+        const renamed=await aw('/account/name','PUT',{name});
+        if(renamed.$id!==current.$id||renamed.name!==name)throw new Error('The name change could not be verified.');
+        nameSaved=true;const latest=await currentAccount(),prefs={...(latest.prefs||{}),account_type:accountType,classification};
+        await aw('/account/prefs','PUT',{prefs});const verified=await currentAccount();
+        if(verified.name!==name||verified.prefs?.account_type!==accountType||verified.prefs?.classification!==classification)throw new Error('The saved profile did not match this submission.');
+        account=verified;const changed=$('display-name').value.trim()!==name||$('account-type').value!==accountType||$('classification').value!==classification;
+        msg('profile-status',changed?'Submitted profile saved. Your newer edits are not saved yet.':'Profile and account classification saved.');
+      }catch(error){if(account)msg('profile-status',(nameSaved?'Display name saved. ':'')+(attempted?writeFailure(error,nameSaved?'Account classification':'Profile'):error.message),true)}
+      finally{endAccountMutation()}
+    });
     $('enterprise-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('create-enterprise'),name=$('enterprise-name').value.trim();if(button.disabled||!name)return;button.disabled=true;let created;try{await currentAccount();created=await aw('/teams','POST',{teamId:'team_'+crypto.randomUUID().replaceAll('-','').slice(0,28),name,roles:['owner']});$('enterprise-name').value='';workspaces=(await backend('/workspaces')).workspaces||[];renderWorkspaces();active=workspaces.find(w=>w.kind==='organisation'&&w.team===created.$id)||active;renderActive();msg('enterprise-status',`Enterprise workspace “${created.name}” created. Your personal workspace and plan are preserved.`)}catch(error){msg('enterprise-status',created?'Your team was created. Reload to finish connecting its workspace. Avoid creating a duplicate.':error.message,true)}finally{button.disabled=false}});
     $('invite-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('send-invite'),workspace=workspaces.find(w=>idOf(w)===$('invite-workspace').value);if(button.disabled||!workspace||!['owner','admin'].includes(workspace.role))return;button.disabled=true;try{await currentAccount();const email=$('invite-email').value.trim().toLowerCase();await aw(`/teams/${encodeURIComponent(workspace.team)}/memberships`,'POST',{email,roles:[$('invite-role').value],url:new URL('/accept-invitation.html',location.origin).href});msg('invite-status',`Invitation sent to ${email}. They must accept it to join the workspace.`);$('invite-email').value=''}catch(error){msg('invite-status',error.message,true)}finally{button.disabled=false}});
-    $('preferences-form').addEventListener('submit',async event=>{event.preventDefault();try{const latest=await currentAccount(),prefs={...(latest.prefs||{}),theme:$('theme').value,language:$('language').value,currency:$('currency').value,default_product:$('default_product').value};await aw('/account/prefs','PUT',{prefs});account={...latest,prefs};if(preferencesReady){const updated=await backend('/account/preferences','PUT',{version:prefsVersion,personal_activity:$('personal-activity').checked,organisation_activity:$('organisation-activity').checked},idOf(personal));prefsVersion=updated.version}msg('preferences-status',preferencesReady?'Preferences saved.':'Display preferences saved. Reload to load activity preferences.')}catch(error){msg('preferences-status',error.message,true)}});
+    $('preferences-form').addEventListener('submit',async event=>{
+      event.preventDefault();if(accountMutation)return;
+      if(preferencesNeedRefresh){msg('preferences-status','Reload the latest activity settings before saving again. Your unsaved choices have been kept.',true);return}
+      const display={theme:$('theme').value,language:$('language').value,currency:$('currency').value,default_product:$('default_product').value};
+      const activity=preferencesReady?{version:prefsVersion,personal_activity:$('personal-activity').checked,organisation_activity:$('organisation-activity').checked}:null;
+      if(!beginAccountMutation())return;
+      let displaySaved=false,attempted=false,activityAttempted=false;msg('preferences-status','Saving preferences…');
+      try{
+        const latest=await currentAccount(),prefs={...(latest.prefs||{}),...display};attempted=true;
+        await aw('/account/prefs','PUT',{prefs});const verified=await currentAccount();
+        if(Object.entries(display).some(([key,value])=>verified.prefs?.[key]!==value))throw new Error('Saved display preferences did not match this submission.');
+        account=verified;displaySaved=true;
+        if(activity){
+          activityAttempted=true;
+          const updated=verifyPreferences(await backend('/account/preferences','PUT',activity,idOf(personal)));
+          if(updated.version!==activity.version+1||updated.personal_activity!==activity.personal_activity||updated.organisation_activity!==activity.organisation_activity)throw new Error('The saved activity preferences did not match this submission.');
+          prefsVersion=updated.version;
+        }
+        const changed=Object.entries(display).some(([key,value])=>$(key).value!==value)||(activity&&($('personal-activity').checked!==activity.personal_activity||$('organisation-activity').checked!==activity.organisation_activity));
+        msg('preferences-status',changed?'Submitted preferences saved. Your newer edits are not saved yet.':activity?'Preferences saved.':'Display preferences saved. Reload to load activity preferences.');
+      }catch(error){
+        if(account){
+          if(activityAttempted){preferencesReady=false;preferencesNeedRefresh=true;$('retry-preferences').classList.remove('hidden')}
+          msg('preferences-status',(displaySaved?'Display preferences saved. ':'')+(attempted?writeFailure(error,displaySaved?'Activity preferences':'Display preferences'):error.message),true);
+        }
+      }finally{endAccountMutation()}
+    });
     $('change-plan').addEventListener('click',async()=>{
       const plan=$('plan-select').value;if(!canChange(plan))return;changingPlan=true;renderSubscription();
       try{const result=await backend('/workspaces/'+encodeURIComponent(idOf(personal))+'/subscription','POST',{plan},idOf(personal));if(result.checkout_url){const target=new URL(result.checkout_url);if(target.protocol!=='https:'||!['checkout.dodopayments.com','test.checkout.dodopayments.com'].includes(target.hostname)||target.username||target.password)throw new Error('The payment service returned an invalid checkout address. Contact support.');location.assign(target.href);return}await refreshSubscription();msg('plan-status',result.message||(result.state==='scheduled'?'Plan change scheduled for your next billing date.':'Your request is awaiting verified payment confirmation.'))}catch(error){msg('plan-status',error.message,true)}finally{changingPlan=false;renderSubscription()}
     });
     $('refresh-plan').addEventListener('click',async()=>{const button=$('refresh-plan');button.disabled=true;try{await ensureWorkspaces();await loadSubscription();msg('plan-status',subscription.pending?'Payment confirmation is still pending.':'Plan status refreshed from verified billing records.')}catch(error){msg('plan-status',error.message,true)}finally{button.disabled=false}});
     $('verify-email').addEventListener('click',async()=>{const button=$('verify-email');button.disabled=true;try{await currentAccount();await aw('/account/verification','POST',{url:new URL('/auth.html?verified=complete&next=%2Faccount.html%23security',location.origin).href});msg('security-status','Verification email sent.')}catch(error){msg('security-status',error.message,true)}finally{button.disabled=false}});
-    $('password-form').addEventListener('submit',async event=>{event.preventDefault();try{await currentAccount();await aw('/account/password','PUT',{password:$('new-password').value,oldPassword:$('old-password').value});event.target.reset();msg('security-status','Password changed.')}catch(error){msg('security-status',error.message,true)}});
+    $('password-form').addEventListener('submit',async event=>{
+      event.preventDefault();if(!beginAccountMutation())return;
+      const password=$('new-password').value,oldPassword=$('old-password').value;let attempted=false;msg('security-status','Changing password…');
+      try{
+        const current=await currentAccount();attempted=true;
+        const updated=await aw('/account/password','PUT',{password,oldPassword});
+        if(updated.$id!==current.$id)throw new Error('The password change could not be verified.');
+        await currentAccount();
+        if($('new-password').value===password)$('new-password').value='';
+        if($('old-password').value===oldPassword)$('old-password').value='';
+        msg('security-status','Password changed.');
+      }catch(error){if(account)msg('security-status',attempted?writeFailure(error,'Password change'):error.message,true)}
+      finally{endAccountMutation()}
+    });
     $('sessions-refresh').addEventListener('click',()=>loadSessions());
     $('session-confirm-no').addEventListener('click',()=>{pendingSession=null;$('session-confirm').classList.add('hidden')});
     $('session-confirm-yes').addEventListener('click',()=>endSession());
-    $('signout').addEventListener('click',async()=>{try{await aw('/account/sessions/current','DELETE');location.replace('/')}catch(error){msg('security-status','Sign-out could not be confirmed. Please retry.',true)}});
-    $('signout-all').addEventListener('click',async()=>{try{await aw('/account/sessions','DELETE');location.replace('/')}catch(error){msg('security-status',error.message,true)}});
+    $('signout').addEventListener('click',async()=>{
+      if(!account||accountMutation||sessionAction)return;sessionAction=true;
+      try{await currentAccount();await aw('/account/sessions/current','DELETE');location.replace('/')}
+      catch(error){if(account)msg('security-status','Sign-out could not be confirmed. Please retry.',true)}
+      finally{sessionAction=false}
+    });
+    $('signout-all').addEventListener('click',()=>{
+      if(!account||accountMutation||sessionAction)return;pendingSession={all:true};
+      $('session-confirm-text').textContent='Sign out every device, including this one? Save your work first. Every device will need to sign in again.';
+      $('session-confirm-yes').textContent='Sign out all devices';$('session-confirm').classList.remove('hidden');$('session-confirm-yes').focus();
+    });
     document.addEventListener('visibilitychange',()=>{if(document.hidden){$('app').inert=true;return}if(account)currentAccount().then(()=>{$('app').inert=false}).catch(()=>{})});
     load();
   })();
