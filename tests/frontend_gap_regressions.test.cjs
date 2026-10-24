@@ -66,6 +66,16 @@ test('Fast UI keeps hero content visible and removes decorative timers and Sheet
   assert(!sheet.includes('data-state="saved" aria-live="polite">Saved'),'Do not claim unsynced data is saved');
 });
 
+test('Onboarding renders the profile before the private workspace request settles',()=>{
+  const source=read('onboarding.html');
+  const reveal=source.indexOf('revealProfile(account);'),prepare=source.indexOf('workspaceReady=workspaceContext(account.$id);');
+  assert(reveal>0&&prepare>reveal,'A signed-in new user must see the profile form before workspace provisioning finishes');
+  assert.match(source,/workspaceReady\.then\(async context=>/);
+  assert.match(source,/Continue will safely retry/);
+  assert.match(source,/try\{context=await workspaceReady}catch\{context=await workspaceContext\(account\.\$id\)\}/);
+  assert.match(source,/window\.__alaadaOnboarding=\{account,workspace:null,context:null\}/);
+});
+
 test('Sheets restores cloud data even if IndexedDB is unavailable',async()=>{
   const source=extract(read('Spreadsheets.html'),'async _initPersistence(){','\n  },').slice(0,-1);
   const states=[],stored=new Map(),snapshot={name:'Existing workbook',sheets:[{name:'Data',cells:{A1:{value:'keep'}}}]};

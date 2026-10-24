@@ -45,7 +45,7 @@
       } catch {return '/account.html';}
     }
     const next=safeNext(params.get('next')||'/account.html');
-    let checkoutReady=false;
+    let checkoutReady=false,workspaceReady=null;
     function message(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error);$('status').classList.toggle('ok',!error&&!!text)}
     async function readUMSResponse(response,service,allowEmpty=false){
       let data=null;const raw=await response.text();
@@ -94,21 +94,35 @@
       if((await appwrite('/account')).$id!==current.$id)throw new Error('Your signed-in account changed. Reload before continuing.');
       return {token:token.jwt,personal,subscription};
     }
+    async function configureWorkspaceUI(context){
+      $('personal-plan').value=['Free','Pro','Elite'].includes(context.subscription.plan)?context.subscription.plan:'Free';
+      try{const response=await fetch('/api/health',{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Billing unavailable');const billing=(await response.json()).dodo_billing||{};checkoutReady=Boolean(billing.checkout_enabled&&billing.webhook_configured&&billing.products_configured)}catch{checkoutReady=false}
+      for(const option of $('personal-plan').options)if(option.value!=='Free'){option.disabled=!checkoutReady;option.textContent=option.value+(checkoutReady?' · review checkout':' · checkout unavailable')}
+      $('payment-note').textContent=`Current personal plan: ${context.subscription.plan||'Free'}. `+(checkoutReady?'Choose a paid plan to review secure checkout after saving your profile. Selecting a plan does not charge you or activate access.':'Paid checkout is currently unavailable. Continue with your existing plan; no payment has been taken.');
+    }
+    function revealProfile(account){
+      const name=(account.name||'').trim().split(/\s+/).filter(Boolean);
+      $('first').value=name.shift()||'';$('last').value=name.join(' ');
+      const prefs=account.prefs||{};$('account-type').value=prefs.account_type==='enterprise'?'enterprise':'personal';$('classification').value=prefs.classification||'individual';
+      $('business-note').classList.toggle('hidden',$('account-type').value!=='enterprise');
+      $('form').classList.remove('hidden');$('loading').classList.add('hidden');
+    }
     async function boot(){
       try{
         const account=await appwrite('/account');
         if(account.prefs?.onboarding_completed){location.replace(next);return}
-        const context=await workspaceContext(account.$id);
-        const name=(account.name||'').trim().split(/\s+/).filter(Boolean);
-        $('first').value=name.shift()||'';$('last').value=name.join(' ');
-        const prefs=account.prefs||{};$('account-type').value=prefs.account_type==='enterprise'?'enterprise':'personal';$('classification').value=prefs.classification||'individual';
-        $('business-note').classList.toggle('hidden',$('account-type').value!=='enterprise');
-        $('personal-plan').value=['Free','Pro','Elite'].includes(context.subscription.plan)?context.subscription.plan:'Free';
-        try{const response=await fetch('/api/health',{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Billing unavailable');const billing=(await response.json()).dodo_billing||{};checkoutReady=Boolean(billing.checkout_enabled&&billing.webhook_configured&&billing.products_configured)}catch{checkoutReady=false}
-        for(const option of $('personal-plan').options)if(option.value!=='Free'){option.disabled=!checkoutReady;option.textContent=option.value+(checkoutReady?' · review checkout':' · checkout unavailable')}
-        $('payment-note').textContent=`Current personal plan: ${context.subscription.plan||'Free'}. `+(checkoutReady?'Choose a paid plan to review secure checkout after saving your profile. Selecting a plan does not charge you or activate access.':'Paid checkout is currently unavailable. Continue with your existing plan; no payment has been taken.');
-        $('form').classList.remove('hidden');$('loading').classList.add('hidden');
-        window.__alaadaOnboarding={account,workspace:context.personal};
+        revealProfile(account);
+        window.__alaadaOnboarding={account,workspace:null,context:null};
+        message('Your private workspace is being prepared in the background. You can complete your profile now.');
+        workspaceReady=workspaceContext(account.$id);
+        workspaceReady.then(async context=>{
+          if(!window.__alaadaOnboarding||window.__alaadaOnboarding.account.$id!==account.$id)return;
+          window.__alaadaOnboarding.workspace=context.personal;window.__alaadaOnboarding.context=context;
+          await configureWorkspaceUI(context);
+          message('Your private workspace is ready.');
+        }).catch(()=>{
+          if(window.__alaadaOnboarding?.account.$id===account.$id)message('Your profile is ready. Your private workspace is taking longer than usual; Continue will safely retry.',false);
+        });
       }catch(error){
         const unauthorised=error.status===401;
         $('loading').textContent=unauthorised?'Sign in to finish setting up your Alaada account.':error.message||'Your private workspace is temporarily unavailable.';
@@ -124,7 +138,13 @@
       try{
         const account=await appwrite('/account');
         if(!window.__alaadaOnboarding||account.$id!==window.__alaadaOnboarding.account.$id)throw new Error('Your signed-in account changed. Reload this page before continuing.');
-        const context=await workspaceContext(account.$id);
+        let context=window.__alaadaOnboarding.context;
+        if(!context){
+          try{context=await workspaceReady}catch{context=await workspaceContext(account.$id)}
+          if(!context||context.personal===undefined)context=await workspaceContext(account.$id);
+          window.__alaadaOnboarding.workspace=context.personal;window.__alaadaOnboarding.context=context;
+          await configureWorkspaceUI(context);
+        }
         const displayName=[first,last].filter(Boolean).join(' ').slice(0,128);
         await appwrite('/account/name','PUT',{name:displayName});
         const latest=await appwrite('/account');
