@@ -337,6 +337,32 @@
   .trust-bar{background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:center;gap:36px;flex-wrap:wrap;}
   .trust-item{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:500;color:var(--ink3);}
 
+  /* FIRST-YEAR REACH */
+  .ann-impact{
+    display:grid;grid-template-columns:auto 1px minmax(0,1fr);gap:30px;align-items:center;
+    margin:44px 0 58px;padding:28px 34px;border:1px solid rgba(246,193,76,.26);
+    border-radius:22px;background:linear-gradient(115deg,rgba(246,193,76,.11),rgba(124,58,237,.10) 72%,rgba(255,255,255,.025));
+    box-shadow:0 18px 55px rgba(0,0,0,.16);position:relative;overflow:hidden;
+  }
+  .ann-impact::before{content:'';position:absolute;inset:auto -80px -150px auto;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(246,193,76,.13),transparent 70%);pointer-events:none;}
+  .impact-number-wrap{position:relative;z-index:1;min-width:150px;text-align:center;}
+  .impact-number{display:block;font-family:'Syne',sans-serif;font-size:clamp(3.2rem,7vw,4.6rem);font-weight:800;line-height:.95;letter-spacing:-3px;color:#f6c14c;font-variant-numeric:tabular-nums;}
+  .impact-label{display:block;margin-top:9px;font-size:.7rem;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;color:rgba(255,255,255,.62);}
+  .impact-divider{width:1px;align-self:stretch;background:linear-gradient(to bottom,transparent,rgba(246,193,76,.48),transparent);}
+  .impact-copy-wrap{position:relative;z-index:1;}
+  .impact-eyebrow{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:2.1px;text-transform:uppercase;color:#f6c14c;margin-bottom:8px;}
+  .impact-copy{font-size:.96rem;line-height:1.8;color:rgba(255,255,255,.8);margin:0;}
+  .impact-copy strong{color:#fff;font-weight:700;}
+  .impact-source{margin-top:11px;font-size:.69rem;letter-spacing:.35px;color:rgba(255,255,255,.42);}
+  @media(max-width:680px){
+    .ann-impact{grid-template-columns:1fr;gap:17px;margin:34px 0 44px;padding:24px 20px;text-align:center;}
+    .impact-number-wrap{min-width:0;display:flex;align-items:baseline;justify-content:center;gap:10px;}
+    .impact-number{font-size:3.65rem;}
+    .impact-label{margin-top:0;font-size:.64rem;}
+    .impact-divider{width:54px;height:1px;justify-self:center;background:linear-gradient(to right,transparent,rgba(246,193,76,.55),transparent);}
+    .impact-copy{font-size:.9rem;line-height:1.75;}
+  }
+
   /* ═════ ANNIVERSARY SECTION ═════ */
   #anniversary{position:relative;overflow:hidden;background:#0d0c0b;color:#fff;padding:110px 32px 120px;}
   #anniversary::before{content:'';position:absolute;top:-180px;left:50%;transform:translateX(-50%);width:900px;height:620px;border-radius:50%;background:radial-gradient(circle,rgba(212,147,10,.28),transparent 68%);pointer-events:none;}
@@ -1148,6 +1174,19 @@
       <p class="thanks reveal">To everyone who explored Alaada, used our products, shared feedback, supported our journey or simply believed in the idea — thank you. You are part of this first chapter.</p>
     </div>
 
+
+    <section class="ann-impact reveal" aria-label="Alaada's first-year audience reach">
+      <div class="impact-number-wrap">
+        <span class="impact-number">2,000+</span>
+        <span class="impact-label">new users</span>
+      </div>
+      <div class="impact-divider" aria-hidden="true"></div>
+      <div class="impact-copy-wrap">
+        <p class="impact-eyebrow">A first year beyond borders</p>
+        <p class="impact-copy">More than <strong>2,000 people discovered Alaada</strong> during our first year. Our audience reached us from <strong>India</strong>, the <strong>United States</strong>, China, Germany, the UAE, Singapore and Ireland.</p>
+        <p class="impact-source">Google Analytics · 1 November 2025 – 2 November 2026</p>
+      </div>
+    </section>
 
     <div class="tn reveal" id="then-now">
       <h3 class="tn-title">Where it started</h3>
