@@ -8,25 +8,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f4ef">
 <title>Orbit AI — Alaada</title>
-<link rel="preconnect" href="https://sfo.cloud.appwrite.io" crossorigin>
-<meta name="description" content="Orbit AI helps with research, analysis, files, and everyday work."/>
-<link rel="canonical" href="https://www.alaada.com/Orbit.html"/>
-<script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.4.16/dist/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
   MathJax = {
     tex: { inlineMath:[['$','$'],['\\(','\\)']], displayMath:[['$$','$$'],['\\[','\\]']], processEscapes:true, processEnvironments:true },
     options: { skipHtmlTags:['script','noscript','style','textarea','pre'] }
   };
 </script>
-<script>
-let mathJaxLoadPromise;
-function ensureMathJax(){if(window.MathJax?.typesetPromise)return Promise.resolve(window.MathJax);if(!mathJaxLoadPromise)mathJaxLoadPromise=new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";script.async=true;script.onload=()=>resolve(window.MathJax);script.onerror=()=>{mathJaxLoadPromise=null;script.remove();reject(new Error("Math rendering could not be loaded"))};document.head.append(script)});return mathJaxLoadPromise}
-function typesetMath(node){if(!/[\$]|\\\(|\\\[/.test(node?.textContent||""))return;ensureMathJax().then(()=>window.MathJax.typesetPromise([node])).catch(()=>{})}
-</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 /* ═══════════════════════════════════
    DESIGN TOKENS — matches alaada.com
 ═══════════════════════════════════ */
@@ -990,10 +981,9 @@ body {
 /* ═══════════════════════════════════
    MOBILE
 ═══════════════════════════════════ */
-@media (max-width: 899px) {
+@media (max-width: 639px) {
   .sidebar {
-    position: fixed; top:var(--alaada-workspace-bar-height,36px); left:0; bottom:0;
-    max-width: min(86vw,320px);
+    position: fixed; top:0; left:0; bottom:0;
     transform: translateX(-100%);
     box-shadow: 8px 0 32px rgba(0,0,0,.12);
   }
@@ -1011,7 +1001,7 @@ body {
 /* ═══════════════════════════════════
    DESKTOP
 ═══════════════════════════════════ */
-@media (min-width: 900px) {
+@media (min-width: 640px) {
   .sidebar        { transform: none !important; position: relative; }
   #mobileHeader   { display: none !important; }
   #overlay        { display: none !important; }
@@ -1030,27 +1020,12 @@ body {
   #inputTextarea { border-radius: 14px; font-size: 14px; }
   .rnd-btn, #sendBtn { border-radius: var(--r-md); width: auto; height: auto; padding: 10px 14px; }
 }
-/* Keep the composer reachable on narrow and short screens. */
-.input-row{min-width:0}
-#inputTextarea{min-width:0}
-.message-wrap{min-width:0}
-.message{overflow-wrap:anywhere;max-width:100%;overflow-x:auto}
-#statusBar{overflow-wrap:anywhere;padding:6px 14px;line-height:1.4}
-#toast{white-space:normal;overflow-wrap:anywhere;border-radius:12px}
-@media(max-width:420px){
-  .input-row{display:grid;grid-template-columns:repeat(3,36px) minmax(0,1fr) 36px;gap:4px;padding:8px}
-  #inputTextarea{grid-row:1;grid-column:1 / 5;width:100%}
-  #sendBtn{grid-row:1;grid-column:5}
-  .input-row .rnd-btn{grid-row:2}
-  .rnd-btn,#sendBtn{width:36px;min-width:36px;height:40px}
-  .welcome-container{padding:16px 0}.welcome-logo{width:48px;height:48px}
-}
 </style>
 </head>
 <body data-alaada-product="orbit">
 <script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=0b10c82558ab" data-product="orbit"></script>
-<script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
+<script src="/api/workspaces/client.js" data-product="orbit"></script>
+<script>if(!window.AlaadaWorkspace)document.addEventListener('DOMContentLoaded',()=>{const gate=document.createElement('div');gate.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui';gate.textContent='The private workspace service is unavailable. Reload when the service is connected.';document.body.append(gate);});</script>
 <div id="app">
 
   <!-- SIDEBAR -->
@@ -1063,6 +1038,7 @@ body {
           <circle cx="14" cy="14" r="7.5"  stroke="#1a5fff" stroke-width="1.4" fill="none" opacity=".45"/>
           <circle cx="14" cy="14" r="2.8"  fill="#1a5fff"/>
           <circle cx="22.5" cy="9" r="2"   fill="#00957a">
+            <animateTransform attributeName="transform" type="rotate" from="0 14 14" to="360 14 14" dur="5s" repeatCount="indefinite"/>
           </circle>
         </svg>
         Orbit
@@ -1105,7 +1081,6 @@ body {
 
   <!-- MAIN -->
   <div class="main">
-    <h1 class="visually-hidden">Orbit AI</h1>
     <div id="mobileHeader">
       <button id="menuBtn" onclick="openSidebar()">☰</button>
       <span id="mobileTitle">Orbit AI</span>
@@ -1120,22 +1095,22 @@ body {
       <button id="speakStopBtn" onclick="stopSpeaking()">⏹ Stop</button>
     </div>
 
-    <div id="statusBar" role="status" aria-live="polite">Checking workspace capabilities…</div>
+    <div id="statusBar">—</div>
 
     <div class="input-wrapper" id="inputWrapper">
       <div id="previewBar">
-        <img id="prevThumb" src="/images/alaada-logo.jpg" alt="" style="display:none">
+        <img id="prevThumb" src="" alt="" style="display:none">
         <div id="prevName"></div>
-        <button id="prevClose" aria-label="Remove attachment from this draft" onclick="clearPreview()">✕</button>
+        <button id="prevClose" onclick="clearPreview()">✕</button>
       </div>
       <div class="input-row">
-        <button class="rnd-btn" id="micBtn" aria-label="Voice input" disabled>🎤</button>
-        <button class="rnd-btn" id="voiceBtn" aria-label="Read response aloud" title="Read aloud  •  Long-press for settings" disabled>🔊</button>
-        <button class="rnd-btn" id="attachBtn" aria-label="Attach a file" onclick="triggerFile()" disabled>📎</button>
-        <textarea id="inputTextarea" aria-label="Message to Orbit" aria-describedby="statusBar" placeholder="Ask Orbit anything…" rows="1"></textarea>
-        <button id="sendBtn" aria-label="Send message" onclick="send()" disabled>➤</button>
+        <button class="rnd-btn" id="micBtn">🎤</button>
+        <button class="rnd-btn" id="voiceBtn" title="Read aloud  •  Long-press for settings">🔊</button>
+        <button class="rnd-btn" onclick="triggerFile()">📎</button>
+        <textarea id="inputTextarea" placeholder="Ask Orbit anything…" rows="1"></textarea>
+        <button id="sendBtn" onclick="send()">➤</button>
         <input id="fileInput" type="file" style="display:none"
-          accept=".txt,.csv,.tsv,.md,.json">
+          accept="image/*,application/pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.txt,.csv">
       </div>
     </div>
   </div>
@@ -1145,12 +1120,10 @@ body {
 <div class="modal-bg" id="profileModal">
   <div class="sheet" id="profileSheet">
     <div class="sheet-handle"></div>
-    <h2 id="sheetTitle">Your Profile</h2>
-    <p class="welcome-subtitle">Optional preferences for this workspace. You can chat without completing this form.</p>
-    <button type="button" class="save-btn secondary" onclick="closeSheet()">Close profile</button>
-    <label for="p_name">Name</label>
+    <h3 id="sheetTitle">Your Profile</h3>
+    <label>Name *</label>
     <input id="p_name" placeholder="Your name" autocomplete="name" inputmode="text">
-    <label for="p_email">Email (optional)</label>
+    <label>Email *</label>
     <input id="p_email" type="email" placeholder="your@email.com" autocomplete="email" inputmode="email">
     <div class="field-row">
       <div><label>Age</label><input id="p_age" type="number" placeholder="Age" inputmode="numeric" min="1" max="120"></div>
@@ -1275,9 +1248,6 @@ let recorder = null, chunks = [], busy = false;
 ═══════════════════════════════════ */
 function parseMathMarkdown(text) {
   if (!text || text === "__TYPING__") return text;
-  // Both saved messages and model output are untrusted. A blocked CDN must
-  // degrade to readable plain text rather than break chat or insert raw HTML.
-  if (!window.marked?.parse || !window.DOMPurify?.sanitize) return escHtml(text).replace(/\n/g,'<br>');
   const blocks = [];
 
   // 1. Display math: \[...\]  (highest priority — do before $$)
@@ -1310,7 +1280,7 @@ function parseMathMarkdown(text) {
   // 6. Restore all math blocks
   html = html.replace(/\x02MATH(\d+)\x03/g, (_, i) => blocks[+i]);
 
-  return window.DOMPurify.sanitize(html,{USE_PROFILES:{html:true},FORBID_TAGS:['style','form','input','button'],FORBID_ATTR:['style','id','name']});
+  return html;
 }
 
 window.addEventListener("load", async () => {
@@ -1321,10 +1291,11 @@ window.addEventListener("load", async () => {
   imageGallery = JSON.parse(window.AlaadaWorkspace.storage.getItem('orbit_images') || '[]');
   voiceConfig = JSON.parse(window.AlaadaWorkspace.storage.getItem('orbit_voice') || 'null') || voiceConfig;
   autoResizeTA();
-  swipeToDismissSheet("profileSheet", "profileModal", () => true);
+  swipeToDismissSheet("profileSheet", "profileModal", () => profile?.name && profile?.email);
   swipeToDismissSheet("voiceSheet",   "voiceModal",   () => true);
-  createThread(); // Reuse an empty draft without creating a cloud write on load.
-  // Appwrite already owns identity. A second profile form must never gate chat.
+  if (!threads.length || threads[0].messages.length > 0) createThread();
+  else openThread(threads[0].id);
+  if (!profile?.name || !profile?.email) openSheet(true);
   refreshProfileUI(); checkBirthday(); connectWS(); renderImageGallery(); buildVoiceCards(); syncVoiceBtn();
 
   const vBtn = document.getElementById("voiceBtn");
@@ -1347,7 +1318,6 @@ function prepareTextForSpeech(raw) {
 }
 
 async function speakText(text) {
-  if(!orbitCapabilities.voiceOutput){toast('Read-aloud is not available in this workspace yet.');return;}
   if (!text || text === "__TYPING__") return;
   stopSpeaking();
   const clean = prepareTextForSpeech(text);
@@ -1540,20 +1510,8 @@ function downloadGalleryImage(img) {
 function openSidebar(){document.getElementById("sidebar").classList.add("open");document.getElementById("overlay").classList.add("open");}
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("open");}
 
-let orbitCapabilities={text:false,files:false,voiceInput:false,voiceOutput:false};
-const composerDrafts=new Map();
-const composerAttachments=new Map();
-const transientThreads=new Set();
 function connectWS() {
-  const workspace=window.AlaadaWorkspace.active;
-  window.AlaadaWorkspace.entitlements().then(policy=>{
-    if(window.AlaadaWorkspace.active!==workspace)return;
-    orbitCapabilities.text=policy.role!=='reader' && policy.products?.orbit?.execution_available===true && policy.products?.orbit?.capabilities?.execution_receipts===true;
-    orbitCapabilities.files=orbitCapabilities.text && policy.products?.orbit?.capabilities?.files===true && typeof window.AlaadaWorkspace.uploadOrbitFile==='function';
-    lockInput(busy);
-    setStatus(orbitCapabilities.text?(orbitCapabilities.files?'Ready · attach TXT, CSV, TSV, Markdown or JSON (64 KiB). Voice, images and Office/PDF processing are not connected yet.':'Text chat ready · voice and attachments are not connected yet.'):policy.role==='reader'?'Read-only workspace. Saved conversations are available.':policy.products?.orbit?.execution_available===true?'Text chat needs the updated workspace backend. Your drafts are kept.':'Text chat is not connected yet. You can keep drafting and read saved conversations.');
-  }).catch(()=>{orbitCapabilities.text=false;orbitCapabilities.files=false;lockInput(busy);setStatus('Workspace access could not be verified. Your draft has not been sent.');});
-  return; // Execution uses the authenticated workspace API.
+  window.AlaadaWorkspace.entitlements().then(policy=>setStatus(policy.products.orbit.execution_available?"Workspace text chat ready":"Workspace Orbit backend needs configuration")).catch(error=>setStatus(error.message)); return; // Execution uses the authenticated workspace API.
 
   if(ws&&(ws.readyState===WebSocket.OPEN||ws.readyState===WebSocket.CONNECTING))return;
   ws=new WebSocket(WS_URL);
@@ -1582,29 +1540,23 @@ function profilePayload() {
 
 async function send() {
   if(busy)return;
-  if(!orbitCapabilities.text){toast('Chat is not available yet. Your draft has been kept.');return;}
   const ta=document.getElementById("inputTextarea");const text=ta.value;
-  if(!text.trim()){if(fileId)toast('Add a question about your attachment before sending.');return;}
-  if(fileId&&!orbitCapabilities.files){toast('File analysis is unavailable. Your draft and attachment are kept.');return;}
+  if(!text.trim()&&!fileId)return;
+  if(fileId){toast("Workspace file execution is not connected yet.");return;}
   const t=activeThread();if(!t)return;
-  const attachments=fileId?[{id:fileId.id,name:fileId.name}]:[];
-  if(!(t.pendingPrompt===text&&t.messages.at(-1)?.role==='user'&&t.messages.at(-1)?.text===text&&JSON.stringify(t.messages.at(-1)?.attachments||[])===JSON.stringify(attachments))){
-    t.messages.push({role:"user",text,images:null,...(attachments.length?{attachments}:{})});
-  }
-  t.pendingPrompt=text;
+  t.messages.push({role:"user",text:text||"(file sent)",images:(filePreview&&fileIsImage)?[filePreview]:null});
+  ta.value="";ta.style.height="auto";
+  filePreview=null;fileId=null;fileIsImage=false;hidePreview();
   saveThreads();renderChat();busy=true;lockInput(true);stopSpeaking();
   closeSidebar();
   setStatus("Orbit is replying in "+window.AlaadaWorkspace.active.name+"…");
   try {
-    await window.AlaadaWorkspace.flush();
     const updated=await window.AlaadaWorkspace.orbitReply(t.id);
     t.messages=updated.messages;
-    delete t.pendingPrompt;composerDrafts.delete(t.id);ta.value="";ta.style.height="auto";
-    clearPreview(true);
     updateUserMemory(text,t.messages[t.messages.length-1].text);
     autoTitle();saveThreads();renderChat();
     setStatus("Saved in "+window.AlaadaWorkspace.active.name);
-  } catch(error) {ta.value=text;toast(error.message,7000);setStatus("Reply not confirmed. Your draft is kept; reload to check the saved conversation before retrying.");}
+  } catch(error) {toast(error.message,7000);setStatus("Reply not completed. Reload to verify the saved conversation.");}
   finally {busy=false;lockInput(false);}
 }
 
@@ -1616,7 +1568,7 @@ function applyDownloadLinks(node) {
     const fullUrl=href.startsWith("http")?href:`${BACKEND}${href}`;
     a.href=fullUrl;a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("download","");
     const label=a.textContent.trim()||"Download file";
-    a.textContent=`⬇️ ${label}`;
+    a.innerHTML=`⬇️ ${label}`;
     a.style.cssText="display:inline-block;padding:9px 18px;margin:8px 2px 4px;background:var(--blue);color:white;border-radius:10px;text-decoration:none;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(26,95,255,.3);";
   });
 }
@@ -1631,7 +1583,7 @@ function streamToken(tok) {
   if(node){
     node.innerHTML=parseMathMarkdown(last.text);
     applyDownloadLinks(node);
-    typesetMath(node);
+    if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([node]).catch(()=>{});
   }
   ensureActionsBar(wrap,last);
   chat.scrollTop=chat.scrollHeight;
@@ -1646,14 +1598,7 @@ function finalize(remaining) {
   if(remaining!==undefined)setStatus(`${remaining} messages left today`);
 }
 
-function lockInput(on){
-  document.getElementById('inputTextarea').disabled=on;
-  document.getElementById('prevClose').disabled=on;
-  for(const[id,capability]of[['sendBtn','text'],['micBtn','voiceInput'],['voiceBtn','voiceOutput'],['attachBtn','files']]){
-    const button=document.getElementById(id);button.disabled=on||!orbitCapabilities[capability];
-    button.title=orbitCapabilities[capability]?'':'This capability is not connected for this workspace yet.';
-  }
-}
+function lockInput(on){["inputTextarea","micBtn","sendBtn"].forEach(id=>{document.getElementById(id).disabled=on;});}
 
 function showErr(msg) {
   const t=activeThread();if(!t)return;
@@ -1663,19 +1608,12 @@ function showErr(msg) {
 }
 
 function createThread() {
-  if(busy)return;
-  const input=document.getElementById('inputTextarea');
-  const existing=threads.find(t=>!t.archived && !t.messages.length && !composerDrafts.get(t.id)
-    && !composerAttachments.get(t.id)
-    && !(t.id===activeId && input.value.trim()));
-  if(existing){openThread(existing.id);closeSidebar();return;}
   const id=(crypto.randomUUID?crypto.randomUUID():String(Date.now()));
   threads.unshift({id,title:"New Chat",messages:[],archived:false});
-  transientThreads.add(id);
-  renderThreads();openThread(id);closeSidebar();
+  saveThreads();renderThreads();openThread(id);closeSidebar();
 }
 
-function openThread(id){if(busy)return;const input=document.getElementById('inputTextarea');if(activeId)composerDrafts.set(activeId,input.value);activeId=id;stopSpeaking();renderThreads();renderChat();const t=threads.find(x=>x.id===id);if(t){document.getElementById("mobileTitle").textContent=t.title;input.value=composerDrafts.get(id)??(t.pendingPrompt&&t.messages.at(-1)?.role==='user'?t.pendingPrompt:'');fileId=composerAttachments.has(id)?composerAttachments.get(id):(t.pendingPrompt?t.messages.at(-1)?.attachments?.[0]||null:null);showFilePreview();}}
+function openThread(id){activeId=id;stopSpeaking();renderThreads();renderChat();const t=threads.find(x=>x.id===id);if(t)document.getElementById("mobileTitle").textContent=t.title;}
 
 function renderThreads() {
   const aEl=document.getElementById("threads"),arEl=document.getElementById("archivedThreads"),arcSec=document.getElementById("archivedSection");
@@ -1697,10 +1635,7 @@ function renderThreads() {
 }
 
 function saveThreads() {
-  // Keep existing saved chats intact. A new empty draft needs no database row
-  // until its first message, rename or archive; typing remains local to this tab.
-  const saved=threads.filter(t=>!transientThreads.has(t.id)||t.messages.length||t.title!=="New Chat"||t.archived);
-  try{window.AlaadaWorkspace.storage.setItem("orbit_threads",JSON.stringify(saved));}
+  try{window.AlaadaWorkspace.storage.setItem("orbit_threads",JSON.stringify(threads));}
   catch(error){toast('Conversations were not saved: '+error.message);}
 }
 
@@ -1718,6 +1653,7 @@ function renderChat() {
           <circle cx="14" cy="14" r="7"  stroke="#1a5fff" stroke-width="1.5" fill="none" opacity=".5"/>
           <circle cx="14" cy="14" r="2.8" fill="#1a5fff"/>
           <circle cx="22" cy="9" r="2" fill="#00957a">
+            <animateTransform attributeName="transform" type="rotate" from="0 14 14" to="360 14 14" dur="5s" repeatCount="indefinite"/>
           </circle>
         </svg>
       </div>
@@ -1736,7 +1672,7 @@ function renderChat() {
     });
   } else {
     t.messages.forEach(m=>chat.appendChild(makeBubble(m)));
-    typesetMath(chat);
+    if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([chat]).catch(()=>{});
   }
   chat.scrollTop=chat.scrollHeight;
 }
@@ -1749,13 +1685,9 @@ function makeBubble(msg) {
   } else if(msg.text){
     div.innerHTML=parseMathMarkdown(msg.text);
     applyDownloadLinks(div);
-    typesetMath(div);
+    if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([div]).catch(()=>{});
   }
   if(msg.images?.length){const g=document.createElement("div");g.className="gallery";msg.images.forEach(src=>{if(!src)return;const img=document.createElement("img");img.src=src;img.loading="lazy";img.alt="Generated image";img.onclick=()=>window.open(src,"_blank");g.appendChild(img);});div.appendChild(g);}
-  if(Array.isArray(msg.attachments))for(const attachment of msg.attachments){
-    if(typeof attachment?.name!=='string')continue;
-    const label=document.createElement('p');label.textContent='📎 '+attachment.name;label.style.overflowWrap='anywhere';div.appendChild(label);
-  }
   wrap.appendChild(div);
   if(msg.text!=="__TYPING__")wrap.appendChild(buildActionsBar(msg));
   return wrap;
@@ -1768,7 +1700,7 @@ function buildActionsBar(msg) {
       if(voiceSpeaking){stopSpeaking();btn.innerHTML=`<span>🔊</span><span>Read</span>`;btn.classList.remove("speaking-btn");return;}
       btn.classList.add("speaking-btn");btn.innerHTML=`<span>⏹</span><span>Stop</span>`;
       speakText(msg.text).then(()=>{btn.innerHTML=`<span>🔊</span><span>Read</span>`;btn.classList.remove("speaking-btn");});
-    });speakBtn.disabled=!orbitCapabilities.voiceOutput;speakBtn.title=orbitCapabilities.voiceOutput?'Read aloud':'Read aloud is not connected yet.';bar.appendChild(speakBtn);
+    });bar.appendChild(speakBtn);
   }
   const copyBtn=makeActionBtn("📋","Copy",async(btn)=>{
     try{let text=msg.text||"";text=text.replace(/\*\*(.*?)\*\*/g,"$1").replace(/\*(.*?)\*/g,"$1").replace(/#{1,6} /g,"").trim();if(msg.images?.length){text+="\n\n[Images: "+msg.images.length+"]";msg.images.forEach((u,i)=>{if(!u.startsWith("data:"))text+=`\nImage ${i+1}: ${u}`;});}await navigator.clipboard.writeText(text);showBtnSuccess(btn,"Copied!");toast("Copied to clipboard!");}
@@ -1798,7 +1730,7 @@ function autoTitle() {const t=activeThread();if(!t||t.title!=="New Chat")return;
 function refreshProfileUI() {
   const name=profile?.name||"",email=profile?.email||"",letter=name?name[0].toUpperCase():"?";
   document.getElementById("sidebarAvatar").textContent=letter;document.getElementById("mobileAvatarBtn").textContent=letter;
-  document.getElementById("sidebarName").textContent=name||"Chat preferences";document.getElementById("sidebarEmail").textContent=email||"Optional profile";
+  document.getElementById("sidebarName").textContent=name||"Set up profile";document.getElementById("sidebarEmail").textContent=email||"";
 }
 
 function openSheet(force=false) {
@@ -1811,14 +1743,13 @@ function closeSheet(){document.getElementById("profileModal").classList.remove("
 
 function saveProfile() {
   const name=document.getElementById("p_name").value.trim(),email=document.getElementById("p_email").value.trim();
-  if(email&&!document.getElementById("p_email").checkValidity()){toast("Enter a valid email or leave it blank.");return;}
+  if(!name){toast("Name is required.");return;}if(!email){toast("Email is required.");return;}
   const dob=document.getElementById("p_dob").value;if(dob&&new Date(dob)>=new Date()){toast("DOB must be in the past.");return;}
   profile={name,email,age:document.getElementById("p_age").value.trim(),dob,profession:document.getElementById("p_profession").value.trim(),hobby:document.getElementById("p_hobby").value.trim(),country:document.getElementById("p_country").value.trim(),skills:document.getElementById("p_skills").value.trim(),style:document.getElementById("p_style").value};
   window.AlaadaWorkspace.storage.setItem("orbit_profile",JSON.stringify(profile));refreshProfileUI();closeSheet();toast("Profile saved ✓");
 }
 
-document.getElementById("profileModal").addEventListener("click",(e)=>{if(e.target===document.getElementById("profileModal"))closeSheet();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();closeVoiceModal();closeSidebar();}});
+document.getElementById("profileModal").addEventListener("click",(e)=>{if(e.target===document.getElementById("profileModal"))if(profile?.name&&profile?.email)closeSheet();});
 
 function checkBirthday() {if(!profile?.dob)return;const today=new Date().toISOString().slice(0,10);if(profile.dob.slice(5,10)!==today.slice(5,10))return;if(window.AlaadaWorkspace.storage.getItem("orbit_bday")===today)return;const t=activeThread();if(t){t.messages.push({role:"assistant",text:`🎉 Happy Birthday, **${profile.name}**! Hope it's amazing! 🎂`});saveThreads();renderChat();}window.AlaadaWorkspace.storage.setItem("orbit_bday",today);}
 
@@ -1835,24 +1766,18 @@ function ctxAction(action) {
 document.addEventListener("click",(e)=>{const m=document.getElementById("ctxMenu");if(m.style.display==="block"&&!m.contains(e.target))closeCtx();});
 document.addEventListener("touchstart",(e)=>{const m=document.getElementById("ctxMenu");if(m.style.display==="block"&&!m.contains(e.target))closeCtx();},{passive:true});
 
-function triggerFile(){if(busy)return;if(!orbitCapabilities.files){toast('Attachments are not connected for this workspace yet.');return;}document.getElementById("fileInput").click();}
+function triggerFile(){document.getElementById("fileInput").click();}
 function hidePreview(){document.getElementById("previewBar").style.display="none";}
-function clearPreview(confirmed=false){if(busy&&!confirmed)return;filePreview=fileId=null;fileIsImage=false;composerAttachments.set(activeId,null);document.getElementById("fileInput").value="";hidePreview();}
-function showFilePreview(){const bar=document.getElementById('previewBar');document.getElementById('prevThumb').style.display='none';document.getElementById('prevName').textContent=fileId?'📎 '+fileId.name:'';bar.style.display=fileId?'flex':'none';}
+function clearPreview(){filePreview=fileId=null;fileIsImage=false;document.getElementById("fileInput").value="";hidePreview();}
 
 document.getElementById("fileInput").onchange=async()=>{
-  if(busy)return;
-  if(!orbitCapabilities.files){toast('Attachments are not connected for this workspace yet.');return;}
-  const file=document.getElementById('fileInput').files[0];if(!file||!activeThread())return;
-  const thread=activeId,workspace=window.AlaadaWorkspace.active;
-  busy=true;lockInput(true);setStatus('Saving your attachment privately…');
-  try{
-    const saved=await window.AlaadaWorkspace.uploadOrbitFile(file);
-    if(activeId!==thread||window.AlaadaWorkspace.active!==workspace)throw Error('The destination changed. Check workspace Files before uploading again.');
-    fileId=saved;composerAttachments.set(thread,saved);showFilePreview();
-    setStatus('Attachment saved privately. Add a question and send to analyze it.');
-  }catch(error){toast(error.message,7000);setStatus('Attachment not confirmed. Your message and previous attachment are kept. Check workspace Files before retrying.');}
-  finally{document.getElementById('fileInput').value='';busy=false;lockInput(false);}
+  const file=document.getElementById("fileInput").files[0];if(!file)return;toast("Uploading…");
+  const form=new FormData();form.append("file",file);
+  try{const res=await timedFetch(`${BACKEND}/upload`,{method:"POST",body:form},30000);const data=await res.json();if(!data.file_id){toast("Upload failed.");return;}fileId=data.file_id;fileIsImage=file.type.startsWith("image/");toast("File ready ✓");}
+  catch(e){toast("Upload error: "+(e.message||"timeout"));return;}
+  const bar=document.getElementById("previewBar");
+  if(file.type.startsWith("image/")){const reader=new FileReader();reader.onload=(ev)=>{filePreview=ev.target.result;const th=document.getElementById("prevThumb");th.src=filePreview;th.style.display="block";document.getElementById("prevName").textContent=file.name;bar.style.display="flex";};reader.readAsDataURL(file);}
+  else{document.getElementById("prevThumb").style.display="none";const icons={pdf:"📄",xlsx:"📊",xls:"📊",docx:"📝",doc:"📝",pptx:"📊",ppt:"📊",csv:"📊",txt:"📄",xml:"📄"};const ext=file.name.split(".").pop().toLowerCase();document.getElementById("prevName").textContent=`${icons[ext]||"📎"} ${file.name}`;bar.style.display="flex";}
 };
 
 const iw=document.getElementById("inputWrapper");
@@ -1863,7 +1788,6 @@ iw.addEventListener("drop",(e)=>{e.preventDefault();iw.classList.remove("dragove
 document.getElementById("micBtn").addEventListener("click",toggleMic);
 
 async function toggleMic() {
-  if(!orbitCapabilities.voiceInput){toast('Voice input is not connected for this workspace yet.');return;}
   const btn=document.getElementById("micBtn"),audioWave=document.getElementById("audioWave"),ri=document.getElementById("recordingIndicator");
   if(recorder?.state==="recording"){recorder.stop();return;}
   let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}catch{toast("Microphone access denied.");return;}
