@@ -3,17 +3,30 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Alaada — One Year. Infinite Possibilities.</title>
+  <title>Alaada — AI, Business &amp; Productivity Tools</title>
 
+  <!-- ── PRECONNECT ── -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="preconnect" href="https://www.googletagmanager.com"/>
 
-  <link rel="icon" href="images/alaada-logo.jpg" type="image/jpeg"/>
-  <link rel="apple-touch-icon" href="images/alaada-logo.jpg"/>
+  <!-- ══════════════════════════════════════════
+       FAVICON — uses alaada-logo.jpg (confirmed present)
+       Google needs: accessible, square, ≥ 48 × 48 px
+  ═══════════════════════════════════════════ -->
+  <link rel="icon"             type="image/jpeg" href="images/alaada-logo.jpg"/>
+  <link rel="icon"             type="image/jpeg" sizes="32x32"   href="images/alaada-logo.jpg"/>
+  <link rel="icon"             type="image/jpeg" sizes="48x48"   href="images/alaada-logo.jpg"/>
+  <link rel="icon"             type="image/jpeg" sizes="96x96"   href="images/alaada-logo.jpg"/>
+  <link rel="icon"             type="image/jpeg" sizes="192x192" href="images/alaada-logo.jpg"/>
+  <link rel="apple-touch-icon" sizes="180x180"   href="images/alaada-logo.jpg"/>
+  <link rel="shortcut icon"                      href="images/alaada-logo.jpg"/>
+  <!-- Web-app manifest (tells Google the preferred icon) -->
+  <link rel="manifest" href="manifest.json"/>
 
-  <meta name="description" content="Alaada turns one. One year, infinite possibilities — celebrating our first anniversary (3 November 2025 – 3 November 2026) with Orbit AI, Accounts, Web Analyser and Sheets."/>
-
+  <!-- ── PRIMARY SEO ── -->
+  <meta name="description" content="Alaada builds AI, business and productivity tools for modern work — Orbit AI, Accounts, Web Analyser and Sheets, all in one connected ecosystem."/>
+  <meta name="keywords" content="Alaada, Orbit AI, AI tools, business software, productivity tools, accounting software India, GST accounting, inventory management, CRM, website SEO audit, web analyser, AI spreadsheet, Excel alternative, spreadsheet AI, business tools India"/>
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
   <meta name="author" content="Arzo Das, Alaada"/>
   <meta name="application-name" content="Alaada"/>
@@ -25,24 +38,27 @@
   <meta name="geo.placename" content="Kolkata, West Bengal, India"/>
   <link rel="canonical" href="https://www.alaada.com/"/>
 
+  <!-- ── OPEN GRAPH ── -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="Alaada"/>
   <meta property="og:url" content="https://www.alaada.com/"/>
-  <meta property="og:title" content="Alaada turns one — One Year. Infinite Possibilities."/>
-  <meta property="og:description" content="Alaada's First Anniversary · 3 November 2025 – 3 November 2026. One year down. A world of possibilities ahead."/>
-  <meta property="og:image" content="https://www.alaada.com/images/Alaada%20landscape%20img.png"/>
-  <meta property="og:image:width" content="1536"/>
-  <meta property="og:image:height" content="1024"/>
+  <meta property="og:title" content="Alaada — AI, Business &amp; Productivity Tools"/>
+  <meta property="og:description" content="AI, business and productivity tools for modern work — Orbit AI, Accounts, Web Analyser and Sheets, built in India."/>
+  <meta property="og:image" content="https://www.alaada.com/images/alaada-og.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
   <meta property="og:image:alt" content="Alaada products built in India: Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets."/>
   <meta property="og:locale" content="en_IN"/>
 
+  <!-- ── TWITTER CARD ── -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:site" content="@alaada_ai"/>
-  <meta name="twitter:title" content="Alaada turns one — One Year. Infinite Possibilities."/>
-  <meta name="twitter:description" content="Alaada's First Anniversary · 3 November 2025 – 3 November 2026. Thank you for being part of our first chapter."/>
-  <meta name="twitter:image" content="https://www.alaada.com/images/Alaada%20landscape%20img.png"/>
+  <meta name="twitter:title" content="Alaada — AI, Business &amp; Productivity Tools"/>
+  <meta name="twitter:description" content="Orbit AI, Accounts, Web Analyser and Sheets — connected tools for AI, business and productivity."/>
+  <meta name="twitter:image" content="https://www.alaada.com/images/alaada-og.png"/>
   <meta name="twitter:image:alt" content="Alaada AI and business tools — built in India"/>
 
+  <!-- ── STRUCTURED DATA ── -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -59,7 +75,7 @@
           "height": 200
         },
         "description": "AI and business tools built in India. Where Perfection meets Possibility. Products include Orbit AI, Alaada Accounts, Web Analyser and Alaada Sheets.",
-        "foundingDate": "2025-11-03",
+        "foundingDate": "2024",
         "foundingLocation": {
           "@type": "Place",
           "name": "Kolkata, West Bengal, India"
@@ -89,16 +105,21 @@
         "url": "https://www.alaada.com",
         "publisher": { "@id": "https://www.alaada.com/#organization" },
         "description": "Where Perfection meets Possibility. Connected AI, accounting and business tools built in India.",
-        "inLanguage": "en-IN"
+        "inLanguage": "en-IN",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": { "@type": "EntryPoint", "urlTemplate": "https://www.alaada.com/?q={search_term_string}" },
+          "query-input": "required name=search_term_string"
+        }
       },
       {
         "@type": "WebPage",
         "@id": "https://www.alaada.com/#webpage",
         "url": "https://www.alaada.com/",
-        "name": "Alaada — One Year. Infinite Possibilities.",
+        "name": "Alaada — AI, Business & Productivity Tools",
         "isPartOf": { "@id": "https://www.alaada.com/#website" },
         "about": { "@id": "https://www.alaada.com/#organization" },
-        "description": "Alaada's First Anniversary, 3 November 2025 – 3 November 2026, and a connected ecosystem of AI, business and productivity tools built in India — Orbit AI, Accounts, Web Analyser and Sheets.",
+        "description": "A connected ecosystem of AI, business and productivity tools built in India — Orbit AI, Accounts, Web Analyser and Sheets.",
         "breadcrumb": {
           "@type": "BreadcrumbList",
           "itemListElement": [{ "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.alaada.com/" }]
@@ -113,7 +134,7 @@
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
         "description": "Deep reasoning AI assistant. Thinks step-by-step before answering. Includes live web search, file analysis, and voice output.",
         "url": "https://www.alaada.com/Orbit.html",
-        "screenshot": "https://www.alaada.com/images/Alaada%20landscape%20img.png",
+        "screenshot": "https://www.alaada.com/images/alaada-og.png",
         "featureList": ["Deep reasoning", "Live web search", "File analysis", "Voice output"],
         "publisher": { "@id": "https://www.alaada.com/#organization" }
       },
@@ -129,6 +150,7 @@
         "featureList": ["Performance score", "SEO audit", "Accessibility check", "Speed analysis"],
         "publisher": { "@id": "https://www.alaada.com/#organization" }
       },
+
       {
         "@type": "SoftwareApplication",
         "@id": "https://www.alaada.com/Accounts.html#app",
@@ -159,11 +181,6 @@
             "@type": "Question",
             "name": "What is Alaada?",
             "acceptedAnswer": { "@type": "Answer", "text": "Alaada is an Indian technology platform offering Orbit AI for deep reasoning, Alaada Accounts for accounting and business operations, Web Analyser for website audits, and Alaada Sheets for intelligent spreadsheets." }
-          },
-          {
-            "@type": "Question",
-            "name": "When was Alaada founded and what does the name mean?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Alaada began on 3 November 2025. The name Alaada means “different” in Bengali." }
           },
           {
             "@type": "Question",
@@ -336,32 +353,6 @@
   /* TRUST BAR */
   .trust-bar{background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:center;gap:36px;flex-wrap:wrap;}
   .trust-item{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:500;color:var(--ink3);}
-
-  /* FIRST-YEAR REACH */
-  .ann-impact{
-    display:grid;grid-template-columns:auto 1px minmax(0,1fr);gap:30px;align-items:center;
-    margin:44px 0 58px;padding:28px 34px;border:1px solid rgba(246,193,76,.26);
-    border-radius:22px;background:linear-gradient(115deg,rgba(246,193,76,.11),rgba(124,58,237,.10) 72%,rgba(255,255,255,.025));
-    box-shadow:0 18px 55px rgba(0,0,0,.16);position:relative;overflow:hidden;
-  }
-  .ann-impact::before{content:'';position:absolute;inset:auto -80px -150px auto;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(246,193,76,.13),transparent 70%);pointer-events:none;}
-  .impact-number-wrap{position:relative;z-index:1;min-width:150px;text-align:center;}
-  .impact-number{display:block;font-family:'Syne',sans-serif;font-size:clamp(3.2rem,7vw,4.6rem);font-weight:800;line-height:.95;letter-spacing:-3px;color:#f6c14c;font-variant-numeric:tabular-nums;}
-  .impact-label{display:block;margin-top:9px;font-size:.7rem;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;color:rgba(255,255,255,.62);}
-  .impact-divider{width:1px;align-self:stretch;background:linear-gradient(to bottom,transparent,rgba(246,193,76,.48),transparent);}
-  .impact-copy-wrap{position:relative;z-index:1;}
-  .impact-eyebrow{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:2.1px;text-transform:uppercase;color:#f6c14c;margin-bottom:8px;}
-  .impact-copy{font-size:.96rem;line-height:1.8;color:rgba(255,255,255,.8);margin:0;}
-  .impact-copy strong{color:#fff;font-weight:700;}
-  .impact-source{margin-top:11px;font-size:.69rem;letter-spacing:.35px;color:rgba(255,255,255,.42);}
-  @media(max-width:680px){
-    .ann-impact{grid-template-columns:1fr;gap:17px;margin:34px 0 44px;padding:24px 20px;text-align:center;}
-    .impact-number-wrap{min-width:0;display:flex;align-items:baseline;justify-content:center;gap:10px;}
-    .impact-number{font-size:3.65rem;}
-    .impact-label{margin-top:0;font-size:.64rem;}
-    .impact-divider{width:54px;height:1px;justify-self:center;background:linear-gradient(to right,transparent,rgba(246,193,76,.55),transparent);}
-    .impact-copy{font-size:.9rem;line-height:1.75;}
-  }
 
   /* ═════ ANNIVERSARY SECTION ═════ */
   #anniversary{position:relative;overflow:hidden;background:#0d0c0b;color:#fff;padding:110px 32px 120px;}
@@ -741,7 +732,7 @@
   .stat strong{display:block;font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:-1.5px;color:var(--ink);line-height:1;margin-bottom:3px;}
   .stat span{font-size:.75rem;color:var(--ink3);font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
   .quote-card{background:var(--white);border:1px solid var(--borderM);border-radius:var(--r-xl);padding:32px;box-shadow:var(--sh-md);position:relative;overflow:hidden;}
-  .quote-card::before{content:'\275D';position:absolute;top:-10px;left:18px;font-size:5rem;color:var(--blue2);line-height:1;font-family:Georgia,serif;z-index:0;}
+  .quote-card::before{content:'½D';position:absolute;top:-10px;left:18px;font-size:5rem;color:var(--blue2);line-height:1;font-family:Georgia,serif;z-index:0;}
   .quote-text{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:var(--ink);line-height:1.5;letter-spacing:-.2px;position:relative;z-index:1;margin-bottom:22px;}
   .founder-row{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
   .founder-avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;flex-shrink:0;}
@@ -1018,7 +1009,6 @@
   #intro.out .in-curtain.r{transform:translateX(101%);}
   @media(prefers-reduced-motion:reduce){#intro{display:none!important;}}
 </style>
-  <!-- Identity and workspace access are verified against Alaada's Appwrite project. -->
 </head>
 <body>
 <script>
@@ -1044,24 +1034,23 @@
   <button class="in-skip" id="in-skip" type="button">Skip ›</button>
 </div>
 
+
 <a class="skip-link" href="#main-content">Skip to main content</a>
+
 <canvas id="confetti" aria-hidden="true"></canvas>
 <div id="scroll-bar" aria-hidden="true"></div>
-
 <div id="auth-overlay">
   <div class="auth-spinner"></div>
-  <div id="auth-msg" role="status" aria-live="polite">Checking your account…</div>
+  <div id="auth-msg">Checking your account…</div>
 </div>
 
 <!-- NAV -->
-<nav aria-label="Primary">
+<nav>
   <a href="/" class="nav-logo" aria-label="Alaada home">
     <img src="images/alaada-logo.jpg" alt="Alaada logo" width="28" height="28" loading="eager"/>
     Alaada
   </a>
-  <button class="nav-menu-toggle" id="nav-menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="primary-links"><span></span><span></span><span></span></button>
-  <ul class="nav-links" id="primary-links">
-    <li><a href="#anniversary" class="nav-bday">🎂 Year One</a></li>
+  <ul class="nav-links">
     <li><a href="#orbit-section">Orbit AI</a></li>
     <li><a href="#accounts-section">Accounts</a></li>
     <li><a href="#analyser-section">Web Analyser</a></li>
@@ -1071,16 +1060,11 @@
     <li><a href="/about-us.html">About</a></li>
     <li><a href="/blog.html">Blog</a></li>
     <li><a href="/developers.html">Developers</a></li>
-    <li><a href="/Orbit.html" class="nav-cta launch-orbit-btn">Try Orbit →</a></li>
+    <li><a href="#" class="nav-cta launch-orbit-btn">Try Orbit →</a></li>
   </ul>
-  <div id="user-badge" aria-label="Signed-in account">
+  <div id="user-badge">
     <div class="badge-avatar" id="badge-initial">A</div>
     <span id="badge-name">User</span>
-    <a href="/workspaces" title="Appwrite personal and organisation workspaces" style="text-decoration:none;color:inherit;font-size:.72rem;">Workspaces</a>
-    <a href="/account.html" title="Open account center" style="text-decoration:none;color:inherit;font-size:.72rem;">Account</a>
-    <a href="/team.html" title="Manage team" style="text-decoration:none;color:inherit;font-size:.72rem;">Team</a>
-    <a href="/account.html#preferences" title="Settings" style="text-decoration:none;color:inherit;font-size:.72rem;">Settings</a>
-    <a id="admin-link" href="/admin.html" title="Platform admin" style="display:none;text-decoration:none;color:inherit;font-size:.72rem;">Admin</a>
     <button id="badge-logout" onclick="logout()" title="Sign out">✕</button>
   </div>
 </nav>
@@ -1088,20 +1072,19 @@
 <main id="main-content">
 
 <!-- HERO -->
-<section id="hero" aria-label="Alaada first anniversary — hero">
+<section id="hero" aria-label="Alaada AI tools — hero">
   <div class="hero-blob blob-blue" aria-hidden="true"></div>
   <div class="hero-blob blob-teal" aria-hidden="true"></div>
   <div class="hero-blob blob-gold" aria-hidden="true"></div>
   <div class="hero-dots" aria-hidden="true"></div>
-  <span class="hero-float" aria-hidden="true">🧠</span><span class="hero-float" aria-hidden="true">📒</span><span class="hero-float" aria-hidden="true">🔍</span><span class="hero-float" aria-hidden="true">📊</span>
 
   <div class="hero-left">
-    <div class="hero-badge"><span class="badge-pulse" aria-hidden="true"></span>🎂 Alaada turns 1 · 3 November 2026</div>
-    <h1 class="hero-title">One year.<br><span class="accent">Infinite possibilities.</span></h1>
-    <p class="hero-sub">Alaada's First Anniversary · 3 November 2025 – 3 November 2026</p>
+    <div class="hero-badge"><span class="badge-pulse" aria-hidden="true"></span>Built in India · Alaada Accounts live now</div>
+    <h1 class="hero-title">AI that thinks.<br><span>Tools that <span class="accent">deliver.</span></span></h1>
+    <p class="hero-sub">A connected ecosystem of AI, business, and productivity tools built to help you think, operate, analyse, and create — from one place.</p>
     <div class="hero-btns">
-      <a href="#anniversary" class="btn-primary">Read our story ↓</a>
-      <a href="/Orbit.html" class="btn-ghost launch-orbit-btn">Try Orbit AI →</a>
+      <a href="#" class="btn-primary launch-orbit-btn">Try Orbit AI →</a>
+      <a href="#analyser-section" class="btn-ghost">See Web Analyser</a>
       <a href="#sheets-section" class="btn-ghost">Check out Spreadsheets</a>
     </div>
   </div>
@@ -1115,12 +1098,12 @@
         <div><div class="mock-name">Orbit AI</div><div class="mock-status">● Online</div></div>
       </div>
       <div class="mock-msgs">
-        <div class="mock-msg user">What does Alaada mean?</div>
+        <div class="mock-msg user">Why is our user retention dropping?</div>
         <div class="mock-msg ai" id="hero-ai-reply"><div class="typing-dots"><span></span><span></span><span></span></div></div>
       </div>
       <div class="mock-input-row">
         <div class="mock-input">Ask anything…</div>
-        <button class="mock-send" type="button" aria-label="Open Orbit AI" onclick="window.location.href='/Orbit.html'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        <button class="mock-send" aria-label="Send"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
     </div>
   </div>
@@ -1132,12 +1115,10 @@
   <div class="trust-item" role="listitem">🔒 Secure Google sign-in</div>
   <div class="trust-item" role="listitem">🇮🇳 Made in India</div>
   <div class="trust-item" role="listitem">🌐 Works in your browser</div>
-  <div class="trust-item" role="listitem">🎂 One year and counting</div>
+  <div class="trust-item" role="listitem">✦ Always improving</div>
 </div>
 
-<div class="ticker" aria-hidden="true"><div class="ticker-track"><span>One year</span><span>Infinite possibilities</span><span>3 Nov 2025 – 3 Nov 2026</span><span>Where Perfection meets Possibility</span><span>One year</span><span>Infinite possibilities</span><span>3 Nov 2025 – 3 Nov 2026</span><span>Where Perfection meets Possibility</span><span>One year</span><span>Infinite possibilities</span><span>3 Nov 2025 – 3 Nov 2026</span><span>Where Perfection meets Possibility</span><span>One year</span><span>Infinite possibilities</span><span>3 Nov 2025 – 3 Nov 2026</span><span>Where Perfection meets Possibility</span></div></div>
-
-<!-- ═════ FIRST ANNIVERSARY ═════ -->
+<!-- PRODUCTS OVERVIEW -->
 <section id="anniversary" aria-labelledby="ann-title">
   <div class="float-bits" id="float-bits" aria-hidden="true"></div>
   <div class="ann-inner">
@@ -1174,19 +1155,6 @@
       <p class="thanks reveal">To everyone who explored Alaada, used our products, shared feedback, supported our journey or simply believed in the idea — thank you. You are part of this first chapter.</p>
     </div>
 
-
-    <section class="ann-impact reveal" aria-label="Alaada's first-year audience reach">
-      <div class="impact-number-wrap">
-        <span class="impact-number">2,000+</span>
-        <span class="impact-label">new users</span>
-      </div>
-      <div class="impact-divider" aria-hidden="true"></div>
-      <div class="impact-copy-wrap">
-        <p class="impact-eyebrow">A first year beyond borders</p>
-        <p class="impact-copy">More than <strong>2,000 people discovered Alaada</strong> during our first year. Our audience reached us from <strong>India</strong>, the <strong>United States</strong>, China, Germany, the UAE, Singapore and Ireland.</p>
-        <p class="impact-source">Google Analytics · 1 November 2025 – 2 November 2026</p>
-      </div>
-    </section>
 
     <div class="tn reveal" id="then-now">
       <h3 class="tn-title">Where it started</h3>
@@ -1467,6 +1435,7 @@
   </div>
 </section>
 
+
 <!-- ALAADA ACCOUNTS SECTION -->
 <section id="accounts-section" aria-label="Alaada Accounts deep dive">
   <div class="accounts-container reveal">
@@ -1482,7 +1451,7 @@
           <span class="pill" style="background:var(--violet2);color:var(--violet);">CRM &amp; Automation</span>
           <span class="pill" style="background:var(--violet2);color:var(--violet);">AI Assistance</span>
         </div>
-        <a href="/Accounts.html" class="btn-accounts launch-accounts-btn">Open Alaada Accounts →</a>
+        <a href="#" class="btn-accounts launch-accounts-btn">Open Alaada Accounts →</a>
         <p style="margin-top:14px;font-size:.78rem;color:var(--ink3);">Live now · Browser-based · Built for Indian businesses and growing teams.</p>
       </div>
 
@@ -1595,7 +1564,7 @@
   </div>
 </section>
 
-<!-- VISIBLE FAQ -->
+<!-- VISIBLE FAQ (mirrors FAQPage JSON-LD above for AEO/answer engines) -->
 <section id="faq-section" aria-label="Frequently asked questions about Alaada">
   <div class="faq-inner">
     <div class="faq-head reveal">
@@ -1606,10 +1575,6 @@
       <details class="faq-item">
         <summary class="faq-q">What is Alaada?<span class="faq-q-icon" aria-hidden="true">+</span></summary>
         <p class="faq-a">Alaada is a technology platform building connected AI, business, and productivity tools. Its current products include Orbit AI, Alaada Accounts, Web Analyser, and Alaada Sheets.</p>
-      </details>
-      <details class="faq-item">
-        <summary class="faq-q">When was Alaada founded and what does the name mean?<span class="faq-q-icon" aria-hidden="true">+</span></summary>
-        <p class="faq-a">Alaada began on 3 November 2025. The name Alaada means “different” in Bengali.</p>
       </details>
       <details class="faq-item">
         <summary class="faq-q">Is Alaada free to use?<span class="faq-q-icon" aria-hidden="true">+</span></summary>
@@ -1671,11 +1636,11 @@
             <div class="rf-field">
               <label class="rf-label">Rating</label>
               <div class="star-picker" id="star-picker" role="radiogroup" aria-label="Rating">
-                <span class="star" aria-checked="false" data-v="1" tabindex="0" role="radio" aria-label="1 star">★</span>
-                <span class="star" aria-checked="false" data-v="2" tabindex="0" role="radio" aria-label="2 stars">★</span>
-                <span class="star" aria-checked="false" data-v="3" tabindex="0" role="radio" aria-label="3 stars">★</span>
-                <span class="star" aria-checked="false" data-v="4" tabindex="0" role="radio" aria-label="4 stars">★</span>
-                <span class="star" aria-checked="false" data-v="5" tabindex="0" role="radio" aria-label="5 stars">★</span>
+                <span class="star" data-v="1" tabindex="0" role="radio" aria-label="1 star">★</span>
+                <span class="star" data-v="2" tabindex="0" role="radio" aria-label="2 stars">★</span>
+                <span class="star" data-v="3" tabindex="0" role="radio" aria-label="3 stars">★</span>
+                <span class="star" data-v="4" tabindex="0" role="radio" aria-label="4 stars">★</span>
+                <span class="star" data-v="5" tabindex="0" role="radio" aria-label="5 stars">★</span>
               </div>
               <input type="hidden" name="rating" id="rf-rating" required/>
               <span class="rf-rating-label" id="rf-rating-label">Click to rate</span>
@@ -1727,16 +1692,20 @@
 
     <div class="reviews-grid reveal rd1">
 
+      <!-- REVIEW 1 -->
       <div class="review-card" itemscope itemtype="https://schema.org/Review">
         <div class="review-stars" itemprop="reviewRating" itemscope itemtype="https://schema.org/Rating">
           <meta itemprop="ratingValue" content="5"/><meta itemprop="bestRating" content="5"/>★★★★★
         </div>
+
         <p class="review-text" itemprop="reviewBody">
           "Simple and easy to use AI. Human voice. Excel work fine.
           Perfect example of <em>Indian innovation</em>."
         </p>
+
         <div class="reviewer-row" itemprop="author" itemscope itemtype="https://schema.org/Person">
           <div class="reviewer-avatar">S</div>
+
           <div>
             <div class="reviewer-name" itemprop="name">Sourav Bhattacharya</div>
             <div class="reviewer-role">HSBC Bank Manager · Hyderabad</div>
@@ -1745,15 +1714,19 @@
         <meta itemprop="itemReviewed" content="Alaada"/>
       </div>
 
+      <!-- REVIEW 2 -->
       <div class="review-card" itemscope itemtype="https://schema.org/Review">
         <div class="review-stars" itemprop="reviewRating" itemscope itemtype="https://schema.org/Rating">
           <meta itemprop="ratingValue" content="5"/><meta itemprop="bestRating" content="5"/>★★★★★
         </div>
+
         <p class="review-text" itemprop="reviewBody">
           "The spreadsheet tool is excellent, helped me <em>analyse and inspect my ML training data</em>."
         </p>
+
         <div class="reviewer-row" itemprop="author" itemscope itemtype="https://schema.org/Person">
           <div class="reviewer-avatar">P</div>
+
           <div>
             <div class="reviewer-name" itemprop="name">Pratik Chakraborty</div>
             <div class="reviewer-role">Backend Engineer · Kolkata</div>
@@ -1790,10 +1763,9 @@
       <h2 class="section-title">Where Perfection meets Possibility.</h2>
       <p class="section-body">Alaada was built to connect intelligence with practical work. Orbit helps people reason, Accounts helps businesses operate, Web Analyser reveals what websites need, and Sheets turns data into action.</p>
       <div class="stat-row">
-        <div class="stat"><strong data-count="1">0</strong><span>Year Old</span></div>
-        <div class="stat"><strong data-count="4">0</strong><span>Live Products</span></div>
-        <div class="stat"><strong data-count="4">0</strong><span>Focused Team</span></div>
-        <div class="stat"><strong>∞</strong><span>Possibilities Ahead</span></div>
+        <div class="stat"><strong>4</strong><span>Live Products</span></div>
+        <div class="stat"><strong>4</strong><span>Focused Team</span></div>
+        <div class="stat"><strong>∞</strong><span>Problems to Solve</span></div>
       </div>
     </div>
     <div class="quote-card reveal rd1">
@@ -1820,20 +1792,21 @@
       </div>
       <p class="footer-sub">Where Perfection meets Possibility.</p>
       <div class="footer-email"><a href="mailto:alaada@alaada.com">alaada@alaada.com</a></div>
-      <button class="footer-logout" style="margin-top:14px;" onclick="logout()">Sign out</button>
     </div>
     <div class="footer-socials">
-      <a href="https://discord.gg/uHPaKDDrwe" target="_blank" rel="noopener noreferrer">Discord</a>
-      <a href="https://www.linkedin.com/company/alaada/" target="_blank" rel="noopener noreferrer">LinkedIn Company Page</a>
-      <a href="https://www.linkedin.com/in/arzo-das-782539391/" target="_blank" rel="noopener noreferrer">LinkedIn Arzo Das</a>
-      <a href="https://www.facebook.com/profile.php?id=61583515497634" target="_blank" rel="noopener noreferrer">Facebook</a>
-      <a href="/about-us.html">About Us</a>
-      <a href="/blog.html">Blog</a>
-      <a href="/developers.html">Developers</a>
-      <a href="/Accounts.html" class="launch-accounts-btn">Alaada Accounts</a>
+  <a href="https://discord.gg/uHPaKDDrwe" target="_blank" rel="noopener noreferrer">Discord</a>
+  <a href="https://www.linkedin.com/company/alaada/" target="_blank" rel="noopener noreferrer">LinkedIn Company Page</a>
+  <a href="https://www.linkedin.com/in/arzo-das-782539391/" target="_blank" rel="noopener noreferrer">LinkedIn Arzo Das</a>
+  <a href="https://www.facebook.com/profile.php?id=61583515497634" target="_blank" rel="noopener noreferrer">Facebook</a>
+  <a href="/about-us.html">About Us</a>
+  <a href="/blog.html">Blog</a>
+  <a href="/developers.html">Developers</a>
+  <a href="#" class="launch-accounts-btn">Alaada Accounts</a>
+</div>
+      <button class="footer-logout" onclick="logout()">Sign out</button>
     </div>
   </div>
-  <div class="footer-bottom">© 2026 Alaada. All rights reserved. · One year · 3 November 2025 – 3 November 2026 · Built in Kolkata, India.</div>
+  <div class="footer-bottom">© 2026 Alaada. All rights reserved. · Built in Kolkata, India.</div>
 </footer>
 
 <script>
