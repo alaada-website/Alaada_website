@@ -3,15 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content="Alaada Accounts helps businesses manage ledgers, vouchers, reports, sales, purchases, inventory, GST and CRM in one workspace."/><link rel="canonical" href="https://www.alaada.com/Accounts.html"/>
 <title>Alaada Accounts — Ledgers, Vouchers &amp; Reports</title>
-<link rel="preconnect" href="https://sfo.cloud.appwrite.io" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="accounts-enterprise.css"/>
+<link rel="stylesheet" href="css/accounts-enterprise.css"/>
 <style>
-.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 /* ============================================================
    ALAADA ACCOUNTS — design tokens (shared with alaada.com)
    ============================================================ */
@@ -47,7 +44,7 @@ button{font-family:inherit;}
 
 /* ---------- topbar ---------- */
 #topbar{
-  position:fixed;top:46px;left:0;right:0;height:var(--topbar-h);z-index:200;
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);z-index:200;
   background:rgba(245,244,239,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:18px;padding:0 20px 0 18px;
@@ -110,7 +107,7 @@ button{font-family:inherit;}
 /* ---------- sidebar ---------- */
 .hamburger-btn{display:none;flex-shrink:0;width:34px;height:34px;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--borderM);background:var(--white);cursor:pointer;color:var(--ink2);}
 #sidebar{
-  position:fixed;top:calc(var(--topbar-h) + 46px);left:0;bottom:0;width:var(--sidebar-w);
+  position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--sidebar-w);
   background:var(--white);border-right:1px solid var(--border);
   padding:18px 12px;overflow-y:auto;z-index:100;
   transition:transform .22s ease;
@@ -145,32 +142,11 @@ button{font-family:inherit;}
   #main{margin-left:0;width:100%;max-width:100vw;padding:20px 16px 50px;}
 }
 @media(max-width:420px){#main{padding-left:12px;padding-right:12px;}}
-@media(max-width:700px){
-  :root{--topbar-h:92px;}
-  #topbar{display:grid;grid-template-columns:34px minmax(0,1fr) auto;grid-template-rows:36px 40px;gap:4px 10px;padding:6px 12px;backdrop-filter:none;-webkit-backdrop-filter:none;}
-  .hamburger-btn{grid-row:1;grid-column:1;}
-  #topbar .brand{grid-row:1;grid-column:2;min-width:0;font-size:.86rem;gap:6px;}
-  #topbar .brand small{font-size:.58rem;}
-  #api-status{grid-row:1;grid-column:3;justify-self:end;max-width:130px;}
-  #api-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  #company-picker{grid-row:2;grid-column:1 / 3;min-width:0;}
-  #company-btn{width:100%;max-width:100%;min-width:0;min-height:36px;}
-  #company-btn span.co-name{flex:1;min-width:0;max-width:none;text-align:left;}
-  #global-search-btn{grid-row:2;grid-column:3;justify-self:end;min-height:36px;}
-  /* The full trial-balance report remains available in the navigation. */
-  #balance-beam{display:none;}
-  #company-menu{position:fixed;top:calc(var(--alaada-workspace-bar-height,36px) + var(--topbar-h) - 4px);left:12px;right:12px;width:auto;max-height:calc(100dvh - var(--alaada-workspace-bar-height,36px) - var(--topbar-h) - 12px);}
-  #company-menu.open{display:flex;flex-direction:column;}
-  #company-menu .co-list{min-height:0;max-height:none;overflow-y:auto;}
-  #company-menu .co-item .n{overflow-wrap:anywhere;}
-  #company-menu .co-menu-foot{flex-shrink:0;}
-}
-@media(max-width:380px){#api-status{max-width:83px;}}
 
 
 .view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;min-width:0;}
 .view-head>div:first-child{min-width:0;max-width:100%;}
-.view-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;overflow-wrap:anywhere;}
+.view-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.6px;}
 .view-sub{color:var(--ink3);font-size:.85rem;margin-top:3px;overflow-wrap:anywhere;}
 .view-actions{display:flex;gap:8px;flex-wrap:wrap;min-width:0;}
 
@@ -275,13 +251,13 @@ select{cursor:pointer;}
 .empty p{font-size:.82rem;max-width:340px;margin:0 auto 18px;}
 
 /* modal */
-.modal-backdrop{position:fixed;inset:var(--alaada-workspace-bar-height,36px) 0 0;background:rgba(18,17,16,.45);z-index:400;display:none;align-items:center;justify-content:center;padding:16px;overflow:hidden;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(18,17,16,.45);backdrop-filter:blur(3px);z-index:400;display:none;align-items:center;justify-content:center;padding:16px;overflow:hidden;}
 .modal-backdrop.open{display:flex;}
-.modal{background:var(--white);border-radius:var(--r-lg);box-shadow:var(--sh-md);width:100%;max-width:560px;max-height:100%;overflow:hidden;display:flex;flex-direction:column;}
+.modal{background:var(--white);border-radius:var(--r-lg);box-shadow:var(--sh-md);width:100%;max-width:560px;max-height:calc(100vh - 32px);overflow:hidden;animation:modalIn .18s ease;display:flex;flex-direction:column;}
 .modal.wide{max-width:760px;}
 @keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.modal-head h2{font-family:'Syne';font-weight:800;font-size:1.02rem;letter-spacing:-.3px;}
+.modal-head h3{font-family:'Syne';font-weight:800;font-size:1.02rem;letter-spacing:-.3px;}
 .modal-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--bg);color:var(--ink2);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;}
 .modal-close:hover{background:var(--bg2);}
 .modal-body{padding:22px;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
@@ -297,7 +273,7 @@ select{cursor:pointer;}
 .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:16px 22px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0;}
 @media(max-width:640px){
   .modal-backdrop{padding:0;align-items:flex-end;}
-  .modal{max-width:100%;width:100%;border-radius:var(--r-lg) var(--r-lg) 0 0;max-height:100%;}
+  .modal{max-width:100%;width:100%;border-radius:var(--r-lg) var(--r-lg) 0 0;max-height:92vh;animation:modalInMobile .2s ease;}
   .modal.wide{max-width:100%;}
   .modal-head{padding:16px 16px;}
   .modal-body{padding:16px;}
@@ -406,10 +382,7 @@ select{cursor:pointer;}
 
 </style>
 </head>
-<body data-alaada-product="accounts">
-<script>window.ALAADA_CONFIG=window.ALAADA_CONFIG||{};</script>
-<script src="/workspace-product-client.js?v=0b10c82558ab" data-product="accounts"></script>
-<script>if(!window.AlaadaWorkspace){const failure=new Error("The private workspace client did not load. No personal data was read or saved.");const rejected=Promise.reject(failure);rejected.catch(()=>{});const unavailable=()=>Promise.reject(failure);window.AlaadaWorkspace={storage:{getItem:()=>null,setItem:()=>{throw failure},removeItem:()=>{throw failure},key:()=>null,get length(){return 0}},ready:rejected,active:null,user:null,productFetch:unavailable,verify:unavailable,entitlements:unavailable,flush:unavailable,save:unavailable,remove:unavailable,read:()=>null,list:()=>[],databaseName:()=>{throw failure},orbitReply:unavailable,beforeSwitch:()=>{}};document.addEventListener("DOMContentLoaded",()=>{const gate=document.createElement("div");gate.setAttribute("role","alert");gate.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#101b2b;color:white;padding:10vh 10vw;font:20px system-ui";gate.textContent="The private workspace client failed to load. Reload to retry; personal data was not changed.";document.body.append(gate)})}</script>
+<body>
 
 <!-- ============== API GATE (first run / connection lost) ============== -->
 <div id="gate" style="display:none;">
@@ -655,10 +628,6 @@ select{cursor:pointer;}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg>
         AI Assistant
       </div>
-      <div class="side-link" data-view="company-access">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg>
-        Company Access
-      </div>
       <div class="side-link" data-view="approvals">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-5"/><path d="M21 12a9 9 0 1 1-6.2-8.56"/><path d="M16 3h5v5"/></svg>
         Approvals
@@ -709,7 +678,6 @@ select{cursor:pointer;}
 
   <!-- ============== MAIN ============== -->
   <main id="main">
-    <h1 class="visually-hidden">Alaada Accounts</h1>
     <div id="view"></div>
   </main>
 </div>
@@ -717,8 +685,8 @@ select{cursor:pointer;}
 <div id="backup-reminder" role="status" aria-live="polite">
   <div class="backup-icon">!</div>
   <div class="backup-copy">
-    <div class="backup-title">Optional device backup</div>
-    <div class="backup-text">Your saved changes are in the cloud. You can also keep an up-to-date copy on this device.</div>
+    <div class="backup-title">Update this company's backup</div>
+    <div class="backup-text">Recent changes are not yet saved to this device. Create a local backup before leaving Alaada.</div>
     <div class="backup-actions">
       <button class="btn btn-teal btn-sm" onclick="createBackup()">Create backup</button>
       <button class="btn btn-ghost btn-sm" onclick="hideBackupReminder()">Later</button>
@@ -731,7 +699,7 @@ select{cursor:pointer;}
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal" id="modal">
     <div class="modal-head">
-      <h2 id="modal-title">Title</h2>
+      <h3 id="modal-title">Title</h3>
       <button class="modal-close" id="modal-close">✕</button>
     </div>
     <div class="modal-ai-tools" id="modal-ai-tools">
@@ -779,16 +747,16 @@ function developerModeAllowed(){
   return isDeveloperFrontend() || !!(window.ALAADA_CONFIG && window.ALAADA_CONFIG.allowDeveloperMode === true);
 }
 
-let DEVELOPER_MODE = developerModeAllowed() && window.AlaadaWorkspace.storage.getItem(LS.devMode) === '1';
+let DEVELOPER_MODE = developerModeAllowed() && localStorage.getItem(LS.devMode) === '1';
 function setDeveloperMode(on){
   if (on && !developerModeAllowed()) {
     DEVELOPER_MODE = false;
-    window.AlaadaWorkspace.storage.removeItem(LS.devMode);
+    localStorage.removeItem(LS.devMode);
     applyDeveloperModeVisibility();
     return false;
   }
   DEVELOPER_MODE = !!on;
-  if (DEVELOPER_MODE) window.AlaadaWorkspace.storage.setItem(LS.devMode, '1'); else window.AlaadaWorkspace.storage.removeItem(LS.devMode);
+  if (DEVELOPER_MODE) localStorage.setItem(LS.devMode, '1'); else localStorage.removeItem(LS.devMode);
   applyDeveloperModeVisibility();
   return DEVELOPER_MODE;
 }
@@ -835,14 +803,14 @@ function resolveApiBase(){
   if (window.ALAADA_CONFIG && window.ALAADA_CONFIG.apiBase) return window.ALAADA_CONFIG.apiBase.replace(/\/$/,'');
   const meta = document.querySelector('meta[name="alaada-api-base"]');
   if (meta && meta.content) return meta.content.trim().replace(/\/$/,'');
-  const stored = window.AlaadaWorkspace.storage.getItem(LS.api);
+  const stored = localStorage.getItem(LS.api);
   if (stored && (isDeveloperFrontend() || isTrustedAccountsApiBase(stored))) return stored.replace(/\/$/,'');
-  if (stored && !isTrustedAccountsApiBase(stored)) window.AlaadaWorkspace.storage.removeItem(LS.api);
+  if (stored && !isTrustedAccountsApiBase(stored)) localStorage.removeItem(LS.api);
   return FALLBACK_API;
 }
 let API_BASE = resolveApiBase();
 // API key lives in memory only for the current page session. It is never
-// written to window.AlaadaWorkspace.storage/sessionStorage — closing or reloading the tab
+// written to localStorage/sessionStorage — closing or reloading the tab
 // clears it, by design. Only relevant when self-hosting with
 // ALAADA_ENFORCE_API_AUTH=true; the public deployment does not require it.
 let API_KEY = '';
@@ -855,26 +823,24 @@ let API_KEY = '';
    ============================================================ */
 const APPWRITE_ENDPOINT = ((window.ALAADA_CONFIG && window.ALAADA_CONFIG.appwriteEndpoint) || 'https://sfo.cloud.appwrite.io/v1').replace(/\/$/,'');
 const APPWRITE_PROJECT_ID = (window.ALAADA_CONFIG && window.ALAADA_CONFIG.appwriteProjectId) || '6972444700208a437da1';
-const APPWRITE_AUTH_REQUIRED = true;
+const APPWRITE_AUTH_REQUIRED = !(window.ALAADA_CONFIG && window.ALAADA_CONFIG.requireAppwriteAuth === false);
 let APPWRITE_USER = null;
 let APPWRITE_JWT = '';
 let APPWRITE_JWT_EXPIRES_AT = 0;
 let APPWRITE_JWT_PROMISE = null;
 
-async function fetchWithTimeout(input, init={}, timeoutMs=90000){
+async function fetchWithTimeout(input, init={}, timeoutMs=10000){
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(new DOMException('Accounts request timed out. Retry the connection.', 'TimeoutError')), timeoutMs);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   const externalSignal = init.signal;
-  const abort = () => controller.abort(externalSignal.reason);
   if (externalSignal) {
-    if (externalSignal.aborted) abort();
-    else externalSignal.addEventListener('abort', abort, {once:true});
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener('abort', () => controller.abort(), {once:true});
   }
   try {
-    return await window.AlaadaWorkspace.productFetch(input, {...init, signal:controller.signal});
+    return await fetch(input, {...init, signal:controller.signal});
   } finally {
     clearTimeout(timer);
-    externalSignal?.removeEventListener('abort', abort);
   }
 }
 
@@ -888,44 +854,26 @@ async function appwriteRequest(path, {method='GET', body=null} = {}){
   return fetchWithTimeout(APPWRITE_ENDPOINT + path, init, 10000);
 }
 
-function appwriteAuthUrl(){
-  const next = window.location.pathname + window.location.search + window.location.hash;
-  return `${window.location.origin}/auth.html?next=${encodeURIComponent(next)}`;
-}
-
-async function accountsAuthJSON(response, field){
-  const text = await response.text();
-  let data;
-  try { data = text.trim() ? JSON.parse(text) : null; } catch {}
-  if (!response.ok) throw new ApiError(response.status === 401 ? 'Sign in to access Alaada Accounts.' : 'Appwrite could not verify the Accounts session.', response.status, data || {code:`HTTP_${response.status}`});
-  if (!text.trim()) throw new ApiError('Appwrite returned an empty response. Retry the connection.', 502, {code:'EMPTY_RESPONSE'});
-  if (!data || typeof data[field] !== 'string' || !data[field]) throw new ApiError('Appwrite returned an incomplete response. Retry the connection.', 502, {code:'MALFORMED_RESPONSE'});
-  return data;
+function appwriteOAuthUrl(){
+  const success = window.location.origin + window.location.pathname;
+  const failure = window.location.origin + '/';
+  return `${APPWRITE_ENDPOINT}/account/sessions/oauth2/google?project=${encodeURIComponent(APPWRITE_PROJECT_ID)}&success=${encodeURIComponent(success)}&failure=${encodeURIComponent(failure)}`;
 }
 
 async function ensureAccountsIdentity({redirect=true} = {}){
-  await window.AlaadaWorkspace.ready;
-  // The shared client has already verified the cookie session and workspace.
-  // It checks current identity again for each API call; do not mint a second
-  // JWT or repeat the whole bootstrap before every Accounts request.
-  if (window.AlaadaWorkspace.user) {
-    APPWRITE_USER = {$id:window.AlaadaWorkspace.user};
-    return APPWRITE_USER;
-  }
   if (!APPWRITE_AUTH_REQUIRED) return null;
   if (APPWRITE_USER) return APPWRITE_USER;
   try {
     const res = await appwriteRequest('/account');
-    APPWRITE_USER = await accountsAuthJSON(res, '$id');
+    if (!res.ok) throw new Error('not authenticated');
+    APPWRITE_USER = await res.json();
     return APPWRITE_USER;
   } catch(e) {
-    if (e.status === 401) {
-      APPWRITE_USER = null;
-      APPWRITE_JWT = '';
-      APPWRITE_JWT_EXPIRES_AT = 0;
-      if (redirect) window.location.replace(appwriteAuthUrl());
-    }
-    throw normalizeConnectionError(e, APPWRITE_ENDPOINT);
+    APPWRITE_USER = null;
+    APPWRITE_JWT = '';
+    APPWRITE_JWT_EXPIRES_AT = 0;
+    if (redirect) window.location.replace(appwriteOAuthUrl());
+    throw new ApiError('Sign in to access Alaada Accounts.', 401, {});
   }
 }
 
@@ -936,9 +884,13 @@ async function getAppwriteJwt({force=false} = {}){
   APPWRITE_JWT_PROMISE = (async () => {
     await ensureAccountsIdentity();
     const res = await appwriteRequest('/account/jwts', {method:'POST', body:{duration:3600}});
-    if (res.status === 401) APPWRITE_USER = null;
-    const data = await accountsAuthJSON(res, 'jwt');
-    APPWRITE_JWT = data.jwt;
+    if (!res.ok) {
+      APPWRITE_USER = null;
+      throw new ApiError('Could not create a secure Accounts session.', res.status, {});
+    }
+    const data = await res.json();
+    APPWRITE_JWT = data.jwt || '';
+    if (!APPWRITE_JWT) throw new ApiError('Appwrite did not return a JWT.', 401, data);
     APPWRITE_JWT_EXPIRES_AT = Date.now() + 3600 * 1000;
     return APPWRITE_JWT;
   })().finally(() => { APPWRITE_JWT_PROMISE = null; });
@@ -954,15 +906,14 @@ async function apiAuthHeaders(extra={}){
         origin:urlOrigin(API_BASE),
       });
     }
-    // Authorization is attached by AlaadaWorkspace.productFetch, not a second
-    // independent token cache on this page.
+    headers.Authorization = `Bearer ${await getAppwriteJwt()}`;
   }
   if (API_KEY && !headers['X-Alaada-API-Key']) headers['X-Alaada-API-Key'] = API_KEY;
   return headers;
 }
 let STATE = {
   companies: [],
-  companyId: window.AlaadaWorkspace.storage.getItem(LS.company) || null,
+  companyId: localStorage.getItem(LS.company) || null,
   company: null,
   groups: [],
   ledgers: [],
@@ -983,13 +934,12 @@ let STATE = {
   openapi: null,
   openapiOperations: [],
   apiExplorerSelected: null,
-  capabilities: {},
 };
 
 /* ============================================================
    API WRAPPER
    ============================================================ */
-async function api(path, {method='GET', body=null, qs=null, raw=false, headers={}, formData=null, timeoutMs=90000} = {}) {
+async function api(path, {method='GET', body=null, qs=null, raw=false, headers={}, formData=null} = {}) {
   let url = API_BASE.replace(/\/$/,'') + path;
   if (qs) {
     const params = Object.entries(qs).filter(([,v]) => v !== undefined && v !== null && v !== '');
@@ -1006,18 +956,16 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       opts.headers = await apiAuthHeaders(opts.headers);
-      res = await fetchWithTimeout(url, opts, timeoutMs);
+      res = await fetchWithTimeout(url, opts, 10000);
     } catch(e) {
-      if (e && ['AbortError','TimeoutError'].includes(e.name)) throw new ApiError(`The Accounts API timed out after ${Math.ceil(timeoutMs/1000)} seconds.`, 0, {code:'REQUEST_TIMEOUT', endpoint:url});
+      if (e && e.name === 'AbortError') throw new ApiError('The Accounts API timed out after 10 seconds.', 0, {code:'REQUEST_TIMEOUT', endpoint:url});
       if (e instanceof ApiError) throw e;
       throw new ApiError('Could not reach the API. Check the URL and that the server is running.', 0, {code:'NETWORK_OR_CORS', endpoint:url});
     }
-    if (res.status !== 401 || attempt === 1 || !APPWRITE_AUTH_REQUIRED || window.AlaadaWorkspace.user) break;
+    if (res.status !== 401 || attempt === 1 || !APPWRITE_AUTH_REQUIRED) break;
     APPWRITE_JWT = '';
     APPWRITE_JWT_EXPIRES_AT = 0;
-    // Keep body metadata and retry keys when refreshing only the credential.
-    delete opts.headers.Authorization;
-    delete opts.headers.authorization;
+    opts.headers = {...headers};
     await getAppwriteJwt({force:true});
   }
   if (raw) return res;
@@ -1025,7 +973,7 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
   const text = await res.text();
   try { data = text ? JSON.parse(text) : null; } catch(e){ data = text || null; }
   if (!res.ok) {
-    const msg = (data && data.error && data.error.message) || (data && typeof data.detail === 'string' && data.detail) || (typeof data === 'string' && data) || `Request failed (${res.status})`;
+    const msg = (data && data.error && data.error.message) || (typeof data === 'string' && data) || `Request failed (${res.status})`;
     throw new ApiError(msg, res.status, data);
   }
   const selectedCompanyPath = STATE.companyId ? `/companies/${STATE.companyId}` : null;
@@ -1036,35 +984,6 @@ async function api(path, {method='GET', body=null, qs=null, raw=false, headers={
   return data;
 }
 class ApiError extends Error { constructor(msg, status, data){ super(msg); this.status=status; this.data=data; } }
-
-async function apiAllItems(path, {qs={}, isCurrent=()=>true}={}) {
-  const items = [], seen = new Set();
-  let expectedTotal = null;
-  for (let page = 1; page <= 500; page++) {
-    if (!isCurrent()) return null;
-    const result = await api(path, {qs:{...qs, page, page_size:100}});
-    if (!isCurrent()) return null;
-    if (!result || !Array.isArray(result.items)) throw new Error('The server returned an invalid list. Retry loading.');
-    const total = result.meta?.total ?? result.total;
-    if (total !== undefined) {
-      if (!Number.isSafeInteger(total) || total < 0 || (expectedTotal !== null && total !== expectedTotal)) {
-        throw new Error('The list changed while loading. Retry to load a complete list.');
-      }
-      expectedTotal = total;
-    }
-    for (const item of result.items) {
-      if (!item || typeof item.id !== 'string' || seen.has(item.id)) throw new Error('The list changed while loading. Retry loading.');
-      seen.add(item.id); items.push(item);
-    }
-    if (expectedTotal !== null && items.length > expectedTotal) throw new Error('Invalid list total. Retry loading.');
-    if (expectedTotal !== null && items.length === expectedTotal) return items;
-    if (result.items.length < 100) {
-      if (expectedTotal !== null) throw new Error('The list is incomplete. Retry loading.');
-      return items;
-    }
-  }
-  throw new Error('This list is too large to load completely. Narrow the selection.');
-}
 
 /* ============================================================
    LOCAL DEVICE BACKUPS
@@ -1077,16 +996,16 @@ const DRAFT_KEY_STORE = 'device_keys';
 const DRAFT_VERSION = 1;
 
 function markBackupNeeded(companyId){
-  window.AlaadaWorkspace.storage.setItem(LS.dirtyBackup + companyId, '1');
+  localStorage.setItem(LS.dirtyBackup + companyId, '1');
   sessionStorage.removeItem(LS.backupReminderDismissed + companyId);
   updateBackupReminder();
 }
 function clearBackupNeeded(companyId){
-  window.AlaadaWorkspace.storage.removeItem(LS.dirtyBackup + companyId);
+  localStorage.removeItem(LS.dirtyBackup + companyId);
   sessionStorage.removeItem(LS.backupReminderDismissed + companyId);
   updateBackupReminder();
 }
-function backupNeeded(companyId){ return window.AlaadaWorkspace.storage.getItem(LS.dirtyBackup + companyId) === '1'; }
+function backupNeeded(companyId){ return localStorage.getItem(LS.dirtyBackup + companyId) === '1'; }
 function hideBackupReminder(){
   if (STATE.companyId) sessionStorage.setItem(LS.backupReminderDismissed + STATE.companyId, '1');
   updateBackupReminder();
@@ -1095,30 +1014,17 @@ function updateBackupReminder(){
   const el = document.getElementById('backup-reminder');
   if (!el) return;
   const dismissed = STATE.companyId && sessionStorage.getItem(LS.backupReminderDismissed + STATE.companyId) === '1';
-  el.classList.toggle('show', STATE.capabilities.company_export === true && !!STATE.companyId && backupNeeded(STATE.companyId) && !dismissed);
+  el.classList.toggle('show', !!STATE.companyId && backupNeeded(STATE.companyId) && !dismissed);
 }
 function backupFileName(companyId){ return `alaada-accounts-backup-${companyId}.json`; }
 function requireBackupArray(payload, key){
   if (!Array.isArray(payload[key])) throw new Error(`Backup JSON is missing ${key}.`);
 }
 function validateBackupPayload(payload){
-  if (!payload || !['alaada.company.v1','alaada.accounts.appwrite.v1'].includes(payload.export_format) || !payload.company || !payload.company.id) {
+  if (!payload || payload.export_format !== 'alaada.company.v1' || !payload.company || !payload.company.id) {
     throw new Error('This is not a valid Alaada company backup JSON file.');
   }
   ['account_groups','ledgers','voucher_types','financial_years','vouchers','audit_logs'].forEach(key => requireBackupArray(payload, key));
-  if (payload.export_format === 'alaada.accounts.appwrite.v1') {
-    if (payload.manifest?.scope !== 'company-business-records' || payload.manifest?.restore_supported !== false
-        || !payload.manifest.counts || !Array.isArray(payload.manifest.excluded)) throw new Error('Company export manifest is incomplete.');
-    const sections=['account_groups','ledgers','voucher_types','financial_years','vouchers','journal_entries',
-      'customers','suppliers','payment_transactions','item_categories','units_of_measure','warehouses',
-      'stock_items','stock_ledger_entries','gst_tax_rates','tax_classifications','sales_invoices','purchase_bills',
-      'accounting_dimensions','budgets','approval_rules','approval_requests','audit_logs'];
-    if (sections.some(key => !Object.hasOwn(payload.manifest.counts,key))) throw new Error('Company export manifest is incomplete.');
-    for (const [key,count] of Object.entries(payload.manifest.counts)) {
-      if (!Number.isSafeInteger(count) || count < 0 || !Array.isArray(payload[key]) || payload[key].length !== count)
-        throw new Error('Company export record counts do not match.');
-    }
-  }
   if (payload.journal_entries !== undefined) requireBackupArray(payload, 'journal_entries');
   if (payload.customers !== undefined) requireBackupArray(payload, 'customers');
   if (payload.suppliers !== undefined) requireBackupArray(payload, 'suppliers');
@@ -1181,9 +1087,9 @@ function backupSummary(record){
   ];
 }
 
-function openBackupDb(databaseName=window.AlaadaWorkspace.databaseName(BACKUP_DB)){
+function openBackupDb(){
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(databaseName, 1);
+    const req = indexedDB.open(BACKUP_DB, 1);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(BACKUP_STORE)) db.createObjectStore(BACKUP_STORE, {keyPath:'companyId'});
@@ -1192,8 +1098,8 @@ function openBackupDb(databaseName=window.AlaadaWorkspace.databaseName(BACKUP_DB
     req.onerror = () => reject(req.error);
   });
 }
-async function putLocalBackup(record, databaseName){
-  const db = await openBackupDb(databaseName);
+async function putLocalBackup(record){
+  const db = await openBackupDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(BACKUP_STORE, 'readwrite');
     tx.objectStore(BACKUP_STORE).put(record);
@@ -1247,32 +1153,24 @@ async function saveBackupFile(payload, fileName){
 }
 async function saveLocalCompanyBackup({download=false, silent=false} = {}){
   if (!STATE.companyId) return null;
-  const companyId=STATE.companyId, generation=STATE.companyGeneration;
-  const databaseName=window.AlaadaWorkspace.databaseName(BACKUP_DB);
-  const payload = validateBackupPayload(await api(`/companies/${companyId}/export/json`));
-  if (!sameCompanyGeneration(companyId,generation) || databaseName !== window.AlaadaWorkspace.databaseName(BACKUP_DB))
-    throw new Error('Company or workspace changed during export. No local copy was saved.');
-  if (payload.company.id !== companyId) throw new Error('The export belongs to a different company. No local copy was saved.');
+  const payload = await api(`/companies/${STATE.companyId}/export/json`);
   const record = {
-    companyId,
-    companyName: payload.company.name || 'Company',
+    companyId: STATE.companyId,
+    companyName: payload.company && payload.company.name ? payload.company.name : (STATE.company ? STATE.company.name : 'Company'),
     savedAt: new Date().toISOString(),
-    fileName: backupFileName(companyId),
+    fileName: backupFileName(STATE.companyId),
     payload,
   };
-  await putLocalBackup(record, databaseName);
-  if (!sameCompanyGeneration(companyId,generation) || databaseName !== window.AlaadaWorkspace.databaseName(BACKUP_DB)) return record;
-  clearBackupNeeded(companyId);
+  await putLocalBackup(record);
+  clearBackupNeeded(STATE.companyId);
   if (download) await saveBackupFile(payload, record.fileName);
-  if (!silent) toast(`Local data copy saved: ${record.fileName}`, 'ok');
+  if (!silent) toast(`Backup updated: ${record.fileName}`, 'ok');
   return record;
 }
 async function ensureLocalBackupForSelectedCompany(){
-  if (!STATE.companyId || STATE.capabilities.company_export !== true) return;
-  const companyId=STATE.companyId, generation=STATE.companyGeneration;
+  if (!STATE.companyId) return;
   try {
-    const existing = await getLocalBackup(companyId);
-    if (!sameCompanyGeneration(companyId,generation)) return;
+    const existing = await getLocalBackup(STATE.companyId);
     if (!existing) await saveLocalCompanyBackup({download:false, silent:true});
   } catch(e){ console.warn(e); }
 }
@@ -1304,7 +1202,7 @@ function draftUserId(){
 function openDraftDb(){
   if (!secureDraftsSupported()) return Promise.reject(new Error('Secure device draft storage is not available in this browser.'));
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(window.AlaadaWorkspace.databaseName(DRAFT_DB), 1);
+    const req = indexedDB.open(DRAFT_DB, 1);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(DRAFT_STORE)) {
@@ -1456,9 +1354,6 @@ async function deleteSecureDraftRecord(record){
 }
 async function restoreLocalBackupToCloud(record){
   if (!record || !record.payload) return null;
-  validateBackupPayload(record.payload);
-  if (STATE.capabilities.company_restore === false || record.payload.export_format === 'alaada.accounts.appwrite.v1')
-    throw new Error('Cloud restore is not available for this Appwrite data copy. Keep the JSON export; no records have been changed.');
   const restored = await api('/companies/import/json', {method:'POST', body:record.payload});
   toast(`Restored local backup: ${restored.name}`, 'ok');
   await loadCompanies();
@@ -1491,32 +1386,11 @@ async function copyText(text){
 /* ============================================================
    FORMAT HELPERS
    ============================================================ */
-function moneyCents(v){
-  if (v === null || v === undefined || v === '') return null;
-  const match = String(v).trim().match(/^(-?)(\d+)(?:\.(\d*))?(?:e([+-]?\d+))?$/i);
-  if (!match || match[2].length + (match[3] || '').length > 100) return null;
-  const exponent = Number(match[4] || 0);
-  if (!Number.isInteger(exponent) || Math.abs(exponent) > 100) return null;
-  const digits = BigInt(match[2] + (match[3] || ''));
-  const shift = 2 + exponent - (match[3] || '').length;
-  const cents = shift >= 0 ? digits * (10n ** BigInt(shift))
-    : (digits + (10n ** BigInt(-shift)) / 2n) / (10n ** BigInt(-shift));
-  return match[1] ? -cents : cents;
-}
-function sumMoneyAmounts(values){
-  const amounts = values.map(moneyCents);
-  if (amounts.some(amount=>amount === null)) return null;
-  const total = amounts.reduce((sum,amount)=>sum+amount,0n), abs = total < 0n ? -total : total;
-  return (total < 0n ? '-' : '') + String(abs / 100n) + '.' + String(abs % 100n).padStart(2,'0');
-}
 function money(v, currency){
-  const cents = moneyCents(v);
-  if (cents === null) return '—';
-  const positive = cents < 0n ? -cents : cents;
-  const abs = (positive / 100n).toLocaleString('en-IN') + '.' + String(positive % 100n).padStart(2,'0');
-  const code = /^[A-Z]{3}$/.test(currency || '') ? currency : 'INR';
-  const sym = {USD:'$',EUR:'€',INR:'₹',GBP:'£'}[code] || code + ' ';
-  return (cents < 0n ? '−' : '') + sym + abs;
+  const n = Number(v || 0);
+  const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const sym = currency === 'USD' ? '$' : (currency === 'EUR' ? '€' : '₹');
+  return (n < 0 ? '−' : '') + sym + abs;
 }
 function fmtDate(d){ if(!d) return '—'; const dt = new Date(d); if(isNaN(dt)) return d; return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -1756,11 +1630,10 @@ async function tryConnect(url, {silent=false} = {}) {
   API_KEY = DEVELOPER_MODE ? gateApiKey.value.trim() : API_KEY;
   if (!silent) { gateStatus.innerHTML = '<span class="spin"></span> Connecting…'; }
   try {
-    const res = await fetchWithTimeout(API_BASE + '/health');
+    const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
     if (!res.ok) throw await healthResponseError(res);
-    STATE.capabilities = (await res.json()).capabilities || {};
-    if (isDeveloperFrontend() || isTrustedAccountsApiBase(API_BASE)) window.AlaadaWorkspace.storage.setItem(LS.api, API_BASE);
-    else window.AlaadaWorkspace.storage.removeItem(LS.api);
+    if (isDeveloperFrontend() || isTrustedAccountsApiBase(API_BASE)) localStorage.setItem(LS.api, API_BASE);
+    else localStorage.removeItem(LS.api);
     setApiStatus('up');
     gate.style.display = 'none';
     await bootstrap();
@@ -1805,7 +1678,7 @@ function applyDeveloperModeVisibility(){
   const devAllowed = developerModeAllowed();
   if (!devAllowed && DEVELOPER_MODE) {
     DEVELOPER_MODE = false;
-    window.AlaadaWorkspace.storage.removeItem(LS.devMode);
+    localStorage.removeItem(LS.devMode);
   }
   if (urlRow) urlRow.style.display = devAllowed && DEVELOPER_MODE ? '' : 'none';
   if (keyRow) keyRow.style.display = devAllowed && DEVELOPER_MODE ? '' : 'none';
@@ -1832,19 +1705,14 @@ async function bootstrap() {
     await loadCompanies();
     renderSidebarRouting();
     navigate(STATE.currentView);
-    if (developerModeAllowed() && DEVELOPER_MODE) loadOpenApiSpec().catch(()=>{});
+    pollHealth();
+    loadOpenApiSpec().catch(()=>{});
   })().finally(() => { bootstrapPromise = null; });
   return bootstrapPromise;
 }
-let healthPollPromise = null;
-setInterval(() => { if (API_BASE && !document.hidden && !autoConnectPromise && STATE.companies.length) pollHealth(); }, 120000);
+setInterval(() => { if (API_BASE) pollHealth(); }, 20000);
 async function pollHealth(){
-  if (healthPollPromise) return healthPollPromise;
-  healthPollPromise = (async()=>{
-    try { const r = await fetchWithTimeout(API_BASE + '/health'); setApiStatus(r.ok ? 'up' : 'down'); }
-    catch(e){ setApiStatus('down'); }
-  })().finally(()=>{healthPollPromise=null;});
-  return healthPollPromise;
+  try { const r = await fetchWithTimeout(API_BASE + '/health', {}, 10000); setApiStatus(r.ok ? 'up' : 'down'); } catch(e){ setApiStatus('down'); }
 }
 
 /* ============================================================
@@ -1884,12 +1752,12 @@ async function healthResponseError(res){
   let data = null;
   const text = await res.text().catch(() => '');
   try { data = text ? JSON.parse(text) : null; } catch(e) { data = text ? {code:'MALFORMED_RESPONSE', detail:text.slice(0,240)} : null; }
-  const message = data?.error?.message || data?.detail?.message || data?.message || (typeof data?.detail==='string'?data.detail:null) || `Health check failed (${res.status})`;
+  const message = data?.error?.message || data?.detail?.message || data?.message || `Health check failed (${res.status})`;
   return new ApiError(message, res.status, data || {code:`HTTP_${res.status}`});
 }
 function normalizeConnectionError(error, endpoint){
   if (error instanceof ApiError) return error;
-  if (error && ['AbortError','TimeoutError'].includes(error.name)) return new ApiError('The Accounts service timed out while opening.', 0, {code:'REQUEST_TIMEOUT', endpoint});
+  if (error && error.name === 'AbortError') return new ApiError('The Accounts service timed out while opening.', 0, {code:'REQUEST_TIMEOUT', endpoint});
   return new ApiError('The Accounts service could not be reached from this browser.', 0, {code:'NETWORK_OR_CORS', endpoint});
 }
 function requestIdFromError(error){
@@ -1906,11 +1774,7 @@ function classifyAccountsError(error, phase){
   let title = 'The operation could not be completed';
   let message = error?.message || 'Try again after checking the connection.';
   let kind = 'server_error';
-  if (code === 'INTEGRATION_UNAVAILABLE') {
-    kind = 'integration_unavailable';
-    title = 'Accounts is not connected yet';
-    message = 'Your workspace is available, but its accounting service has not been connected. No company data was changed. Try again after your administrator enables the service.';
-  } else if (status === 0) {
+  if (status === 0) {
     kind = code === 'REQUEST_TIMEOUT' ? 'timeout' : 'network_or_cors';
     title = code === 'REQUEST_TIMEOUT' ? 'Accounts is taking too long to respond' : 'Accounts server could not be reached';
     message = code === 'REQUEST_TIMEOUT'
@@ -1937,14 +1801,10 @@ function classifyAccountsError(error, phase){
     kind = 'validation_or_business_rule';
     title = 'Accounts rejected the submitted data';
     message = error?.message || 'Review the details, fix the issue, and retry.';
-  } else if (status === 429) {
-    kind = 'usage_limit';
-    title = 'Accounts usage limit reached';
-    message = 'Check your workspace plan and usage. Retrying immediately will not increase the limit.';
   } else if (status === 503) {
     kind = 'database_or_migrations';
     title = 'Accounts database is not ready';
-    message = error?.message || 'Accounts is not ready yet. Retry the connection after a moment.';
+    message = 'The server is reachable, but the database or migrations are not ready yet. Retry after a moment.';
   } else if (String(code).toUpperCase() === 'MALFORMED_RESPONSE') {
     kind = 'malformed_response';
     title = 'Accounts returned an unexpected response';
@@ -1954,15 +1814,15 @@ function classifyAccountsError(error, phase){
     title = 'Accounts server error';
     message = 'The server reported an internal problem. Retry after a moment or contact support with the request ID.';
   }
-  const retryable = ['timeout','network_or_cors','database_or_migrations'].includes(kind) || [502,504].includes(status);
-  return {phase, kind, retryable, status: status || 'network', code, title, message, requestId: requestIdFromError(error), raw: error?.data || error?.message || ''};
+  return {phase, kind, status: status || 'network', code, title, message, requestId: requestIdFromError(error), raw: error?.data || error?.message || ''};
 }
 function renderConnectingView(attempt){
   view().innerHTML = `<div class="empty" style="padding-top:80px;">
     <div class="empty-icon"><span class="spin" style="width:26px;height:26px;border-width:3px;"></span></div>
-    <h4>Opening Alaada Accounts…</h4>
-    <p>The Free server may need up to a minute to wake after being idle. This is one connection attempt; your work has not been changed.</p>
-    <p><a href="/workspaces">Open workspaces</a> · <a href="/">All products</a></p>
+    <h4>${attempt>1 ? 'Still starting up…' : 'Alaada Accounts is starting…'}</h4>
+    <p>${attempt>1
+        ? `This can take up to a minute the first time. Retrying automatically.`
+        : `Setting things up for you.`}</p>
     ${technicalDetails([['Endpoint', API_BASE], ['Attempt', attempt]])}
   </div>`;
 }
@@ -1993,10 +1853,10 @@ async function renderOfflineBackupView(error=null){
         <div class="stat-grid" style="margin-top:18px;text-align:left;">
           ${summary.map(item => `<div class="stat"><span>${esc(item.label)}</span><strong>${esc(item.value)}</strong></div>`).join('')}
         </div>
-        <p style="margin-top:16px;">Download this device copy to keep your exported records. ${STATE.capabilities.company_restore === false || backup.payload?.export_format === 'alaada.accounts.appwrite.v1' ? 'Appwrite cloud restore is not available yet.' : 'Reconnect to review cloud restore.'}</p>
+        <p style="margin-top:16px;">Reconnect to restore this backup to the cloud database, or download the JSON copy from this device.</p>
         <div style="margin-top:18px;">
           <button class="btn btn-blue" onclick="startAutoConnect()">Retry cloud</button>
-          ${STATE.capabilities.company_restore === false || backup.payload?.export_format === 'alaada.accounts.appwrite.v1' ? '' : '<button class="btn btn-teal" onclick="restoreOfflineBackup()" style="margin-left:8px;">Restore after reconnect</button>'}
+          <button class="btn btn-teal" onclick="restoreOfflineBackup()" style="margin-left:8px;">Restore after reconnect</button>
           <button class="btn btn-ghost" onclick="downloadOfflineBackup()" style="margin-left:8px;">Download backup</button>
         </div>
         ${connectionTechnicalDetails(error)}
@@ -2021,39 +1881,25 @@ async function downloadOfflineBackup(){
 }
 let autoConnectPromise = null;
 async function startAutoConnect(){
-  try { await window.AlaadaWorkspace.ready; } catch { return; }
-  STATE.companyId = window.AlaadaWorkspace.storage.getItem(LS.company) || null;
   if (autoConnectPromise) return autoConnectPromise;
   autoConnectPromise = (async () => {
     await ensureAccountsIdentity();
-    try {
-      const policy=await window.AlaadaWorkspace.entitlements();
-      if(!policy.products?.accounts?.execution_available){
-        setApiStatus('down');
-        renderOfflineView(classifyAccountsError(new ApiError('Accounts is not connected',503,{code:'INTEGRATION_UNAVAILABLE'}),'opening Accounts'));
-        return false;
-      }
-    } catch(error) {
-      setApiStatus('down');renderOfflineView(classifyAccountsError(normalizeConnectionError(error,API_BASE),'verifying workspace access'));return false;
-    }
     gateUrl.value = API_BASE;
     setApiStatus('connecting');
     renderConnectingView(1);
-    const delays = [0]; // One bounded request; never start overlapping cold-start retries.
+    const delays = [0, 2000, 3000, 5000, 8000, 8000, 8000, 8000]; // ~40s of gentle retries
     let lastError = null;
     for (let i = 0; i < delays.length; i++) {
       if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
       if (i > 0) renderConnectingView(i+1);
       try {
-        const res = await fetchWithTimeout(API_BASE + '/health');
-        if (res.ok) { STATE.capabilities = (await res.json()).capabilities || {}; setApiStatus('up'); await bootstrap(); return true; }
+        const res = await fetchWithTimeout(API_BASE + '/health', {}, 10000);
+        if (res.ok) { localStorage.setItem(LS.api, API_BASE); setApiStatus('up'); await bootstrap(); return true; }
         lastError = await healthResponseError(res);
       } catch(e) { lastError = normalizeConnectionError(e, API_BASE + '/health'); }
-      if(!classifyAccountsError(lastError,'opening Accounts').retryable)break;
     }
     setApiStatus('down');
-    const classified=classifyAccountsError(lastError,'opening Accounts');
-    if(classified.retryable)await renderOfflineBackupView(classified);else renderOfflineView(classified);
+    await renderOfflineBackupView(classifyAccountsError(lastError, 'opening Accounts'));
     return false;
   })().finally(() => { autoConnectPromise = null; });
   return autoConnectPromise;
@@ -2066,23 +1912,22 @@ startAutoConnect();
 async function loadCompanies() {
   setLoadState('companies', 'loading');
   try {
-    STATE.companies = await apiAllItems('/companies');
+    const page = await api('/companies', {qs:{page:1, page_size:100}});
+    STATE.companies = page.items || [];
     setLoadState('companies', STATE.companies.length ? 'loaded' : 'loaded_empty');
   } catch(e) {
     setLoadState('companies', 'failed', {message:e.message || 'Request failed', status:e.status || 'network', code:errorCodeFromError(e)});
     errToast(e);
-    renderCompanyMenu();
-    return;
   }
   const selectedStillExists = STATE.companies.some(company => company.id === STATE.companyId);
   if (!selectedStillExists) {
     STATE.companyId = STATE.companies[0]?.id || null;
-    if (STATE.companyId) window.AlaadaWorkspace.storage.setItem(LS.company, STATE.companyId);
-    else window.AlaadaWorkspace.storage.removeItem(LS.company);
+    if (STATE.companyId) localStorage.setItem(LS.company, STATE.companyId);
+    else localStorage.removeItem(LS.company);
   }
   renderCompanyMenu();
   if (STATE.companyId) await selectCompany(STATE.companyId, {silentNav:true});
-  else { ++STATE.companyGeneration; clearCompanyScopedData(); document.getElementById('co-current').textContent = 'No company'; navigate(STATE.currentView); updateBackupReminder(); }
+  else { STATE.company = null; document.getElementById('co-current').textContent = 'No company'; updateBackupReminder(); }
 }
 
 function renderCompanyMenu(){
@@ -2113,33 +1958,18 @@ document.getElementById('co-new-btn').onclick = () => { document.getElementById(
 
 async function selectCompany(id, {silentNav=false} = {}) {
   const generation = ++STATE.companyGeneration;
-  const changedCompany = STATE.company?.id !== id;
-  closeModal();
-  if (changedCompany) clearCompanyScopedData();
-  STATE.company = null;
   STATE.companyId = id;
-  window.AlaadaWorkspace.storage.setItem(LS.company, id);
+  localStorage.setItem(LS.company, id);
   clearCompanyScopedLoadStates();
-  document.getElementById('co-current').textContent = 'Loading company…';
-  view().innerHTML = '<div class="loading-row"><span class="spin"></span> Loading company…</div>';
-  let bundledCompany = null;
   try {
-    if (STATE.capabilities.company_bootstrap) bundledCompany = await api(`/companies/${id}/bootstrap`);
-    const company = bundledCompany ? bundledCompany.company : await api(`/companies/${id}`);
+    const company = await api(`/companies/${id}`);
     if (!sameCompanyGeneration(id, generation)) return;
-    if (!company || company.id !== id) throw new ApiError('Accounts returned a different company.',502,{code:'MALFORMED_RESPONSE'});
-    if (bundledCompany) {
-      const keys=['groups','ledgers','voucherTypes','financialYears','customers','suppliers','categories','uoms','warehouses','stockItems','gstRates','taxClassifications'];
-      if (keys.some(key=>!Array.isArray(bundledCompany[key]))) throw new ApiError('Company data was incomplete. Retry loading.',502,{code:'MALFORMED_RESPONSE'});
-      for (const key of keys) { STATE[key]=bundledCompany[key]; setLoadState(key,STATE[key].length?'loaded':'loaded_empty',{companyId:id}); }
-    }
     STATE.company = company;
   } catch(e) {
     if (!sameCompanyGeneration(id, generation)) return;
     if (e.status === 404) {
       try {
         const backup = await getLocalBackup(id);
-        if (!sameCompanyGeneration(id, generation)) return;
         if (backup) {
           STATE.offlineBackup = backup;
           toast('Company missing in cloud database. Review recovery options before restoring.', 'err');
@@ -2148,23 +1978,18 @@ async function selectCompany(id, {silentNav=false} = {}) {
         }
       } catch(inner){ console.warn(inner); }
     }
-    if (!sameCompanyGeneration(id, generation)) return;
-    clearCompanyScopedData();
-    document.getElementById('co-current').textContent = 'Company unavailable';
-    view().innerHTML = emptyState('⚠','Could not load company',esc(e.message),
-      '<button class="btn btn-ghost" onclick="retryCompanyScopedLoaders()">Retry loading</button>');
-    errToast(e); updateBackupReminder(); return;
+    errToast(e); STATE.company = null; updateBackupReminder(); return;
   }
   document.getElementById('co-current').textContent = STATE.company.name;
   renderCompanyMenu();
-  const scopedResults = bundledCompany ? [] : await Promise.allSettled([
+  const scopedResults = await Promise.allSettled([
     loadGroups(generation, id), loadLedgers(generation, id), loadVoucherTypes(generation, id), loadFinancialYears(generation, id),
     loadCustomers(generation, id), loadSuppliers(generation, id), loadCategories(generation, id), loadUoms(generation, id),
     loadWarehouses(generation, id), loadStockItems(generation, id), loadGstRates(generation, id), loadTaxClassifications(generation, id),
   ]);
   if (!sameCompanyGeneration(id, generation)) return;
   if (scopedResults.some(result => result.status === 'rejected')) {
-    toast('Some company data could not be loaded. Use Retry loading before creating new records.', 'err');
+    toast('Some company data could not be loaded. Existing data was kept; use Retry loading before creating new records.', 'err');
   }
   ensureLocalBackupForSelectedCompany();
   refreshBalanceBeam();
@@ -2186,19 +2011,12 @@ function failedLoadState(key) {
 function clearCompanyScopedLoadStates() {
   STATE.loadStates = {};
 }
-function clearCompanyScopedData() {
-  for (const key of ['groups','ledgers','voucherTypes','financialYears','customers','suppliers',
-    'categories','uoms','warehouses','stockItems','gstRates','taxClassifications']) STATE[key] = [];
-  STATE.company = null;
-  STATE.offlineBackup = null;
-  clearCompanyScopedLoadStates();
-}
 function failedLoaderNoticeHtml(keys, retryAction='retryCompanyScopedLoaders()') {
   const failures = keys.map(key => [key, failedLoadState(key)]).filter(([,state]) => state);
   if (!failures.length) return '';
   return `<div class="card card-pad" style="margin-bottom:16px;border-color:rgba(214,58,58,.35);">
     <div style="font-weight:900;color:var(--red);margin-bottom:6px;">Some company data could not be loaded</div>
-    <div class="help-text">This is a loading failure, not an empty list. Only previously loaded data for this same company may be shown. Retry before creating new records.</div>
+    <div class="help-text">Alaada kept the last available data instead of treating this as empty. Retry before creating new records.</div>
     <div class="grid grid-2" style="margin-top:12px;">
       ${failures.map(([key,state]) => `<div class="kv"><span class="k">${esc(key)}</span><span class="v">${esc(state.message || 'Load failed')}</span></div>`).join('')}
     </div>
@@ -2213,11 +2031,9 @@ async function loadCompanyScopedState(key, pathBuilder, {items=false, fallback=[
   if (!companyId) return;
   setLoadState(key, 'loading', {companyId});
   try {
-    const data = items
-      ? await apiAllItems(pathBuilder(companyId), {isCurrent:()=>sameCompanyGeneration(companyId, generation)})
-      : await api(pathBuilder(companyId));
+    const data = await api(pathBuilder(companyId));
     if (!sameCompanyGeneration(companyId, generation)) return;
-    STATE[key] = data;
+    STATE[key] = items ? (data.items || []) : data;
     setLoadState(key, Array.isArray(STATE[key]) && STATE[key].length === 0 ? 'loaded_empty' : 'loaded', {companyId});
   } catch(e) {
     if (!sameCompanyGeneration(companyId, generation)) return;
@@ -2227,15 +2043,15 @@ async function loadCompanyScopedState(key, pathBuilder, {items=false, fallback=[
   }
 }
 async function loadGroups(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('groups', id=>`/companies/${id}/account-groups`, {}, generation, companyId); }
-async function loadLedgers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('ledgers', id=>`/companies/${id}/ledgers`, {items:true}, generation, companyId); }
+async function loadLedgers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('ledgers', id=>`/companies/${id}/ledgers?page_size=500`, {items:true}, generation, companyId); }
 async function loadVoucherTypes(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('voucherTypes', id=>`/companies/${id}/voucher-types`, {}, generation, companyId); }
 async function loadFinancialYears(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('financialYears', id=>`/companies/${id}/financial-years`, {}, generation, companyId); }
-async function loadCustomers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('customers', id=>`/companies/${id}/customers`, {items:true}, generation, companyId); }
-async function loadSuppliers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('suppliers', id=>`/companies/${id}/suppliers`, {items:true}, generation, companyId); }
+async function loadCustomers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('customers', id=>`/companies/${id}/customers?page_size=500`, {items:true}, generation, companyId); }
+async function loadSuppliers(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('suppliers', id=>`/companies/${id}/suppliers?page_size=500`, {items:true}, generation, companyId); }
 async function loadCategories(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('categories', id=>`/companies/${id}/inventory/categories`, {}, generation, companyId); }
 async function loadUoms(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('uoms', id=>`/companies/${id}/inventory/uoms`, {}, generation, companyId); }
 async function loadWarehouses(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('warehouses', id=>`/companies/${id}/inventory/warehouses`, {}, generation, companyId); }
-async function loadStockItems(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('stockItems', id=>`/companies/${id}/inventory/items`, {items:true}, generation, companyId); }
+async function loadStockItems(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('stockItems', id=>`/companies/${id}/inventory/items?page_size=500`, {items:true}, generation, companyId); }
 async function loadGstRates(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('gstRates', id=>`/companies/${id}/gst/rates`, {}, generation, companyId); }
 async function loadTaxClassifications(generation=STATE.companyGeneration, companyId=STATE.companyId){ return loadCompanyScopedState('taxClassifications', id=>`/companies/${id}/gst/classifications`, {}, generation, companyId); }
 
@@ -2248,11 +2064,6 @@ function uomSymbol(id){ const u = STATE.uoms.find(x=>x.id===id); return u ? u.sy
 function categoryName(id){ const c = STATE.categories.find(x=>x.id===id); return c ? c.name : '—'; }
 
 function requireCompany(){
-  if (STATE.companyId && (!STATE.company || STATE.company.id !== STATE.companyId)) {
-    view().innerHTML = emptyState('🏢','Company not loaded','Wait for loading to finish, or retry if it failed.',
-      '<button class="btn btn-ghost" onclick="retryCompanyScopedLoaders()">Retry loading</button>');
-    return false;
-  }
   if (!STATE.companyId) {
     view().innerHTML = emptyState('🏢','No company selected','Create a company to start recording ledgers and vouchers.',
       `<button class="btn btn-blue" onclick="openCompanyForm()">+ Create company</button>`);
@@ -2265,15 +2076,13 @@ function requireCompany(){
    BALANCE BEAM (signature element) — reflects trial balance
    ============================================================ */
 async function refreshBalanceBeam(){
-  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   const label = document.getElementById('beam-label');
   const bar = document.getElementById('beam-bar');
   const panL = document.getElementById('beam-pan-l');
   const panR = document.getElementById('beam-pan-r');
   if (!STATE.companyId) { label.textContent='—'; label.className=''; return; }
   try {
-    const tb = await api(`/companies/${companyId}/reports/trial-balance`);
-    if (!sameCompanyGeneration(companyId, generation)) return;
+    const tb = await api(`/companies/${STATE.companyId}/reports/trial-balance`);
     const d = tb.total_debit, c = tb.total_credit;
     const balanced = tb.is_balanced;
     label.textContent = balanced ? 'Books balanced' : 'Out of balance';
@@ -2282,7 +2091,7 @@ async function refreshBalanceBeam(){
     bar.style.transform = `rotate(${tilt}deg)`;
     panL.style.transform = `rotate(${tilt}deg)`;
     panR.style.transform = `rotate(${tilt}deg)`;
-  } catch(e) { if (sameCompanyGeneration(companyId, generation)) { label.textContent='—'; label.className=''; } }
+  } catch(e) { label.textContent='—'; label.className=''; }
 }
 document.getElementById('balance-beam').onclick = () => navigate('report-trial-balance');
 
@@ -2292,9 +2101,6 @@ document.getElementById('balance-beam').onclick = () => navigate('report-trial-b
 function view(){ return document.getElementById('view'); }
 function renderSidebarRouting(){
   document.querySelectorAll('.side-link[data-view]').forEach(l => {
-    l.setAttribute('role','button');l.tabIndex=0;
-    l.setAttribute('aria-current',l.classList.contains('active')?'page':'false');
-    l.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();l.click();}};
     l.onclick = () => { navigate(l.dataset.view); closeSidebarDrawer(); };
   });
 }
@@ -2322,7 +2128,7 @@ const DEV_ONLY_VIEWS = ['backend-features', 'internal-api'];
 function navigate(v){
   if (DEV_ONLY_VIEWS.includes(v) && !DEVELOPER_MODE) v = 'dashboard';
   STATE.currentView = v;
-  document.querySelectorAll('.side-link[data-view]').forEach(l => {l.classList.toggle('active', l.dataset.view===v);l.setAttribute('aria-current',l.dataset.view===v?'page':'false');});
+  document.querySelectorAll('.side-link[data-view]').forEach(l => l.classList.toggle('active', l.dataset.view===v));
   const fn = VIEW_RENDERERS[v] || renderDashboard;
   fn();
   updateBackupReminder();
@@ -2340,19 +2146,14 @@ function viewHead(title, sub, actionsHtml){
    ============================================================ */
 async function renderDashboard(){
   if (!requireCompany()) return;
-  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   view().innerHTML = viewHead(STATE.company.name, `Fiscal overview · ${esc(STATE.company.base_currency||'INR')} · as of ${fmtDate(todayStr())}`,
     `<button class="btn btn-ghost btn-sm" data-seed-demo-btn onclick="seedDemo()">✦ Seed demo data</button>
      <button class="btn btn-blue" onclick="openVoucherForm()">+ New voucher</button>`) +
     `${failedLoaderNoticeHtml(['groups','ledgers','voucherTypes','financialYears','customers','suppliers','categories','uoms','warehouses','stockItems','gstRates','taxClassifications'])}
     <div id="seed-demo-status"></div><div id="dash-body"><div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading dashboard…</td></tr></tbody></table></div></div>`;
-  const slot = document.getElementById('dash-body');
-  const isCurrent = () => sameCompanyGeneration(companyId, generation) && document.getElementById('dash-body') === slot;
   try {
-    const d = await api(`/companies/${companyId}/dashboard`);
-    if (!isCurrent()) return;
+    const d = await api(`/companies/${STATE.companyId}/dashboard`);
     const cur = STATE.company.base_currency;
-    const metric = field => d[field] == null ? 'Unavailable' : money(d[field],cur);
     const body = `<div class="dashboard-shell">
       <div class="grid grid-4" style="margin-bottom:18px;">
         <div class="stat-card c-blue"><div class="stat-label">Total Assets</div><div class="stat-value">${money(d.total_assets,cur)}</div></div>
@@ -2367,19 +2168,19 @@ async function renderDashboard(){
         <div class="stat-card c-red"><div class="stat-label">Total Expenses (YTD)</div><div class="stat-value">${money(d.total_expenses,cur)}</div></div>
       </div>
       <div class="grid grid-4" style="margin-bottom:22px;">
-        <div class="stat-card c-blue" style="cursor:pointer;" onclick="navigate('customers')"><div class="stat-label">Receivables</div><div class="stat-value">${metric('outstanding_receivables')}</div></div>
-        <div class="stat-card c-gold" style="cursor:pointer;" onclick="navigate('suppliers')"><div class="stat-label">Payables</div><div class="stat-value">${metric('outstanding_payables')}</div></div>
-        <div class="stat-card c-teal" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Inventory Value</div><div class="stat-value">${metric('inventory_value')}</div></div>
-        <div class="stat-card ${(d.low_stock_items||[]).length?'c-red':'c-ink'}" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Low Stock Items</div><div class="stat-value">${d.low_stock_items == null ? 'Unavailable' : d.low_stock_items.length}</div></div>
+        <div class="stat-card c-blue" style="cursor:pointer;" onclick="navigate('customers')"><div class="stat-label">Receivables</div><div class="stat-value">${money(d.outstanding_receivables,cur)}</div></div>
+        <div class="stat-card c-gold" style="cursor:pointer;" onclick="navigate('suppliers')"><div class="stat-label">Payables</div><div class="stat-value">${money(d.outstanding_payables,cur)}</div></div>
+        <div class="stat-card c-teal" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Inventory Value</div><div class="stat-value">${money(d.inventory_value,cur)}</div></div>
+        <div class="stat-card ${(d.low_stock_items||[]).length?'c-red':'c-ink'}" style="cursor:pointer;" onclick="navigate('inventory-stock')"><div class="stat-label">Low Stock Items</div><div class="stat-value">${(d.low_stock_items||[]).length}</div></div>
       </div>
       <div class="grid grid-2" style="margin-bottom:22px;">
         <div class="card card-pad">
           <div style="font-weight:800;margin-bottom:10px;">Top customers (YTD sales)</div>
-          ${(d.top_customers&&d.top_customers.length) ? d.top_customers.map(c=>`<div class="kv"><span class="k">${esc(c.customer_name)}</span><span class="v">${money(c.total_sales,cur)}</span></div>`).join('') : `<div style="font-size:.8rem;color:var(--ink3);">${d.top_customers == null ? 'Sales invoice data is not available yet.' : 'No posted sales invoices yet.'}</div>`}
+          ${(d.top_customers&&d.top_customers.length) ? d.top_customers.map(c=>`<div class="kv"><span class="k">${esc(c.customer_name)}</span><span class="v">${money(c.total_sales,cur)}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No posted sales invoices yet.</div>'}
         </div>
         <div class="card card-pad">
           <div style="font-weight:800;margin-bottom:10px;">Top suppliers (YTD purchases)</div>
-          ${(d.top_suppliers&&d.top_suppliers.length) ? d.top_suppliers.map(s=>`<div class="kv"><span class="k">${esc(s.supplier_name)}</span><span class="v">${money(s.total_purchases,cur)}</span></div>`).join('') : `<div style="font-size:.8rem;color:var(--ink3);">${d.top_suppliers == null ? 'Purchase bill data is not available yet.' : 'No posted purchase bills yet.'}</div>`}
+          ${(d.top_suppliers&&d.top_suppliers.length) ? d.top_suppliers.map(s=>`<div class="kv"><span class="k">${esc(s.supplier_name)}</span><span class="v">${money(s.total_purchases,cur)}</span></div>`).join('') : '<div style="font-size:.8rem;color:var(--ink3);">No posted purchase bills yet.</div>'}
         </div>
       </div>
       ${(d.low_stock_items&&d.low_stock_items.length) ? `
@@ -2388,14 +2189,14 @@ async function renderDashboard(){
       <div class="table-wrap" style="margin-bottom:22px;"><table><thead><tr><th>Item</th><th>Warehouse</th><th class="num">Quantity</th><th class="num">Reorder Level</th></tr></thead>
       <tbody>${d.low_stock_items.map(r=>`<tr><td>${esc(r.item_name)}${r.sku?` <span class="pill">${esc(r.sku)}</span>`:''}</td><td>${esc(r.warehouse_name)}</td><td class="num">${r.quantity}</td><td class="num">${r.reorder_level}</td></tr>`).join('')}</tbody></table></div>` : ''}
       <div class="view-head dashboard-section-head"><div class="view-title">Recent orders &amp; documents</div></div>
-      ${d.recent_orders == null ? emptyState('📦','Orders unavailable','Sales and purchase documents are not available from this backend yet.') : renderRecentOrdersTable(d.recent_orders, cur)}
+      ${renderRecentOrdersTable(d.recent_orders, cur)}
       <div class="view-head dashboard-section-head" style="margin-top:22px;"><div class="view-title">Recent activity</div>
         <div class="view-actions"><button class="btn btn-ghost btn-sm" onclick="navigate('vouchers')">View all vouchers →</button></div></div>
       ${renderRecentTable(d.recent_transactions, cur)}
     </div>`;
-    slot.innerHTML = body;
+    document.getElementById('dash-body').innerHTML = body;
   } catch(e) {
-    if (isCurrent()) slot.innerHTML = emptyState('⚠','Could not load dashboard', esc(e.message), `<button class="btn btn-ghost" onclick="navigate('dashboard')">Retry</button>`);
+    document.getElementById('dash-body').innerHTML = emptyState('⚠','Could not load dashboard', esc(e.message), `<button class="btn btn-ghost" onclick="navigate('dashboard')">Retry</button>`);
   }
 }
 function renderRecentOrdersTable(items, cur){
@@ -2974,16 +2775,11 @@ async function submitVoucherForm(){
 }
 
 async function openVoucherDetail(id){
-  if (!requireCompany()) return;
-  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   openModal({title:'Voucher', wide:true, ai:{enabled:false}, bodyHtml:`<div id="vd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
-  const slot = document.getElementById('vd-body');
-  const isCurrent = () => sameCompanyGeneration(companyId, generation) && document.getElementById('vd-body') === slot;
   try {
-    const v = await api(`/companies/${companyId}/vouchers/${id}`);
-    if (!isCurrent()) return;
+    const v = await api(`/companies/${STATE.companyId}/vouchers/${id}`);
     const cur = STATE.company.base_currency;
-    const total = sumMoneyAmounts(v.lines.map(line=>line.debit));
+    const total = v.lines.reduce((s,l)=>s+parseFloat(l.debit||0),0);
     document.getElementById('modal-title').textContent = `${voucherTypeName(v.voucher_type_id)} · ${v.voucher_number}`;
     document.getElementById('vd-body').innerHTML = `
       <div class="kv"><span class="k">Date</span><span class="v">${fmtDate(v.date)}</span></div>
@@ -3000,14 +2796,9 @@ async function openVoucherDetail(id){
     if (v.status==='DRAFT') actions += `<button class="btn btn-ghost" onclick="openApprovalSubmitForm({entityType:'VOUCHER', entityId:'${v.id}'})">Submit for approval</button><button class="btn btn-danger" onclick="deleteVoucherAction('${v.id}')">Delete</button><button class="btn btn-teal" onclick="postVoucherAction('${v.id}')">Post voucher</button>`;
     if (v.status==='POSTED') actions += `<button class="btn btn-danger" onclick="cancelVoucherAction('${v.id}')">Cancel (reverse)</button>`;
     foot.innerHTML = actions;
-  } catch(e){ if (isCurrent()) slot.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  } catch(e){ document.getElementById('vd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 const voucherActionInFlight = new Set();
-function refreshVoucherViews(){
-  if (STATE.currentView==='vouchers') loadVoucherTable();
-  if (STATE.currentView==='payments') loadPaymentTable();
-  if (STATE.currentView==='dashboard') renderDashboard();
-}
 function confirmVoucherAction({title, body, confirmLabel, danger=false, onConfirm}){
   openModal({
     title,
@@ -3022,71 +2813,62 @@ function confirmVoucherAction({title, body, confirmLabel, danger=false, onConfir
   });
 }
 async function postVoucherAction(id){
-  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   confirmVoucherAction({
     title:'Post voucher',
     body:'Posting makes this draft part of the official books. Review the debit and credit lines first; Alaada will not post it until you confirm here.',
     confirmLabel:'Post voucher',
     onConfirm: async () => {
-      if (!sameCompanyGeneration(companyId, generation)) return;
       const key = `post:${id}`;
       if (voucherActionInFlight.has(key)) return;
       const btn = document.getElementById('voucher-confirm-action');
-      const idem = `voucher-post:${companyId}:${id}`;
+      const idem = `voucher-post:${STATE.companyId}:${id}`;
       try {
         voucherActionInFlight.add(key);
         if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
-        await api(`/companies/${companyId}/vouchers/${id}/post`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
-        if (!sameCompanyGeneration(companyId, generation)) return;
-        toast('Voucher posted','ok'); closeModal(); refreshBalanceBeam(); refreshVoucherViews();
-      } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
+        await api(`/companies/${STATE.companyId}/vouchers/${id}/post`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
+        toast('Voucher posted','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable(); if(STATE.currentView==='dashboard') renderDashboard();
+      } catch(e){ errToast(e); }
       finally { voucherActionInFlight.delete(key); if (btn) { btn.disabled = false; btn.textContent = 'Post voucher'; } }
     }
   });
 }
 async function cancelVoucherAction(id){
-  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   confirmVoucherAction({
     title:'Cancel posted voucher',
     body:'A reversal entry will be created and the original voucher will remain in the audit trail.',
     confirmLabel:'Cancel and reverse',
     danger:true,
     onConfirm: async () => {
-      if (!sameCompanyGeneration(companyId, generation)) return;
       const key = `cancel:${id}`;
       if (voucherActionInFlight.has(key)) return;
       const btn = document.getElementById('voucher-confirm-action');
-      const idem = `voucher-cancel:${companyId}:${id}`;
+      const idem = `voucher-cancel:${STATE.companyId}:${id}`;
       try {
         voucherActionInFlight.add(key);
         if (btn) { btn.disabled = true; btn.textContent = 'Cancelling...'; }
-        await api(`/companies/${companyId}/vouchers/${id}/cancel`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
-        if (!sameCompanyGeneration(companyId, generation)) return;
-        toast('Voucher cancelled and reversed','ok'); closeModal(); refreshBalanceBeam(); refreshVoucherViews();
-      } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
+        await api(`/companies/${STATE.companyId}/vouchers/${id}/cancel`, {method:'POST', headers:{'Idempotency-Key':idem,'X-Idempotency-Key':idem}});
+        toast('Voucher cancelled and reversed','ok'); closeModal(); refreshBalanceBeam(); if(STATE.currentView==='vouchers') loadVoucherTable();
+      } catch(e){ errToast(e); }
       finally { voucherActionInFlight.delete(key); if (btn) { btn.disabled = false; btn.textContent = 'Cancel and reverse'; } }
     }
   });
 }
 async function deleteVoucherAction(id){
-  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   confirmVoucherAction({
     title:'Delete draft voucher',
     body:'This only deletes the unposted draft. Posted accounting records cannot be deleted from here.',
     confirmLabel:'Delete draft',
     danger:true,
     onConfirm: async () => {
-      if (!sameCompanyGeneration(companyId, generation)) return;
       const key = `delete:${id}`;
       if (voucherActionInFlight.has(key)) return;
       const btn = document.getElementById('voucher-confirm-action');
       try {
         voucherActionInFlight.add(key);
         if (btn) { btn.disabled = true; btn.textContent = 'Deleting...'; }
-        await api(`/companies/${companyId}/vouchers/${id}`, {method:'DELETE'});
-        if (!sameCompanyGeneration(companyId, generation)) return;
-        toast('Draft deleted','ok'); closeModal(); refreshVoucherViews();
-      } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
+        await api(`/companies/${STATE.companyId}/vouchers/${id}`, {method:'DELETE'});
+        toast('Draft deleted','ok'); closeModal(); if(STATE.currentView==='vouchers') loadVoucherTable();
+      } catch(e){ errToast(e); }
       finally { voucherActionInFlight.delete(key); if (btn) { btn.disabled = false; btn.textContent = 'Delete draft'; } }
     }
   });
@@ -3101,11 +2883,9 @@ const PAYMENT_KIND_LABEL = {
   BANK_RECEIPT:'Bank Receipt', BANK_PAYMENT:'Bank Payment',
 };
 let paymentFilters = {payment_kind:''};
-let paymentLoadGeneration = 0;
-let paymentFormCompany = null;
 async function renderPayments(){
   if (!requireCompany()) return;
-  view().innerHTML = viewHead('Payments', 'Customer receipts and supplier payments — posted only after required approval and accounting checks.',
+  view().innerHTML = viewHead('Payments', 'Customer receipts, supplier payments, and cash/bank movements — each one posts a voucher automatically.',
     `<button class="btn btn-blue" onclick="openPaymentForm()">+ New payment</button>`) +
     `<div class="card card-pad" style="margin-bottom:16px;">
       <div class="form-row" style="margin-bottom:0;max-width:280px;"><label>Kind</label>
@@ -3118,34 +2898,27 @@ async function renderPayments(){
 }
 VIEW_RENDERERS['payments'] = renderPayments;
 async function loadPaymentTable(){
-  const companyId = STATE.companyId, generation = STATE.companyGeneration, requestId = ++paymentLoadGeneration;
-  const slot = document.getElementById('payment-table');
-  const isCurrent = () => sameCompanyGeneration(companyId, generation) && requestId === paymentLoadGeneration && document.getElementById('payment-table') === slot;
-  const qs = {payment_kind: document.getElementById('pf-kind').value || undefined};
+  const qs = {page:1, page_size:100, payment_kind: document.getElementById('pf-kind').value || undefined};
   document.getElementById('payment-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading payments…</td></tr></tbody></table></div>`;
   try {
-    const items = await apiAllItems(`/companies/${companyId}/payments`, {qs, isCurrent});
-    if (!isCurrent()) return;
+    const page = await api(`/companies/${STATE.companyId}/payments`, {qs});
+    const items = page.items;
     const cur = STATE.company.base_currency;
     if (!items.length) { document.getElementById('payment-table').innerHTML = emptyState('💸','No payments recorded','Record a receipt or payment to see it here.',`<button class="btn btn-blue" onclick="openPaymentForm()">+ New payment</button>`); return; }
     document.getElementById('payment-table').innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Date</th><th>Kind</th><th>Party</th><th class="num">Amount</th><th>Status</th><th>Reference</th><th>Narration</th><th></th></tr></thead>
+      <thead><tr><th>Date</th><th>Kind</th><th>Party</th><th class="num">Amount</th><th>Reference</th><th>Narration</th><th></th></tr></thead>
       <tbody>${items.map(p => `<tr>
         <td>${fmtDate(p.payment_date)}</td>
         <td><span class="pill">${esc(PAYMENT_KIND_LABEL[p.payment_kind]||p.payment_kind)}</span></td>
         <td>${esc(p.customer_id ? customerName(p.customer_id) : (p.supplier_id ? supplierName(p.supplier_id) : '—'))}</td>
         <td class="num">${money(p.amount, cur)}</td>
-        <td>${esc(p.status || 'POSTED')}</td>
         <td class="mono">${esc(p.reference_number||'—')}</td>
         <td>${esc(p.narration||'—')}</td>
         <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="openVoucherDetail('${p.voucher_id}')">View voucher</button></td>
       </tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ if (isCurrent()) slot.innerHTML = emptyState('⚠','Could not load payments', esc(e.message)); }
+  } catch(e){ document.getElementById('payment-table').innerHTML = emptyState('⚠','Could not load payments', esc(e.message)); }
 }
 function openPaymentForm(){
-  if (!requireCompany()) return;
-  if (['ledgers','customers','suppliers'].some(key=>!['loaded','loaded_empty'].includes(STATE.loadStates[key]?.status))) return toast('Load company ledgers and parties before recording a payment. Use Retry loading.','err');
-  paymentFormCompany = {companyId:STATE.companyId, generation:STATE.companyGeneration};
   if (!STATE.ledgers.length) return toast('Create at least one ledger before recording payments','err');
   const cashBankOpts = STATE.ledgers.filter(l=>l.status==='ACTIVE' && l.cash_bank_type).map(l=>`<option value="${l.id}">${esc(l.name)} (${l.cash_bank_type})</option>`).join('') || `<option value="">— tag a ledger as Cash/Bank first —</option>`;
   const partyLedgerOpts = ledgerOptionsHtml();
@@ -3161,8 +2934,8 @@ function openPaymentForm(){
         <div class="form-row"><label>Reference no. (optional)</label><input type="text" id="pm-ref"/></div>
         <div class="form-row"><label>Cash / Bank ledger</label><select id="pm-cashbank">${cashBankOpts}</select></div>
         <div class="form-row"><label>Counterparty ledger</label><select id="pm-counterparty">${partyLedgerOpts}</select></div>
-        <div class="form-row" id="pm-customer-row" style="display:none;"><label>Customer</label><select id="pm-customer"><option value="">— select —</option>${STATE.customers.filter(c=>c.status==='ACTIVE').map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
-        <div class="form-row" id="pm-supplier-row" style="display:none;"><label>Supplier</label><select id="pm-supplier"><option value="">— select —</option>${STATE.suppliers.filter(s=>s.status==='ACTIVE').map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></div>
+        <div class="form-row" id="pm-customer-row" style="display:none;"><label>Customer</label><select id="pm-customer"><option value="">— select —</option>${STATE.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row" id="pm-supplier-row" style="display:none;"><label>Supplier</label><select id="pm-supplier"><option value="">— select —</option>${STATE.suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></div>
       </div>
       <div class="form-row"><label>Narration (optional)</label><input type="text" id="pm-narr"/></div>
     `,
@@ -3180,17 +2953,12 @@ function openPaymentForm(){
   });
 }
 async function submitPaymentForm(){
-  if (!paymentFormCompany || !sameCompanyGeneration(paymentFormCompany.companyId, paymentFormCompany.generation)) return;
-  const {companyId, generation} = paymentFormCompany;
-  const button = document.getElementById('pm-save');
-  if (!button || button.disabled) return;
   const payment_kind = document.getElementById('pm-kind').value;
-  const amount = document.getElementById('pm-amount').value.trim();
+  const amount = parseFloat(document.getElementById('pm-amount').value || '0');
   const cash_bank_ledger_id = document.getElementById('pm-cashbank').value;
   const counterparty_ledger_id = document.getElementById('pm-counterparty').value;
   if (!cash_bank_ledger_id) return toast('Choose a cash/bank ledger — tag one as Cash or Bank under Ledgers first','err');
-  if (!/^\d{1,16}(\.\d{1,2})?$/.test(amount) || !/[1-9]/.test(amount)) return toast('Enter a positive amount with at most two decimal places.','err');
-  if (cash_bank_ledger_id === counterparty_ledger_id) return toast('Choose two different ledgers.','err');
+  if (amount <= 0) return toast('Amount must be greater than zero','err');
   const payload = {
     payment_kind, amount, cash_bank_ledger_id, counterparty_ledger_id,
     payment_date: document.getElementById('pm-date').value,
@@ -3199,15 +2967,11 @@ async function submitPaymentForm(){
     customer_id: payment_kind==='CUSTOMER_RECEIPT' ? (document.getElementById('pm-customer').value || null) : null,
     supplier_id: payment_kind==='SUPPLIER_PAYMENT' ? (document.getElementById('pm-supplier').value || null) : null,
   };
-  button.disabled = true;
   try {
-    const result = await api(`/companies/${companyId}/payments`, {method:'POST', body:payload});
-    if (!sameCompanyGeneration(companyId, generation) || document.getElementById('pm-save') !== button) return;
-    toast(result.status === 'PENDING_APPROVAL' ? 'Payment saved; approval required before posting.' : 'Payment recorded ✓','ok');
-    closeModal(); refreshBalanceBeam();
+    await api(`/companies/${STATE.companyId}/payments`, {method:'POST', body:payload});
+    toast('Payment recorded ✓','ok'); closeModal(); refreshBalanceBeam();
     if (STATE.currentView==='payments') loadPaymentTable();
-  } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
-  finally { button.disabled = false; }
+  } catch(e){ errToast(e); }
 }
 
 /* ============================================================
@@ -3796,16 +3560,6 @@ function addDocLine(tbodyId, totalId){
   updateDocTotal(tbodyId, totalId);
 }
 function updateDocTotal(tbodyId, totalId){
-  if (tbodyId === 'si-lines-body' || tbodyId === 'pb-lines-body') {
-    const totalEl = document.getElementById(totalId);
-    try {
-      const lines = collectTradingLines(tbodyId, 'price', false);
-      const cents = lines.reduce((total,line)=>total + tradingLineCents(line.quantity,line.price),0n);
-      const text = `${cents / 100n}.${String(cents % 100n).padStart(2,'0')}`;
-      if (totalEl) totalEl.textContent = `Subtotal: ${text}`;
-      return text;
-    } catch(e) { if (totalEl) totalEl.textContent = e.message; return null; }
-  }
   const rows = document.querySelectorAll(`#${tbodyId} tr`);
   let total = 0;
   rows.forEach(r => { const q = parseFloat(r.querySelector('.dl-qty').value||0); const p = parseFloat(r.querySelector('.dl-price').value||0); total += q*p; });
@@ -4239,88 +3993,15 @@ async function cancelSalesOrderAction(id){
   catch(e){ errToast(e); }
 }
 async function openSalesInvoiceFormFromOrder(orderId){
-  const companyId=STATE.companyId,generation=STATE.companyGeneration;
-  try { const o = await api(`/companies/${companyId}/sales/orders/${orderId}`); if(sameCompanyGeneration(companyId,generation))openSalesInvoiceForm(o); }
-  catch(e){ if(sameCompanyGeneration(companyId,generation))errToast(e); }
+  try { const o = await api(`/companies/${STATE.companyId}/sales/orders/${orderId}`); openSalesInvoiceForm(o); }
+  catch(e){ errToast(e); }
 }
 
 /* ============================================================
    SALES INVOICES
    ============================================================ */
-const tradingForms = {}, tradingDetails = {}, tradingLists = {};
-const tradingSpecs = {
-  si:{path:'/sales/invoices',name:'Sales invoice',view:'sales-invoices',detail:openSalesInvoiceDetail,load:loadSalesInvoiceTable},
-  pb:{path:'/purchase/bills',name:'Purchase bill',view:'purchase-bills',detail:openPurchaseBillDetail,load:loadPurchaseBillTable},
-};
-function tradingMastersReady(keys){
-  if(!requireCompany())return false;
-  if(keys.some(key=>!['loaded','loaded_empty'].includes(STATE.loadStates[key]?.status))){
-    toast('Load the company masters before creating a document. Use Retry loading.','err');return false;
-  }
-  return true;
-}
-function tradingContext(slotId, modal=false){
-  const companyId=STATE.companyId, generation=STATE.companyGeneration, name=STATE.currentView, slot=document.getElementById(slotId);
-  return {companyId,slot,current:()=>!!slot && sameCompanyGeneration(companyId,generation) && STATE.currentView===name
-    && document.getElementById(slotId)===slot && (!modal || modalBackdrop.classList.contains('open'))};
-}
-function tradingLineCents(quantity,price){
-  const scaled=(value,places)=>{const [whole,fraction='']=value.split('.');return BigInt(whole)*10n**BigInt(places)+BigInt(fraction.padEnd(places,'0'));};
-  const product=scaled(quantity,6)*scaled(price,2), divisor=1000000n;
-  let cents=product/divisor; const remainder=product%divisor;
-  if(remainder*2n>divisor || (remainder*2n===divisor && cents%2n===1n)) cents++;
-  if(cents>999999999999999999n) throw new Error('Line total exceeds the supported amount.');
-  return cents;
-}
-function collectTradingLines(tbodyId,priceKey,required=true){
-  const lines=[];
-  for(const row of document.querySelectorAll(`#${tbodyId} tr`)){
-    const item_id=row.querySelector('.dl-item').value, description=row.querySelector('.dl-desc').value.trim()||null;
-    const q=row.querySelector('.dl-qty').value.trim(), p=row.querySelector('.dl-price').value.trim();
-    if(!q && !p && !description) continue; // Only entirely unused rows are omitted.
-    const item=STATE.stockItems.find(item=>item.id===item_id && item.status==='ACTIVE');
-    const unit=STATE.uoms.find(unit=>unit.id===item?.uom_id);
-    if(!item || !unit) throw new Error('Select an active item with a loaded unit of measure.');
-    const quantity=inventoryDecimal(q,unit.precision,'Quantity',{positive:true});
-    const price=inventoryDecimal(p,2,'Unit price',{maxWholeDigits:16});
-    // Trim insignificant zeros before fixed-point arithmetic, without Number().
-    const canonical=value=>value.includes('.')?value.replace(/0+$/,'').replace(/\.$/,''):value;
-    lines.push({item_id,description,quantity:canonical(quantity),[priceKey]:canonical(price)});
-  }
-  if(lines.length>40) throw new Error('Use at most 40 lines per invoice or bill.');
-  const cents=lines.reduce((total,line)=>total+tradingLineCents(line.quantity,line[priceKey]),0n);
-  if(cents>999999999999999999n) throw new Error('Document total exceeds the supported amount.');
-  if(required && !cents) throw new Error('Add line items with a positive document total.');
-  return lines;
-}
-async function submitTradingForm(prefix,build){
-  const context=tradingForms[prefix], spec=tradingSpecs[prefix];
-  if(!context?.current() || context.slot.disabled) return;
-  try {
-    const body=build(); context.slot.disabled=true;
-    const saved=await api(`/companies/${context.companyId}${spec.path}`,{method:'POST',body});
-    if(!context.current()) return;
-    closeModal();toast(spec.name+' saved as draft','ok');
-    spec.detail(saved.id);if(STATE.currentView===spec.view) spec.load();
-  } catch(e){if(context.current())errToast(e);}
-  finally {context.slot.disabled=false;}
-}
-async function postTradingDocument(prefix,id){
-  const context=tradingDetails[prefix],spec=tradingSpecs[prefix];
-  if(!context?.current() || context.id!==id || context.busy) return;
-  if(!confirm('Post this '+spec.name.toLowerCase()+'? This commits its accounting and stock movements together.'))return;
-  try {
-    context.busy=true;
-    const key=`trading-post:${context.companyId}:${prefix}:${id}`;
-    await api(`/companies/${context.companyId}${spec.path}/${id}/post`,{method:'POST',headers:{'Idempotency-Key':key,'X-Idempotency-Key':key}});
-    if(!context.current())return;
-    toast(spec.name+' posted','ok');refreshBalanceBeam();spec.detail(id);
-    if(STATE.currentView===spec.view)spec.load();
-  }catch(e){if(context.current())errToast(e);}
-  finally{context.busy=false;}
-}
 async function renderSalesInvoices(){
-  if (!await prepareCompanyView([loadCustomers,loadLedgers,loadStockItems,loadWarehouses,loadUoms])) return;
+  if (!requireCompany()) return;
   view().innerHTML = viewHead('Sales Invoices', 'Posting an invoice creates the voucher and moves stock out automatically.',
     `<button class="btn btn-blue" onclick="openSalesInvoiceForm()">+ New sales invoice</button>`) +
     `<div class="card card-pad" style="margin-bottom:16px;"><div class="form-row" style="margin-bottom:0;max-width:220px;"><label>Status</label>
@@ -4331,42 +4012,36 @@ async function renderSalesInvoices(){
 }
 VIEW_RENDERERS['sales-invoices'] = renderSalesInvoices;
 async function loadSalesInvoiceTable(){
-  const context=tradingContext('si-table');tradingLists.si=context;
-  const current=()=>context.current() && tradingLists.si===context;
-  if(!current())return;
   document.getElementById('si-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
-    const items = await apiAllItems(`/companies/${context.companyId}/sales/invoices`, {qs:{status:document.getElementById('si-filter-status').value||undefined},isCurrent:current});
-    if(!current())return;
-    const cur = STATE.company.base_currency;
+    const page = await api(`/companies/${STATE.companyId}/sales/invoices`, {qs:{page_size:100, status: document.getElementById('si-filter-status').value || undefined}});
+    const items = page.items, cur = STATE.company.base_currency;
     if (!items.length) { document.getElementById('si-table').innerHTML = emptyState('🧾','No sales invoices found','Create an invoice for a customer.',`<button class="btn btn-blue" onclick="openSalesInvoiceForm()">+ New sales invoice</button>`); return; }
     document.getElementById('si-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Invoice #</th><th>Date</th><th>Customer</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(i => `<tr class="row-link" onclick="openSalesInvoiceDetail('${i.id}')">
         <td class="mono">${esc(i.invoice_number)}</td><td>${fmtDate(i.invoice_date)}</td><td>${esc(customerName(i.customer_id))}</td>
         <td class="num">${money(i.total_amount,cur)}</td><td><span class="badge badge-${i.status.toLowerCase()}">${i.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ if(current()) context.slot.innerHTML = emptyState('⚠','Could not load sales invoices', esc(e.message)); }
+  } catch(e){ document.getElementById('si-table').innerHTML = emptyState('⚠','Could not load sales invoices', esc(e.message)); }
 }
 function openSalesInvoiceForm(prefillOrder){
-  if (!tradingMastersReady(['customers','ledgers','stockItems','warehouses','uoms'])) return;
   if (!STATE.customers.length) return toast('Create a customer first','err');
   if (!STATE.stockItems.length) return toast('Create a stock item first','err');
   if (!STATE.warehouses.length) return toast('Create a warehouse first','err');
-  if (!STATE.customers.some(c=>c.status==='ACTIVE') || !STATE.warehouses.some(w=>w.status==='ACTIVE')) return toast('Create an active customer and warehouse first','err');
+  const salesLedgers = STATE.ledgers.filter(l=>l.status==='ACTIVE');
   openModal({
     title: prefillOrder ? `New invoice from ${prefillOrder.order_number}` : 'New sales invoice', wide:true,
     bodyHtml:`
       <div class="form-grid">
-        <div class="form-row"><label>Customer</label><select id="si-customer">${STATE.customers.filter(c=>c.status==='ACTIVE').map(c=>`<option value="${c.id}" ${prefillOrder&&prefillOrder.customer_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Customer</label><select id="si-customer">${STATE.customers.map(c=>`<option value="${c.id}" ${prefillOrder&&prefillOrder.customer_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Customer ledger (receivable)</label><select id="si-custledger">${ledgerOptionsHtml()}</select></div>
         <div class="form-row"><label>Sales ledger (income)</label><select id="si-salesledger">${ledgerOptionsHtml()}</select></div>
-        <div class="form-row"><label>Warehouse</label><select id="si-wh">${STATE.warehouses.filter(w=>w.status==='ACTIVE').map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Warehouse</label><select id="si-wh">${STATE.warehouses.map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Invoice date</label><input type="date" id="si-date" value="${todayStr()}"/></div>
       </div>
       <div class="form-row"><label>Narration (optional)</label><input type="text" id="si-narr" value="${prefillOrder?('Against order '+esc(prefillOrder.order_number)):''}"/></div>
       <div class="form-row"><label>Line items</label>${docLinesTableHtml('si-lines-body','Unit Price')}
         <button class="btn btn-ghost btn-sm" id="si-addline">+ Add line</button></div>
       <div class="totals-row balanced" id="si-total" style="justify-content:flex-start;">Subtotal: 0.00</div>
-      <p class="help-text">Base-currency amounts only. GST is not calculated or posted by this invoice form. Review any required tax entries separately before using it for tax invoices.</p>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="si-save">Save as draft</button>`,
     onMount:() => {
@@ -4385,32 +4060,35 @@ function openSalesInvoiceForm(prefillOrder){
       }
       document.getElementById('si-addline').onclick = () => addDocLine('si-lines-body','si-total');
       document.getElementById('si-save').onclick = submitSalesInvoiceForm;
-      tradingForms.si=tradingContext('si-save',true);
     }
   });
 }
 async function submitSalesInvoiceForm(){
-  return submitTradingForm('si',()=>({
+  const lines = collectDocLines('si-lines-body','unit_price');
+  if (!lines.length) return toast('Add at least one line item','err');
+  const payload = {
     invoice_date: document.getElementById('si-date').value,
     customer_id: document.getElementById('si-customer').value,
     customer_ledger_id: document.getElementById('si-custledger').value,
     sales_ledger_id: document.getElementById('si-salesledger').value,
     warehouse_id: document.getElementById('si-wh').value,
     narration: document.getElementById('si-narr').value.trim() || null,
-    lines:collectTradingLines('si-lines-body','unit_price'),
-  }));
+    lines,
+  };
+  try {
+    const inv = await api(`/companies/${STATE.companyId}/sales/invoices`, {method:'POST', body:payload});
+    toast('Sales invoice saved as draft ✓','ok'); closeModal(); openSalesInvoiceDetail(inv.id);
+    if (STATE.currentView==='sales-invoices') loadSalesInvoiceTable();
+  } catch(e){ errToast(e); }
 }
 async function openSalesInvoiceDetail(id){
   openModal({title:'Sales invoice', wide:true, ai:{enabled:false}, bodyHtml:`<div id="sid-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
-  const context=tradingContext('sid-body',true);context.id=id;tradingDetails.si=context;
   try {
-    const inv = await api(`/companies/${context.companyId}/sales/invoices/${id}`);
-    if(!context.current())return;
+    const inv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}`);
     let einv = null;
     if (inv.status === 'POSTED') {
-      try { einv = await api(`/companies/${context.companyId}/sales/invoices/${id}/e-invoice`); } catch (_) { einv = null; }
+      try { einv = await api(`/companies/${STATE.companyId}/sales/invoices/${id}/e-invoice`); } catch (_) { einv = null; }
     }
-    if(!context.current())return;
     const cur = STATE.company.base_currency;
     document.getElementById('modal-title').textContent = `Sales Invoice · ${inv.invoice_number}`;
     const eInvBadge = einv ? `<span class="badge badge-${einv.status==='GENERATED'?'active':einv.status==='CANCELLED'?'cancelled':'draft'}">${esc(einv.status)}</span>` : '<span class="badge badge-draft">Not generated</span>';
@@ -4431,17 +4109,18 @@ async function openSalesInvoiceDetail(id){
       <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(inv.total_amount,cur)}</div>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
-    if (inv.status==='DRAFT') actions.push(`<button class="btn btn-ghost" onclick="openApprovalSubmitForm({entityType:'SALES_INVOICE',entityId:'${inv.id}'})">Request approval</button>`, `<button class="btn btn-teal" onclick="postSalesInvoiceAction('${inv.id}')">Post invoice</button>`);
+    if (inv.status==='DRAFT') actions.push(`<button class="btn btn-teal" onclick="postSalesInvoiceAction('${inv.id}')">Post invoice</button>`);
     if (inv.status==='POSTED' && !einv) actions.push(`<button class="btn btn-teal" onclick="generateEInvoiceAction('${inv.id}')">Generate IRN</button>`);
     if (einv) actions.push(`<button class="btn btn-ghost" onclick="showEInvoicePayload('${inv.id}')">Signed payload</button>`);
     if (einv && einv.status==='GENERATED') actions.push(`<button class="btn btn-danger" onclick="cancelEInvoiceAction('${inv.id}')">Cancel IRN</button>`);
     if (inv.status==='POSTED') actions.push(`<button class="btn btn-blue" onclick="closeModal();openSalesReturnFormFromInvoice('${inv.id}')">Create return</button>`);
     if (inv.voucher_id) actions.push(`<button class="btn btn-ghost" onclick="openVoucherDetail('${inv.voucher_id}')">View voucher</button>`);
     document.getElementById('modal-foot').innerHTML = actions.join('');
-  } catch(e){ if(context.current()) context.slot.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  } catch(e){ document.getElementById('sid-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function postSalesInvoiceAction(id){
-  return postTradingDocument('si',id);
+  try { await api(`/companies/${STATE.companyId}/sales/invoices/${id}/post`, {method:'POST'}); toast('Sales invoice posted ✓','ok'); refreshBalanceBeam(); openSalesInvoiceDetail(id); if(STATE.currentView==='sales-invoices') loadSalesInvoiceTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
+  catch(e){ errToast(e); }
 }
 async function generateEInvoiceAction(id){
   try {
@@ -4688,9 +4367,8 @@ async function cancelPurchaseOrderAction(id){
   catch(e){ errToast(e); }
 }
 async function openPurchaseBillFormFromOrder(orderId){
-  const companyId=STATE.companyId,generation=STATE.companyGeneration;
-  try { const o = await api(`/companies/${companyId}/purchase/orders/${orderId}`); if(sameCompanyGeneration(companyId,generation))openPurchaseBillForm(o); }
-  catch(e){ if(sameCompanyGeneration(companyId,generation))errToast(e); }
+  try { const o = await api(`/companies/${STATE.companyId}/purchase/orders/${orderId}`); openPurchaseBillForm(o); }
+  catch(e){ errToast(e); }
 }
 async function renderGoodsReceipts(){
   if (!requireCompany()) return;
@@ -4805,7 +4483,7 @@ async function cancelGoodsReceiptAction(id){
    PURCHASE BILLS
    ============================================================ */
 async function renderPurchaseBills(){
-  if (!await prepareCompanyView([loadSuppliers,loadLedgers,loadStockItems,loadWarehouses,loadUoms])) return;
+  if (!requireCompany()) return;
   view().innerHTML = viewHead('Purchase Bills', 'Posting a bill creates the voucher and moves stock in automatically.',
     `<button class="btn btn-blue" onclick="openPurchaseBillForm()">+ New purchase bill</button>`) +
     `<div class="card card-pad" style="margin-bottom:16px;"><div class="form-row" style="margin-bottom:0;max-width:220px;"><label>Status</label>
@@ -4816,42 +4494,35 @@ async function renderPurchaseBills(){
 }
 VIEW_RENDERERS['purchase-bills'] = renderPurchaseBills;
 async function loadPurchaseBillTable(){
-  const context=tradingContext('pb-table');tradingLists.pb=context;
-  const current=()=>context.current() && tradingLists.pb===context;
-  if(!current())return;
   document.getElementById('pb-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
-    const items = await apiAllItems(`/companies/${context.companyId}/purchase/bills`, {qs:{status:document.getElementById('pb-filter-status').value||undefined},isCurrent:current});
-    if(!current())return;
-    const cur = STATE.company.base_currency;
+    const page = await api(`/companies/${STATE.companyId}/purchase/bills`, {qs:{page_size:100, status: document.getElementById('pb-filter-status').value || undefined}});
+    const items = page.items, cur = STATE.company.base_currency;
     if (!items.length) { document.getElementById('pb-table').innerHTML = emptyState('🧾','No purchase bills found','Create a bill for a supplier.',`<button class="btn btn-blue" onclick="openPurchaseBillForm()">+ New purchase bill</button>`); return; }
     document.getElementById('pb-table').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Bill #</th><th>Date</th><th>Supplier</th><th class="num">Total</th><th>Status</th></tr></thead>
       <tbody>${items.map(b => `<tr class="row-link" onclick="openPurchaseBillDetail('${b.id}')">
         <td class="mono">${esc(b.bill_number)}</td><td>${fmtDate(b.bill_date)}</td><td>${esc(supplierName(b.supplier_id))}</td>
         <td class="num">${money(b.total_amount,cur)}</td><td><span class="badge badge-${b.status.toLowerCase()}">${b.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  } catch(e){ if(current()) context.slot.innerHTML = emptyState('⚠','Could not load purchase bills', esc(e.message)); }
+  } catch(e){ document.getElementById('pb-table').innerHTML = emptyState('⚠','Could not load purchase bills', esc(e.message)); }
 }
 function openPurchaseBillForm(prefillOrder){
-  if (!tradingMastersReady(['suppliers','ledgers','stockItems','warehouses','uoms'])) return;
   if (!STATE.suppliers.length) return toast('Create a supplier first','err');
   if (!STATE.stockItems.length) return toast('Create a stock item first','err');
   if (!STATE.warehouses.length) return toast('Create a warehouse first','err');
-  if (!STATE.suppliers.some(s=>s.status==='ACTIVE') || !STATE.warehouses.some(w=>w.status==='ACTIVE')) return toast('Create an active supplier and warehouse first','err');
   openModal({
     title: prefillOrder ? `New bill from ${prefillOrder.order_number}` : 'New purchase bill', wide:true,
     bodyHtml:`
       <div class="form-grid">
-        <div class="form-row"><label>Supplier</label><select id="pb-supplier">${STATE.suppliers.filter(s=>s.status==='ACTIVE').map(s=>`<option value="${s.id}" ${prefillOrder&&prefillOrder.supplier_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Supplier</label><select id="pb-supplier">${STATE.suppliers.map(s=>`<option value="${s.id}" ${prefillOrder&&prefillOrder.supplier_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Supplier ledger (payable)</label><select id="pb-supledger">${ledgerOptionsHtml()}</select></div>
         <div class="form-row"><label>Purchase ledger (expense)</label><select id="pb-purledger">${ledgerOptionsHtml()}</select></div>
-        <div class="form-row"><label>Warehouse</label><select id="pb-wh">${STATE.warehouses.filter(w=>w.status==='ACTIVE').map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
+        <div class="form-row"><label>Warehouse</label><select id="pb-wh">${STATE.warehouses.map(w=>`<option value="${w.id}" ${prefillOrder&&prefillOrder.warehouse_id===w.id?'selected':''}>${esc(w.name)}</option>`).join('')}</select></div>
         <div class="form-row"><label>Bill date</label><input type="date" id="pb-date" value="${todayStr()}"/></div>
       </div>
       <div class="form-row"><label>Narration (optional)</label><input type="text" id="pb-narr" value="${prefillOrder?('Against order '+esc(prefillOrder.order_number)):''}"/></div>
       <div class="form-row"><label>Line items</label>${docLinesTableHtml('pb-lines-body','Unit Cost')}
         <button class="btn btn-ghost btn-sm" id="pb-addline">+ Add line</button></div>
       <div class="totals-row balanced" id="pb-total" style="justify-content:flex-start;">Subtotal: 0.00</div>
-      <p class="help-text">Base-currency amounts only. GST is not calculated or posted by this bill form. Review any required tax entries separately.</p>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="pb-save">Save as draft</button>`,
     onMount:() => {
@@ -4870,27 +4541,31 @@ function openPurchaseBillForm(prefillOrder){
       }
       document.getElementById('pb-addline').onclick = () => addDocLine('pb-lines-body','pb-total');
       document.getElementById('pb-save').onclick = submitPurchaseBillForm;
-      tradingForms.pb=tradingContext('pb-save',true);
     }
   });
 }
 async function submitPurchaseBillForm(){
-  return submitTradingForm('pb',()=>({
+  const lines = collectDocLines('pb-lines-body','unit_cost');
+  if (!lines.length) return toast('Add at least one line item','err');
+  const payload = {
     bill_date: document.getElementById('pb-date').value,
     supplier_id: document.getElementById('pb-supplier').value,
     supplier_ledger_id: document.getElementById('pb-supledger').value,
     purchase_ledger_id: document.getElementById('pb-purledger').value,
     warehouse_id: document.getElementById('pb-wh').value,
     narration: document.getElementById('pb-narr').value.trim() || null,
-    lines:collectTradingLines('pb-lines-body','unit_cost'),
-  }));
+    lines,
+  };
+  try {
+    const b = await api(`/companies/${STATE.companyId}/purchase/bills`, {method:'POST', body:payload});
+    toast('Purchase bill saved as draft ✓','ok'); closeModal(); openPurchaseBillDetail(b.id);
+    if (STATE.currentView==='purchase-bills') loadPurchaseBillTable();
+  } catch(e){ errToast(e); }
 }
 async function openPurchaseBillDetail(id){
   openModal({title:'Purchase bill', wide:true, bodyHtml:`<div id="pbd-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
-  const context=tradingContext('pbd-body',true);context.id=id;tradingDetails.pb=context;
   try {
-    const b = await api(`/companies/${context.companyId}/purchase/bills/${id}`);
-    if(!context.current())return;
+    const b = await api(`/companies/${STATE.companyId}/purchase/bills/${id}`);
     const cur = STATE.company.base_currency;
     document.getElementById('modal-title').textContent = `Purchase Bill · ${b.bill_number}`;
     document.getElementById('pbd-body').innerHTML = `
@@ -4905,14 +4580,15 @@ async function openPurchaseBillDetail(id){
       <div class="totals-row balanced" style="justify-content:flex-start;">Total: ${money(b.total_amount,cur)}</div>
     `;
     const actions = [`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`];
-    if (b.status==='DRAFT') actions.push(`<button class="btn btn-ghost" onclick="openApprovalSubmitForm({entityType:'PURCHASE_BILL',entityId:'${b.id}'})">Request approval</button>`, `<button class="btn btn-teal" onclick="postPurchaseBillAction('${b.id}')">Post bill</button>`);
+    if (b.status==='DRAFT') actions.push(`<button class="btn btn-teal" onclick="postPurchaseBillAction('${b.id}')">Post bill</button>`);
     if (b.status==='POSTED') actions.push(`<button class="btn btn-blue" onclick="closeModal();openPurchaseReturnFormFromBill('${b.id}')">Create return</button>`);
     if (b.voucher_id) actions.push(`<button class="btn btn-ghost" onclick="openVoucherDetail('${b.voucher_id}')">View voucher</button>`);
     document.getElementById('modal-foot').innerHTML = actions.join('');
-  } catch(e){ if(context.current()) context.slot.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  } catch(e){ document.getElementById('pbd-body').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function postPurchaseBillAction(id){
-  return postTradingDocument('pb',id);
+  try { await api(`/companies/${STATE.companyId}/purchase/bills/${id}/post`, {method:'POST'}); toast('Purchase bill posted ✓','ok'); refreshBalanceBeam(); openPurchaseBillDetail(id); if(STATE.currentView==='purchase-bills') loadPurchaseBillTable(); if(STATE.currentView==='dashboard') renderDashboard(); }
+  catch(e){ errToast(e); }
 }
 
 /* ============================================================
@@ -5033,59 +4709,9 @@ async function postPurchaseReturnAction(id){
   catch(e){ errToast(e); }
 }
 
-let companyViewSequence = 0;
-async function prepareCompanyView(loaders){
-  if (!requireCompany()) return null;
-  const companyId = STATE.companyId, generation = STATE.companyGeneration, name = STATE.currentView;
-  const sequence = ++companyViewSequence;
-  const current = () => sameCompanyGeneration(companyId, generation) && STATE.currentView === name && sequence === companyViewSequence;
-  view().innerHTML = '<div class="loading-row"><span class="spin"></span> Loading company data…</div>';
-  const results = await Promise.allSettled(loaders.map(load=>load(generation, companyId)));
-  if (!current()) return null;
-  const failed = results.find(result=>result.status === 'rejected');
-  if (failed) {
-    view().innerHTML = emptyState('⚠','Could not load company data',esc(failed.reason?.message || 'Request failed'),
-      '<button class="btn btn-ghost" onclick="navigate(STATE.currentView)">Retry loading</button>');
-    return null;
-  }
-  return {current};
-}
-function bindCompanyForm(buttonId, buildRequest, afterSave){
-  const companyId = STATE.companyId, generation = STATE.companyGeneration, name = STATE.currentView;
-  const button = document.getElementById(buttonId);
-  const current = () => sameCompanyGeneration(companyId, generation) && STATE.currentView === name
-    && document.getElementById(buttonId) === button && modalBackdrop.classList.contains('open');
-  button.onclick = async () => {
-    if (!current() || button.disabled) return;
-    let request;
-    try {
-      request = buildRequest();
-      if (!request) return;
-      button.disabled = true;
-      await api(`/companies/${companyId}${request.path}`, {method:request.method || 'POST', body:request.body, headers:request.headers || {}});
-    } catch(e) { if (current()) errToast(e); return; }
-    finally { button.disabled = false; }
-    if (!current()) return;
-    closeModal(); toast(request.message || 'Saved ✓','ok');
-    try { await afterSave(generation, companyId); }
-    catch(e) { if (sameCompanyGeneration(companyId, generation)) toast('Saved, but the view could not refresh. Retry loading.','err'); }
-  };
-}
-function inventoryDecimal(value, precision, label, {positive=false, maxWholeDigits=15}={}){
-  const cleaned = String(value).trim();
-  if (!Number.isInteger(precision) || precision < 0 || precision > 6 || !/^\d+(?:\.\d+)?$/.test(cleaned)
-      || cleaned.split('.')[0].length > maxWholeDigits || (cleaned.split('.')[1] || '').replace(/0+$/,'').length > precision
-      || (positive && !/[1-9]/.test(cleaned))) throw new Error(label + ' must be a valid ' + (positive ? 'positive ' : 'nonnegative ') + 'decimal within the unit precision.');
-  return cleaned;
-}
-async function refreshCompanyAfterSave(loaders, generation, companyId){
-  await Promise.all(loaders.map(load=>load(generation, companyId)));
-  if (sameCompanyGeneration(companyId, generation)) navigate(STATE.currentView);
-}
 async function renderInventorySetup(){
   if (!requireCompany()) return;
-  const loaded = await prepareCompanyView([loadCategories, loadUoms, loadWarehouses]);
-  if (!loaded?.current()) return;
+  await Promise.all([loadCategories(), loadUoms(), loadWarehouses()]);
   view().innerHTML = viewHead('Categories, UOM &amp; Warehouses', 'Master data that stock items and movements rely on.', '') +
     `<div class="grid grid-3">
       <div class="card card-pad">
@@ -5104,20 +4730,21 @@ async function renderInventorySetup(){
 }
 VIEW_RENDERERS['inventory-setup'] = renderInventorySetup;
 function openCategoryForm(){
-  if (!requireCompany()) return;
   openModal({
     title:'New item category',
     bodyHtml:`<div class="form-row"><label>Name</label><input type="text" id="cat-name" placeholder="e.g. Electronics"/></div><div class="form-row"><label>Description (optional)</label><textarea id="cat-desc" rows="2"></textarea></div>`,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="cat-save">Create category</button>`,
-    onMount:() => bindCompanyForm('cat-save', () => {
+    onMount:() => document.getElementById('cat-save').onclick = async () => {
       const name = document.getElementById('cat-name').value.trim();
       if (!name) return toast('Category name is required','err');
-      return {path:'/inventory/categories', body:{name, description:document.getElementById('cat-desc').value.trim() || null}, message:'Category created ✓'};
-    }, (generation, companyId)=>refreshCompanyAfterSave([loadCategories], generation, companyId))
+      try {
+        await api(`/companies/${STATE.companyId}/inventory/categories`, {method:'POST', body:{name, description: document.getElementById('cat-desc').value.trim() || null}});
+        toast('Category created ✓','ok'); closeModal(); renderInventorySetup();
+      } catch(e){ errToast(e); }
+    }
   });
 }
 function openUomForm(){
-  if (!requireCompany()) return;
   openModal({
     title:'New unit of measure',
     bodyHtml:`
@@ -5128,18 +4755,18 @@ function openUomForm(){
       <div class="form-row"><label>Decimal precision</label><input type="number" id="uom-precision" value="2" min="0" max="6"/></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="uom-save">Create unit</button>`,
-    onMount:() => bindCompanyForm('uom-save', () => {
+    onMount:() => document.getElementById('uom-save').onclick = async () => {
       const name = document.getElementById('uom-name').value.trim();
       const symbol = document.getElementById('uom-symbol').value.trim();
       if (!name || !symbol) return toast('Name and symbol are both required','err');
-      const precision = document.getElementById('uom-precision').value.trim();
-      if (!/^[0-6]$/.test(precision)) throw new Error('Unit precision must be a whole number from zero to six.');
-      return {path:'/inventory/uoms', body:{name,symbol,precision:Number(precision)}, message:'Unit created ✓'};
-    }, (generation, companyId)=>refreshCompanyAfterSave([loadUoms], generation, companyId))
+      try {
+        await api(`/companies/${STATE.companyId}/inventory/uoms`, {method:'POST', body:{name, symbol, precision: parseInt(document.getElementById('uom-precision').value||'2',10)}});
+        toast('Unit created ✓','ok'); closeModal(); renderInventorySetup();
+      } catch(e){ errToast(e); }
+    }
   });
 }
 function openWarehouseForm(){
-  if (!requireCompany()) return;
   openModal({
     title:'New warehouse',
     bodyHtml:`
@@ -5149,15 +4776,18 @@ function openWarehouseForm(){
       <div class="form-row"><label class="check-row"><input type="checkbox" id="wh-default"/> Set as default warehouse</label></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="wh-save">Create warehouse</button>`,
-    onMount:() => bindCompanyForm('wh-save', () => {
+    onMount:() => document.getElementById('wh-save').onclick = async () => {
       const name = document.getElementById('wh-name').value.trim();
       if (!name) return toast('Warehouse name is required','err');
-      return {path:'/inventory/warehouses', message:'Warehouse created ✓', body:{
+      try {
+        await api(`/companies/${STATE.companyId}/inventory/warehouses`, {method:'POST', body:{
           name, code: document.getElementById('wh-code').value.trim() || null,
           address: document.getElementById('wh-addr').value.trim() || null,
           is_default: document.getElementById('wh-default').checked,
-      }};
-    }, (generation, companyId)=>refreshCompanyAfterSave([loadWarehouses], generation, companyId))
+        }});
+        toast('Warehouse created ✓','ok'); closeModal(); renderInventorySetup();
+      } catch(e){ errToast(e); }
+    }
   });
 }
 
@@ -5166,8 +4796,7 @@ function openWarehouseForm(){
    ============================================================ */
 async function renderInventoryItems(){
   if (!requireCompany()) return;
-  const loaded = await prepareCompanyView([loadStockItems, loadCategories, loadUoms]);
-  if (!loaded?.current()) return;
+  await Promise.all([loadStockItems(), loadCategories(), loadUoms()]);
   view().innerHTML = viewHead('Items', `${STATE.stockItems.length} item${STATE.stockItems.length===1?'':'s'} in ${esc(STATE.company.name)}`,
     `<input type="search" id="item-search" placeholder="Search items…" style="width:200px;">
      <button class="btn btn-blue" onclick="openItemForm()">+ New item</button>`) +
@@ -5194,7 +4823,6 @@ function renderItemTable(q){
     </tr>`).join('')}</tbody></table></div>`;
 }
 function openItemForm(existing){
-  if (!requireCompany()) return;
   const it = existing || {};
   if (!STATE.uoms.length) return toast('Create a unit of measure first (Inventory → Categories, UOM & Warehouses)','err');
   openModal({
@@ -5207,53 +4835,41 @@ function openItemForm(existing){
         <div class="form-row"><label>Unit of measure *</label><select id="it-uom">${STATE.uoms.map(u=>`<option value="${u.id}" ${it.uom_id===u.id?'selected':''}>${esc(u.name)} (${esc(u.symbol)})</option>`).join('')}</select></div>
         <div class="form-row"><label>HSN/SAC (optional)</label><input type="text" id="it-hsn" value="${esc(it.hsn_sac||'')}"/></div>
         <div class="form-row"><label>GST rate %</label><input type="number" step="0.01" id="it-gst" value="${it.gst_rate||0}"/></div>
-        <div class="form-row"><label>Reorder level (unit precision)</label><input type="number" step="any" id="it-reorder" value="${it.reorder_level||0}"/></div>
+        <div class="form-row"><label>Reorder level</label><input type="number" step="0.01" id="it-reorder" value="${it.reorder_level||0}"/></div>
       </div>
       <div class="form-row"><label class="check-row"><input type="checkbox" id="it-negstock" ${it.allow_negative_stock?'checked':''}/> Allow negative stock</label></div>
       <div class="form-row"><label>Description (optional)</label><textarea id="it-desc" rows="2">${esc(it.description||'')}</textarea></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="it-save">${existing?'Save changes':'Create item'}</button>`,
-    onMount:() => bindCompanyForm('it-save', () => itemFormRequest(existing && existing.id),
-      (generation, companyId)=>refreshCompanyAfterSave([loadStockItems], generation, companyId))
+    onMount:() => document.getElementById('it-save').onclick = () => submitItemForm(existing && existing.id)
   });
 }
-function itemFormRequest(id){
+async function submitItemForm(id){
   const name = document.getElementById('it-name').value.trim();
   if (!name) return toast('Item name is required','err');
-  const uom = STATE.uoms.find(unit=>unit.id === document.getElementById('it-uom').value);
-  if (!uom) throw new Error('Select a valid unit of measure.');
   const payload = {
     name,
     sku: document.getElementById('it-sku').value.trim() || null,
     category_id: document.getElementById('it-cat').value || null,
     uom_id: document.getElementById('it-uom').value,
     hsn_sac: document.getElementById('it-hsn').value.trim() || null,
-    gst_rate: inventoryDecimal(document.getElementById('it-gst').value || '0', 2, 'Tax rate', {maxWholeDigits:3}),
-    reorder_level: inventoryDecimal(document.getElementById('it-reorder').value || '0', uom.precision, 'Reorder level'),
+    gst_rate: parseFloat(document.getElementById('it-gst').value || '0'),
+    reorder_level: parseFloat(document.getElementById('it-reorder').value || '0'),
     allow_negative_stock: document.getElementById('it-negstock').checked,
     description: document.getElementById('it-desc').value.trim() || null,
   };
-  if (Number(payload.gst_rate) > 100) throw new Error('Tax rate must be between zero and 100.');
-  return {path:'/inventory/items' + (id ? '/' + id : ''), method:id?'PATCH':'POST', body:payload, message:id?'Item updated ✓':'Item created ✓'};
+  try {
+    if (id) await api(`/companies/${STATE.companyId}/inventory/items/${id}`, {method:'PATCH', body:payload});
+    else await api(`/companies/${STATE.companyId}/inventory/items`, {method:'POST', body:payload});
+    toast(id?'Item updated ✓':'Item created ✓','ok'); closeModal(); await loadStockItems(); renderInventoryItems();
+  } catch(e){ errToast(e); }
 }
 async function openItemDetail(id){
-  if (!requireCompany()) return;
-  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   const it = STATE.stockItems.find(x=>x.id===id); if (!it) return;
   openModal({title:it.name, wide:true, bodyHtml:`<div id="item-detail-body"><span class="spin"></span> Loading…</div>`, footHtml:``});
-  const slot = document.getElementById('item-detail-body');
-  const current = () => sameCompanyGeneration(companyId, generation) && document.getElementById('item-detail-body') === slot && modalBackdrop.classList.contains('open');
-  let stockRows;
-  try {
-    stockRows = await api(`/companies/${companyId}/inventory/current-stock`, {qs:{item_id:id}});
-    if (!current()) return;
-    if (!Array.isArray(stockRows)) throw new Error('Invalid stock response. Retry loading.');
-  } catch(e){
-    if (current()) slot.innerHTML = emptyState('⚠','Could not load stock',esc(e.message),
-      `<button class="btn btn-ghost" onclick="openItemDetail('${id}')">Retry loading</button>`);
-    return;
-  }
-  slot.innerHTML = `
+  let stockRows = [];
+  try { stockRows = await api(`/companies/${STATE.companyId}/inventory/current-stock`, {qs:{item_id:id}}); } catch(e){ stockRows = []; }
+  document.getElementById('item-detail-body').innerHTML = `
     <div class="kv"><span class="k">SKU</span><span class="v">${esc(it.sku||'—')}</span></div>
     <div class="kv"><span class="k">Category</span><span class="v">${esc(categoryName(it.category_id))}</span></div>
     <div class="kv"><span class="k">UOM</span><span class="v">${esc(uomSymbol(it.uom_id))}</span></div>
@@ -5270,65 +4886,51 @@ async function openItemDetail(id){
   const foot = document.getElementById('modal-foot');
   foot.innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Close</button>
     ${it.status==='ACTIVE'?`<button class="btn btn-danger" onclick="archiveItemAction('${it.id}')">Archive</button>`:''}
-    ${it.status==='ACTIVE'?`<button class="btn btn-teal" onclick="openStockMovementForm('${it.id}')">+ Stock movement</button>`:''}
+    <button class="btn btn-teal" onclick="openStockMovementForm('${it.id}')">+ Stock movement</button>
     <button class="btn btn-blue" onclick="closeModal();openItemForm(STATE.stockItems.find(x=>x.id==='${it.id}'))">Edit</button>`;
 }
 async function archiveItemAction(id){
-  if (!requireCompany()) return;
-  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   if (!confirm('Archive this item?')) return;
-  try {
-    await api(`/companies/${companyId}/inventory/items/${id}/archive`, {method:'POST'});
-    if (!sameCompanyGeneration(companyId, generation)) return;
-    toast('Item archived','ok'); closeModal();
-    await refreshCompanyAfterSave([loadStockItems], generation, companyId);
-  } catch(e){ if (sameCompanyGeneration(companyId, generation)) errToast(e); }
+  try { await api(`/companies/${STATE.companyId}/inventory/items/${id}/archive`, {method:'POST'}); toast('Item archived','ok'); closeModal(); await loadStockItems(); renderInventoryItems(); }
+  catch(e){ errToast(e); }
 }
 function openStockMovementForm(itemId){
-  if (!requireCompany()) return;
-  const item = STATE.stockItems.find(row=>row.id === itemId);
-  const uom = item && STATE.uoms.find(row=>row.id === item.uom_id);
-  if (!item || item.status !== 'ACTIVE' || !uom) return toast('Load an active item and its unit before recording stock.','err');
-  if (!STATE.warehouses.some(row=>row.status === 'ACTIVE')) return toast('Create an active warehouse first','err');
+  if (!STATE.warehouses.length) return toast('Create a warehouse first','err');
   openModal({
     title:'Record stock movement', wide:true,
     bodyHtml:`
       <div class="form-grid">
         <div class="form-row"><label>Warehouse</label><select id="sm-wh">${STATE.warehouses.filter(w=>w.status==='ACTIVE').map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select></div>
-        <div class="form-row"><label>Movement type</label><select id="sm-type"><option value="OPENING">Opening (first movement only)</option><option value="ADJUSTMENT_IN" selected>Adjustment In</option><option value="ADJUSTMENT_OUT">Adjustment Out</option></select></div>
+        <div class="form-row"><label>Movement type</label><select id="sm-type"><option value="OPENING">Opening</option><option value="ADJUSTMENT_IN">Adjustment In</option><option value="ADJUSTMENT_OUT">Adjustment Out</option></select></div>
         <div class="form-row"><label>Date</label><input type="date" id="sm-date" value="${todayStr()}"/></div>
-        <div class="form-row"><label>Quantity (${esc(uom.symbol)}, up to ${uom.precision} decimals)</label><input type="text" inputmode="decimal" id="sm-qty" placeholder="0"/></div>
+        <div class="form-row"><label>Quantity</label><input type="number" step="0.001" id="sm-qty" placeholder="0"/></div>
       </div>
       <div class="form-row"><label>Narration (optional)</label><input type="text" id="sm-narr"/></div>
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="sm-save">Record movement</button>`,
-    onMount:() => bindCompanyForm('sm-save', () => {
-      const quantity = inventoryDecimal(document.getElementById('sm-qty').value, uom.precision, 'Quantity', {positive:true});
-      const warehouse = STATE.warehouses.find(row=>row.id === document.getElementById('sm-wh').value && row.status === 'ACTIVE');
-      if (!warehouse) throw new Error('Select an active warehouse.');
-      return {path:'/inventory/stock-movements', message:'Stock movement recorded ✓', body:{
+    onMount:() => document.getElementById('sm-save').onclick = async () => {
+      const quantity = parseFloat(document.getElementById('sm-qty').value || '0');
+      if (quantity <= 0) return toast('Quantity must be greater than zero','err');
+      try {
+        await api(`/companies/${STATE.companyId}/inventory/stock-movements`, {method:'POST', body:{
           item_id: itemId, warehouse_id: document.getElementById('sm-wh').value,
           movement_date: document.getElementById('sm-date').value,
           movement_type: document.getElementById('sm-type').value,
           quantity, narration: document.getElementById('sm-narr').value.trim() || null,
-      }};
-    }, () => openItemDetail(itemId))
+        }});
+        toast('Stock movement recorded ✓','ok'); closeModal(); openItemDetail(itemId);
+      } catch(e){ errToast(e); }
+    }
   });
 }
 async function viewStockLedger(itemId, warehouseId){
-  if (!requireCompany()) return;
-  const companyId = STATE.companyId, generation = STATE.companyGeneration;
   openModal({title:'Stock ledger', wide:true, bodyHtml:`<div id="sl-body"><span class="spin"></span> Loading…</div>`, footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`});
-  const slot = document.getElementById('sl-body');
-  const current = () => sameCompanyGeneration(companyId, generation) && document.getElementById('sl-body') === slot && modalBackdrop.classList.contains('open');
   try {
-    const rows = await api(`/companies/${companyId}/inventory/items/${itemId}/stock-ledger`, {qs:{warehouse_id: warehouseId}});
-    if (!current()) return;
-    if (!Array.isArray(rows)) throw new Error('Invalid stock ledger response.');
+    const rows = await api(`/companies/${STATE.companyId}/inventory/items/${itemId}/stock-ledger`, {qs:{warehouse_id: warehouseId}});
     document.getElementById('sl-body').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th class="num">In</th><th class="num">Out</th><th>Narration</th></tr></thead>
       <tbody>${rows.map(r=>`<tr><td>${fmtDate(r.movement_date)}</td><td>${esc(r.movement_type)}</td><td class="num">${r.quantity_in>0?r.quantity_in:''}</td><td class="num">${r.quantity_out>0?r.quantity_out:''}</td><td>${esc(r.narration||'—')}</td></tr>`).join('')}</tbody></table></div>`
       : emptyState('📄','No movements yet','');
-  } catch(e){ if (current()) slot.innerHTML = emptyState('⚠','Could not load stock ledger', esc(e.message)); }
+  } catch(e){ document.getElementById('sl-body').innerHTML = emptyState('⚠','Could not load stock ledger', esc(e.message)); }
 }
 
 /* ============================================================
@@ -5336,8 +4938,7 @@ async function viewStockLedger(itemId, warehouseId){
    ============================================================ */
 async function renderInventoryStock(){
   if (!requireCompany()) return;
-  const loaded = await prepareCompanyView([loadWarehouses, loadStockItems]);
-  if (!loaded?.current()) return;
+  await Promise.all([loadWarehouses(), loadStockItems()]);
   const whOpts = STATE.warehouses.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('');
   view().innerHTML = viewHead('Current Stock', 'Live quantities across all warehouses.',
     `<select id="stk-wh"><option value="">All warehouses</option>${whOpts}</select><button class="btn btn-ghost btn-sm" onclick="loadStockTable()">Refresh</button>`) +
@@ -5346,18 +4947,11 @@ async function renderInventoryStock(){
   loadStockTable();
 }
 VIEW_RENDERERS['inventory-stock'] = renderInventoryStock;
-let stockTableSequence = 0;
 async function loadStockTable(){
-  const companyId = STATE.companyId, generation = STATE.companyGeneration, sequence = ++stockTableSequence;
-  const slot = document.getElementById('stock-table');
-  if (!slot || !document.getElementById('stk-wh')) return;
-  const current = () => sameCompanyGeneration(companyId, generation) && document.getElementById('stock-table') === slot && sequence === stockTableSequence;
   const warehouse_id = document.getElementById('stk-wh').value || undefined;
   document.getElementById('stock-table').innerHTML = `<div class="table-wrap"><table><tbody><tr class="loading-row"><td><span class="spin"></span> Loading…</td></tr></tbody></table></div>`;
   try {
-    const rows = await api(`/companies/${companyId}/inventory/current-stock`, {qs:{warehouse_id}});
-    if (!current()) return;
-    if (!Array.isArray(rows)) throw new Error('Invalid stock response.');
+    const rows = await api(`/companies/${STATE.companyId}/inventory/current-stock`, {qs:{warehouse_id}});
     document.getElementById('stock-table').innerHTML = rows.length ? `<div class="table-wrap"><table>
       <thead><tr><th>Item</th><th>SKU</th><th>Warehouse</th><th class="num">Quantity</th><th class="num">Reorder Level</th><th>Status</th></tr></thead>
       <tbody>${rows.map(r => `<tr class="row-link" onclick="openItemDetail('${r.item_id}')">
@@ -5365,7 +4959,7 @@ async function loadStockTable(){
         <td class="num ${r.is_low_stock?'neg':''}">${r.quantity}</td><td class="num">${r.reorder_level}</td>
         <td>${r.is_low_stock?'<span class="badge badge-cancelled">Low</span>':'<span class="badge badge-active">OK</span>'}</td></tr>`).join('')}</tbody></table></div>`
       : emptyState('📦','No stock movements yet','Record stock movements from an item’s detail view, or post purchase bills to receive stock.');
-  } catch(e){ if (current()) slot.innerHTML = emptyState('⚠','Could not load stock', esc(e.message)); }
+  } catch(e){ document.getElementById('stock-table').innerHTML = emptyState('⚠','Could not load stock', esc(e.message)); }
 }
 
 /* ============================================================
@@ -5373,8 +4967,7 @@ async function loadStockTable(){
    ============================================================ */
 async function renderGstRates(){
   if (!requireCompany()) return;
-  const loaded = await prepareCompanyView([loadGstRates]);
-  if (!loaded?.current()) return;
+  await loadGstRates();
   view().innerHTML = viewHead('GST Tax Rates', 'Standard tax rates used when preparing GST returns.',
     `<button class="btn btn-blue" onclick="openGstRateForm()">+ New rate</button>`) +
     (STATE.gstRates.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th class="num">Rate %</th><th>Description</th><th>Status</th><th></th></tr></thead>
@@ -5387,7 +4980,6 @@ async function renderGstRates(){
 }
 VIEW_RENDERERS['gst-rates'] = renderGstRates;
 function openGstRateForm(existing){
-  if (!requireCompany()) return;
   const r = existing || {};
   openModal({
     title: existing?'Edit GST rate':'New GST rate',
@@ -5400,14 +4992,17 @@ function openGstRateForm(existing){
       ${existing?`<div class="form-row"><label class="check-row"><input type="checkbox" id="gr-active" ${r.is_active?'checked':''}/> Active</label></div>`:''}
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="gr-save">${existing?'Save changes':'Create rate'}</button>`,
-    onMount:() => bindCompanyForm('gr-save', () => {
+    onMount:() => document.getElementById('gr-save').onclick = async () => {
       const name = document.getElementById('gr-name').value.trim();
       if (!name) return toast('Name is required','err');
-      const payload = {name, rate_percent:inventoryDecimal(document.getElementById('gr-rate').value || '0',2,'Tax rate',{maxWholeDigits:3}), description:document.getElementById('gr-desc').value.trim() || null};
-      if (Number(payload.rate_percent) > 100) throw new Error('Tax rate must be between zero and 100.');
+      const payload = { name, rate_percent: parseFloat(document.getElementById('gr-rate').value||'0'), description: document.getElementById('gr-desc').value.trim() || null };
       if (existing) payload.is_active = document.getElementById('gr-active').checked;
-      return {path:'/gst/rates'+(existing?'/'+existing.id:''), method:existing?'PATCH':'POST', body:payload, message:existing?'Rate updated ✓':'Rate created ✓'};
-    }, (generation, companyId)=>refreshCompanyAfterSave([loadGstRates], generation, companyId))
+      try {
+        if (existing) await api(`/companies/${STATE.companyId}/gst/rates/${existing.id}`, {method:'PATCH', body:payload});
+        else await api(`/companies/${STATE.companyId}/gst/rates`, {method:'POST', body:payload});
+        toast(existing?'Rate updated ✓':'Rate created ✓','ok'); closeModal(); renderGstRates();
+      } catch(e){ errToast(e); }
+    }
   });
 }
 function editGstRateAction(id){ const r = STATE.gstRates.find(x=>x.id===id); if (r) openGstRateForm(r); }
@@ -5417,8 +5012,7 @@ function editGstRateAction(id){ const r = STATE.gstRates.find(x=>x.id===id); if 
    ============================================================ */
 async function renderGstClassifications(){
   if (!requireCompany()) return;
-  const loaded = await prepareCompanyView([loadTaxClassifications, loadGstRates]);
-  if (!loaded?.current()) return;
+  await Promise.all([loadTaxClassifications(), loadGstRates()]);
   view().innerHTML = viewHead('HSN / SAC Classifications', 'Product (HSN) and service (SAC) tax classification codes.',
     `<button class="btn btn-blue" onclick="openTaxClassificationForm()">+ New classification</button>`) +
     (STATE.taxClassifications.length ? `<div class="table-wrap"><table><thead><tr><th>Type</th><th>Code</th><th>Description</th><th>GST rate</th><th>Status</th><th></th></tr></thead>
@@ -5432,7 +5026,6 @@ async function renderGstClassifications(){
 }
 VIEW_RENDERERS['gst-classifications'] = renderGstClassifications;
 function openTaxClassificationForm(existing){
-  if (!requireCompany()) return;
   const c = existing || {};
   openModal({
     title: existing?'Edit classification':'New classification',
@@ -5446,14 +5039,18 @@ function openTaxClassificationForm(existing){
       ${existing?`<div class="form-row"><label class="check-row"><input type="checkbox" id="tc-active" ${c.is_active?'checked':''}/> Active</label></div>`:''}
     `,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="tc-save">${existing?'Save changes':'Create classification'}</button>`,
-    onMount:() => bindCompanyForm('tc-save', () => {
+    onMount:() => document.getElementById('tc-save').onclick = async () => {
       const code = document.getElementById('tc-code').value.trim();
       const description = document.getElementById('tc-desc').value.trim();
       if (!code || !description) return toast('Code and description are required','err');
       const payload = { classification_type: document.getElementById('tc-type').value, code, description, gst_rate_id: document.getElementById('tc-rate').value || null };
       if (existing) payload.is_active = document.getElementById('tc-active').checked;
-      return {path:'/gst/classifications'+(existing?'/'+existing.id:''), method:existing?'PATCH':'POST', body:payload, message:existing?'Classification updated ✓':'Classification created ✓'};
-    }, (generation, companyId)=>refreshCompanyAfterSave([loadTaxClassifications], generation, companyId))
+      try {
+        if (existing) await api(`/companies/${STATE.companyId}/gst/classifications/${existing.id}`, {method:'PATCH', body:payload});
+        else await api(`/companies/${STATE.companyId}/gst/classifications`, {method:'POST', body:payload});
+        toast(existing?'Classification updated ✓':'Classification created ✓','ok'); closeModal(); renderGstClassifications();
+      } catch(e){ errToast(e); }
+    }
   });
 }
 function editTaxClassificationAction(id){ const c = STATE.taxClassifications.find(x=>x.id===id); if (c) openTaxClassificationForm(c); }
@@ -5929,98 +5526,6 @@ VIEW_RENDERERS['ai-assistant'] = renderAiAssistant;
 /* ============================================================
    APPROVAL WORKFLOW (threshold rules and approval queue)
    ============================================================ */
-/* ============================================================
-   COMPANY ACCESS (verified Appwrite organisation members)
-   ============================================================ */
-let companyAccessView = null, companyAccessSequence = 0;
-async function renderCompanyAccess(){
-  if (!requireCompany()) return;
-  const companyId = STATE.companyId, generation = STATE.companyGeneration, sequence = ++companyAccessSequence;
-  const current = () => sameCompanyGeneration(companyId, generation) && STATE.currentView === 'company-access' && sequence === companyAccessSequence;
-  companyAccessView = null;
-  view().innerHTML = viewHead('Company access', 'Appwrite identity, company roles and independent approvers.') +
-    emptyState('…','Loading company access','Checking your current permissions.');
-  try {
-    const access = await api(`/companies/${companyId}/members/me`);
-    if (!current()) return;
-    if (!access.collaboration_available) {
-      view().innerHTML = viewHead('Company access', 'Your personal workspace stays private.') +
-        emptyState('✓','Personal company','Manage shared companies in an organisation workspace. Personal company data is not shared automatically.');
-      return;
-    }
-    if (!access.can_manage) {
-      view().innerHTML = viewHead('Company access', 'Your company role: ' + esc(access.role)) +
-        emptyState('✓','Managed by your company owner','Only company owners and administrators can change access. Organisation membership alone does not grant company access.');
-      return;
-    }
-    const members = await apiAllItems(`/companies/${companyId}/members`, {isCurrent:current});
-    if (!current()) return;
-    let candidates = [], directoryError = '';
-    try {
-      const directory = await api(`/companies/${companyId}/member-candidates`);
-      if (!Array.isArray(directory.items) || directory.items.some(member => !member || !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,35}$/.test(member.user_id)
-          || !['admin','editor','reader'].includes(member.workspace_role))) throw new Error('Invalid organisation directory. Retry loading.');
-      candidates = directory.items;
-    } catch(e) { directoryError = e.message || 'Organisation directory unavailable.'; }
-    if (!current()) return;
-    companyAccessView = {companyId,generation,access,members,candidates,directoryError};
-    const names = new Map(candidates.map(member=>[member.user_id,member.name || member.user_id]));
-    view().innerHTML = viewHead('Company access', 'Only confirmed members of this Appwrite organisation can receive access.',
-      `<button class="btn btn-ghost btn-sm" onclick="renderCompanyAccess()">Refresh</button>
-       <button class="btn btn-blue btn-sm" onclick="openCompanyMemberForm()" ${directoryError ? 'disabled' : ''}>Add member</button>`) +
-      (directoryError ? `<div class="card card-pad" role="alert">Could not verify the organisation directory: ${esc(directoryError)} You can still revoke existing access. Refresh before granting access.</div>` : '') +
-      `<div class="card card-pad"><p class="muted">Owners manage ownership. Administrators manage members and accounting controls. Editors enter transactions; viewers have read-only access. Approvers must be independent members with the role required by the approval rule. Appwrite workspace permissions also apply.</p>
-      <div class="table-wrap"><table><thead><tr><th>Member</th><th>Company role</th><th>Status</th><th>Actions</th></tr></thead><tbody>${members.map((member,index)=>`<tr>
-        <td><strong>${esc(names.get(member.user_id) || member.user_id)}</strong><div class="mono small">${esc(member.user_id)}${member.user_id === access.user_id ? ' · You' : ''}</div></td>
-        <td>${esc(member.role)}</td><td>${esc(member.status)}</td><td>${access.role === 'owner' || member.role !== 'owner'
-          ? `<button class="btn btn-ghost btn-sm" onclick="openCompanyMemberForm(${index})">Edit access</button>` : 'Owner-managed'}</td></tr>`).join('')}</tbody></table></div></div>`;
-  } catch(e) {
-    if (current()) view().innerHTML = emptyState('⚠','Could not load company access',esc(e.message),
-      '<button class="btn btn-ghost" onclick="renderCompanyAccess()">Retry loading</button>');
-  }
-}
-function openCompanyMemberForm(index=null){
-  const snapshot = companyAccessView;
-  if (!snapshot || !sameCompanyGeneration(snapshot.companyId,snapshot.generation) || STATE.currentView !== 'company-access') return;
-  const existing = index === null ? null : snapshot.members[index];
-  if (index !== null && !existing) return;
-  if (!snapshot.access.can_manage || (existing?.role === 'owner' && snapshot.access.role !== 'owner')) return;
-  const candidates = snapshot.candidates.filter(member=>!snapshot.members.some(record=>record.user_id === member.user_id));
-  if (!existing && !candidates.length) return toast('No unassigned confirmed organisation members. Ask the Appwrite team owner to invite a member and have them accept first.','err');
-  const roles = snapshot.access.role === 'owner' ? ['viewer','editor','admin','owner'] : ['viewer','editor','admin'];
-  openModal({
-    title:existing ? 'Edit company access' : 'Add company member',
-    bodyHtml:`<div class="form-grid">
-      ${existing ? `<p>Appwrite account: <strong class="mono">${esc(existing.user_id)}</strong></p>`
-        : `<div class="form-row"><label for="member-user">Confirmed organisation member</label><select id="member-user">${candidates.map(member=>`<option value="${esc(member.user_id)}">${esc(member.name || member.user_id)} · ${esc(member.user_id)} (${esc(member.workspace_role)})</option>`).join('')}</select></div>`}
-      <div class="form-row"><label for="member-role">Company role</label><select id="member-role">${roles.map(role=>`<option value="${role}">${role}</option>`).join('')}</select></div>
-      ${existing ? '<div class="form-row"><label for="member-status">Access</label><select id="member-status"><option value="ACTIVE">Active</option><option value="INACTIVE">Revoked</option></select></div>' : ''}
-      <p class="muted small">This changes access to this company only. It does not create an account or invite anyone to the organisation. At least one active owner must remain.</p>
-    </div>`,
-    footHtml:'<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="member-save">Save access</button>',
-    onMount:()=>{
-      document.getElementById('member-role').value = existing?.role || 'viewer';
-      if (existing) document.getElementById('member-status').value = existing.status;
-      bindCompanyForm('member-save',()=>{
-        if (companyAccessView !== snapshot) throw new Error('Company access changed. Reopen this form.');
-        const userId = existing?.user_id || document.getElementById('member-user').value;
-        const role = document.getElementById('member-role').value;
-        const status = existing ? document.getElementById('member-status').value : 'ACTIVE';
-        const verified = snapshot.candidates.find(member=>member.user_id === userId);
-        if (status === 'ACTIVE' && !verified) throw new Error('Refresh the organisation directory before granting active access.');
-        if (status === 'ACTIVE' && role !== 'viewer' && verified.workspace_role === 'reader') throw new Error('This organisation member has read-only access. Choose viewer.');
-        if (!roles.includes(role) || !['ACTIVE','INACTIVE'].includes(status)) throw new Error('Select a valid role and access status.');
-        return {path:'/members' + (existing ? '/' + encodeURIComponent(userId) : ''), method:existing ? 'PATCH' : 'POST',
-          body:existing ? {role,status,version:existing.version} : {user_id:userId,role}, message:'Company access saved'};
-      },async()=>{
-        if (existing?.user_id === snapshot.access.user_id) await loadCompanies();
-        if (sameCompanyGeneration(snapshot.companyId,snapshot.generation) && STATE.currentView === 'company-access') await renderCompanyAccess();
-      });
-    }
-  });
-}
-VIEW_RENDERERS['company-access'] = renderCompanyAccess;
-
 async function renderApprovals(){
   if (!requireCompany()) return;
   view().innerHTML = viewHead('Approvals', 'Threshold rules, document approval queue, and posting controls.',
@@ -6031,25 +5536,20 @@ async function renderApprovals(){
   loadApprovals();
 }
 
-let approvalLoadSequence = 0;
-let approvalRuleView = null;
 async function loadApprovals(){
   if (!requireCompany()) return;
   const body = document.getElementById('approvals-body');
   if (!body) return;
-  const companyId = STATE.companyId, generation = STATE.companyGeneration, sequence = ++approvalLoadSequence;
-  approvalRuleView = null;
-  const current = () => sameCompanyGeneration(companyId,generation) && STATE.currentView === 'approvals'
-    && document.getElementById('approvals-body') === body && sequence === approvalLoadSequence;
   try {
-    const [rules, all] = await Promise.all([
-      apiAllItems(`/companies/${companyId}/automation/approval-rules`, {isCurrent:current}),
-      apiAllItems(`/companies/${companyId}/automation/approval-requests`, {isCurrent:current}),
+    const [rulesPage, pendingPage, allPage] = await Promise.all([
+      api(`/companies/${STATE.companyId}/automation/approval-rules`, {qs:{page_size:100}}),
+      api(`/companies/${STATE.companyId}/automation/approval-requests`, {qs:{page_size:100, status:'PENDING'}}),
+      api(`/companies/${STATE.companyId}/automation/approval-requests`, {qs:{page_size:100}}),
     ]);
-    if (!current()) return;
     const cur = STATE.company.base_currency || 'INR';
-    const pending = all.filter(request=>request.status === 'PENDING');
-    approvalRuleView = {companyId, generation, rules};
+    const rules = rulesPage.items || [];
+    const pending = pendingPage.items || [];
+    const all = allPage.items || [];
     body.innerHTML = `
       <div class="grid three" style="margin-bottom:14px;">
         <div class="metric"><div class="muted">Active rules</div><strong>${rules.filter(r=>r.status==='ACTIVE').length}</strong></div>
@@ -6059,7 +5559,7 @@ async function loadApprovals(){
       <div class="grid two">
         <div class="card card-pad">
           <div class="section-title">Approval rules</div>
-          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Document</th><th class="num">Min amount</th><th>Approvals</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rules.map((r,index)=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.approver_role || '')}</div></td><td>${esc(r.entity_type)}</td><td class="num">${money(r.min_amount,cur)}</td><td>${r.required_approvals}</td><td><span class="pill">${esc(r.status)}</span></td><td><button class="btn btn-ghost btn-sm" onclick="openApprovalRuleForm(${index})">Edit rule</button></td></tr>`).join('')}</tbody></table></div>`
+          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Document</th><th class="num">Min amount</th><th>Approvals</th><th>Status</th></tr></thead><tbody>${rules.map(r=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.approver_role || '')}</div></td><td>${esc(r.entity_type)}</td><td class="num">${money(r.min_amount,cur)}</td><td>${r.required_approvals}</td><td><span class="pill">${esc(r.status)}</span></td></tr>`).join('')}</tbody></table></div>`
             : emptyState('✓','No approval rules','Create a threshold rule to require approval before posting.') }
         </div>
         <div class="card card-pad">
@@ -6074,63 +5574,43 @@ async function loadApprovals(){
           : emptyState('✓','No approval requests','Submit a draft voucher, sales invoice, or purchase bill for approval.') }
       </div>`;
   } catch(e) {
-    if (current()) body.innerHTML = emptyState('⚠','Could not load approvals', esc(e.message),
-      '<button class="btn btn-ghost" onclick="loadApprovals()">Retry loading</button>');
+    body.innerHTML = emptyState('⚠','Could not load approvals', esc(e.message));
   }
 }
 
-function openApprovalRuleForm(index = null){
+function openApprovalRuleForm(){
   if (!requireCompany()) return;
-  let rule = null;
-  if (index !== null) {
-    if (!Number.isInteger(index) || !approvalRuleView || !sameCompanyGeneration(approvalRuleView.companyId,approvalRuleView.generation)) return;
-    rule = approvalRuleView.rules[index];
-    if (!rule || !/^[A-Za-z0-9_-]+$/.test(rule.id)) return;
-  }
-  const idempotencyKey = `approval-rule:${crypto.randomUUID()}`;
   openModal({
-    title:rule ? 'Edit approval rule' : 'New approval rule',
+    title:'New approval rule',
     bodyHtml:`<div class="form-grid">
       <div class="form-row"><label>Name</label><input id="appr-rule-name" placeholder="Voucher above 50,000"/></div>
       <div class="form-row"><label>Document type</label><select id="appr-rule-entity"><option>VOUCHER</option><option>SALES_INVOICE</option><option>PURCHASE_BILL</option></select></div>
       <div class="form-row"><label>Minimum amount</label><input id="appr-rule-min" type="number" step="0.01" value="0"/></div>
       <div class="form-row"><label>Required approvals</label><input id="appr-rule-count" type="number" min="1" max="10" value="1"/></div>
-      <div class="form-row"><label>Approver company role</label><select id="appr-rule-role"><option value="">Any authorized independent member</option><option value="owner">Owner</option><option value="admin">Administrator</option><option value="editor">Editor</option></select></div>
+      <div class="form-row"><label>Approver role</label><input id="appr-rule-role" placeholder="Finance Manager"/></div>
       <div class="form-row"><label>Notes</label><textarea id="appr-rule-notes" rows="2"></textarea></div>
-      ${rule ? '<div class="form-row"><label>Status</label><select id="appr-rule-status"><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></div>' : ''}
-    </div><p class="muted small">Only company owners and administrators can change rules. Independent approvals require an organisation workspace. Changing a rule invalidates approvals under its previous version.</p>`,
-    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-rule-save">${rule ? 'Save rule' : 'Create rule'}</button>`,
+    </div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-rule-save">Create rule</button>`,
     onMount:() => {
-      const field = name=>document.getElementById('appr-rule-' + name);
-      field('name').value = rule?.name || '';
-      field('entity').value = rule?.entity_type || 'VOUCHER';
-      field('name').disabled = field('entity').disabled = !!rule;
-      field('min').value = rule?.min_amount ?? '0';
-      field('count').value = String(rule?.required_approvals ?? 1);
-      field('role').value = rule?.approver_role || '';
-      field('notes').value = rule?.notes || '';
-      if (rule) field('status').value = rule.status;
-      bindCompanyForm('appr-rule-save',()=>{
-        const name = field('name').value.trim(), count = field('count').value.trim();
-        if (!name) throw new Error('Enter a rule name.');
-        if (!/^\d+$/.test(count) || Number(count) < 1 || Number(count) > 10) throw new Error('Required approvals must be a whole number from 1 to 10.');
-        const body = {min_amount:field('min').value.trim() || '0', required_approvals:Number(count),
-          approver_role:field('role').value || null, notes:field('notes').value.trim() || null};
-        if (rule) {
-          body.status = field('status').value;
-          if (Number.isInteger(rule.version)) body.version = rule.version;
-        } else Object.assign(body,{name,entity_type:field('entity').value});
-        return {path:'/automation/approval-rules' + (rule ? '/' + rule.id : ''), method:rule ? 'PATCH' : 'POST',body,
-          headers:{'Idempotency-Key':idempotencyKey,'X-Idempotency-Key':idempotencyKey},
-          message:rule ? 'Approval rule updated' : 'Approval rule created'};
-      },loadApprovals);
+      document.getElementById('appr-rule-save').onclick = async () => {
+        try {
+          await api(`/companies/${STATE.companyId}/automation/approval-rules`, {method:'POST', body:{
+            name: document.getElementById('appr-rule-name').value,
+            entity_type: document.getElementById('appr-rule-entity').value,
+            min_amount: document.getElementById('appr-rule-min').value || '0',
+            required_approvals: parseInt(document.getElementById('appr-rule-count').value || '1', 10),
+            approver_role: document.getElementById('appr-rule-role').value || null,
+            notes: document.getElementById('appr-rule-notes').value || null,
+          }});
+          closeModal(); toast('Approval rule created','ok'); loadApprovals();
+        } catch(e){ errToast(e); }
+      };
     }
   });
 }
 
 function openApprovalSubmitForm(opts = {}){
   if (!requireCompany()) return;
-  const idempotencyKey = `approval-submit:${crypto.randomUUID()}`;
   const entityType = opts.entityType || 'VOUCHER';
   const entityId = opts.entityId || '';
   openModal({
@@ -6138,125 +5618,91 @@ function openApprovalSubmitForm(opts = {}){
     bodyHtml:`<div class="form-grid">
       <div class="form-row"><label>Document type</label><select id="appr-submit-entity"><option value="VOUCHER">Voucher</option><option value="SALES_INVOICE">Sales invoice</option><option value="PURCHASE_BILL">Purchase bill</option></select></div>
       <div class="form-row"><label>Document ID</label><input id="appr-submit-id" class="mono" placeholder="32-character id" value="${esc(entityId)}"/></div>
-      <p class="muted small">The requester is your signed-in Appwrite account, verified by the server.</p>
+      <div class="form-row"><label>Requested by</label><input id="appr-submit-by" value="accounts"/></div>
       <div class="form-row"><label>Note</label><textarea id="appr-submit-note" rows="2"></textarea></div>
     </div>`,
     footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="appr-submit-save">Submit</button>`,
     onMount:() => {
       document.getElementById('appr-submit-entity').value = entityType;
-      bindCompanyForm('appr-submit-save',()=>{
-        if (!document.getElementById('appr-submit-id').value.trim()) throw new Error('Select or enter the document ID before submitting.');
-        return {path:'/automation/approval-requests',body:{
+      document.getElementById('appr-submit-save').onclick = async () => {
+        const submitBtn = document.getElementById('appr-submit-save');
+        const idempotencyKey = `approval-submit:${STATE.companyId}:${document.getElementById('appr-submit-entity').value}:${document.getElementById('appr-submit-id').value.trim()}`;
+        if (!document.getElementById('appr-submit-id').value.trim()) return toast('Select or enter the document ID before submitting.','err');
+        try {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Submitting...';
+          await api(`/companies/${STATE.companyId}/automation/approval-requests`, {method:'POST', body:{
             entity_type: document.getElementById('appr-submit-entity').value,
             entity_id: document.getElementById('appr-submit-id').value.trim(),
+            requested_by: document.getElementById('appr-submit-by').value || null,
             requested_note: document.getElementById('appr-submit-note').value || null,
-          }, headers:{'Idempotency-Key':idempotencyKey,'X-Idempotency-Key':idempotencyKey},message:'Approval request submitted'};
-      },loadApprovals);
+          }, headers:{'Idempotency-Key':idempotencyKey,'X-Idempotency-Key':idempotencyKey}});
+          closeModal(); toast('Approval request submitted','ok'); loadApprovals();
+        } catch(e){ errToast(e); }
+        finally { submitBtn.disabled = false; submitBtn.textContent = 'Submit'; }
+      };
     }
   });
 }
 
-function decideApproval(requestId, action){
-  if (!requireCompany() || !['approve','reject'].includes(action) || !/^[A-Za-z0-9_-]+$/.test(requestId)) return;
-  const idempotencyKey = `approval-decision:${crypto.randomUUID()}`;
-  openModal({
-    title:action === 'approve' ? 'Approve document' : 'Reject document',
-    bodyHtml:'<p>This decision is recorded against your signed-in Appwrite account. The server checks your current role and independent approver permission.</p><div class="form-row"><label for="approval-decision-note">Decision note</label><textarea id="approval-decision-note" rows="3"></textarea></div>',
-    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="approval-decision-save">${action === 'approve' ? 'Approve' : 'Reject'}</button>`,
-    onMount:()=>bindCompanyForm('approval-decision-save',()=>({
-      path:`/automation/approval-requests/${requestId}/${action}`,
-      body:{note:document.getElementById('approval-decision-note').value.trim() || null},
-      headers:{'Idempotency-Key':idempotencyKey,'X-Idempotency-Key':idempotencyKey},
-      message:action === 'approve' ? 'Approval recorded' : 'Rejection recorded',
-    }),loadApprovals)
-  });
+async function decideApproval(requestId, action){
+  const decidedBy = window.prompt('Approver name', 'finance.manager@example.com');
+  if (!decidedBy) return;
+  const note = window.prompt('Decision note', action === 'approve' ? 'Approved' : 'Rejected');
+  try {
+    await api(`/companies/${STATE.companyId}/automation/approval-requests/${requestId}/${action}`, {method:'POST', body:{decided_by:decidedBy, note:note || null}});
+    toast(`Approval ${action}d`,'ok');
+    loadApprovals();
+  } catch(e){ errToast(e); }
 }
 VIEW_RENDERERS['approvals'] = renderApprovals;
 
 /* ============================================================
    NOTIFICATIONS (low cash alerts and event notification queue)
    ============================================================ */
-let notificationView = null, notificationLoadSequence = 0;
-const notificationFlights = new Map();
-function currentNotificationView(snapshot=notificationView){
-  return !!snapshot && notificationView === snapshot && sameCompanyGeneration(snapshot.companyId,snapshot.generation)
-    && STATE.currentView === 'notifications' && document.getElementById('notifications-body') === snapshot.body;
-}
-function notificationControls(){
-  const snapshot=notificationView, current=currentNotificationView(snapshot);
-  const busy=current && notificationFlights.has(JSON.stringify([snapshot.companyId,snapshot.generation]));
-  for (const button of document.querySelectorAll('[data-notification-write]')) {
-    button.disabled=!current || busy || !(button.dataset.notificationWrite === 'manage' ? snapshot.access.can_manage : snapshot.access.can_write);
-  }
-}
-function notificationDeliveryStatus(notice){
-  const states=Object.values(notice.delivery_state || {}).map(item=>item.status);
-  if (states.length) return ['SENDING','PENDING','FAILED','UNKNOWN','DEAD_LETTER'].find(status=>states.includes(status)) || 'SENT';
-  return notice.status === 'READ' && notice.channel !== 'IN_APP' ? 'PENDING' : notice.status;
-}
-function notificationCanSend(notice){
-  if (notice.status === 'DISMISSED' || (notice.status === 'READ' && notice.channel === 'IN_APP')) return false;
-  const states=Object.values(notice.delivery_state || {});
-  return states.length ? states.some(item=>item.status === 'PENDING' || (item.status === 'FAILED' && (item.next_at || 0)*1000 <= Date.now()))
-    : notificationDeliveryStatus(notice) === 'PENDING';
-}
-function notificationDeliveryNote(status){
-  return ({SENDING:'Delivery is in progress. Do not resend.', UNKNOWN:'The provider outcome is unknown. Check the provider before any further send; automatic resend is blocked.',
-    FAILED:'Delivery was rejected or the channel is not configured. Correct the problem; retries respect server backoff.',
-    DEAD_LETTER:'Automatic retries stopped after repeated failures. Administrator review is required.',
-    SENT:'Accepted by the delivery channel. This does not prove inbox delivery or that the recipient read it.',
-    SKIPPED:'Preview only. Nothing was sent.', PENDING:'Waiting for delivery.'})[status] || 'Delivery status recorded.';
-}
 async function renderNotifications(){
   if (!requireCompany()) return;
   view().innerHTML = viewHead('Notifications', 'Low cash alerts, business event notifications, and delivery queue.',
     `<button class="btn btn-ghost btn-sm" onclick="loadNotifications()">Refresh</button>
-     <button class="btn btn-ghost btn-sm" data-notification-write="manage" disabled onclick="runDueNotifications()">Run alerts</button>
-     <button class="btn btn-ghost btn-sm" data-notification-write="manage" disabled onclick="deliverPendingNotifications()">Send pending</button>
-     <button class="btn btn-blue btn-sm" data-notification-write="manage" disabled onclick="openNotificationRuleForm()">New rule</button>`) +
+     <button class="btn btn-ghost btn-sm" onclick="runDueNotifications()">Run alerts</button>
+     <button class="btn btn-ghost btn-sm" onclick="deliverPendingNotifications()">Send pending</button>
+     <button class="btn btn-blue btn-sm" onclick="openNotificationRuleForm()">New rule</button>`) +
     `<div id="notifications-body">${emptyState('•','Loading notifications','Fetching rules and queue.')}</div>`;
-  await loadNotifications();
+  loadNotifications();
 }
 
 async function loadNotifications(){
   if (!requireCompany()) return;
   const body = document.getElementById('notifications-body');
   if (!body) return;
-  const companyId=STATE.companyId, generation=STATE.companyGeneration, sequence=++notificationLoadSequence;
-  const current=()=>sameCompanyGeneration(companyId,generation) && STATE.currentView === 'notifications'
-    && document.getElementById('notifications-body') === body && sequence === notificationLoadSequence;
-  notificationView=null; notificationControls();
   try {
-    const [rules, all, attempts, access] = await Promise.all([
-      apiAllItems(`/companies/${companyId}/automation/notification-rules`, {isCurrent:current}),
-      apiAllItems(`/companies/${companyId}/automation/notifications`, {isCurrent:current}),
-      apiAllItems(`/companies/${companyId}/automation/notification-delivery-attempts`, {isCurrent:current}),
-      api(`/companies/${companyId}/members/me`),
+    const [rulesPage, pendingPage, allPage, attemptsPage] = await Promise.all([
+      api(`/companies/${STATE.companyId}/automation/notification-rules`, {qs:{page_size:100}}),
+      api(`/companies/${STATE.companyId}/automation/notifications`, {qs:{page_size:100, status:'PENDING'}}),
+      api(`/companies/${STATE.companyId}/automation/notifications`, {qs:{page_size:100}}),
+      api(`/companies/${STATE.companyId}/automation/notification-delivery-attempts`, {qs:{page_size:100}}),
     ]);
-    if (!current()) return;
-    if (!access || typeof access.can_manage !== 'boolean' || typeof access.can_write !== 'boolean') throw new Error('Company permissions could not be verified. Refresh after the Appwrite backend is updated.');
     const cur = STATE.company.base_currency || 'INR';
-    notificationView={companyId,generation,body,rules,all,attempts,access};
-    const queue=all.map((notice,index)=>({notice,index})).filter(({notice})=>notice.status !== 'DISMISSED'
-      && ['PENDING','FAILED','SENDING','UNKNOWN','DEAD_LETTER'].includes(notificationDeliveryStatus(notice)));
+    const rules = rulesPage.items || [];
+    const pending = pendingPage.items || [];
+    const all = allPage.items || [];
+    const attempts = attemptsPage.items || [];
     body.innerHTML = `
-      <p class="muted small">This is the company's shared inbox. Read and dismiss apply to everyone in this company. Dismiss stops queued deliveries, but cannot recall a message already accepted by a provider. Alerts and delivery batches run when an authorised member clicks the controls above.</p>
-      ${!access.can_manage ? '<p class="muted small">Only a company owner or administrator can change rules, run alerts, or send messages.</p>' : ''}
       <div class="grid four" style="margin-bottom:14px;">
         <div class="metric"><div class="muted">Active rules</div><strong>${rules.filter(r=>r.status==='ACTIVE').length}</strong></div>
-        <div class="metric"><div class="muted">Queued / needs attention</div><strong>${queue.length}</strong></div>
+        <div class="metric"><div class="muted">Pending</div><strong>${pending.length}</strong></div>
         <div class="metric"><div class="muted">Critical</div><strong>${all.filter(n=>n.severity==='CRITICAL').length}</strong></div>
-        <div class="metric"><div class="muted">Accepted attempts</div><strong>${attempts.filter(a=>a.status==='SENT').length}</strong></div>
+        <div class="metric"><div class="muted">Sent attempts</div><strong>${attempts.filter(a=>a.status==='SENT').length}</strong></div>
       </div>
       <div class="grid two">
         <div class="card card-pad">
           <div class="section-title">Notification rules</div>
-          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Channel</th><th class="num">Threshold</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rules.map((r,index)=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.event_type || r.notes || '')}</div></td><td>${esc(r.rule_type)}</td><td>${esc(r.channel)}</td><td class="num">${r.threshold_amount != null ? money(r.threshold_amount,cur) : '-'}</td><td><span class="pill">${esc(r.status)}</span></td><td>${access.can_manage ? `<button class="btn btn-ghost btn-sm" data-notification-write="manage" onclick="openNotificationRuleForm(${index})">Edit rule</button>` : 'Read only'}</td></tr>`).join('')}</tbody></table></div>`
+          ${rules.length ? `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Channel</th><th class="num">Threshold</th><th>Status</th></tr></thead><tbody>${rules.map(r=>`<tr><td><strong>${esc(r.name)}</strong><div class="muted small">${esc(r.event_type || r.notes || '')}</div></td><td>${esc(r.rule_type)}</td><td>${esc(r.channel)}</td><td class="num">${r.threshold_amount ? money(r.threshold_amount,cur) : '-'}</td><td><span class="pill">${esc(r.status)}</span></td></tr>`).join('')}</tbody></table></div>`
             : emptyState('•','No notification rules','Create a low cash or business event rule.') }
         </div>
         <div class="card card-pad">
-          <div class="section-title">Delivery queue and exceptions</div>
-          ${queue.length ? `<div class="table-wrap"><table><thead><tr><th>Notification</th><th>Severity</th><th>Delivery</th><th class="num">Actions</th></tr></thead><tbody>${queue.map(({notice:n,index})=>`<tr><td><strong>${esc(n.title)}</strong><div class="muted small">${esc(n.message)}</div></td><td><span class="pill">${esc(n.severity)}</span></td><td>${esc(n.channel)} · ${esc(notificationDeliveryStatus(n))}<div class="muted small">${esc(notificationDeliveryNote(notificationDeliveryStatus(n)))}</div></td><td class="num">${access.can_manage && notificationCanSend(n) ? `<button class="btn btn-ghost btn-sm" data-notification-write="manage" onclick="deliverNotification(${index})">Send / retry eligible</button>` : ''}${access.can_write ? `${n.status !== 'READ' ? `<button class="btn btn-ghost btn-sm" data-notification-write="write" onclick="markNotificationRead(${index})">Read</button>` : ''}<button class="btn btn-ghost btn-sm" data-notification-write="write" onclick="dismissNotification(${index})">Dismiss</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+          <div class="section-title">Pending queue</div>
+          ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>Notification</th><th>Severity</th><th>Channel</th><th class="num">Actions</th></tr></thead><tbody>${pending.map(n=>`<tr><td><strong>${esc(n.title)}</strong><div class="muted small">${esc(n.message)}</div></td><td><span class="pill">${esc(n.severity)}</span></td><td>${esc(n.channel)}</td><td class="num"><button class="btn btn-ghost btn-sm" onclick="deliverNotification('${n.id}')">Send</button><button class="btn btn-ghost btn-sm" onclick="markNotificationRead('${n.id}')">Read</button><button class="btn btn-ghost btn-sm" onclick="dismissNotification('${n.id}')">Dismiss</button></td></tr>`).join('')}</tbody></table></div>`
             : emptyState('✓','No pending notifications','Run alerts to evaluate active rules.') }
         </div>
       </div>
@@ -6267,96 +5713,91 @@ async function loadNotifications(){
       </div>
       <div class="card card-pad" style="margin-top:14px;">
         <div class="section-title">Delivery attempts</div>
-        ${attempts.length ? `<div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Channel</th><th>Status</th><th>Recipient</th><th>Delivery note</th></tr></thead><tbody>${attempts.map(a=>`<tr><td>${new Date(a.attempted_at).toLocaleString('en-IN')}</td><td>${esc(a.channel)}</td><td><span class="pill">${esc(a.status)}</span></td><td>${esc(a.recipient || '')}</td><td class="muted small">${esc(notificationDeliveryNote(a.status))}<div class="small">Reference: <span class="mono">${esc(a.id)}</span></div>${DEVELOPER_MODE ? `<details style="margin-top:6px;"><summary style="cursor:pointer;">Developer diagnostics</summary><pre>${esc(JSON.stringify({provider:a.provider,error_message:a.error_message}, null, 2))}</pre></details>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+        ${attempts.length ? `<div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Channel</th><th>Status</th><th>Recipient</th><th>Delivery note</th></tr></thead><tbody>${attempts.map(a=>`<tr><td>${new Date(a.attempted_at).toLocaleString('en-IN')}</td><td>${esc(a.channel)}</td><td><span class="pill">${esc(a.status)}</span></td><td>${esc(a.recipient || '')}</td><td class="muted small">${a.status==='FAILED' ? 'Delivery failed. Retry or check channel settings.' : 'Delivery status recorded.'}${DEVELOPER_MODE ? `<details style="margin-top:6px;"><summary style="cursor:pointer;">Developer diagnostics</summary><pre>${esc(JSON.stringify({provider:a.provider,error_message:a.error_message}, null, 2))}</pre></details>` : ''}</td></tr>`).join('')}</tbody></table></div>`
           : emptyState('•','No delivery attempts','Send pending notifications to create delivery history.') }
       </div>`;
-    notificationControls();
   } catch(e) {
-    if (current()) { notificationView=null; notificationControls(); body.innerHTML = emptyState('⚠','Could not load notifications', esc(e.message), '<button class="btn btn-ghost" onclick="loadNotifications()">Retry loading</button>'); }
+    body.innerHTML = emptyState('⚠','Could not load notifications', esc(e.message));
   }
 }
 
-function openNotificationRuleForm(index=null){
-  const snapshot=notificationView;
-  if (!currentNotificationView(snapshot) || !snapshot.access.can_manage) return;
-  const rule=index === null ? null : Number.isInteger(index) ? snapshot.rules[index] : null;
-  if (index !== null && !rule) return;
+function openNotificationRuleForm(){
+  if (!requireCompany()) return;
   openModal({
-    title:rule ? 'Edit notification rule' : 'New notification rule',
+    title:'New notification rule',
     bodyHtml:`<div class="form-grid">
-      <div class="form-row"><label for="notif-rule-name">Name</label><input id="notif-rule-name" maxlength="200" ${rule ? 'disabled' : ''} placeholder="Low cash below 1,00,000"/></div>
-      <div class="form-row"><label for="notif-rule-type">Type</label><select id="notif-rule-type" ${rule ? 'disabled' : ''}><option>LOW_CASH</option><option>BUSINESS_EVENT</option></select></div>
-      <div class="form-row"><label for="notif-rule-channel">Channel</label><select id="notif-rule-channel"><option>IN_APP</option><option>EMAIL</option><option>SMS</option><option>WHATSAPP</option></select></div>
-      <div class="form-row"><label for="notif-rule-severity">Severity</label><select id="notif-rule-severity"><option>WARNING</option><option>INFO</option><option>CRITICAL</option></select></div>
-      <div class="form-row"><label for="notif-rule-threshold">Threshold amount</label><input id="notif-rule-threshold" inputmode="decimal"/></div>
-      <div class="form-row"><label for="notif-rule-event">Business event type</label><input id="notif-rule-event" maxlength="120" placeholder="voucher.posted"/></div>
-      <div class="form-row"><label for="notif-rule-recipients">Recipients</label><textarea id="notif-rule-recipients" rows="2" maxlength="4000" placeholder="finance@example.com"></textarea></div>
-      <div class="form-row"><label for="notif-rule-notes">Notes</label><textarea id="notif-rule-notes" rows="2"></textarea></div>
-      ${rule ? '<div class="form-row"><label for="notif-rule-status">Status</label><select id="notif-rule-status"><option>ACTIVE</option><option>INACTIVE</option></select></div>' : ''}
-    </div><p class="muted small">Separate recipients with commas, semicolons, or new lines (up to 20). Email may use the company email when blank. SMS and WhatsApp need international phone numbers. External channels require server-side provider configuration. Changing a rule affects future alerts, not messages already queued.</p>`,
-    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="notif-rule-save">${rule ? 'Save rule' : 'Create rule'}</button>`,
+      <div class="form-row"><label>Name</label><input id="notif-rule-name" placeholder="Low cash below 1,00,000"/></div>
+      <div class="form-row"><label>Type</label><select id="notif-rule-type"><option>LOW_CASH</option><option>BUSINESS_EVENT</option></select></div>
+      <div class="form-row"><label>Channel</label><select id="notif-rule-channel"><option>IN_APP</option><option>EMAIL</option><option>SMS</option><option>WHATSAPP</option></select></div>
+      <div class="form-row"><label>Severity</label><select id="notif-rule-severity"><option>WARNING</option><option>INFO</option><option>CRITICAL</option></select></div>
+      <div class="form-row"><label>Threshold amount</label><input id="notif-rule-threshold" type="number" step="0.01" value="100000"/></div>
+      <div class="form-row"><label>Business event type</label><input id="notif-rule-event" placeholder="sales_invoice.posted"/></div>
+      <div class="form-row"><label>Recipients</label><input id="notif-rule-recipients" placeholder="finance@example.com"/></div>
+      <div class="form-row"><label>Notes</label><textarea id="notif-rule-notes" rows="2"></textarea></div>
+    </div>`,
+    footHtml:`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" id="notif-rule-save">Create rule</button>`,
     onMount:() => {
-      const field=name=>document.getElementById('notif-rule-'+name);
-      for (const [name,value] of Object.entries({name:rule?.name || '',type:rule?.rule_type || 'LOW_CASH',channel:rule?.channel || 'IN_APP',
-        severity:rule?.severity || 'WARNING',threshold:rule?.threshold_amount ?? '100000',event:rule?.event_type || '',recipients:rule?.recipients || '',notes:rule?.notes || ''})) field(name).value=value;
-      if (rule) field('status').value=rule.status;
-      const updateFields=()=>{field('threshold').disabled=field('type').value !== 'LOW_CASH';field('event').disabled=field('type').value !== 'BUSINESS_EVENT';};
-      field('type').onchange=updateFields; updateFields();
-      bindCompanyForm('notif-rule-save',()=>{
-        if (!currentNotificationView(snapshot)) throw new Error('Notification rules changed. Refresh and reopen the form.');
-        const type=rule?.rule_type || field('type').value, name=field('name').value.trim();
-        if (!name || name.length>200 || !['LOW_CASH','BUSINESS_EVENT'].includes(type)) throw new Error('Enter a name and a valid rule type.');
-        const event=field('event').value.trim();
-        if (type === 'BUSINESS_EVENT' && (!event || event.length>120)) throw new Error('Enter a business event type.');
-        const body={channel:field('channel').value,severity:field('severity').value,
-          threshold_amount:type === 'LOW_CASH' ? inventoryDecimal(field('threshold').value,2,'Threshold') : null,
-          event_type:type === 'BUSINESS_EVENT' ? event : null,recipients:field('recipients').value.trim() || null,notes:field('notes').value || null};
-        if (rule) { body.status=field('status').value; if (Number.isInteger(rule.version)) body.version=rule.version; }
-        else Object.assign(body,{name,rule_type:type});
-        // The shared Appwrite client persists an opaque retry key for this exact
-        // request, including across reloads; no recipient data is stored there.
-        return {path:'/automation/notification-rules'+(rule ? '/'+encodeURIComponent(rule.id) : ''),method:rule ? 'PATCH' : 'POST',body,message:'Notification rule saved'};
-      },async()=>{if (currentNotificationView(snapshot)) await loadNotifications();});
+      document.getElementById('notif-rule-save').onclick = async () => {
+        try {
+          const type = document.getElementById('notif-rule-type').value;
+          await api(`/companies/${STATE.companyId}/automation/notification-rules`, {method:'POST', body:{
+            name: document.getElementById('notif-rule-name').value,
+            rule_type: type,
+            channel: document.getElementById('notif-rule-channel').value,
+            severity: document.getElementById('notif-rule-severity').value,
+            threshold_amount: type === 'LOW_CASH' ? (document.getElementById('notif-rule-threshold').value || '0') : null,
+            event_type: type === 'BUSINESS_EVENT' ? document.getElementById('notif-rule-event').value.trim() : null,
+            recipients: document.getElementById('notif-rule-recipients').value || null,
+            notes: document.getElementById('notif-rule-notes').value || null,
+          }});
+          closeModal(); toast('Notification rule created','ok'); loadNotifications();
+        } catch(e){ errToast(e); }
+      };
     }
   });
 }
 
-async function notificationAction(action,index=null){
-  const snapshot=notificationView;
-  if (!currentNotificationView(snapshot) || !['run-due','deliver-pending','deliver','read','dismiss'].includes(action)) return;
-  const marking=['read','dismiss'].includes(action);
-  if (!(marking ? snapshot.access.can_write : snapshot.access.can_manage)) return;
-  const row=Number.isInteger(index) ? snapshot.all[index] : null;
-  if (['deliver','read','dismiss'].includes(action) && (!row || row.status === 'DISMISSED')) return;
-  if (action === 'deliver' && !notificationCanSend(row)) return toast('This delivery is not eligible to send. Refresh and review its delivery details.','err');
-  const scope=JSON.stringify([snapshot.companyId,snapshot.generation]);
-  if (notificationFlights.has(scope)) return notificationFlights.get(scope);
-  const operation=(async()=>{
-    try {
-      const suffix=row ? encodeURIComponent(row.id)+'/'+action : action;
-      const body=action === 'run-due' ? {as_of:todayStr(),limit:10} : action === 'deliver-pending' ? {limit:10} : null;
-      const result=await api(`/companies/${snapshot.companyId}/automation/notifications/${suffix}`,{method:'POST',body,timeoutMs:40000});
-      if (!currentNotificationView(snapshot)) return;
-      if (marking) toast(action === 'read' ? 'Marked read in the shared company inbox' : 'Notification dismissed; queued deliveries stopped','ok');
-      else if (!Array.isArray(result)) throw new Error('The server returned an incomplete result. Refresh before retrying.');
-      else if (action === 'run-due') toast(`${result.length} alerts generated. Run again to evaluate remaining events.`,'ok');
-      else {
-        const accepted=result.filter(item=>item.status === 'SENT').length, failed=result.filter(item=>['FAILED','DEAD_LETTER'].includes(item.status)).length,
-          uncertain=result.filter(item=>['UNKNOWN','SENDING'].includes(item.status)).length;
-        toast(result.length ? `${accepted} accepted; ${failed} failed; ${uncertain} uncertain or in progress. Review the queue for remaining recipients.`
-          : 'Nothing was sent. Remaining deliveries may be waiting for retry or require review.',failed || uncertain ? 'err' : 'ok');
-      }
-      await loadNotifications();
-    } catch(e) { if (currentNotificationView(snapshot)) errToast(e); }
-  })();
-  notificationFlights.set(scope,operation); notificationControls();
-  try { return await operation; } finally { notificationFlights.delete(scope); notificationControls(); }
+async function runDueNotifications(){
+  if (!requireCompany()) return;
+  try {
+    const rows = await api(`/companies/${STATE.companyId}/automation/notifications/run-due`, {method:'POST', body:{as_of:todayStr(), limit:50}});
+    toast(`${rows.length} notification${rows.length===1?'':'s'} generated`,'ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
 }
-async function runDueNotifications(){return notificationAction('run-due');}
-async function deliverPendingNotifications(){return notificationAction('deliver-pending');}
-async function deliverNotification(index){return notificationAction('deliver',index);}
-async function markNotificationRead(index){return notificationAction('read',index);}
-async function dismissNotification(index){return notificationAction('dismiss',index);}
+
+async function deliverPendingNotifications(){
+  if (!requireCompany()) return;
+  try {
+    const rows = await api(`/companies/${STATE.companyId}/automation/notifications/deliver-pending`, {method:'POST', body:{limit:50}});
+    toast(`${rows.length} delivery attempt${rows.length===1?'':'s'} recorded`,'ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
+}
+
+async function deliverNotification(notificationId){
+  try {
+    const rows = await api(`/companies/${STATE.companyId}/automation/notifications/${notificationId}/deliver`, {method:'POST'});
+    toast(`${rows.length} delivery attempt${rows.length===1?'':'s'} recorded`,'ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
+}
+
+async function markNotificationRead(notificationId){
+  try {
+    await api(`/companies/${STATE.companyId}/automation/notifications/${notificationId}/read`, {method:'POST'});
+    toast('Notification marked read','ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
+}
+
+async function dismissNotification(notificationId){
+  try {
+    await api(`/companies/${STATE.companyId}/automation/notifications/${notificationId}/dismiss`, {method:'POST'});
+    toast('Notification dismissed','ok');
+    loadNotifications();
+  } catch(e){ errToast(e); }
+}
 VIEW_RENDERERS['notifications'] = renderNotifications;
 
 /* ============================================================
@@ -6986,7 +6427,7 @@ async function renderSettings(){
         Developer mode - shows the API explorer, internal endpoint list, and connection details
       </label>
     </div>` : '';
-  view().innerHTML = viewHead('Company & Financial Years', 'Manage company details and accounting periods.',
+  view().innerHTML = viewHead('Company &amp; Financial Years', 'Manage company details and accounting periods.',
     `<button class="btn btn-ghost" onclick="openCompanyForm()">+ New company</button>
      <button class="btn btn-danger" onclick="deleteCurrentCompany()">Delete this company</button>`) +
     `<div class="grid grid-2">
@@ -7015,10 +6456,9 @@ async function renderSettings(){
         <button class="btn btn-ghost btn-sm" onclick="downloadCsv('ledgers')">Export ledgers CSV</button>
         <button class="btn btn-ghost btn-sm" onclick="downloadCsv('vouchers')">Export vouchers CSV</button>
         <button class="btn btn-ghost btn-sm" onclick="importLedgersCsv()">Import ledgers CSV</button>
-        <button class="btn btn-teal btn-sm" onclick="createBackup()">${STATE.capabilities.company_restore === false ? 'Save device copy' : 'Create backup'}</button>
-        <button class="btn btn-ghost btn-sm" onclick="restoreBackupFromDevice()" ${STATE.capabilities.company_restore === false ? 'disabled title="Appwrite cloud restore is not available yet"' : ''}>Restore backup JSON</button>
+        <button class="btn btn-teal btn-sm" onclick="createBackup()">Create backup</button>
+        <button class="btn btn-ghost btn-sm" onclick="restoreBackupFromDevice()">Restore backup JSON</button>
       </div>
-      ${STATE.capabilities.company_export === true && STATE.capabilities.company_restore === false ? '<p class="help-text">JSON exports include company business records and financial audit history, including archived records (up to 8 MB per download). They exclude access memberships, delivery configuration and internal receipts. Keep a downloaded copy; automated cloud restore is not available yet.</p>' : ''}
     </div>
     ${developerSettingsHtml}`;
   renderFyList();
@@ -7046,7 +6486,7 @@ async function renderRecoveryCenter(){
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
         <button class="btn btn-ghost btn-sm" onclick="previewLocalBackup()">Preview</button>
         <button class="btn btn-ghost btn-sm" onclick="downloadRecoveryBackup()">Export</button>
-        ${STATE.capabilities.company_restore === false || backup.payload?.export_format === 'alaada.accounts.appwrite.v1' ? '<span class="help-text">Appwrite data copy — cloud restore unavailable.</span>' : '<button class="btn btn-blue btn-sm" onclick="restoreRecoveryBackup()">Restore to cloud</button>'}
+        <button class="btn btn-blue btn-sm" onclick="restoreRecoveryBackup()">Restore to cloud</button>
       </div>
     </div>` : `<div class="card card-pad">${emptyState('□','No local company backup','Create a backup from Settings after your next successful connection.')}</div>`;
     const draftHtml = drafts.length ? `<div class="card card-pad">
@@ -7476,7 +6916,7 @@ async function deleteCurrentCompany(){
     await api(`/companies/${deletingCompanyId}`, {method:'DELETE'});
     clearBackupNeeded(deletingCompanyId);
     toast('Company deleted','ok');
-    STATE.companyId = null; window.AlaadaWorkspace.storage.removeItem(LS.company);
+    STATE.companyId = null; localStorage.removeItem(LS.company);
     await loadCompanies(); navigate('dashboard');
   } catch(e){ errToast(e); }
 }
@@ -8088,8 +7528,6 @@ function openCompanyForm(){
   });
 }
 async function submitCompanyForm(){
-  const button = document.getElementById('c-save');
-  if (!button || button.disabled) return;
   const name = document.getElementById('c-name').value.trim();
   if (!name) return toast('Company name is required','err');
   const payload = {
@@ -8103,33 +7541,16 @@ async function submitCompanyForm(){
     pan: document.getElementById('c-pan').value.trim() || null,
     address: document.getElementById('c-addr').value.trim() || null,
   };
-  const generation = STATE.companyGeneration, workspace = window.AlaadaWorkspace.active?.id;
-  const label = button.textContent;
-  button.disabled = true; button.textContent = 'Creating company…';
-  button.setAttribute('aria-busy', 'true');
   try {
     const c = await api('/companies', {method:'POST', body:payload});
-    if (!c || typeof c.id !== 'string') throw new ApiError('Company creation was not confirmed. Retry with the same form values.',502,{code:'MALFORMED_RESPONSE'});
-    if (workspace !== window.AlaadaWorkspace.active?.id) return;
     markBackupNeeded(c.id);
-    STATE.companies = [c, ...STATE.companies.filter(company => company.id !== c.id)];
-    setLoadState('companies', 'loaded'); renderCompanyMenu();
-    toast('Company created ✓','ok');
-    // Do not replace a different company or a newly opened form after a slow
-    // response. The saved company remains available in the picker.
-    if (generation !== STATE.companyGeneration || document.getElementById('c-save') !== button || !modalBackdrop.classList.contains('open')) return;
-    closeModal();
-    STATE.currentView = 'dashboard';
-    await selectCompany(c.id);
+    toast('Company created ✓','ok'); closeModal();
+    await loadCompanies(); await selectCompany(c.id); navigate('dashboard');
   } catch(e){ errToast(e); }
-  finally {
-    button.disabled = false; button.textContent = label;
-    button.removeAttribute('aria-busy');
-  }
 }
 
 async function refreshBackupBeforeLeaving(){
-  if (STATE.capabilities.company_export !== true || !STATE.companyId || !backupNeeded(STATE.companyId)) return;
+  if (!STATE.companyId || !backupNeeded(STATE.companyId)) return;
   try { await saveLocalCompanyBackup({download:false, silent:true}); }
   catch(e){ console.warn(e); }
 }
@@ -8137,13 +7558,18 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') refreshBackupBeforeLeaving();
 });
 window.addEventListener('pagehide', refreshBackupBeforeLeaving);
-// A stale optional device backup is not an unsaved cloud write. Do not block
-// reloads or navigation merely because the user has not downloaded a copy.
+window.addEventListener('beforeunload', e => {
+  if (STATE.companyId && backupNeeded(STATE.companyId)) {
+    e.preventDefault();
+    e.returnValue = 'Alaada has changes that should be backed up on this device before you leave.';
+    return e.returnValue;
+  }
+});
 </script>
-<script defer src="accounts-enterprise.js"></script>
-<script defer src="accounts-banking.js"></script>
-<script defer src="accounts-assets.js"></script>
-<script defer src="accounts-close.js"></script>
-<script defer src="accounts-reports.js"></script>
+<script src="js/accounts-enterprise.js"></script>
+<script src="js/accounts-banking.js"></script>
+<script src="js/accounts-assets.js"></script>
+<script src="js/accounts-close.js"></script>
+<script src="js/accounts-reports.js"></script>
 </body>
 </html>
